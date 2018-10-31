@@ -1,0 +1,5 @@
+export const regions = ['SEA', 'PHX', 'IAD', 'FRA', 'LHR', 'LFI', 'LUF']
+export const namespaces = ['oci_computeagent', 'oci_blockstore', 'oci_lbaas', 'oci_telemetry']
+export const aggregations = ['count()', 'max()', 'mean()', 'min()', 'rate()', 'sum()', 'percentile(.90)', 'percentile(.95)', 'percentile(.99)']
+export const windows = ['1m', '5m', '1h']
+export const environments = ['local', 'OCI Instance']
