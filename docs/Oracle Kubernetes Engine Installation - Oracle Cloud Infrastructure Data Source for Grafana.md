@@ -1,6 +1,6 @@
 # Oracle Kubernetes Engine Installation - Oracle Cloud Infrastructure Data Source for Grafana
 
-## Prerequisites:
+## Pre-requisites:
 
 * [Oracle Container Engine for Kubernetes (OKE)](http://www.oracle.com/webfolder/technetwork/tutorials/obe/oci/oke-full/index.html)
 * [Kubectl 1.7.4](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
@@ -72,60 +72,5 @@ Fill in your **Tenancy OCID**, **Default Region**, and **Environment**. Your **D
 Click **Save & Test** to return to the home dashboard.
 
 ![Screen Shot 2018-12-17 at 3.25.33 PM](images/Screen_Shot_2019-02-08_at_10.19.56_AM.png)
-
-Navigate back to the Home Dashboard and click **New Dashboard**.
-
-![Screen Shot 2018-12-17 at 3.26.01 PM](images/Screen%20Shot%202018-12-17%20at%203.26.01%20PM.png)
-
-Choose **Graph** from the list of available dashboard types.
-
-![Screen Shot 2018-12-17 at 3.26.18 PM](images/Screen%20Shot%202018-12-17%20at%203.26.18%20PM.png)
-
-Click **Panel Title** and then **Edit** to add metrics to the dashboard.![Screen Shot 2018-12-17 at 3.26.26 PM](images/Screen%20Shot%202018-12-17%20at%203.26.26%20PM.png)
-
-Choose the appropriate **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options.
-
-![Screen Shot 2018-12-19 at 5.20.58 PM](images/Screen%20Shot%202018-12-19%20at%205.20.58%20PM.png)
-
-Click the save icon to save your dashboard.
-
-At this stage, if the **metrics** pull down menu is not properly populating with options, you may need to navigate back to the OCI console add an additional matching rule to your Dynamic Group stating: `matching_rule = “ANY {instance.compartment.id = ‘${var.compartment_ocid}’}”`.
-
-## Templating
-
-Templating provides the ability to dynamically switch the contents of graphs as seen in the example below.
-
-![templating](images/templating.gif)
-
-In order to configure templating, click on the gear icon in the upper right corner of the dashboard creation page from the previous step. This will take you to the **Settings** page. Click the **Variables** tab and then click the **Add variable** button. 
-
-![Screen Shot 2019-01-11 at 3.10.49 PM](images/Screen%20Shot%202019-01-11%20at%203.10.49%20PM.png)
-
-Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions()`. 
-
-![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
-
-The page will load a preview of valuables available for that variable. Scroll down and click **Add** to create a template variable for regions. 
-
-![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
-
-Repeat the process for the following OCI variables: 
-
-| Name        | Query                              |
-| ----------- | ---------------------------------- |
-| region      | `regions()`                        |
-| compartment | `compartments()`                   |
-| namespace   | `namespaces()`                     |
-| metric      | `metrics($namespace,$compartment)` |
-
-The final list of variables should look like this: 
-
-![Screen Shot 2019-01-11 at 3.19.58 PM](images/Screen%20Shot%202019-01-11%20at%203.19.58%20PM.png)
-
-In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
-
-![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screen%20Shot%202019-01-11%20at%203.19.51%20PM.png)
-
-Choose the save icon to save your dashboard. 
 
 
