@@ -62,5 +62,9 @@ Click **Save & Test** to return to the home dashboard.
 
 ![Screen Shot 2018-12-17 at 3.25.33 PM](images/Screen_Shot_2019-02-08_at_10.19.56_AM.png)
 
+## Next Steps
+
+Check out how to use the newly installed and configured plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/Using%20Grafana%20with%20the%20Oracle%20Cloud%20Infrastructure%20Data%20Source.md) walkthrough. 
+
 
 

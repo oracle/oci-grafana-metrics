@@ -88,3 +88,9 @@ Click **Save & Test** to return to the home dashboard.
 ## Clean Up 
 
 To remove the environment created by the Terraform script, run `terraform destroy` and pass in the same availability domain and dynamic group variables passed in during the apply step.
+
+
+
+## Next Steps
+
+Check out how to use the newly installed and configured plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/Using%20Grafana%20with%20the%20Oracle%20Cloud%20Infrastructure%20Data%20Source.md) walkthrough. 

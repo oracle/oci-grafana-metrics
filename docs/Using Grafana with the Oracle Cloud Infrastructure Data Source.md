@@ -8,17 +8,17 @@ The query editor can be used to create graphs of your Oracle Cloud Infrastructur
 
 On the Grafana Home Dashboard and click **New Dashboard**.
 
-![Screen Shot 2018-12-17 at 3.26.01 PM](/Users/mboxell/Desktop/docupdates/oci-grafana-plugin/docs/images/Screen%20Shot%202018-12-17%20at%203.26.01%20PM.png)
+![Screen Shot 2018-12-17 at 3.26.01 PM](images/Screen%20Shot%202018-12-17%20at%203.26.01%20PM.png)
 
 Choose **Graph** from the list of available dashboard types.
 
-![Screen Shot 2018-12-17 at 3.26.18 PM](/Users/mboxell/Desktop/docupdates/oci-grafana-plugin/docs/images/Screen%20Shot%202018-12-17%20at%203.26.18%20PM.png)
+![Screen Shot 2018-12-17 at 3.26.18 PM](images/Screen%20Shot%202018-12-17%20at%203.26.18%20PM.png)
 
-Click **Panel Title** and then **Edit** to add metrics to the dashboard.![Screen Shot 2018-12-17 at 3.26.26 PM](/Users/mboxell/Desktop/docupdates/oci-grafana-plugin/docs/images/Screen%20Shot%202018-12-17%20at%203.26.26%20PM.png)
+Click **Panel Title** and then **Edit** to add metrics to the dashboard.![Screen Shot 2018-12-17 at 3.26.26 PM](images/Screen%20Shot%202018-12-17%20at%203.26.26%20PM.png)
 
 Choose the appropriate **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options.
 
-![Screen Shot 2018-12-19 at 5.20.58 PM](/Users/mboxell/Desktop/docupdates/oci-grafana-plugin/docs/images/Screen%20Shot%202018-12-19%20at%205.20.58%20PM.png)
+![Screen_Shot_2019-02-15_at_3.06.49_PM](images/Screen_Shot_2019-02-15_at_3.06.49_PM.png)
 
 Click the save icon to save your graph.
 
