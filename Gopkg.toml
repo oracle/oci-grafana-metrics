@@ -12,7 +12,7 @@
 
 [[constraint]]
   name = "github.com/oracle/oci-go-sdk"
-  version = "2.7.0"
+  version = "4.1.0"
 
 [[constraint]]
   name = "github.com/pkg/errors"

@@ -6,8 +6,6 @@ import (
 	"log"
 	"time"
 
-	"gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin/metrics"
-
 	"golang.org/x/net/context"
 
 	"github.com/davecgh/go-spew/spew"
@@ -17,6 +15,7 @@ import (
 	"github.com/oracle/oci-go-sdk/common"
 	"github.com/oracle/oci-go-sdk/common/auth"
 	"github.com/oracle/oci-go-sdk/identity"
+	"github.com/oracle/oci-go-sdk/monitoring"
 	"github.com/pkg/errors"
 )
 
@@ -26,7 +25,7 @@ var cacheRefreshTime = time.Minute
 //OCIDatasource - pulls in data from telemtry/various oci apis
 type OCIDatasource struct {
 	plugin.NetRPCUnsupportedPlugin
-	metricsClient    metrics.TelemetryClient
+	metricsClient    monitoring.MonitoringClient
 	identityClient   identity.IdentityClient
 	config           common.ConfigurationProvider
 	logger           hclog.Logger
@@ -84,7 +83,7 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
 		}
-		metricsClient, err := metrics.NewTelemetryClientWithConfigurationProvider(configProvider)
+		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
 			return nil, errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
 		}
@@ -118,7 +117,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, tsdbReq *datasource.Da
 	var ts GrafanaCommonRequest
 	json.Unmarshal([]byte(tsdbReq.Queries[0].ModelJson), &ts)
 
-	listMetrics := metrics.ListMetricsRequest{
+	listMetrics := monitoring.ListMetricsRequest{
 		CompartmentId: common.String(ts.TenancyOCID),
 	}
 	reg := common.StringToRegion(ts.Region)
@@ -142,7 +141,7 @@ func (o *OCIDatasource) dimensionResponse(ctx context.Context, tsdbReq *datasour
 	for _, query := range tsdbReq.Queries {
 		var ts GrafanaSearchRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
-		reqDetails := metrics.ListMetricsDetails{}
+		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.Namespace = common.String(ts.Namespace)
 		reqDetails.Name = common.String(ts.Metric)
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
@@ -185,7 +184,7 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, tsdbReq *datasour
 		var ts GrafanaSearchRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
 
-		reqDetails := metrics.ListMetricsDetails{}
+		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.GroupBy = []string{"namespace"}
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
 		if err != nil {
@@ -237,7 +236,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 	for _, query := range tsdbReq.Queries {
 		var ts GrafanaSearchRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
-		reqDetails := metrics.ListMetricsDetails{
+		reqDetails := monitoring.ListMetricsDetails{
 			Namespace: common.String(ts.Namespace),
 		}
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
@@ -273,13 +272,13 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 
 }
 
-func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails metrics.ListMetricsDetails) ([]metrics.Metric, error) {
-	var items []metrics.Metric
+func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails) ([]monitoring.Metric, error) {
+	var items []monitoring.Metric
 	var page *string
 	for {
 		reg := common.StringToRegion(region)
 		o.metricsClient.SetRegion(string(reg))
-		res, err := o.metricsClient.ListMetrics(ctx, metrics.ListMetricsRequest{
+		res, err := o.metricsClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
 			CompartmentId:      common.String(compartment),
 			ListMetricsDetails: metricDetails,
 			Page:               page,
@@ -370,7 +369,7 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment str
 }
 
 type responseAndQuery struct {
-	ociRes metrics.SummarizeMetricsDataResponse
+	ociRes monitoring.SummarizeMetricsDataResponse
 	query  *datasource.Query
 	err    error
 }
@@ -387,7 +386,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 		start = start.Truncate(time.Millisecond)
 		end = end.Truncate(time.Millisecond)
 
-		req := metrics.SummarizeMetricsDataDetails{
+		req := monitoring.SummarizeMetricsDataDetails{
 			Query:      common.String(ts.Query),
 			Namespace:  common.String(ts.Namespace),
 			StartTime:  &common.SDKTime{start},
@@ -397,7 +396,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 		reg := common.StringToRegion(ts.Region)
 		o.metricsClient.SetRegion(string(reg))
 
-		request := metrics.SummarizeMetricsDataRequest{
+		request := monitoring.SummarizeMetricsDataRequest{
 			CompartmentId:               common.String(ts.Compartment),
 			SummarizeMetricsDataDetails: req,
 		}
