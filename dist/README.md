@@ -20,6 +20,7 @@ In order to simplify the installation process, we created detailed guides for yo
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana on a MacOS host using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/Local%20Installation%20MacOS%20-%20Oracle%20Cloud%20Infrastructure%20Data%20Source%20for%20Grafana.md).
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana on a virtual machine in Oracle Cloud Infrastructure using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/OCI%20Virtual%20Machine%20Installation%20-%20Oracle%20Cloud%20Infrastructure%20Data%20Source%20for%20Grafana.md).
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana on a virtual machine in Oracle Cloud Infrastructure using Terraform using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/Terraform-Based%20Installation%20-%20Oracle%20Cloud%20Infrastructure%20Data%20Source%20for%20Grafana.md).
+* Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana on Kubernetes in Oracle Cloud Infrastructure using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/Oracle%20Kubernetes%20Engine%20Installation%20-%20Oracle%20Cloud%20Infrastructure%20Data%20Source%20for%20Grafana.md)
 
 Once you have the data source installed, configure your datasource with your tenancy OCID, default region, and where you're running the plugin (Oracle Cloud or elsewhere).
 
