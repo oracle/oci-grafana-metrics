@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
-
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana_plugin_model/go/datasource"
