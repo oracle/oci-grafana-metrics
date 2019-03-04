@@ -1,6 +1,6 @@
 # Using Grafana with the Oracle Cloud Infrastructure Data Source 
 
-Here are a few tools for you to explore after installing and configuring the Oracle Cloud Infrastructure Data Source for Grafana. 
+Here are a few tools for you to explore after installing and configuring the Oracle Cloud Infrastructure Data Source for Grafana. Refer to [this page](https://docs.cloud.oracle.com/iaas/Content/Monitoring/Concepts/monitoringoverview.htm) for additional information about the Monitoring Service. 
 
 ## Query Editor
 
