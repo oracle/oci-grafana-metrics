@@ -12,6 +12,8 @@ Grafana is a popular technology that makes it easy to visualize metrics. The [Or
 
 This walkthrough is intended for use by people who would like to deploy Grafana and the OCI Data Source for Grafana on a Kubernetes environment.
 
+Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.com/iaas/Content/Monitoring/Concepts/monitoringoverview.htm) and that [metrics have been enabled](https://docs.cloud.oracle.com/iaas/Content/Compute/Tasks/enablingmonitoring.htm) for the resources you are trying to monitor.
+
 ## Configuring the OCI Identity policies
 
 In order to use the the OCI Data Source for Grafana on OKE, the first step is to create a [dynamic group](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingdynamicgroups.htm) used to group virtual machine or bare metal compute instances as “principals” (similar to user groups). Create a dynamic group that corresponds to all of your OKE worker nodes:
