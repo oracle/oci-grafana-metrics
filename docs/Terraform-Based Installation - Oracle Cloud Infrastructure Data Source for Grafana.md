@@ -6,6 +6,8 @@ Grafana is a popular technology that makes it easy to visualize metrics. The Ora
 
 This walkthrough is intended for use by people who would like to deploy Grafana and the OCI Data Source for Grafana on a virtual machine in OCI. 
 
+Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.com/iaas/Content/Monitoring/Concepts/monitoringoverview.htm) and that [metrics have been enabled](https://docs.cloud.oracle.com/iaas/Content/Compute/Tasks/enablingmonitoring.htm) for the resources you are trying to monitor.
+
 ## Install Terraform 
 
 Begin by [installing Terraform](https://learn.hashicorp.com/terraform/getting-started/install) onto your development machine. We will be using the [Oracle Cloud Infrastructure Provider](https://www.terraform.io/docs/providers/oci/index.html), a tool designed to understand API interactions and exposing resource related to a specific cloud vendor, in this case Oracle Cloud Infrastructure. Terraform requires a number of variables in order to properly create an environment for Grafana and the OCI Data Source for Grafana plugin: 
