@@ -116,9 +116,12 @@ var OCIDatasourceQueryCtrl = exports.OCIDatasourceQueryCtrl = function (_QueryCt
   }, {
     key: 'getRegions',
     value: function getRegions() {
-      var regs = _lodash2.default.clone(_constants.regions);
-      regs.push('$region');
-      return regs;
+      return this.datasource.getRegions().then(function (regs) {
+        regs.push({ text: '$region', value: '$region' });
+        return regs;
+      }).catch(function (err) {
+        console.error(err);
+      });
     }
   }, {
     key: 'getCompartments',

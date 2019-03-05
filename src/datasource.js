@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { regions, namespaces } from './constants'
+import { namespaces } from './constants'
 import retryOrThrow from './util/retry'
 
 export class OCIDatasource {
@@ -106,29 +106,6 @@ export class OCIDatasource {
     })
   }
 
-  annotationQuery (options) {
-    var query = this.templateSrv.replace(options.annotation.query, {}, 'glob')
-    var annotationQuery = {
-      range: options.range,
-      annotation: {
-        name: options.annotation.name,
-        datasource: options.annotation.datasource,
-        enable: options.annotation.enable,
-        iconColor: options.annotation.iconColor,
-        query: query
-      },
-      rangeRaw: options.rangeRaw
-    }
-
-    return this.doRequest({
-      url: this.url + '/annotations',
-      method: 'POST',
-      data: annotationQuery
-    }).then(result => {
-      return result.data
-    })
-  }
-
   templateMeticSearch (varString) {
     let compartmentQuery = varString.match(/^compartments\(\)/)
     if (compartmentQuery) {
@@ -137,10 +114,7 @@ export class OCIDatasource {
 
     let regionQuery = varString.match(/^regions\(\)/)
     if (regionQuery) {
-      let regs = regions.map((reg) => {
-        return { row: reg, value: reg }
-      })
-      return this.q.when(regs)
+      return this.getRegions()
     }
 
     let metricQuery = varString.match(/metrics\((\$?\w+)(,\s*\$\w+)*\)/)
@@ -288,6 +262,16 @@ export class OCIDatasource {
     }).then((namespaces) => { return this.mapToTextValue(namespaces, 'namespaces') })
   }
 
+  getRegions () {
+    return this.doRequest({ targets: [{
+      environment: this.environment,
+      queryType: 'regions',
+      datasourceId: this.id,
+      refId: 'regions'
+    }],
+    range: this.timeSrv.timeRange()
+    }).then((regions) => { return this.mapToTextValue(regions, 'regions') })
+  }
   doRequest (options) {
     let _this = this
     return retryOrThrow(() => {

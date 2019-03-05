@@ -12,14 +12,14 @@ System.register([], function (_export, _context) {
           resolve(response);
         }).catch(function (error) {
           if (numberOfRetries >= maxRetries) {
-            return reject(new Error("reject: too many failed attempts: " + error));
+            return reject(new Error("reject: too many failed attempts: " + JSON.stringify(error)));
           }
           var delay = Math.pow(2, numberOfRetries) + Math.floor(Math.random() * 1000);
           numberOfRetries++;
           setTimeout(function () {
             return action();
           }, delay);
-        }).catch(reject);
+        });
       }
     });
   }
