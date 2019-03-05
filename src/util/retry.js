@@ -9,13 +9,12 @@ export default function retryOrThrow (actionPromise, maxRetries) {
         })
         .catch((error) => {
           if (numberOfRetries >= maxRetries) {
-            return reject(new Error(`reject: too many failed attempts: ${error}`))
+            return reject(new Error(`reject: too many failed attempts: ${JSON.stringify(error)}`))
           }
           let delay = Math.pow(2, numberOfRetries) + Math.floor(Math.random() * 1000)
           numberOfRetries++
           setTimeout(() => action(), delay)
         })
-        .catch(reject)
     }
   })
 }

@@ -23,12 +23,10 @@ _testmain.go
 *.test
 *.prof
 
-./identity
-!./client/identity
+
+
 /vendor/**
 !/vendor/vendor.json
-/.wercker
-
 .DS_Store
 *.swp
 

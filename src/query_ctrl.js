@@ -1,6 +1,6 @@
 import { QueryCtrl } from 'app/plugins/sdk'
 import './css/query-editor.css!'
-import { regions, aggregations, windows } from './constants'
+import { aggregations, windows } from './constants'
 import _ from 'lodash'
 
 export class OCIDatasourceQueryCtrl extends QueryCtrl {
@@ -84,9 +84,11 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   }
 
   getRegions () {
-    const regs = _.clone(regions)
-    regs.push('$region')
-    return regs
+    return this.datasource.getRegions()
+      .then((regs) => {
+        regs.push({ text: '$region', value: '$region' })
+        return regs
+      }).catch((err) => { console.error(err) })
   }
 
   getCompartments () {

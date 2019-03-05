@@ -6,12 +6,13 @@
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword">Region</label>
-          <select
-            class="gf-form-input width-10"
-            ng-model="ctrl.target.region"
-            ng-options="o as o for o in ctrl.getRegions()"
-            on-change="ctrl.onChangeInternal()">
-          </select>
+          <div class="gf-form-select-wrapper width-10">
+            <gf-form-dropdown
+              model="ctrl.target.region"
+              get-options="ctrl.getRegions()"
+              on-change="ctrl.onChangeInternal()">
+            </gf-form-dropdown>
+          </div>
           <label class="gf-form-label query-keyword width-10">Compartment</label>
           <div class="gf-form-select-wrapper width-10">
             <gf-form-dropdown model="ctrl.target.compartment"

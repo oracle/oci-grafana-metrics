@@ -3,7 +3,7 @@
 System.register(['app/plugins/sdk', './css/query-editor.css!', './constants', 'lodash'], function (_export, _context) {
   "use strict";
 
-  var QueryCtrl, regions, aggregations, windows, _, _createClass, OCIDatasourceQueryCtrl;
+  var QueryCtrl, aggregations, windows, _, _createClass, OCIDatasourceQueryCtrl;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -39,7 +39,6 @@ System.register(['app/plugins/sdk', './css/query-editor.css!', './constants', 'l
     setters: [function (_appPluginsSdk) {
       QueryCtrl = _appPluginsSdk.QueryCtrl;
     }, function (_cssQueryEditorCss) {}, function (_constants) {
-      regions = _constants.regions;
       aggregations = _constants.aggregations;
       windows = _constants.windows;
     }, function (_lodash) {
@@ -155,9 +154,12 @@ System.register(['app/plugins/sdk', './css/query-editor.css!', './constants', 'l
         }, {
           key: 'getRegions',
           value: function getRegions() {
-            var regs = _.clone(regions);
-            regs.push('$region');
-            return regs;
+            return this.datasource.getRegions().then(function (regs) {
+              regs.push({ text: '$region', value: '$region' });
+              return regs;
+            }).catch(function (err) {
+              console.error(err);
+            });
           }
         }, {
           key: 'getCompartments',

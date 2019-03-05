@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
-	"context"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana_plugin_model/go/datasource"
@@ -103,6 +103,8 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 		return o.dimensionResponse(ctx, tsdbReq)
 	case "namespaces":
 		return o.namespaceResponse(ctx, tsdbReq)
+	case "regions":
+		return o.regionsResponse(ctx, tsdbReq)
 	case "search":
 		return o.searchResponse(ctx, tsdbReq)
 	case "test":
@@ -451,4 +453,42 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 	}
 
 	return response, nil
+}
+
+func (o *OCIDatasource) regionsResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
+	table := datasource.Table{
+		Columns: []*datasource.TableColumn{
+			&datasource.TableColumn{Name: "text"},
+		},
+		Rows: make([]*datasource.TableRow, 0),
+	}
+	for _, query := range tsdbReq.Queries {
+		var ts GrafanaOCIRequest
+		json.Unmarshal([]byte(query.ModelJson), &ts)
+		res, err := o.identityClient.ListRegions(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "error fetching regions")
+		}
+		rows := make([]*datasource.TableRow, 0, len(res.Items))
+		o.logger.Debug("successful req", spew.Sdump(res))
+		for _, item := range res.Items {
+			rows = append(rows, &datasource.TableRow{
+				Values: []*datasource.RowValue{
+					&datasource.RowValue{
+						Kind:        datasource.RowValue_TYPE_STRING,
+						StringValue: *(item.Name),
+					},
+				},
+			})
+		}
+		table.Rows = rows
+	}
+	return &datasource.DatasourceResponse{
+		Results: []*datasource.QueryResult{
+			&datasource.QueryResult{
+				RefId:  "regions",
+				Tables: []*datasource.Table{&table},
+			},
+		},
+	}, nil
 }

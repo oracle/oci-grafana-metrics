@@ -3,7 +3,7 @@
 System.register(['lodash', './constants', './util/retry'], function (_export, _context) {
   "use strict";
 
-  var _, regions, namespaces, retryOrThrow, _createClass, OCIDatasource;
+  var _, namespaces, retryOrThrow, _createClass, OCIDatasource;
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -15,7 +15,6 @@ System.register(['lodash', './constants', './util/retry'], function (_export, _c
     setters: [function (_lodash) {
       _ = _lodash.default;
     }, function (_constants) {
-      regions = _constants.regions;
       namespaces = _constants.namespaces;
     }, function (_utilRetry) {
       retryOrThrow = _utilRetry.default;
@@ -152,30 +151,6 @@ System.register(['lodash', './constants', './util/retry'], function (_export, _c
             });
           }
         }, {
-          key: 'annotationQuery',
-          value: function annotationQuery(options) {
-            var query = this.templateSrv.replace(options.annotation.query, {}, 'glob');
-            var annotationQuery = {
-              range: options.range,
-              annotation: {
-                name: options.annotation.name,
-                datasource: options.annotation.datasource,
-                enable: options.annotation.enable,
-                iconColor: options.annotation.iconColor,
-                query: query
-              },
-              rangeRaw: options.rangeRaw
-            };
-
-            return this.doRequest({
-              url: this.url + '/annotations',
-              method: 'POST',
-              data: annotationQuery
-            }).then(function (result) {
-              return result.data;
-            });
-          }
-        }, {
           key: 'templateMeticSearch',
           value: function templateMeticSearch(varString) {
             var compartmentQuery = varString.match(/^compartments\(\)/);
@@ -185,10 +160,7 @@ System.register(['lodash', './constants', './util/retry'], function (_export, _c
 
             var regionQuery = varString.match(/^regions\(\)/);
             if (regionQuery) {
-              var regs = regions.map(function (reg) {
-                return { row: reg, value: reg };
-              });
-              return this.q.when(regs);
+              return this.getRegions();
             }
 
             var metricQuery = varString.match(/metrics\((\$?\w+)(,\s*\$\w+)*\)/);
@@ -352,6 +324,22 @@ System.register(['lodash', './constants', './util/retry'], function (_export, _c
               range: this.timeSrv.timeRange()
             }).then(function (namespaces) {
               return _this6.mapToTextValue(namespaces, 'namespaces');
+            });
+          }
+        }, {
+          key: 'getRegions',
+          value: function getRegions() {
+            var _this7 = this;
+
+            return this.doRequest({ targets: [{
+                environment: this.environment,
+                queryType: 'regions',
+                datasourceId: this.id,
+                refId: 'regions'
+              }],
+              range: this.timeSrv.timeRange()
+            }).then(function (regions) {
+              return _this7.mapToTextValue(regions, 'regions');
             });
           }
         }, {
