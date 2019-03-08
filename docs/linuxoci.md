@@ -18,8 +18,8 @@ After creating your VM, the next step is to create a [dynamic group](https://doc
 
 Next, create a [policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Concepts/policygetstarted.htm) named “grafana_policy” in the root compartment of your tenancy to permit instances in the dynamic group to make API calls against Oracle Cloud Infrastructure services. Add the following policy statements:
 
-* `allow group grafana to read metrics in tenancy`
-* `allow group grafana to read compartments in tenancy`
+* `allow dynamicgroup grafana to read metrics in tenancy`
+* `allow dynamicgroup grafana to read compartments in tenancy`
 
    ![Screen Shot 2018-12-17 at 4.01.47 PM](images/Screen%20Shot%202018-12-17%20at%204.01.47%20PM.png)
 
@@ -66,4 +66,4 @@ Click **Save & Test** to return to the home dashboard.
 
 ## Next Steps
 
-Check out how to use the newly installed and configured plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](docs/Using%20Grafana%20with%20the%20Oracle%20Cloud%20Infrastructure%20Data%20Source.md) walkthrough. 
+Check out how to use the newly installed and configured plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](using.md) walkthrough. 
