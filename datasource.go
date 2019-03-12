@@ -76,7 +76,7 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 	var ts GrafanaCommonRequest
 	json.Unmarshal([]byte(tsdbReq.Queries[0].ModelJson), &ts)
 
-	queryType := tsdbReq.Queries[0].RefId
+	queryType := ts.QueryType
 	if o.config == nil {
 		configProvider, err := getConfigProvider(ts.Environment)
 		if err != nil {
@@ -352,8 +352,10 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment str
 	for {
 		res, err := o.identityClient.ListCompartments(ctx,
 			identity.ListCompartmentsRequest{
-				CompartmentId: &rootCompartment,
-				Page:          page,
+				CompartmentId:          &rootCompartment,
+				Page:                   page,
+				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
+				CompartmentIdInSubtree: common.Bool(true),
 			})
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("this is what we were trying to get %s", rootCompartment))

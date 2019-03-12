@@ -15,9 +15,8 @@
           </div>
           <label class="gf-form-label query-keyword width-10">Compartment</label>
           <div class="gf-form-select-wrapper width-10">
-            <gf-form-dropdown model="ctrl.target.compartment"
-              allow-custom="true"
-              lookup-text="true"
+            <gf-form-dropdown
+              model="ctrl.target.compartment"
               get-options="ctrl.getCompartments()"
               on-change="ctrl.onChangeInternal()">
             </gf-form-dropdown>

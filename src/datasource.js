@@ -90,8 +90,7 @@ export default class OCIDatasource {
   testDatasource () {
     return this.doRequest({
       targets: [{
-        queryType: 'query',
-        refId: 'test',
+        queryType: 'test',
         region: this.defaultRegion,
         tenancyOCID: this.tenancyOCID,
         compartment: '',
@@ -162,7 +161,6 @@ export default class OCIDatasource {
       tenancyOCID: this.tenancyOCID,
       region: this.templateSrv.replace(region),
       datasourceId: this.id,
-      refId: 'search',
       namespace: this.templateSrv.replace(target.namespace)
     }]
     var options = {
@@ -199,7 +197,6 @@ export default class OCIDatasource {
       tenancyOCID: this.tenancyOCID,
       queryType: 'compartments',
       datasourceId: this.id,
-      refId: 'compartments'
     }]
     var options = {
       range: range,
@@ -232,7 +229,6 @@ export default class OCIDatasource {
       tenancyOCID: this.tenancyOCID,
 
       datasourceId: this.id,
-      refId: 'dimensions',
       metric: this.templateSrv.replace(target.metric),
       namespace: this.templateSrv.replace(target.namespace)
     }]
@@ -258,7 +254,6 @@ export default class OCIDatasource {
       tenancyOCID: this.tenancyOCID,
 
       datasourceId: this.id,
-      refId: 'namespaces'
     }],
     range: this.timeSrv.timeRange()
     }).then((namespaces) => { return this.mapToTextValue(namespaces, 'namespaces') })
@@ -269,7 +264,6 @@ export default class OCIDatasource {
       environment: this.environment,
       queryType: 'regions',
       datasourceId: this.id,
-      refId: 'regions'
     }],
     range: this.timeSrv.timeRange()
     }).then((regions) => { return this.mapToTextValue(regions, 'regions') })
