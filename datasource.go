@@ -361,7 +361,9 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment str
 			return nil, errors.Wrap(err, fmt.Sprintf("this is what we were trying to get %s", rootCompartment))
 		}
 		for _, compartment := range res.Items {
-			m[*(compartment.Name)] = *(compartment.Id)
+			if compartment.LifecycleState == identity.CompartmentLifecycleStateActive {
+				m[*(compartment.Name)] = *(compartment.Id)
+			}
 		}
 		if res.OpcNextPage == nil {
 			break
