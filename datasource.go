@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -429,16 +431,27 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 		//Items -> timeserries
 		series := make([]*datasource.TimeSeries, 0, len(q.ociRes.Items))
 		for _, item := range q.ociRes.Items {
-			t := &datasource.TimeSeries{}
+			t := &datasource.TimeSeries{
+				Name: *(item.Name),
+			}
+			var re = regexp.MustCompile(`(?m)\w+Name`)
 			for k, v := range item.Dimensions {
 				o.logger.Debug(k)
-				if k == "resourceDisplayName" {
-					t.Name = fmt.Sprintf("%s, {%s}", *(item.Name), v)
-					break
+				if re.MatchString(k) {
+					t.Name = fmt.Sprintf("%s, {%s}", t.Name, v)
 				}
-				if k == "resourceId" {
-					t.Name = fmt.Sprintf("%s, {%s}", *(item.Name), v)
-				}
+			}
+			// if there isn't a human readable name fallback to resourceId
+			if t.Name == *(item).Name {
+				resourceID := item.Dimensions["resourceId"]
+				id := resourceID[strings.LastIndex(resourceID, "."):]
+				display := resourceID[0:strings.LastIndex(resourceID, ".")] + id[0:4] + "..." + id[len(id)-6:]
+				t.Name = fmt.Sprintf("%s, {%s}", t.Name, display)
+			}
+			// if the namespace is loadbalancer toss on the Ad name to match the console
+			if *(item.Namespace) == "oci_lbaas" {
+				availabilityDomain := item.Dimensions["availabilityDomain"]
+				t.Name = fmt.Sprintf("%s, %s", t.Name, availabilityDomain)
 			}
 			p := make([]*datasource.Point, 0, len(item.AggregatedDatapoints))
 			for _, metric := range item.AggregatedDatapoints {
