@@ -429,12 +429,15 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 		//Items -> timeserries
 		series := make([]*datasource.TimeSeries, 0, len(q.ociRes.Items))
 		for _, item := range q.ociRes.Items {
-			t := &datasource.TimeSeries{
-				Name: *(item.Name),
-			}
+			t := &datasource.TimeSeries{}
 			for k, v := range item.Dimensions {
+				o.logger.Debug(k)
+				if k == "resourceDisplayName" {
+					t.Name = fmt.Sprintf("%s, {%s}", *(item.Name), v)
+					break
+				}
 				if k == "resourceId" {
-					t.Name = fmt.Sprintf("%s, {%s}", t.Name, v)
+					t.Name = fmt.Sprintf("%s, {%s}", *(item.Name), v)
 				}
 			}
 			p := make([]*datasource.Point, 0, len(item.AggregatedDatapoints))
