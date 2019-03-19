@@ -32,3 +32,5 @@ _testmain.go
 
 node_modules
 dist/oci-plugin_*
+coverage/
+dist/

@@ -13,6 +13,7 @@ build:
   script:
     - npm install
     - npm run lint
+    - npm run test
     - npm run buildjs
 
 go:
