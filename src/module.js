@@ -1,4 +1,4 @@
-import { OCIDatasource } from './datasource'
+import OCIDatasource from './datasource'
 import { OCIDatasourceQueryCtrl } from './query_ctrl'
 import { OCIConfigCtrl } from './config_ctrl'
 

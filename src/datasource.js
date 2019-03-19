@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { namespaces } from './constants'
 import retryOrThrow from './util/retry'
 
-export class OCIDatasource {
+export default class OCIDatasource {
   constructor (instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = instanceSettings.type
     this.url = instanceSettings.url
@@ -99,10 +99,12 @@ export class OCIDatasource {
         datasourceId: this.id
       }],
       range: this.timeSrv.timeRange()
-    }).then(response => {
+    }).then((response) => {
       if (response.status === 200) {
         return { status: 'success', message: 'Data source is working', title: 'Success' }
       }
+    }).catch(() => {
+      return { status: 'error', message: 'Data source is not working', title: 'Failure' }
     })
   }
 
@@ -272,6 +274,7 @@ export class OCIDatasource {
     range: this.timeSrv.timeRange()
     }).then((regions) => { return this.mapToTextValue(regions, 'regions') })
   }
+
   doRequest (options) {
     let _this = this
     return retryOrThrow(() => {

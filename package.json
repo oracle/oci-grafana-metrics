@@ -8,7 +8,8 @@
     "buildjs": "./node_modules/.bin/grunt",
     "lint": "./node_modules/.bin/eslint src/",
     "fix": "./node_modules/.bin/eslint --fix src/",
-    "bump": "./node_modules/.bin/grunt bump"
+    "bump": "./node_modules/.bin/grunt bump",
+    "test": "jest src/ --coverage"
   },
   "author": "",
   "license": "ISC",
@@ -33,12 +34,14 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-execute": "~0.2.2",
     "grunt-systemjs-builder": "^1.0.0",
+    "jest": "^24.5.0",
     "jsdom": "~9.12.0",
     "load-grunt-tasks": "^3.5.2",
     "prunk": "^1.3.0",
     "q": "^1.5.0"
   },
   "dependencies": {
+    "@babel/preset-env": "^7.3.4",
     "babel-loader": "^8.0.4",
     "babel-plugin-transform-es2015-for-of": "^6.6.0",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
