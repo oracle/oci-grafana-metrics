@@ -1,6 +1,6 @@
 import { QueryCtrl } from 'app/plugins/sdk'
 import './css/query-editor.css!'
-import { aggregations, windows } from './constants'
+import { windows } from './constants'
 import _ from 'lodash'
 
 export class OCIDatasourceQueryCtrl extends QueryCtrl {
@@ -76,7 +76,11 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   }
 
   getAggregations () {
-    return aggregations
+    return this.datasource.getAggregations().then((aggs) => {
+      return aggs.map((val) => {
+        return { text: val, value: val }
+      })
+    })
   }
 
   onChangeInternal () {

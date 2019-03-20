@@ -52,12 +52,12 @@
         <div class="gf-form">
           <label class="gf-form-label width-10">Aggregation</label>
           <div class="gf-form-select-wrapper width-10">
-            <select
-              class="gf-form-input"
-              ng-model="ctrl.target.aggregation"
-              ng-options="o as o for o in ctrl.getAggregations()"
-              ng-change="ctrl.onChangeInternal()">
-            </select>
+            <gf-form-dropdown
+              model="ctrl.target.aggregation"
+              get-options="ctrl.getAggregations()"
+              on-change="ctrl.onChangeInternal()"
+              allow-custom="true" >
+            </gf-form-dropdown>
           </div>
         </div>
         <div class="gf-form">

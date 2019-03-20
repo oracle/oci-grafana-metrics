@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { namespaces } from './constants'
+import { aggregations, namespaces } from './constants'
 import retryOrThrow from './util/retry'
 
 export default class OCIDatasource {
@@ -267,6 +267,10 @@ export default class OCIDatasource {
     }],
     range: this.timeSrv.timeRange()
     }).then((regions) => { return this.mapToTextValue(regions, 'regions') })
+  }
+
+  getAggregations () {
+    return this.q.when(aggregations)
   }
 
   doRequest (options) {
