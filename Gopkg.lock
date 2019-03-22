@@ -77,7 +77,7 @@
     "common",
     "common/auth",
     "identity",
-    "monitoring"
+    "monitoring",
   ]
   pruneopts = ""
   revision = "5295b14d42d1417490d318ff91475c5868e0fd8f"
@@ -194,8 +194,8 @@
     "github.com/oracle/oci-go-sdk/common",
     "github.com/oracle/oci-go-sdk/common/auth",
     "github.com/oracle/oci-go-sdk/identity",
+    "github.com/oracle/oci-go-sdk/monitoring",
     "github.com/pkg/errors",
-    "golang.org/x/net/context",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
