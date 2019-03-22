@@ -51,6 +51,7 @@ export default class OCIDatasource {
 
     var targets = _.map(options.targets, target => {
       let region = target.region
+      // check to see if we have tags (dimensions) in the query and turn those into a string for MQL
       let t = []
       if (target.hasOwnProperty('tags')) {
         for (let i = 0; i < target.tags.length; i++) {
@@ -64,6 +65,7 @@ export default class OCIDatasource {
       if (target.region === 'select region') {
         region = this.defaultRegion
       }
+      // If there's nothing there return a blank string otherwise return the dimensions encapsuled by these {}
       let dimension = (t.length === 0) ? '' : `{${t}}`
 
       return {
@@ -78,6 +80,7 @@ export default class OCIDatasource {
         hide: target.hide,
         type: target.type || 'timeserie',
         datasourceId: this.id,
+        // pass the MQL string we built here
         query: `${this.templateSrv.replace(target.metric, options.scopedVars || {})}[${target.window}]${dimension}.${target.aggregation}`
       }
     })
@@ -107,15 +110,16 @@ export default class OCIDatasource {
     })
   }
 
+  // helps match the regex's from creating template variables in grafana
   templateMeticSearch (varString) {
     let compartmentQuery = varString.match(/^compartments\(\)/)
     if (compartmentQuery) {
-      return this.getCompartments()
+      return this.getCompartments().catch(err => { throw new Error('Unable to make request ' + err) })
     }
 
     let regionQuery = varString.match(/^regions\(\)/)
     if (regionQuery) {
-      return this.getRegions()
+      return this.getRegions().catch(err => { throw new Error('Unable to make request ' + err) })
     }
 
     let metricQuery = varString.match(/metrics\((\$?\w+)(,\s*\$\w+)*\)/)
@@ -124,7 +128,7 @@ export default class OCIDatasource {
         namespace: this.templateSrv.replace(metricQuery[1]),
         compartment: this.templateSrv.replace(metricQuery[2]).replace(',', '').trim()
       }
-      return this.metricFindQuery(target)
+      return this.metricFindQuery(target).catch(err => { throw new Error('Unable to make request ' + err) })
     }
 
     let namespaceQuery = varString.match(/namespaces\(\)/)
@@ -137,6 +141,10 @@ export default class OCIDatasource {
     throw new Error('Unable to parse templating string')
   }
 
+  // this function does 2 things - its the entrypoint for finding the metrics from the query editor
+  // and is the entrypoint for templating according to grafana -- since this wasn't docuemnted
+  // in grafana I was lead to believe that it did the former
+  // TODO: break the metric finding for the query editor out into a different function
   metricFindQuery (target) {
     if (typeof (target) === 'string') {
       return this.templateMeticSearch(target)
@@ -273,6 +281,7 @@ export default class OCIDatasource {
     return this.q.when(aggregations)
   }
 
+  // retries all request to the backend grafana 10 times before failure
   doRequest (options) {
     let _this = this
     return retryOrThrow(() => {

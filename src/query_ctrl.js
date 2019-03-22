@@ -28,6 +28,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
       value: '-- remove tag filter --'
     })
 
+    // rebuilds the tagSegments which are stored as tags when reloading the query editor
     for (let i = 0; i < this.target.tags.length; i++) {
       if (i > 0) {
         this.tagSegments.push(this.uiSegmentSrv.newCondition(','))
@@ -116,6 +117,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     return []
   }
 
+  // entrypoint in fetching the dimensions and their values for a particular metric
   getTagsOrValues (segment, index) {
     if (segment.type === 'operator') {
       return this.q.when([])
@@ -129,12 +131,15 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     const key = this.tagSegments[index - 2]
     const options = this.dimCache[key.value]
     const that = this
+    // return all the values for the key
     const optSegments = options.map(v => that.uiSegmentSrv.newSegment({
       value: v
     }))
     return this.q.when(optSegments)
   }
 
+  // we fetch dimensions for a metric in pairs link this key=value
+  // we save them in an object that looks like {key [list, of, values]}
   mapToSegment (dimensions) {
     const dimCache = {}
     const dims = dimensions.map((v) => {
@@ -154,6 +159,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     return dims
   }
 
+  // deals with adding or updating new values
   tagSegmentUpdated (segment, index) {
     this.tagSegments[index] = segment
 
@@ -164,16 +170,19 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
         this.tagSegments.push(this.uiSegmentSrv.newPlusButton())
       } else if (this.tagSegments.length > 2) {
         this.tagSegments.splice(Math.max(index - 1, 0), 1)
+        // if the thing we removed was the only key value pair add + button so they can put in new metrics
         if (this.tagSegments[this.tagSegments.length - 1].type !== 'plus-button') {
           this.tagSegments.push(this.uiSegmentSrv.newPlusButton())
         }
       }
     } else {
+      // handle adding in the first dimension pair
       if (segment.type === 'plus-button') {
         if (index > 2) {
           this.tagSegments.splice(index, 0, this.uiSegmentSrv.newCondition(','))
         }
         this.tagSegments.push(this.uiSegmentSrv.newOperator('='))
+        // always push in the fake for the first value in case network request breaks
         this.tagSegments.push(this.uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'))
         segment.type = 'key'
         segment.cssClass = 'query-segment-key'
@@ -187,6 +196,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.rebuildTargetTagConditions()
   }
 
+  // take the tagSegments and turn them into tags for the query that gets sent
   rebuildTargetTagConditions () {
     const tags = []
     let tagIndex = 0
