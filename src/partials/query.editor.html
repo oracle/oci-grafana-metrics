@@ -15,9 +15,8 @@
           </div>
           <label class="gf-form-label query-keyword width-10">Compartment</label>
           <div class="gf-form-select-wrapper width-10">
-            <gf-form-dropdown model="ctrl.target.compartment"
-              allow-custom="true"
-              lookup-text="true"
+            <gf-form-dropdown
+              model="ctrl.target.compartment"
               get-options="ctrl.getCompartments()"
               on-change="ctrl.onChangeInternal()">
             </gf-form-dropdown>
@@ -31,7 +30,7 @@
             </gf-form-dropdown>
           </div>
           <div class="gf-form">
-            <label class="gf-form-label width-10">Resolution</label>
+            <label class="gf-form-label width-10 query-keyword">Resolution</label>
             <input type="text" class="input-small gf-form-input width-5" ng-model="ctrl.target.resolution" ng-change="ctrl.onChangeInternal()" placeholder="1m"/>
           </div>
         </div>
@@ -51,14 +50,14 @@
           </div>
         </div>
         <div class="gf-form">
-          <label class="gf-form-label width-10">Aggregation</label>
+          <label class="gf-form-label width-10 query-keyword">Aggregation</label>
           <div class="gf-form-select-wrapper width-10">
-            <select
-              class="gf-form-input"
-              ng-model="ctrl.target.aggregation"
-              ng-options="o as o for o in ctrl.getAggregations()"
-              ng-change="ctrl.onChangeInternal()">
-            </select>
+            <gf-form-dropdown
+              model="ctrl.target.aggregation"
+              get-options="ctrl.getAggregations()"
+              on-change="ctrl.onChangeInternal()"
+              allow-custom="true" >
+            </gf-form-dropdown>
           </div>
         </div>
         <div class="gf-form">

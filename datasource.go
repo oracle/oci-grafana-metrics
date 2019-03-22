@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -76,7 +78,7 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 	var ts GrafanaCommonRequest
 	json.Unmarshal([]byte(tsdbReq.Queries[0].ModelJson), &ts)
 
-	queryType := tsdbReq.Queries[0].RefId
+	queryType := ts.QueryType
 	if o.config == nil {
 		configProvider, err := getConfigProvider(ts.Environment)
 		if err != nil {
@@ -352,14 +354,18 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment str
 	for {
 		res, err := o.identityClient.ListCompartments(ctx,
 			identity.ListCompartmentsRequest{
-				CompartmentId: &rootCompartment,
-				Page:          page,
+				CompartmentId:          &rootCompartment,
+				Page:                   page,
+				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
+				CompartmentIdInSubtree: common.Bool(true),
 			})
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("this is what we were trying to get %s", rootCompartment))
 		}
 		for _, compartment := range res.Items {
-			m[*(compartment.Name)] = *(compartment.Id)
+			if compartment.LifecycleState == identity.CompartmentLifecycleStateActive {
+				m[*(compartment.Name)] = *(compartment.Id)
+			}
 		}
 		if res.OpcNextPage == nil {
 			break
@@ -428,10 +434,24 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 			t := &datasource.TimeSeries{
 				Name: *(item.Name),
 			}
+			var re = regexp.MustCompile(`(?m)\w+Name`)
 			for k, v := range item.Dimensions {
-				if k == "resourceId" {
+				o.logger.Debug(k)
+				if re.MatchString(k) {
 					t.Name = fmt.Sprintf("%s, {%s}", t.Name, v)
 				}
+			}
+			// if there isn't a human readable name fallback to resourceId
+			if t.Name == *(item).Name {
+				resourceID := item.Dimensions["resourceId"]
+				id := resourceID[strings.LastIndex(resourceID, "."):]
+				display := resourceID[0:strings.LastIndex(resourceID, ".")] + id[0:4] + "..." + id[len(id)-6:]
+				t.Name = fmt.Sprintf("%s, {%s}", t.Name, display)
+			}
+			// if the namespace is loadbalancer toss on the Ad name to match the console
+			if *(item.Namespace) == "oci_lbaas" {
+				availabilityDomain := item.Dimensions["availabilityDomain"]
+				t.Name = fmt.Sprintf("%s, %s", t.Name, availabilityDomain)
 			}
 			p := make([]*datasource.Point, 0, len(item.AggregatedDatapoints))
 			for _, metric := range item.AggregatedDatapoints {
