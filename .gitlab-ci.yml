@@ -65,8 +65,6 @@ stages:
 
 deploy:
   stage: deploy
-  only:
-    - master
   image:
     name: phx.ocir.io/odx-sre/sauron/gitlab-dind:0.7
     entrypoint: ["/bin/sh", "-c"]
