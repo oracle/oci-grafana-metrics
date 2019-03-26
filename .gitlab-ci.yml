@@ -56,6 +56,8 @@ predeploy:
   script:
     - git checkout -b test-branch-$CI_COMMIT_SHA
     - echo 'hi' >> Readme.md
+    - git config --global user.email "deploy@oracle.com"
+    - git config --global user.name "deployboy"
     - git commit -am 'change Readme.md'
     - git push origin test-branch-$CI_COMMIT_SHA
     #- npm install
