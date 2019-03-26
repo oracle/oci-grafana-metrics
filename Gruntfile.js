@@ -72,7 +72,6 @@ module.exports = function(grunt) {
       options: {
         files: ['plugin.json', 'package.json', 'src/plugin.json'],
         commitFiles: ['-a'],
-        push: false,
         pushTo: 'origin',
         commitMessage: '[skip ci] Release v%VERSION%',
       }
