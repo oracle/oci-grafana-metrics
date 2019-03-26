@@ -56,7 +56,6 @@ predeploy:
   script:
     - git checkout -b test-branch-$CI_COMMIT_SHA
     - echo 'hi' >> Readme.md
-    - git remote add ssh_remote git@gitlab-odx.oracledx.com:cloudnative/oci-grafana-plugin.git
     - git config --global user.email "deploy@oracle.com"
     - git config --global user.name "deployboy"
     - git commit -am 'change Readme.md'
