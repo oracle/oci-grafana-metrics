@@ -52,51 +52,44 @@ predeploy:
   artifacts:
     paths:
       - dist/
-        #when: manual
+  when: manual
   script:
     - git remote set-url origin https://faiqus:${CI_PUSH_TOKEN}@gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin.git
-    - git checkout -b test-branch-$CI_COMMIT_SHA
-    - echo 'hi' >> Readme.md
     - git config --global user.email "deploy@oracle.com"
     - git config --global user.name "deployboy"
-    - git commit -am '[skip ci] change Readme.md'
     - git push --follow-tags origin test-branch-$CI_COMMIT_SHA
-    #- npm install
-      #- npm run bump
+    - npm install
+    - npm run bump
     #- cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
 
 
-      #deploy:
-      #  stage: deploy
-      #  only:
-      #    - master
-      #  image:
-      #    name: phx.ocir.io/odx-sre/sauron/gitlab-dind:0.7
-      #    entrypoint: ["/bin/sh", "-c"]
-      #  dependencies:
-      #    - build
-      #    - go
-      #    - predeploy
-      #  when: manual
-      #  script:
-      #    - VERSION=$(cat ./dist/VERSION)
-      #    - rm ./dist/VERSION
-      #    - sed 's|"version"':' "\(.*\)"|"version"':' \"'$VERSION'\"|g' -i dist/plugin.json
-      #    - tar -cvf plugin.tar dist/
-      #    - go get -u github.com/tcnksm/ghr
-      #    - rm -rf /root/.oci/config
-      #    - mkdir -p /root/.oci
-      #    - echo "$OCI_PRIVATE_KEY" | base64 -d >> /root/.oci/oci_api_key.pem
-      #    - echo "$OCI_PUBLIC_KEY" | base64 -d >> /root/.oci/oci_api_key_public.pem
-      #    - echo "$OCI_CONFIG" | base64 -d >> /root/.oci/config
-      #    - cat /root/.oci/config
-      #    - oci setup repair-file-permissions --file /root/.oci/oci_api_key.pem
-      #    - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
-      #    - oci setup repair-file-permissions --file /root/.oci/config
-      #    - export HTTP_PROXY=http://www-proxy-hqdc.us.oracle.com:80
-      #    - export HTTPS_PROXY=http://www-proxy-hqdc.us.oracle.com:80
-      #    - export http_proxy=http://www-proxy-hqdc.us.oracle.com:80
-      #    - export https_proxy=http://www-proxy-hqdc.us.oracle.com:80
-      #    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar --name plugin.tar --no-multipart --content-type tar --no-retry
-      #    - export PATH=/go/bin/:$PATH
-      #    - ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
+deploy:
+  stage: deploy
+  only:
+    - master
+  image:
+    name: phx.ocir.io/odx-sre/sauron/gitlab-dind:0.7
+    entrypoint: ["/bin/sh", "-c"]
+    #dependencies:
+    #- build
+    #- go
+    #- predeploy
+    #when: manual
+  script:
+    #- VERSION=$(cat ./dist/VERSION)
+    #- rm ./dist/VERSION
+    #- sed 's|"version"':' "\(.*\)"|"version"':' \"'$VERSION'\"|g' -i dist/plugin.json
+    #- tar -cvf plugin.tar dist/
+    - echo 'lies' >>  plugin.tar
+    - go get -u github.com/tcnksm/ghr
+    - rm -rf /root/.oci/config
+    - mkdir -p /root/.oci
+    - echo "$OCI_PRIVATE_KEY" | base64 -d >> /root/.oci/oci_api_key.pem
+    - echo "$OCI_PUBLIC_KEY" | base64 -d >> /root/.oci/oci_api_key_public.pem
+    - echo "$OCI_CONFIG" | base64 -d >> /root/.oci/config
+    - oci setup repair-file-permissions --file /root/.oci/oci_api_key.pem
+    - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
+    - oci setup repair-file-permissions --file /root/.oci/config
+    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin-$CI_COMMIT_SHA --file plugin.tar --name plugin.tar --no-multipart --content-type tar --no-retry
+    - export PATH=/go/bin/:$PATH
+      #- ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
