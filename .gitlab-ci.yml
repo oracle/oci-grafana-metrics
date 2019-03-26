@@ -56,11 +56,11 @@ predeploy:
   script:
     - git checkout -b test-branch-$CI_COMMIT_SHA
     - echo 'hi' >> Readme.md
-    - git remote add test git@gitlab-odx.oracledx.com:cloudnative/oci-grafana-plugin.git
+    - git remote add ssh_remote git@gitlab-odx.oracledx.com:cloudnative/oci-grafana-plugin.git
     - git config --global user.email "deploy@oracle.com"
     - git config --global user.name "deployboy"
     - git commit -am 'change Readme.md'
-    - git push test test-branch-$CI_COMMIT_SHA
+    - git push ssh-remote HEAD:dev
     #- npm install
       #- npm run bump
     #- cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
