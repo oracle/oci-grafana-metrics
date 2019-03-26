@@ -1,85 +1,89 @@
 stages:
-  #- build
-  #- buildgo
-  #- predeploy
+- build
+- buildgo
+- predeploy
 - deploy
 
-  #build:
-  #  image: node
-  #  stage: build
-  #  artifacts:
-  #    paths:
-  #      - dist/
-  #  script:
-  #    - npm install
-  #    - npm run lint
-  #    - npm run test
-  #    - npm run buildjs
-  #
-  #go:
-  #  stage: buildgo
-  #  image:
-  #    name: golang
-  #  dependencies:
-  #    - build
-  #  artifacts:
-  #    paths:
-  #      - dist/
-  #  script:
-  #    - go get -u github.com/golang/dep/cmd/dep
-  #    - mkdir -p /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
-  #    - cp -r * /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin/
-  #    - cd /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
-  #    - ls -alh
-  #    - dep ensure
-  #    - go build -o ./oci-plugin_linux_amd64
-  #    - GOOS=darwin go build -o ./oci-plugin_darwin_amd64
-  #    - GOOS=windows GOARCH=amd64 go build -o ./oci-plugin_windows_amd64.exe
-  #    - mv oci-plugin_linux_amd64 /
-  #    - mv oci-plugin_darwin_amd64 /
-  #    - mv oci-plugin_windows_amd64.exe /
-  #    - cd -
-  #    - mv /oci-plugin_linux_amd64 dist/
-  #    - mv /oci-plugin_darwin_amd64 dist/
-  #    - mv /oci-plugin_windows_amd64.exe dist/
-  #    - ls dist/
-  #
-  #predeploy:
-  #  image: node
-  #  only:
-  #    - master
-  #  stage: predeploy
-  #  artifacts:
-  #    paths:
-  #      - dist/
-  #  when: manual
-  #  script:
-  #    - git remote set-url origin https://faiqus:${CI_PUSH_TOKEN}@gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin.git
-  #    - git config --global user.email "deploy@oracle.com"
-  #    - git config --global user.name "deployboy"
-  #    - git push --follow-tags origin test-branch-$CI_COMMIT_SHA
-  #    - npm install
-  #    - npm run bump
-  #    - cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
+build:
+  image: node
+  stage: build
+  artifacts:
+    paths:
+      - dist/
+  script:
+    - npm install
+    - npm run lint
+    - npm run test
+    - npm run buildjs
+
+go:
+  stage: buildgo
+  image:
+    name: golang
+  dependencies:
+    - build
+  artifacts:
+    paths:
+      - dist/
+  script:
+    - go get -u github.com/golang/dep/cmd/dep
+    - mkdir -p /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
+    - cp -r * /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin/
+    - cd /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
+    - ls -alh
+    - dep ensure
+    - go build -o ./oci-plugin_linux_amd64
+    - GOOS=darwin go build -o ./oci-plugin_darwin_amd64
+    - GOOS=windows GOARCH=amd64 go build -o ./oci-plugin_windows_amd64.exe
+    - mv oci-plugin_linux_amd64 /
+    - mv oci-plugin_darwin_amd64 /
+    - mv oci-plugin_windows_amd64.exe /
+    - cd -
+    - mv /oci-plugin_linux_amd64 dist/
+    - mv /oci-plugin_darwin_amd64 dist/
+    - mv /oci-plugin_windows_amd64.exe dist/
+    - ls dist/
+
+predeploy:
+  image: node
+  only:
+    - master
+  dependencies:
+    - build
+    - go
+  stage: predeploy
+  artifacts:
+    paths:
+      - dist/
+  when: manual
+  script:
+    - git remote set-url origin https://faiqus:${CI_PUSH_TOKEN}@gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin.git
+    - git config --global user.email "deploy@oracle.com"
+    - git config --global user.name "deployboy"
+    - git push --follow-tags origin test-branch-$CI_COMMIT_SHA
+    - npm install
+    - npm run bump
+    - cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
 
 
 deploy:
   stage: deploy
+  only:
+    - master
   image:
     name: phx.ocir.io/odx-sre/sauron/gitlab-dind:0.7
     entrypoint: ["/bin/sh", "-c"]
-    #dependencies:
-    #- build
-    #- go
-    #- predeploy
-    #when: manual
+  dependencies:
+    - build
+    - go
+    - predeploy
+  when: manual
   script:
-    - VERSION=$(echo '69.69.69-test')
-    #- rm ./dist/VERSION
-    #- sed 's|"version"':' "\(.*\)"|"version"':' \"'$VERSION'\"|g' -i dist/plugin.json
-    #- tar -cvf plugin.tar dist/
-    #- go get -u github.com/tcnksm/ghr
-    - echo 'hi' > plugin.tar
+    - VERSION=$(cat ./dist/VERSION)
+    - rm ./dist/VERSION
+    - sed 's|"version"':' "\(.*\)"|"version"':' \"'$VERSION'\"|g' -i dist/plugin.json
+    - tar -cvf plugin.tar dist/
+    - go get -u github.com/tcnksm/ghr
     - rm -rf /root/.oci/config
     - mkdir -p /root/.oci
     - echo "$OCI_PRIVATE_KEY" | base64 -d >> /root/.oci/oci_api_key.pem
@@ -89,5 +93,5 @@ deploy:
     - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
     - oci setup repair-file-permissions --file /root/.oci/config
     - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar --name plugin.tar-v$VERSION --no-multipart --content-type tar --no-retry
-    #- export PATH=/go/bin/:$PATH
-    #- ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
+    - export PATH=/go/bin/:$PATH
+    - ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
