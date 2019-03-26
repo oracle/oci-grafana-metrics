@@ -88,6 +88,6 @@ deploy:
     - oci setup repair-file-permissions --file /root/.oci/oci_api_key.pem
     - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
     - oci setup repair-file-permissions --file /root/.oci/config
-    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar-v$VERSION --name plugin.tar --no-multipart --content-type tar --no-retry
+    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --name plugin.tar-v$VERSION --file plugin.tar --no-multipart --content-type tar --no-retry
     #- export PATH=/go/bin/:$PATH
     #- ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
