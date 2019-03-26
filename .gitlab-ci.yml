@@ -54,6 +54,10 @@ predeploy:
       - dist/
         #when: manual
   script:
+    - git remote set-url origin https://faiqus:${CI_PUSH_TOKEN}@gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin.git
+    - git config --global user.email "faiq.raza@oracle.com"
+    - git config --global user.name "faiqus"
+
     - git checkout -b test-branch-$CI_COMMIT_SHA
     - echo 'hi' >> Readme.md
     - git config --global user.email "deploy@oracle.com"
