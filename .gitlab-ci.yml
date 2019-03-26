@@ -1,53 +1,53 @@
 stages:
-- build
-- buildgo
+  #- build
+  #- buildgo
 - predeploy
 - deploy
 
-build:
-  image: node
-  stage: build
-  artifacts:
-    paths:
-      - dist/
-  script:
-    - npm install
-    - npm run lint
-    - npm run test
-    - npm run buildjs
-
-go:
-  stage: buildgo
-  image:
-    name: golang
-  dependencies:
-    - build
-  artifacts:
-    paths:
-      - dist/
-  script:
-    - go get -u github.com/golang/dep/cmd/dep
-    - mkdir -p /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
-    - cp -r * /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin/
-    - cd /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
-    - ls -alh
-    - dep ensure
-    - go build -o ./oci-plugin_linux_amd64
-    - GOOS=darwin go build -o ./oci-plugin_darwin_amd64
-    - GOOS=windows GOARCH=amd64 go build -o ./oci-plugin_windows_amd64.exe
-    - mv oci-plugin_linux_amd64 /
-    - mv oci-plugin_darwin_amd64 /
-    - mv oci-plugin_windows_amd64.exe /
-    - cd -
-    - mv /oci-plugin_linux_amd64 dist/
-    - mv /oci-plugin_darwin_amd64 dist/
-    - mv /oci-plugin_windows_amd64.exe dist/
-    - ls dist/
+  #build:
+  #  image: node
+  #  stage: build
+  #  artifacts:
+  #    paths:
+  #      - dist/
+  #  script:
+  #    - npm install
+  #    - npm run lint
+  #    - npm run test
+  #    - npm run buildjs
+  #
+  #go:
+  #  stage: buildgo
+  #  image:
+  #    name: golang
+  #  dependencies:
+  #    - build
+  #  artifacts:
+  #    paths:
+  #      - dist/
+  #  script:
+  #    - go get -u github.com/golang/dep/cmd/dep
+  #    - mkdir -p /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
+  #    - cp -r * /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin/
+  #    - cd /go/src/gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin
+  #    - ls -alh
+  #    - dep ensure
+  #    - go build -o ./oci-plugin_linux_amd64
+  #    - GOOS=darwin go build -o ./oci-plugin_darwin_amd64
+  #    - GOOS=windows GOARCH=amd64 go build -o ./oci-plugin_windows_amd64.exe
+  #    - mv oci-plugin_linux_amd64 /
+  #    - mv oci-plugin_darwin_amd64 /
+  #    - mv oci-plugin_windows_amd64.exe /
+  #    - cd -
+  #    - mv /oci-plugin_linux_amd64 dist/
+  #    - mv /oci-plugin_darwin_amd64 dist/
+  #    - mv /oci-plugin_windows_amd64.exe dist/
+  #    - ls dist/
 
 predeploy:
   image: node
-  only:
-    - master
+  #only:
+  #  - master
   dependencies:
     - build
     - go
@@ -55,55 +55,49 @@ predeploy:
   artifacts:
     paths:
       - dist/
-  when: manual
+        #when: manual
   script:
     - git remote rm origin
-    - mkdir ~/.ssh
-    - echo $'Host * \n StrictHostKeyChecking=no'  >> ~/.ssh/config
-    - echo "$ID_RSA" | base64 -d >> ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
     - git remote add origin git@gitlab-odx.oracledx.com:cloudnative/oci-grafana-plugin.git
-    - git config --global user.email "faiq.raza@oracle.com"
-    - git config --global user.name "faiqus"
     - git fetch
     - git checkout master
     - git reset --hard origin/master
     - npm install
-    - npm run bump
+      #- npm run bump
     - cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
 
 
-deploy:
-  stage: deploy
-  only:
-    - master
-  image:
-    name: phx.ocir.io/odx-sre/sauron/gitlab-dind:0.7
-    entrypoint: ["/bin/sh", "-c"]
-  dependencies:
-    - build
-    - go
-    - predeploy
-  when: manual
-  script:
-    - VERSION=$(cat ./dist/VERSION)
-    - rm ./dist/VERSION
-    - sed 's|"version"':' "\(.*\)"|"version"':' \"'$VERSION'\"|g' -i dist/plugin.json
-    - tar -cvf plugin.tar dist/
-    - go get -u github.com/tcnksm/ghr
-    - rm -rf /root/.oci/config
-    - mkdir -p /root/.oci
-    - echo "$OCI_PRIVATE_KEY" | base64 -d >> /root/.oci/oci_api_key.pem
-    - echo "$OCI_PUBLIC_KEY" | base64 -d >> /root/.oci/oci_api_key_public.pem
-    - echo "$OCI_CONFIG" | base64 -d >> /root/.oci/config
-    - cat /root/.oci/config
-    - oci setup repair-file-permissions --file /root/.oci/oci_api_key.pem
-    - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
-    - oci setup repair-file-permissions --file /root/.oci/config
-    - export HTTP_PROXY=http://www-proxy-hqdc.us.oracle.com:80
-    - export HTTPS_PROXY=http://www-proxy-hqdc.us.oracle.com:80
-    - export http_proxy=http://www-proxy-hqdc.us.oracle.com:80
-    - export https_proxy=http://www-proxy-hqdc.us.oracle.com:80
-    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar --name plugin.tar --no-multipart --content-type tar --no-retry
-    - export PATH=/go/bin/:$PATH
-    - ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
+      #deploy:
+      #  stage: deploy
+      #  only:
+      #    - master
+      #  image:
+      #    name: phx.ocir.io/odx-sre/sauron/gitlab-dind:0.7
+      #    entrypoint: ["/bin/sh", "-c"]
+      #  dependencies:
+      #    - build
+      #    - go
+      #    - predeploy
+      #  when: manual
+      #  script:
+      #    - VERSION=$(cat ./dist/VERSION)
+      #    - rm ./dist/VERSION
+      #    - sed 's|"version"':' "\(.*\)"|"version"':' \"'$VERSION'\"|g' -i dist/plugin.json
+      #    - tar -cvf plugin.tar dist/
+      #    - go get -u github.com/tcnksm/ghr
+      #    - rm -rf /root/.oci/config
+      #    - mkdir -p /root/.oci
+      #    - echo "$OCI_PRIVATE_KEY" | base64 -d >> /root/.oci/oci_api_key.pem
+      #    - echo "$OCI_PUBLIC_KEY" | base64 -d >> /root/.oci/oci_api_key_public.pem
+      #    - echo "$OCI_CONFIG" | base64 -d >> /root/.oci/config
+      #    - cat /root/.oci/config
+      #    - oci setup repair-file-permissions --file /root/.oci/oci_api_key.pem
+      #    - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
+      #    - oci setup repair-file-permissions --file /root/.oci/config
+      #    - export HTTP_PROXY=http://www-proxy-hqdc.us.oracle.com:80
+      #    - export HTTPS_PROXY=http://www-proxy-hqdc.us.oracle.com:80
+      #    - export http_proxy=http://www-proxy-hqdc.us.oracle.com:80
+      #    - export https_proxy=http://www-proxy-hqdc.us.oracle.com:80
+      #    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar --name plugin.tar --no-multipart --content-type tar --no-retry
+      #    - export PATH=/go/bin/:$PATH
+      #    - ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
