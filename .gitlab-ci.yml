@@ -54,11 +54,6 @@ predeploy:
       - dist/
         #when: manual
   script:
-    - git remote rm origin
-    - git remote add origin git@gitlab-odx.oracledx.com:cloudnative/oci-grafana-plugin.git
-    - git fetch
-    - git checkout master
-    - git reset --hard origin/master
     - git checkout -b test-branch-$CI_COMMIT_SHA
     - echo 'hi' >> Readme.md
     - git commit -am 'change Readme.md'
