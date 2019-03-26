@@ -1,4 +1,4 @@
-stages:
+
   #- build
   #- buildgo
 - predeploy
@@ -55,11 +55,12 @@ predeploy:
         #when: manual
   script:
     - git checkout -b test-branch-$CI_COMMIT_SHA
+    - git add remote ssh_remote git@gitlab-odx.oracledx.com:cloudnative/oci-grafana-plugin.git 
     - echo 'hi' >> Readme.md
     - git config --global user.email "deploy@oracle.com"
     - git config --global user.name "deployboy"
     - git commit -am 'change Readme.md'
-    - git push origin test-branch-$CI_COMMIT_SHA
+    - git push remote test-branch-$CI_COMMIT_SHA
     #- npm install
       #- npm run bump
     #- cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
