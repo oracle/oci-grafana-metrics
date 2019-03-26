@@ -43,11 +43,11 @@ stages:
   #    - mv /oci-plugin_darwin_amd64 dist/
   #    - mv /oci-plugin_windows_amd64.exe dist/
   #    - ls dist/
-
+  #
   #predeploy:
   #  image: node
-  #  #only:
-  #  #  - master
+  #  only:
+  #    - master
   #  stage: predeploy
   #  artifacts:
   #    paths:
@@ -60,7 +60,7 @@ stages:
   #    - git push --follow-tags origin test-branch-$CI_COMMIT_SHA
   #    - npm install
   #    - npm run bump
-  #    #- cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
+  #    - cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
 
 
 deploy:
@@ -74,12 +74,12 @@ deploy:
     #- predeploy
     #when: manual
   script:
-    #- VERSION=$(cat ./dist/VERSION)
+    - VERSION=$(echo '69.69.69-test')
     #- rm ./dist/VERSION
     #- sed 's|"version"':' "\(.*\)"|"version"':' \"'$VERSION'\"|g' -i dist/plugin.json
     #- tar -cvf plugin.tar dist/
-    - echo 'lies' >>  plugin.tar
-    - go get -u github.com/tcnksm/ghr
+    #- go get -u github.com/tcnksm/ghr
+    - echo 'hi' > plugin.tar
     - rm -rf /root/.oci/config
     - mkdir -p /root/.oci
     - echo "$OCI_PRIVATE_KEY" | base64 -d >> /root/.oci/oci_api_key.pem
@@ -88,7 +88,6 @@ deploy:
     - oci setup repair-file-permissions --file /root/.oci/oci_api_key.pem
     - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
     - oci setup repair-file-permissions --file /root/.oci/config
-    - oci os bucket create Grafanaplugin-$CI_COMMIT_SHA || true
-    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin-$CI_COMMIT_SHA --file plugin.tar --name plugin.tar --no-multipart --content-type tar --no-retry
-    - export PATH=/go/bin/:$PATH
-      #- ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
+    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar-v$VERSION --name plugin.tar --no-multipart --content-type tar --no-retry
+    #- export PATH=/go/bin/:$PATH
+    #- ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
