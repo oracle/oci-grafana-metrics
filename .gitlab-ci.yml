@@ -48,9 +48,6 @@ predeploy:
   image: node
   #only:
   #  - master
-  dependencies:
-    - build
-    - go
   stage: predeploy
   artifacts:
     paths:
@@ -62,9 +59,13 @@ predeploy:
     - git fetch
     - git checkout master
     - git reset --hard origin/master
-    - npm install
+    - git checkout -b test-branch-$CI_COMMIT_SHA
+    - echo 'hi' >> Readme.md
+    - git commit -am 'change Readme.md'
+    - git push origin test-branch-$CI_COMMIT_SHA
+    #- npm install
       #- npm run bump
-    - cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
+    #- cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
 
 
       #deploy:
