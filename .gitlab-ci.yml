@@ -57,17 +57,10 @@ predeploy:
       - dist/
   when: manual
   script:
-    - git remote rm origin
-    - mkdir ~/.ssh
-    - echo $'Host * \n StrictHostKeyChecking=no'  >> ~/.ssh/config
-    - echo "$ID_RSA" | base64 -d >> ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - git remote add origin git@gitlab-odx.oracledx.com:cloudnative/oci-grafana-plugin.git
-    - git config --global user.email "faiq.raza@oracle.com"
-    - git config --global user.name "faiqus"
-    - git fetch
-    - git checkout master
-    - git reset --hard origin/master
+    - git remote set-url origin https://faiqus:${CI_PUSH_TOKEN}@gitlab-odx.oracledx.com/cloudnative/oci-grafana-plugin.git
+    - git config --global user.email "deploy@oracle.com"
+    - git config --global user.name "deployboy"
+    - git push --follow-tags origin test-branch-$CI_COMMIT_SHA
     - npm install
     - npm run bump
     - cat plugin.json | grep version |  cut -d':' -f2 | xargs | cut -d, -f1 >> ./dist/VERSION
@@ -96,14 +89,9 @@ deploy:
     - echo "$OCI_PRIVATE_KEY" | base64 -d >> /root/.oci/oci_api_key.pem
     - echo "$OCI_PUBLIC_KEY" | base64 -d >> /root/.oci/oci_api_key_public.pem
     - echo "$OCI_CONFIG" | base64 -d >> /root/.oci/config
-    - cat /root/.oci/config
     - oci setup repair-file-permissions --file /root/.oci/oci_api_key.pem
     - oci setup repair-file-permissions --file /root/.oci/oci_api_key_public.pem
     - oci setup repair-file-permissions --file /root/.oci/config
-    - export HTTP_PROXY=http://www-proxy-hqdc.us.oracle.com:80
-    - export HTTPS_PROXY=http://www-proxy-hqdc.us.oracle.com:80
-    - export http_proxy=http://www-proxy-hqdc.us.oracle.com:80
-    - export https_proxy=http://www-proxy-hqdc.us.oracle.com:80
-    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar --name plugin.tar --no-multipart --content-type tar --no-retry
+    - oci os object put --force -ns oracle-cloudnative -bn Grafanaplugin --file plugin.tar --name plugin.tar-v$VERSION --no-multipart --content-type tar --no-retry
     - export PATH=/go/bin/:$PATH
     - ghr -u oracle -r oci-grafana-plugin "v$VERSION" plugin.tar
