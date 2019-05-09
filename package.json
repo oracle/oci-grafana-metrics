@@ -12,7 +12,7 @@
     "test": "jest src/ --coverage"
   },
   "author": "",
-  "license": "ISC",
+  "license": "UPL",
   "engines": {
     "node": ">6.10.0"
   },

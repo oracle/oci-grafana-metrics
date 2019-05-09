@@ -24,7 +24,7 @@
     },
     "links": [
       {"name": "GitHub", "url": "https://github.com/oracle/oci-grafana-plugin"},
-      {"name": "MIT License", "url": "https://github.com/oracle/oci-grafana-plugin"}
+      {"name": "UPL", "url": "https://oss.oracle.com/licenses/upl"}
     ],
     "version": "1.0.2",
     "updated": "2019-01-23"
