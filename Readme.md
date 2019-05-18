@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This plugin makes queries to the Oracle Cloud Infrastructure Telemetry Service and displays them on Grafana.
+This plugin makes queries to the Oracle Cloud Infrastructure Monitoring Service and displays them on Grafana.
 
 If you are running Grafana on a machine instance in Oracle Cloud, use the Service Principal with a configured Dynamic Group and policy to allow you to read metrics and compartments.
 
