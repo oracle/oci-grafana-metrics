@@ -69,7 +69,7 @@ Dimensions can be used to add specificity to your graphs. To use dimensions crea
 
 
 
-![Screen Shot 2019-02-14 at 12.03.26 PM](images/Screen Shot 2019-02-14 at 12.03.26 PM.png)
+![Screen Shot 2019-02-14 at 12.03.26 PM](images/Screen%20Shot%202019-02-14%20at%2012.03.26%20PM.png)
 
 
 
