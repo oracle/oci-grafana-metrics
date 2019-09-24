@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"strings"
+	"sort"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -385,6 +385,7 @@ type responseAndQuery struct {
 
 func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
 	results := make([]responseAndQuery, 0, len(tsdbReq.Queries))
+
 	for _, query := range tsdbReq.Queries {
 		var ts GrafanaOCIRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
@@ -437,24 +438,33 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 				Name: *(item.Name),
 			}
 			var re = regexp.MustCompile(`(?m)\w+Name`)
-			for k, v := range item.Dimensions {
-				o.logger.Debug(k)
-				if re.MatchString(k) {
-					t.Name = fmt.Sprintf("%s, {%s}", t.Name, v)
+			dimensionKeys := make([]string, len(item.Dimensions))
+			i := 0
+
+			for key, dimension := range item.Dimensions {
+				o.logger.Debug(key)
+				if re.MatchString(key) {
+					t.Name = fmt.Sprintf("%s, {%s}", t.Name, dimension)
 				}
+				dimensionKeys[i] = key
+				i++
 			}
+			
 			// if there isn't a human readable name fallback to resourceId
 			if t.Name == *(item).Name {
-				resourceID := item.Dimensions["resourceId"]
-				id := resourceID[strings.LastIndex(resourceID, "."):]
-				display := resourceID[0:strings.LastIndex(resourceID, ".")] + id[0:4] + "..." + id[len(id)-6:]
-				t.Name = fmt.Sprintf("%s, {%s}", t.Name, display)
+				var preDisplayName string = ""
+				sort.Strings(dimensionKeys)
+				for _, dimensionKey := range dimensionKeys {
+					if preDisplayName == "" {
+						preDisplayName = item.Dimensions[dimensionKey]
+					} else {
+						preDisplayName = preDisplayName + ", " + item.Dimensions[dimensionKey]
+					}
+				}
+				
+				t.Name = fmt.Sprintf("%s, {%s}", t.Name, preDisplayName)
 			}
-			// if the namespace is loadbalancer toss on the Ad name to match the console
-			if *(item.Namespace) == "oci_lbaas" {
-				availabilityDomain := item.Dimensions["availabilityDomain"]
-				t.Name = fmt.Sprintf("%s, %s", t.Name, availabilityDomain)
-			}
+
 			p := make([]*datasource.Point, 0, len(item.AggregatedDatapoints))
 			for _, metric := range item.AggregatedDatapoints {
 				point := &datasource.Point{
