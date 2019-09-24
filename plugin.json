@@ -27,7 +27,7 @@
       {"name": "MIT License", "url": "https://github.com/oracle/oci-grafana-plugin"}
     ],
     "version": "1.0.3",
-    "updated": "2019-09-24"
+    "updated": "2019-01-23"
   },
 
   "dependencies": {
