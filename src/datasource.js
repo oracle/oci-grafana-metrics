@@ -7,7 +7,7 @@ import { aggregations, namespaces } from './constants'
 import retryOrThrow from './util/retry'
 
 export default class OCIDatasource {
-  constructor (instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
+  constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = instanceSettings.type
     this.url = instanceSettings.url
     this.name = instanceSettings.name
@@ -21,7 +21,7 @@ export default class OCIDatasource {
     this.timeSrv = timeSrv
   }
 
-  query (options) {
+  query(options) {
     var query = this.buildQueryParameters(options)
     query.targets = query.targets.filter(t => !t.hide)
     if (query.targets.length <= 0) {
@@ -47,7 +47,7 @@ export default class OCIDatasource {
       })
   }
 
-  buildQueryParameters (options) {
+  buildQueryParameters(options) {
     // remove placeholder targets
     options.targets = _.filter(options.targets, target => {
       return target.metric !== 'select metric'
@@ -94,7 +94,7 @@ export default class OCIDatasource {
     return options
   }
 
-  testDatasource () {
+  testDatasource() {
     return this.doRequest({
       targets: [{
         queryType: 'test',
@@ -115,7 +115,7 @@ export default class OCIDatasource {
   }
 
   // helps match the regex's from creating template variables in grafana
-  templateMeticSearch (varString) {
+  templateMeticSearch(varString) {
     let compartmentQuery = varString.match(/^compartments\(\)/)
     if (compartmentQuery) {
       return this.getCompartments().catch(err => { throw new Error('Unable to make request ' + err) })
@@ -126,21 +126,24 @@ export default class OCIDatasource {
       return this.getRegions().catch(err => { throw new Error('Unable to make request ' + err) })
     }
 
-    let metricQuery = varString.match(/metrics\((\$?\w+)(,\s*\$\w+)*\)/)
+    let metricQuery = varString.match(/metrics\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/)
     if (metricQuery) {
       let target = {
-        namespace: this.templateSrv.replace(metricQuery[1]),
-        compartment: this.templateSrv.replace(metricQuery[2]).replace(',', '').trim()
+        region: this.templateSrv.replace(metricQuery[1].trim()),
+        compartment: this.templateSrv.replace(metricQuery[2].replace(',', '').trim()),
+        namespace: this.templateSrv.replace(metricQuery[3].replace(',', '').trim())
       }
       return this.metricFindQuery(target).catch(err => { throw new Error('Unable to make request ' + err) })
     }
 
-    let namespaceQuery = varString.match(/namespaces\(\)/)
+    let namespaceQuery = varString.match(/namespaces\((\$?\w+)(,\s*\$\w+)*\)/)
     if (namespaceQuery) {
-      let names = namespaces.map((reg) => {
-        return { row: reg, value: reg }
-      })
-      return this.q.when(names)
+   
+      let target = {
+        region: this.templateSrv.replace(namespaceQuery[1]),
+        compartment: this.templateSrv.replace(namespaceQuery[2]).replace(',', '').trim()
+      }
+      return this.getNamespaces(target).catch(err => { throw new Error('Unable to make request(get namespaces) ' + err) })
     }
     throw new Error('Unable to parse templating string')
   }
@@ -149,7 +152,7 @@ export default class OCIDatasource {
   // and is the entrypoint for templating according to grafana -- since this wasn't docuemnted
   // in grafana I was lead to believe that it did the former
   // TODO: break the metric finding for the query editor out into a different function
-  metricFindQuery (target) {
+  metricFindQuery(target) {
     if (typeof (target) === 'string') {
       return this.templateMeticSearch(target)
     }
@@ -184,7 +187,7 @@ export default class OCIDatasource {
     })
   }
 
-  mapToTextValue (result, searchField) {
+  mapToTextValue(result, searchField) {
     var table = result.data.results[searchField].tables[0]
     if (!table) {
       return []
@@ -201,7 +204,7 @@ export default class OCIDatasource {
     return m
   }
 
-  getCompartments () {
+  getCompartments() {
     var range = this.timeSrv.timeRange()
     var targets = [{
       environment: this.environment,
@@ -217,7 +220,7 @@ export default class OCIDatasource {
     return this.doRequest(options).then((res) => { return this.mapToTextValue(res, 'compartment') })
   }
 
-  getDimensions (target) {
+  getDimensions(target) {
     var range = this.timeSrv.timeRange()
     let region = target.region
     if (target.namespace === 'select namespace') {
@@ -252,41 +255,43 @@ export default class OCIDatasource {
     return this.doRequest(options).then((res) => { return this.mapToTextValue(res, 'dimensions') })
   }
 
-  getNamespaces (target) {
+  getNamespaces(target) {
     let region = target.region
     if (region === 'select region') {
       region = this.defaultRegion
     }
-    return this.doRequest({ targets: [{
-      // commonRequestParameters
-      compartment: this.templateSrv.replace(target.compartment),
-      environment: this.environment,
-      queryType: 'namespaces',
-      region: this.templateSrv.replace(region),
-      tenancyOCID: this.tenancyOCID,
+    return this.doRequest({
+      targets: [{
+        // commonRequestParameters
+        compartment: this.templateSrv.replace(target.compartment),
+        environment: this.environment,
+        queryType: 'namespaces',
+        region: this.templateSrv.replace(region),
+        tenancyOCID: this.tenancyOCID,
 
-      datasourceId: this.id
-    }],
-    range: this.timeSrv.timeRange()
+        datasourceId: this.id
+      }],
+      range: this.timeSrv.timeRange()
     }).then((namespaces) => { return this.mapToTextValue(namespaces, 'namespaces') })
   }
 
-  getRegions () {
-    return this.doRequest({ targets: [{
-      environment: this.environment,
-      queryType: 'regions',
-      datasourceId: this.id
-    }],
-    range: this.timeSrv.timeRange()
+  getRegions() {
+    return this.doRequest({
+      targets: [{
+        environment: this.environment,
+        queryType: 'regions',
+        datasourceId: this.id
+      }],
+      range: this.timeSrv.timeRange()
     }).then((regions) => { return this.mapToTextValue(regions, 'regions') })
   }
 
-  getAggregations () {
+  getAggregations() {
     return this.q.when(aggregations)
   }
 
   // retries all request to the backend grafana 10 times before failure
-  doRequest (options) {
+  doRequest(options) {
     let _this = this
     return retryOrThrow(() => {
       return _this.backendSrv.datasourceRequest({

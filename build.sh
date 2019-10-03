@@ -35,3 +35,8 @@ fi
 
 echo "building go binary"
 GOOS=$GOOS go build -o ./dist/oci-plugin$POST
+
+# GOOS=linux go build -o ./dist/oci-plugin_linux_amd64
+# GOOS=windows GOARCH=amd64 go build -o ./dist/oci-plugin_windows_amd64.exe
+# tar cvf plugin.tar ./dist
+

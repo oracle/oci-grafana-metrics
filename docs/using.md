@@ -44,12 +44,12 @@ The page will load a preview of valuables available for that variable. Scroll do
 
 Repeat the process for the following OCI variables: 
 
-| Name        | Query                              |
-| ----------- | ---------------------------------- |
-| region      | `regions()`                        |
-| compartment | `compartments()`                   |
-| namespace   | `namespaces()`                     |
-| metric      | `metrics($namespace,$compartment)` |
+| Name        | Query                                      |
+| ----------- | ------------------------------------------ |
+| region      | `regions()`                                |
+| compartment | `compartments()`                           |
+| namespace   | `namespaces($region,$compartment)`         |
+| metric      | `metrics($region,$compartment,$namespace)` |
 
 The final list of variables should look like this: 
 
