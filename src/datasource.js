@@ -71,6 +71,13 @@ export default class OCIDatasource {
       }
       // If there's nothing there return a blank string otherwise return the dimensions encapsuled by these {}
       let dimension = (t.length === 0) ? '' : `{${t}}`
+      var query = target.target
+
+      if (!query || query.length == 0) {
+        query = `${target.metric}[${target.window}]${dimension}.${target.aggregation}`
+      }
+
+      query = this.templateSrv.replace(query, options.scopedVars || {})
 
       return {
         compartment: this.templateSrv.replace(target.compartment, options.scopedVars || {}),
@@ -85,7 +92,7 @@ export default class OCIDatasource {
         type: target.type || 'timeserie',
         datasourceId: this.id,
         // pass the MQL string we built here
-        query: `${this.templateSrv.replace(target.metric, options.scopedVars || {})}[${target.window}]${dimension}.${target.aggregation}`
+        query: query
       }
     })
 
