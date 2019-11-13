@@ -342,7 +342,7 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, tsdbReq *datas
 	return &datasource.DatasourceResponse{
 		Results: []*datasource.QueryResult{
 			&datasource.QueryResult{
-				RefId:  "compartment",
+				RefId:  "compartments",
 				Tables: []*datasource.Table{&table},
 			},
 		},
@@ -449,7 +449,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 				dimensionKeys[i] = key
 				i++
 			}
-			
+
 			// if there isn't a human readable name fallback to resourceId
 			if t.Name == *(item).Name {
 				var preDisplayName string = ""
@@ -461,7 +461,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 						preDisplayName = preDisplayName + ", " + item.Dimensions[dimensionKey]
 					}
 				}
-				
+
 				t.Name = fmt.Sprintf("%s, {%s}", t.Name, preDisplayName)
 			}
 

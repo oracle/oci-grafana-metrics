@@ -7,3 +7,11 @@ export const namespaces = ['oci_computeagent', 'oci_blockstore', 'oci_lbaas', 'o
 export const aggregations = ['count()', 'max()', 'mean()', 'min()', 'rate()', 'sum()', 'percentile(.90)', 'percentile(.95)', 'percentile(.99)']
 export const windows = ['1m', '5m', '1h']
 export const environments = ['local', 'OCI Instance']
+
+
+export const compartmentsQueryRegex = /^compartments\(\)/;
+export const regionsQueryRegex = /^regions\(\)/;
+export const namespacesQueryRegex = /namespaces\((\$?\w+)(,\s*\$\w+)*\)/;
+export const metricsQueryRegex = /metrics\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/;
+export const dimensionKeysQueryRegex = /dimensions\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/;
+export const dimensionValuesQueryRegex = /dimensionOptions\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/;

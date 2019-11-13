@@ -26,3 +26,12 @@ Once you have the data source installed, configure your datasource with your ten
 
 We also have documentation for how to use the newly installed and configured plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/using.md) walkthrough.
 
+## Development
+
+### Debugging
+
+If you want to debug golang backend plugin code, follow the steps below:
+* Install [gops](https://github.com/google/gops) to list running go processes on your machine
+* Run `gops` and find processId for `oci-plugin_darwin_amd64` process
+* Copy this processId to the `.vscode/launch.json`
+* In your VSCode from 'Debug' menu call 'Start Debugging'

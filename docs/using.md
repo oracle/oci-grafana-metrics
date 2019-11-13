@@ -44,12 +44,14 @@ The page will load a preview of valuables available for that variable. Scroll do
 
 Repeat the process for the following OCI variables: 
 
-| Name        | Query                                      |
-| ----------- | ------------------------------------------ |
-| region      | `regions()`                                |
-| compartment | `compartments()`                           |
-| namespace   | `namespaces($region,$compartment)`         |
-| metric      | `metrics($region,$compartment,$namespace)` |
+| Name            | Query                                                                     |
+| --------------- | ------------------------------------------------------------------------- |
+| region          | `regions()`                                                               |
+| compartment     | `compartments()`                                                          |
+| namespace       | `namespaces($region,$compartment)`                                        |
+| metric          | `metrics($region,$compartment,$namespace)`                                |
+| dimensionKey    | `dimensions($region,$compartment,$namespace,$metric)`                     |
+| dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey)` |
 
 The final list of variables should look like this: 
 
@@ -65,7 +67,7 @@ Choose the save icon to save your dashboard.
 
 ### Dimensions
 
-Dimensions can be used to add specificity to your graphs. To use dimensions create a new graph or navigate to an existing one and click the **Metrics** tab. After selecting your variables click the **+** next to **Dimensions** and select one of the tag filters from the list. For example, select `availabilityDomain` from the list. Next, click **select tag value** and choose from the newly populated list of tag values. If you chose `availabilityDomain` as your tag filter, you should see tag values corresponding to the availability domains in which you currently have services provisioned, for example `US-ASHBURN-AD-1`. 
+Dimensions can be used to add specificity to your graphs. To use dimensions create a new graph or navigate to an existing one and click the **Metrics** tab. After selecting your variables click the **+** next to **Dimensions** and select one of the tag filters from the list. For example, select `availabilityDomain` from the list. Next, click **select value** and choose from the newly populated list of dimension values. If you chose `availabilityDomain` as your tag filter, you should see dimension values corresponding to the availability domains in which you currently have services provisioned, for example `US-ASHBURN-AD-1`. 
 
 
 

@@ -76,10 +76,11 @@
        <div class="gf-form">
          <label class="gf-form-label query-keyword width-8">Dimensions</label>
        </div>
-       <div class="gf-form" ng-repeat="segment in ctrl.tagSegments">
-        <metric-segment segment="segment"
-          get-options="ctrl.getTagsOrValues(segment, $index)"
-          on-change="ctrl.tagSegmentUpdated(segment, $index)"
+       <div class="gf-form" ng-repeat="segment in ctrl.dimensionSegments">
+        <metric-segment 
+          segment="segment"
+          get-options="ctrl.getDimensionOptions(segment, $index)"
+          on-change="ctrl.onDimensionsChange(segment, $index)"
         >
         </metric-segment>
       </div>
