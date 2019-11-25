@@ -3,8 +3,9 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import _ from 'lodash'
-import { aggregations, namespaces } from './constants'
+import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, adsQueryRegex } from './constants'
 import retryOrThrow from './util/retry'
+import { SELECT_PLACEHOLDERS } from './query_ctrl'
 
 export default class OCIDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
@@ -21,79 +22,48 @@ export default class OCIDatasource {
     this.timeSrv = timeSrv
   }
 
+  /**
+   * Each Grafana Data source should contain the following functions: 
+   *  - query(options) //used by panels to get data
+   *  - testDatasource() //used by data source configuration page to make sure the connection is working
+   *  - annotationQuery(options) // used by dashboards to get annotations
+   *  - metricFindQuery(options) // used by query editor to get metric suggestions.
+   * More information: https://grafana.com/docs/plugins/developing/datasources/
+  */
+
+  /** 
+   * Required method
+   * Used by panels to get data
+   */
   query(options) {
-    var query = this.buildQueryParameters(options)
-    query.targets = query.targets.filter(t => !t.hide)
+    var query = this.buildQueryParameters(options);
+
     if (query.targets.length <= 0) {
-      return this.q.when({ data: [] })
+      return this.q.when({ data: [] });
     }
 
-    return this.doRequest(query)
-      .then(result => {
-        var res = []
-        _.forEach(result.data.results, r => {
-          _.forEach(r.series, s => {
-            res.push({ target: s.name, datapoints: s.points })
-          })
-          _.forEach(r.tables, t => {
-            t.type = 'table'
-            t.refId = r.refId
-            res.push(t)
-          })
+    return this.doRequest(query).then(result => {
+      var res = []
+      _.forEach(result.data.results, r => {
+        _.forEach(r.series, s => {
+          res.push({ target: s.name, datapoints: s.points })
         })
-
-        result.data = res
-        return result
+        _.forEach(r.tables, t => {
+          t.type = 'table'
+          t.refId = r.refId
+          res.push(t)
+        })
       })
+
+      result.data = res;
+      return result;
+    })
   }
 
-  buildQueryParameters(options) {
-    // remove placeholder targets
-    options.targets = _.filter(options.targets, target => {
-      return target.metric !== 'select metric'
-    })
-
-    var targets = _.map(options.targets, target => {
-      let region = target.region
-      // check to see if we have tags (dimensions) in the query and turn those into a string for MQL
-      let t = []
-      if (target.hasOwnProperty('tags')) {
-        for (let i = 0; i < target.tags.length; i++) {
-          if (target.tags[i].value !== 'select tag value') {
-            t.push(`${target.tags[i].key} ${target.tags[i].operator} "${target.tags[i].value}"`)
-          }
-        }
-        t.join()
-      }
-
-      if (target.region === 'select region') {
-        region = this.defaultRegion
-      }
-      // If there's nothing there return a blank string otherwise return the dimensions encapsuled by these {}
-      let dimension = (t.length === 0) ? '' : `{${t}}`
-
-      return {
-        compartment: this.templateSrv.replace(target.compartment, options.scopedVars || {}),
-        environment: this.environment,
-        queryType: 'query',
-        region: this.templateSrv.replace(region, options.scopedVars || {}),
-        tenancyOCID: this.tenancyOCID,
-        namespace: this.templateSrv.replace(target.namespace, options.scopedVars || {}),
-        resolution: target.resolution,
-        refId: target.refId,
-        hide: target.hide,
-        type: target.type || 'timeserie',
-        datasourceId: this.id,
-        // pass the MQL string we built here
-        query: `${this.templateSrv.replace(target.metric, options.scopedVars || {})}[${target.window}]${dimension}.${target.aggregation}`
-      }
-    })
-
-    options.targets = targets
-
-    return options
-  }
-
+  /**
+   * Required method
+   * Used by data source configuration page to make sure the connection is working
+   */
   testDatasource() {
     return this.doRequest({
       targets: [{
@@ -114,183 +84,379 @@ export default class OCIDatasource {
     })
   }
 
-  // helps match the regex's from creating template variables in grafana
-  templateMeticSearch(varString) {
-    let compartmentQuery = varString.match(/^compartments\(\)/)
-    if (compartmentQuery) {
-      return this.getCompartments().catch(err => { throw new Error('Unable to make request ' + err) })
-    }
-
-    let regionQuery = varString.match(/^regions\(\)/)
-    if (regionQuery) {
-      return this.getRegions().catch(err => { throw new Error('Unable to make request ' + err) })
-    }
-
-    let metricQuery = varString.match(/metrics\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/)
-    if (metricQuery) {
-      let target = {
-        region: this.templateSrv.replace(metricQuery[1].trim()),
-        compartment: this.templateSrv.replace(metricQuery[2].replace(',', '').trim()),
-        namespace: this.templateSrv.replace(metricQuery[3].replace(',', '').trim())
-      }
-      return this.metricFindQuery(target).catch(err => { throw new Error('Unable to make request ' + err) })
-    }
-
-    let namespaceQuery = varString.match(/namespaces\((\$?\w+)(,\s*\$\w+)*\)/)
-    if (namespaceQuery) {
-   
-      let target = {
-        region: this.templateSrv.replace(namespaceQuery[1]),
-        compartment: this.templateSrv.replace(namespaceQuery[2]).replace(',', '').trim()
-      }
-      return this.getNamespaces(target).catch(err => { throw new Error('Unable to make request(get namespaces) ' + err) })
-    }
-    throw new Error('Unable to parse templating string')
-  }
-
-  // this function does 2 things - its the entrypoint for finding the metrics from the query editor
-  // and is the entrypoint for templating according to grafana -- since this wasn't docuemnted
-  // in grafana I was lead to believe that it did the former
-  // TODO: break the metric finding for the query editor out into a different function
+  /** 
+   * Required method
+   * Used by query editor to get metric suggestions
+   */
   metricFindQuery(target) {
     if (typeof (target) === 'string') {
-      return this.templateMeticSearch(target)
+      // used in template editor for creating variables
+      return this.templateMetricQuery(target);
     }
 
-    var range = this.timeSrv.timeRange()
-    let region = this.defaultRegion
-    if (target.namespace === 'select namespace') {
-      target.namespace = ''
-    }
-    if (target.compartment === 'select compartment') {
-      target.compartment = ''
-    }
-    if (Object.hasOwnProperty(target, 'region') && target.region !== 'select region') {
-      region = target.region
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(region);
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
+    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
+
+    if (_.isEmpty(compartment) || _.isEmpty(namespace)) {
+      return this.q.when([]);
     }
 
-    var targets = [{
-      compartment: this.templateSrv.replace(target.compartment),
-      environment: this.environment,
-      queryType: 'search',
-      tenancyOCID: this.tenancyOCID,
-      region: this.templateSrv.replace(region),
-      datasourceId: this.id,
-      namespace: this.templateSrv.replace(target.namespace)
-    }]
-    var options = {
-      range: range,
-      targets: targets
-    }
-    return this.doRequest(options).then((res) => {
+    return this.doRequest({
+      targets: [{
+        environment: this.environment,
+        datasourceId: this.id,
+        tenancyOCID: this.tenancyOCID,
+        queryType: 'search',
+        region: _.isEmpty(region) ? this.defaultRegion : region,
+        compartment: compartment,
+        namespace: namespace
+      }],
+      range: this.timeSrv.timeRange()
+    }).then((res) => {
       return this.mapToTextValue(res, 'search')
     })
   }
 
-  mapToTextValue(result, searchField) {
-    var table = result.data.results[searchField].tables[0]
-    if (!table) {
-      return []
-    }
+  /** 
+   * Build and validate query parameters.
+   */
+  buildQueryParameters(options) {
+    let queries = options.targets
+      .filter(t => !t.hide)
+      .filter(t => !_.isEmpty(this.getVariableValue(t.compartment)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
+      .filter(t => !_.isEmpty(this.getVariableValue(t.namespace)) && t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE)
+      .filter(t => !_.isEmpty(this.getVariableValue(t.metric)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)));
 
-    var m = _.map(table.rows, (row, i) => {
-      if (row.length > 1) {
-        return { text: row[0], value: row[1] }
-      } else if (_.isObject(row[0])) {
-        return { text: row[0], value: i }
+    queries.forEach(t => {
+      t.dimensions = (t.dimensions || [])
+        .filter(dim => !_.isEmpty(dim.key) && dim.key !== SELECT_PLACEHOLDERS.DIMENSION_KEY)
+        .filter(dim => !_.isEmpty(dim.value) && dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE);
+    });
+
+    // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
+    queries = this.splitMultiValueDimensionsIntoQuieries(queries);
+
+    queries = queries.map(t => {
+      const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region);
+      let query = this.getVariableValue(t.target);
+
+      if (_.isEmpty(query)) {
+        //construct query
+        const dimensions = (t.dimensions || []).reduce((result, dim) => {
+          const d = `${this.getVariableValue(dim.key)} ${dim.operator} "${this.getVariableValue(dim.value)}"`;
+          if (result.indexOf(d) < 0) {
+            result.push(d);
+          }
+          return result;
+        }, []);
+        const dimension = _.isEmpty(dimensions) ? '' : `{${dimensions.join(',')}}`;
+        query = `${this.getVariableValue(t.metric)}[${t.window}]${dimension}.${t.aggregation}`;
       }
-      return { text: row[0], value: row[0] }
-    })
-    return m
-  }
 
-  getCompartments() {
-    var range = this.timeSrv.timeRange()
-    var targets = [{
-      environment: this.environment,
-      region: this.defaultRegion,
-      tenancyOCID: this.tenancyOCID,
-      queryType: 'compartments',
-      datasourceId: this.id
-    }]
-    var options = {
-      range: range,
-      targets: targets
-    }
-    return this.doRequest(options).then((res) => { return this.mapToTextValue(res, 'compartment') })
-  }
-
-  getDimensions(target) {
-    var range = this.timeSrv.timeRange()
-    let region = target.region
-    if (target.namespace === 'select namespace') {
-      target.namespace = ''
-    }
-    if (target.compartment === 'select compartment') {
-      target.compartment = ''
-    }
-    if (target.metric === 'select metric') {
-      return []
-    }
-    if (region === 'select region') {
-      region = this.defaultRegion
-    }
-
-    var targets = [{
-      compartment: this.templateSrv.replace(target.compartment),
-      environment: this.environment,
-      queryType: 'dimensions',
-      region: this.templateSrv.replace(region),
-      tenancyOCID: this.tenancyOCID,
-
-      datasourceId: this.id,
-      metric: this.templateSrv.replace(target.metric),
-      namespace: this.templateSrv.replace(target.namespace)
-    }]
-
-    var options = {
-      range: range,
-      targets: targets
-    }
-    return this.doRequest(options).then((res) => { return this.mapToTextValue(res, 'dimensions') })
-  }
-
-  getNamespaces(target) {
-    let region = target.region
-    if (region === 'select region') {
-      region = this.defaultRegion
-    }
-    return this.doRequest({
-      targets: [{
-        // commonRequestParameters
-        compartment: this.templateSrv.replace(target.compartment),
+      return {
         environment: this.environment,
-        queryType: 'namespaces',
-        region: this.templateSrv.replace(region),
+        datasourceId: this.id,
         tenancyOCID: this.tenancyOCID,
+        queryType: 'query',
+        resolution: t.resolution,
+        refId: t.refId,
+        hide: t.hide,
+        type: t.type || 'timeserie',
+        region: _.isEmpty(region) ? this.defaultRegion : region,
+        compartment: this.getVariableValue(t.compartment),
+        namespace: this.getVariableValue(t.namespace),
+        query: query
+      }
+    });
 
-        datasourceId: this.id
-      }],
-      range: this.timeSrv.timeRange()
-    }).then((namespaces) => { return this.mapToTextValue(namespaces, 'namespaces') })
+    options.targets = queries;
+
+    return options;
+  }
+
+  /** 
+   * Splits queries with multi valued dimensions into several quiries.
+   * Example: 
+   * "DeliverySucceedEvents[1m]{resourceDisplayName = ["ResouceName_1","ResouceName_1"], eventType = ["Create","Delete"]}.mean()" ->
+   *  [
+   *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_1", eventType = "Create"}.mean()",
+   *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_2", eventType = "Create"}.mean()",
+   *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_1", eventType = "Delete"}.mean()",
+   *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_2", eventType = "Delete"}.mean()",
+   *  ]
+   */
+  splitMultiValueDimensionsIntoQuieries(queries) {
+    return queries.reduce((data, t) => {
+
+      if (_.isEmpty(t.dimensions) || !_.isEmpty(t.target)) {
+        // nothing to split or dimensions won't be used, query is set manually
+        return data.concat(t);
+      }
+
+      // create a map key : [values] for multiple values
+      const multipleValueDims = t.dimensions.reduce((data, dim) => {
+        const key = dim.key;
+        const value = this.getVariableValue(dim.value);
+        const valueVarDesc = this.getVariableDescriptor(dim.value);
+        if (valueVarDesc && valueVarDesc.multi && value[0] === "{") {
+          const values = value.slice(1, value.length - 1).split(',') || [];
+          data[key] = (data[key] || []).concat(values);
+        }
+        return data;
+      }, {});
+
+      if (_.isEmpty(Object.keys(multipleValueDims))) {
+        // no multiple values used, only single values
+        return data.concat(t);
+      }
+
+      const splitDimensions = (dims, multiDims) => {
+        let prev = [];
+        let next = [];
+
+        const firstDimKey = dims[0].key;
+        const firstDimValues = multiDims[firstDimKey] || [dims[0].value];
+        for (let v of firstDimValues) {
+          const newDim = _.cloneDeep(dims[0]);
+          newDim.value = v;
+          prev.push([newDim]);
+        }
+
+        for (let i = 1; i < dims.length; i++) {
+          const values = multiDims[dims[i].key] || [dims[i].value];
+          for (let v of values) {
+            for (let j = 0; j < prev.length; j++) {
+              if (next.length >= 10) {
+                // this algorithm of collecting multi valued dimensions is computantionally VERY expensive
+                // set the upper limit for quiries number
+                return next;
+              }
+              const newDim = _.cloneDeep(dims[i]);
+              newDim.value = v;
+              next.push(prev[j].concat(newDim));
+            }
+          }
+          prev = next;
+          next = [];
+        }
+
+        return prev;
+      }
+
+      const newDimsArray = splitDimensions(t.dimensions, multipleValueDims);
+
+      const newQueries = [];
+      for (let i = 0; i < newDimsArray.length; i++) {
+        const dims = newDimsArray[i];
+        const newQuery = _.cloneDeep(t);
+        newQuery.dimensions = dims;
+        if (i !== 0) {
+          newQuery.refId = `${newQuery.refId}${i}`;
+        }
+        newQueries.push(newQuery);
+      }
+      return data.concat(newQueries);
+    }, []);
+  }
+
+  // **************************** Template variable helpers ****************************
+
+  /** 
+   * Matches the regex from creating template variables and returns options for the corresponding variable.
+   * Example: 
+   * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
+   */
+  templateMetricQuery(varString) {
+
+    let regionQuery = varString.match(regionsQueryRegex)
+    if (regionQuery) {
+      return this.getRegions().catch(err => { throw new Error('Unable to get regions: ' + err) })
+    }
+
+
+    let compartmentQuery = varString.match(compartmentsQueryRegex)
+    if (compartmentQuery) {
+      return this.getCompartments().catch(err => { throw new Error('Unable to get compartments: ' + err) })
+    }
+
+    let namespaceQuery = varString.match(namespacesQueryRegex)
+    if (namespaceQuery) {
+      let target = {
+        region: this.getVariableValue(namespaceQuery[1]),
+        compartment: this.getVariableValue(namespaceQuery[2]).replace(',', '').trim()
+      }
+      return this.getNamespaces(target).catch(err => { throw new Error('Unable to get namespaces: ' + err) })
+    }
+
+    let metricQuery = varString.match(metricsQueryRegex)
+    if (metricQuery) {
+      let target = {
+        region: this.getVariableValue(metricQuery[1].trim()),
+        compartment: this.getVariableValue(metricQuery[2].replace(',', '').trim()),
+        namespace: this.getVariableValue(metricQuery[3].replace(',', '').trim())
+      }
+      return this.metricFindQuery(target).catch(err => { throw new Error('Unable to get metrics: ' + err) })
+    }
+
+    let dimensionsQuery = varString.match(dimensionKeysQueryRegex)
+    if (dimensionsQuery) {
+      let target = {
+        region: this.getVariableValue(dimensionsQuery[1].trim()),
+        compartment: this.getVariableValue(dimensionsQuery[2].replace(',', '').trim()),
+        namespace: this.getVariableValue(dimensionsQuery[3].replace(',', '').trim()),
+        metric: this.getVariableValue(dimensionsQuery[4].replace(',', '').trim()),
+      }
+      return this.getDimensionKeys(target).catch(err => { throw new Error('Unable to get dimensions: ' + err) })
+    }
+
+    let dimensionOptionsQuery = varString.match(dimensionValuesQueryRegex)
+    if (dimensionOptionsQuery) {
+      let target = {
+        region: this.getVariableValue(dimensionOptionsQuery[1].trim()),
+        compartment: this.getVariableValue(dimensionOptionsQuery[2].replace(',', '').trim()),
+        namespace: this.getVariableValue(dimensionOptionsQuery[3].replace(',', '').trim()),
+        metric: this.getVariableValue(dimensionOptionsQuery[4].replace(',', '').trim())
+      }
+      const dimensionKey = this.getVariableValue(dimensionOptionsQuery[5].replace(',', '').trim());
+      return this.getDimensionValues(target, dimensionKey).catch(err => { throw new Error('Unable to get dimension options: ' + err) })
+    }
+
+    throw new Error('Unable to parse templating string');
   }
 
   getRegions() {
     return this.doRequest({
       targets: [{
         environment: this.environment,
-        queryType: 'regions',
-        datasourceId: this.id
+        datasourceId: this.id,
+        tenancyOCID: this.tenancyOCID,
+        queryType: 'regions'
       }],
       range: this.timeSrv.timeRange()
-    }).then((regions) => { return this.mapToTextValue(regions, 'regions') })
+    }).then((items) => {
+      return this.mapToTextValue(items, 'regions')
+    });
+  }
+
+  getCompartments() {
+    return this.doRequest({
+      targets: [{
+        environment: this.environment,
+        datasourceId: this.id,
+        tenancyOCID: this.tenancyOCID,
+        queryType: 'compartments',
+        region: this.defaultRegion // compartments are registered for the all regions, so no difference which region to use here
+      }],
+      range: this.timeSrv.timeRange()
+    }).then((items) => {
+      return this.mapToTextValue(items, 'compartments')
+    });
+  }
+
+  getNamespaces(target) {
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
+    if (_.isEmpty(compartment)) {
+      return this.q.when([]);
+    }
+
+    return this.doRequest({
+      targets: [{
+        environment: this.environment,
+        datasourceId: this.id,
+        tenancyOCID: this.tenancyOCID,
+        queryType: 'namespaces',
+        region: _.isEmpty(region) ? this.defaultRegion : region,
+        compartment: compartment
+      }],
+      range: this.timeSrv.timeRange()
+    }).then((items) => {
+      return this.mapToTextValue(items, 'namespaces')
+    });
+  }
+
+  getDimensions(target) {
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
+    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
+    const metric = target.metric === SELECT_PLACEHOLDERS.METRIC ? '' : this.getVariableValue(target.metric);
+
+    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(metric)) {
+      return this.q.when([]);
+    }
+
+    return this.doRequest({
+      targets: [{
+        environment: this.environment,
+        datasourceId: this.id,
+        tenancyOCID: this.tenancyOCID,
+        queryType: 'dimensions',
+        region: _.isEmpty(region) ? this.defaultRegion : region,
+        compartment: compartment,
+        namespace: namespace,
+        metric: metric
+      }],
+      range: this.timeSrv.timeRange()
+    }).then((items) => {
+      const result = this.mapToTextValue(items, 'dimensions');
+      // remove duplicates from response
+      return result.reduce((data, item) => {
+        const existingItem = data.find(i => i.value === item.value)
+        if (!existingItem) {
+          data.push(item);
+        }
+        return data;
+      }, []);
+    });
+  }
+
+  getDimensionKeys(target) {
+    return this.getDimensions(target).then(dims => {
+      const dimCache = dims.reduce((data, item) => {
+        const values = item.value.split('=') || [];
+        const key = values[0] || item.value;
+        const value = values[1];
+
+        if (!data[key]) {
+          data[key] = []
+        }
+        data[key].push(value);
+        return data;
+      }, {});
+      return Object.keys(dimCache);
+    }).then(items => {
+      return items.map(item => ({ text: item, value: item }))
+    });
+  }
+
+  getDimensionValues(target, dimKey) {
+    return this.getDimensions(target).then(dims => {
+      const dimCache = dims.reduce((data, item) => {
+        const values = item.value.split('=') || [];
+        const key = values[0] || item.value;
+        const value = values[1];
+
+        if (!data[key]) {
+          data[key] = []
+        }
+        data[key].push(value);
+        return data;
+      }, {});
+      return dimCache[this.getVariableValue(dimKey)] || [];
+    }).then(items => {
+      return items.map(item => ({ text: item, value: item }))
+    });
   }
 
   getAggregations() {
-    return this.q.when(aggregations)
+    return this.q.when(aggregations);
   }
 
-  // retries all request to the backend grafana 10 times before failure
+  /** 
+   * Calls grafana backend.
+   * Retries 10 times before failure.
+   */
   doRequest(options) {
     let _this = this
     return retryOrThrow(() => {
@@ -304,5 +470,80 @@ export default class OCIDatasource {
         }
       })
     }, 10)
+  }
+
+  /** 
+   * Converts data from grafana backend to UI format
+   */
+  mapToTextValue(result, searchField) {
+    if (_.isEmpty(result) || _.isEmpty(searchField)) {
+      return [];
+    }
+
+    var table = result.data.results[searchField].tables[0];
+    if (!table) {
+      return [];
+    }
+
+    var map = _.map(table.rows, (row, i) => {
+      if (row.length > 1) {
+        return { text: row[0], value: row[1] }
+      } else if (_.isObject(row[0])) {
+        return { text: row[0], value: i }
+      }
+      return { text: row[0], value: row[0] }
+    })
+    return map;
+  }
+
+  // **************************** Template variables helpers ****************************
+
+  /**  
+   * Get all template variable descriptors
+   */
+  getVariableDescriptors(regex, type) {
+    let vars = this.templateSrv.variables || [];
+    if (regex) {
+      vars = vars.filter(item => item.query.match(regex) !== null);
+    }
+    if (type) {
+      vars = vars.filter(item => item.type === type)
+    }
+    return vars;
+  }
+
+  /** 
+   * @param varName valid varName contains '$'. Example: '$dimensionKey'
+   * Get all template variable descriptors
+   */
+  getVariableDescriptor(varName) {
+    let vars = this.getVariableDescriptors()
+    return vars.find(item => `$${item.name}` === varName);
+  }
+
+  /** 
+   * List all variable names optionally filtered by regex or/and type
+   * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
+  */
+  getVariables(regex, type) {
+    const varDescriptors = this.getVariableDescriptors(regex, type) || [];
+    return varDescriptors.map(item => `$${item.name}`);
+  }
+
+  /** 
+   * @param varName valid varName contains '$'. Example: '$dimensionKey'
+   * Returns an array with variable values or empty array
+  */
+  getVariableValue(varName) {
+    return this.templateSrv.replace(varName) || varName;
+  }
+
+  /** 
+   * @param varName valid varName contains '$'. Example: '$dimensionKey'
+   * Returns true if variable with the given name is found
+  */
+  isVariable(varName) {
+    const varNames = this.getVariables() || [];
+    return !!varNames.find(item => item === varName);
   }
 }

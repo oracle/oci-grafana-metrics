@@ -4,225 +4,259 @@
 */
 import { QueryCtrl } from 'app/plugins/sdk'
 import './css/query-editor.css!'
-import { windows } from './constants'
+import { windows, namespacesQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionKeysQueryRegex, dimensionValuesQueryRegex } from './constants'
 import _ from 'lodash'
 
+export const SELECT_PLACEHOLDERS = {
+  DIMENSION_KEY: 'select dimension',
+  DIMENSION_VALUE: 'select value',
+  COMPARTMENT: 'select compartment',
+  REGION: 'select region',
+  NAMESPACE: 'select namespace',
+  METRIC: 'select metric'
+};
+
 export class OCIDatasourceQueryCtrl extends QueryCtrl {
-  constructor ($scope, $injector, $q, uiSegmentSrv) {
+  constructor($scope, $injector, $q, uiSegmentSrv) {
     super($scope, $injector)
 
-    this.scope = $scope
-    this.uiSegmentSrv = uiSegmentSrv
-    this.target.region = this.target.region || 'select region'
-    this.target.compartment = this.target.compartment || 'select compartment'
-    this.target.resolution = this.target.resolution || '1m'
-    this.target.namespace = this.target.namespace || 'select namespace'
-    this.target.window = this.target.window || '1m'
-    this.target.metric = this.target.metric || ''
+    this.q = $q;
+    this.uiSegmentSrv = uiSegmentSrv;
+
+    this.target.region = this.target.region || SELECT_PLACEHOLDERS.REGION;
+    this.target.compartment = this.target.compartment || SELECT_PLACEHOLDERS.COMPARTMENT;
+    this.target.namespace = this.target.namespace || SELECT_PLACEHOLDERS.NAMESPACE;
+    this.target.metric = this.target.metric || SELECT_PLACEHOLDERS.METRIC;
+    this.target.resolution = this.target.resolution || '1m';
+    this.target.window = this.target.window || '1m';
     this.target.aggregation = this.target.aggregation || 'mean()'
-    this.target.tags = this.target.tags || []
-    this.q = $q
+    this.target.dimensions = this.target.dimensions || [];
 
-    this.target.dimension = this.target.dimension || ''
+    this.dimensionSegments = [];
+    this.removeDimensionSegment = uiSegmentSrv.newSegment({ fake: true, value: '-- remove dimension --' });
+    this.getSelectDimensionKeySegment = () => uiSegmentSrv.newSegment({ value: SELECT_PLACEHOLDERS.DIMENSION_KEY, type: 'key' });
+    this.getDimensionOperatorSegment = () => this.uiSegmentSrv.newOperator('=');
+    this.getSelectDimensionValueSegment = () => uiSegmentSrv.newSegment({ value: SELECT_PLACEHOLDERS.DIMENSION_VALUE, type: 'value' });
 
-    this.tagSegments = []
-    this.dimCache = {}
-    this.removeTagFilterSegment = uiSegmentSrv.newSegment({
-      fake: true,
-      value: '-- remove tag filter --'
-    })
+    this.regionsCache = [];
+    this.compartmentsCache = [];
+    this.dimensionsCache = {};
 
-    // rebuilds the tagSegments which are stored as tags when reloading the query editor
-    for (let i = 0; i < this.target.tags.length; i++) {
+    // rebuild dimensionSegments on query editor load
+    for (let i = 0; i < this.target.dimensions.length; i++) {
+      const dim = this.target.dimensions[i];
       if (i > 0) {
-        this.tagSegments.push(this.uiSegmentSrv.newCondition(','))
+        this.dimensionSegments.push(this.uiSegmentSrv.newCondition(','))
       }
-      const obj = this.target.tags[i]
-      this.tagSegments.push(this.uiSegmentSrv.newSegment({
-        fake: false,
-        key: obj.key,
-        value: obj.key,
-        type: 'key'
-      }))
-      this.tagSegments.push(this.uiSegmentSrv.newSegment({
-        fake: false,
-        key: obj.operator,
-        type: 'operator',
-        value: obj.operator
-      }))
-      this.tagSegments.push(this.uiSegmentSrv.newSegment({
-        fake: false,
-        key: obj.value,
-        type: 'value',
-        value: obj.value
-      }))
+      this.dimensionSegments.push(this.uiSegmentSrv.newSegment({ value: dim.key, type: 'key' }));
+      this.dimensionSegments.push(this.uiSegmentSrv.newSegment({ value: dim.operator, type: 'operator' }));
+      this.dimensionSegments.push(this.uiSegmentSrv.newSegment({ value: dim.value, type: 'value' }));
     }
-    this.tagSegments.push(this.uiSegmentSrv.newPlusButton())
+    this.dimensionSegments.push(this.uiSegmentSrv.newPlusButton())
   }
 
-  toggleEditorMode () {
-    this.target.rawQuery = !this.target.rawQuery
+  // ****************************** Options **********************************
+
+  getRegions() {
+    if (!_.isEmpty(this.regionsCache)) {
+      return this.q.when(this.regionsCache);
+    }
+    return this.datasource.getRegions()
+      .then((regions) => {
+        this.regionsCache = this.appendVariables(regions, regionsQueryRegex);
+        return this.regionsCache;
+      });
   }
 
-  getNamespaces () {
+  getCompartments() {
+    if (!_.isEmpty(this.compartmentsCache)) {
+      return this.q.when(this.compartmentsCache);
+    }
+    return this.datasource.getCompartments()
+      .then((compartments) => {
+        this.compartmentsCache = this.appendVariables(compartments, compartmentsQueryRegex);
+        return this.compartmentsCache;
+      });
+  }
+
+  getNamespaces() {
     return this.datasource.getNamespaces(this.target)
       .then((namespaces) => {
-        namespaces.push({ text: '$namespace', value: '$namespace' })
-        return namespaces
-      })
+        return this.appendVariables(namespaces, namespacesQueryRegex);
+      });
   }
 
-  getMetrics () {
+  getMetrics() {
     return this.datasource.metricFindQuery(this.target)
       .then((metrics) => {
-        metrics.push({ text: '$metric', value: '$metric' })
-        return metrics
-      })
+        return this.appendVariables(metrics, metricsQueryRegex);
+      });
   }
 
-  getAggregations () {
+  getAggregations() {
     return this.datasource.getAggregations().then((aggs) => {
       return aggs.map((val) => {
-        return { text: val, value: val }
+        return { text: val, value: val };
       })
-    })
+    });
   }
 
-  onChangeInternal () {
-    this.panelCtrl.refresh() // Asks the panel to refresh data.
+  getWindows() {
+    return windows;
   }
 
-  getRegions () {
-    return this.datasource.getRegions()
-      .then((regs) => {
-        regs.push({ text: '$region', value: '$region' })
-        return regs
-      }).catch((err) => { console.error(err) })
-  }
-
-  getCompartments () {
-    return this.datasource.getCompartments()
-      .then((item) => {
-        item.push({ text: '$compartment', value: '$compartment' })
-        return item
-      })
-  }
-
-  getWindows () {
-    return windows
-  }
-
-  getDimensions () {
-    return this.datasource.getDimensions(this.target)
-  }
-
-  handleQueryError (err) {
-    this.error = err.message || 'Failed to issue metric query'
-    return []
-  }
-
-  // entrypoint in fetching the dimensions and their values for a particular metric
-  getTagsOrValues (segment, index) {
-    if (segment.type === 'operator') {
-      return this.q.when([])
-    }
-
+  /**
+   * Get options for the dimension segment: of type 'key' or type 'value'
+   * @param segment 
+   * @param index 
+   */
+  getDimensionOptions(segment, index) {
     if (segment.type === 'key' || segment.type === 'plus-button') {
-      return this.getDimensions()
-        .then(this.mapToSegment.bind(this))
-        .catch(this.handleQueryError.bind(this))
-    }
-    const key = this.tagSegments[index - 2]
-    const options = this.dimCache[key.value]
-    const that = this
-    // return all the values for the key
-    const optSegments = options.map(v => that.uiSegmentSrv.newSegment({
-      value: v
-    }))
-    return this.q.when(optSegments)
-  }
-
-  // we fetch dimensions for a metric in pairs link this key=value
-  // we save them in an object that looks like {key [list, of, values]}
-  mapToSegment (dimensions) {
-    const dimCache = {}
-    const dims = dimensions.map((v) => {
-      const values = v.text.split('=')
-      const key = values[0]
-      const value = values[1]
-      if (!(key in dimCache)) {
-        dimCache[key] = []
-      }
-      dimCache[key].push(value)
-      return this.uiSegmentSrv.newSegment({
-        value: values[0]
-      })
-    })
-    dims.unshift(this.removeTagFilterSegment)
-    this.dimCache = dimCache
-    return dims
-  }
-
-  // deals with adding or updating new values
-  tagSegmentUpdated (segment, index) {
-    this.tagSegments[index] = segment
-
-    // handle remove tag condition
-    if (segment.value === this.removeTagFilterSegment.value) {
-      this.tagSegments.splice(index, 3)
-      if (this.tagSegments.length === 0) {
-        this.tagSegments.push(this.uiSegmentSrv.newPlusButton())
-      } else if (this.tagSegments.length > 2) {
-        this.tagSegments.splice(Math.max(index - 1, 0), 1)
-        // if the thing we removed was the only key value pair add + button so they can put in new metrics
-        if (this.tagSegments[this.tagSegments.length - 1].type !== 'plus-button') {
-          this.tagSegments.push(this.uiSegmentSrv.newPlusButton())
-        }
-      }
-    } else {
-      // handle adding in the first dimension pair
-      if (segment.type === 'plus-button') {
-        if (index > 2) {
-          this.tagSegments.splice(index, 0, this.uiSegmentSrv.newCondition(','))
-        }
-        this.tagSegments.push(this.uiSegmentSrv.newOperator('='))
-        // always push in the fake for the first value in case network request breaks
-        this.tagSegments.push(this.uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'))
-        segment.type = 'key'
-        segment.cssClass = 'query-segment-key'
-      }
-
-      if (index + 1 === this.tagSegments.length) {
-        this.tagSegments.push(this.uiSegmentSrv.newPlusButton())
-      }
+      return this.getDimensionsCache().then(cache => {
+        const keys = Object.keys(cache);
+        const vars = this.datasource.getVariables(dimensionKeysQueryRegex) || [];
+        const keysWithVariables = vars.concat(keys);
+        const segments = keysWithVariables.map(key => this.uiSegmentSrv.newSegment({ value: key }));
+        segments.unshift(this.removeDimensionSegment);
+        return segments;
+      });
     }
 
-    this.rebuildTargetTagConditions()
+    if (segment.type === 'value') {
+      return this.getDimensionsCache().then(cache => {
+        const keySegment = this.dimensionSegments[index - 2];
+        const key = this.datasource.getVariableValue(keySegment.value);
+        const options = cache[key] || [];
+
+        // return all the values for the key
+        const vars = this.datasource.getVariables(dimensionValuesQueryRegex) || [];
+        const custom = this.datasource.getVariables(null, 'custom') || [];
+        const optionsWithVariables = vars.concat(custom).concat(options);
+        const segments = optionsWithVariables.map(v => this.uiSegmentSrv.newSegment({ value: v }));
+        return segments;
+      });
+    }
+
+    return this.q.when([]);
   }
 
-  // take the tagSegments and turn them into tags for the query that gets sent
-  rebuildTargetTagConditions () {
-    const tags = []
-    let tagIndex = 0
+  getDimensionsCache() {
+    const targetSelector = JSON.stringify({
+      region: this.target.region,
+      compartment: this.target.compartment,
+      namespace: this.target.namespace,
+      metric: this.target.metric
+    });
 
-    _.each(this.tagSegments, (segment2, index) => {
-      if (segment2.type === 'key') {
-        if (tags.length === 0) {
-          tags.push({})
+    if (this.dimensionsCache[targetSelector]) {
+      return this.q.when(this.dimensionsCache[targetSelector]);
+    }
+
+    return this.datasource.getDimensions(this.target).then(dimensions => {
+      const cache = dimensions.reduce((data, item) => {
+        const values = item.value.split('=') || [];
+        const key = values[0] || item.value;
+        const value = values[1];
+
+        if (!data[key]) {
+          data[key] = []
         }
-        tags[tagIndex].key = segment2.value
-      } else if (segment2.type === 'value') {
-        tags[tagIndex].value = segment2.value
-      } else if (segment2.type === 'condition') {
-        tags.push({ condition: segment2.value })
-        tagIndex += 1
-      } else if (segment2.type === 'operator') {
-        tags[tagIndex].operator = segment2.value
-      }
+        data[key].push(value);
+        return data;
+      }, {});
+      this.dimensionsCache[targetSelector] = cache;
+      return this.dimensionsCache[targetSelector];
     })
+  }
 
-    this.target.tags = tags
-    this.panelCtrl.refresh()
+  appendVariables(options, varQeueryRegex) {
+    const vars = this.datasource.getVariables(varQeueryRegex) || [];
+    vars.forEach(value => {
+      options.unshift({ value, text: value });
+    });
+    return options;
+  }
+
+  // ****************************** Callbacks **********************************
+
+  toggleEditorMode() {
+    this.target.rawQuery = !this.target.rawQuery;
+  }
+
+  onChangeInternal() {
+    this.panelCtrl.refresh(); // Asks the panel to refresh data.
+  }
+
+  /**
+   * On dimension segment change callback
+   * @param segment 
+   * @param index 
+   */
+  onDimensionsChange(segment, index) {
+    if (segment.value === this.removeDimensionSegment.value) {
+      // remove dimension: key - op - value
+      this.dimensionSegments.splice(index, 3);
+      // remove last comma
+      if (this.dimensionSegments.length > 2) {
+        this.dimensionSegments.splice(Math.max(index - 1, 0), 1);
+      }
+    } else if (segment.type === 'plus-button') {
+      if (index > 2) {
+        // add comma in front of plus button
+        this.dimensionSegments.splice(index, 0, this.uiSegmentSrv.newCondition(','))
+      }
+      // replace plus button with key segment
+      segment.type = 'key';
+      segment.cssClass = 'query-segment-key';
+      this.dimensionSegments.push(this.getDimensionOperatorSegment());
+      this.dimensionSegments.push(this.getSelectDimensionValueSegment());
+    } else if (segment.type === 'key') {
+      this.getDimensionsCache().then(cache => {
+        //update value to be part of the available options
+        const value = this.dimensionSegments[index + 2].value;
+        const options = cache[segment.value] || [];
+        if (!this.datasource.isVariable(value) && options.indexOf(value) < 0) {
+          this.dimensionSegments[index + 2] = this.getSelectDimensionValueSegment();
+        }
+
+        this.updateQueryWithDimensions();
+      });
+    }
+
+    // add plus button at the end
+    if (this.dimensionSegments.length === 0 || this.dimensionSegments[this.dimensionSegments.length - 1].type !== 'plus-button') {
+      this.dimensionSegments.push(this.uiSegmentSrv.newPlusButton());
+    }
+
+    this.updateQueryWithDimensions();
+  }
+
+  /**
+   * Collect data from  dimension segments to pass to query
+   */
+  updateQueryWithDimensions() {
+    const dimensions = [];
+    let index;
+
+    this.dimensionSegments.forEach(s => {
+      if (s.type === 'key') {
+        if (dimensions.length === 0) {
+          dimensions.push({});
+          index = 0;
+        }
+        dimensions[index].key = s.value;
+      } else if (s.type === 'value') {
+        dimensions[index].value = s.value;
+      } else if (s.type === 'condition') {
+        dimensions.push({});
+        index++;
+      } else if (s.type === 'operator') {
+        dimensions[index].operator = s.value;
+      }
+    });
+
+    this.target.dimensions = dimensions;
+    this.panelCtrl.refresh();
   }
 }
 

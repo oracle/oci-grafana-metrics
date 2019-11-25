@@ -30,7 +30,7 @@ describe('OCIDatasource', () => {
             window: '1m',
             metric: 'CpuUtilization',
             aggregation: 'mean()',
-            tags: []
+            dimensions: []
           }
         ] }
       const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
@@ -49,7 +49,7 @@ describe('OCIDatasource', () => {
             window: '1m',
             metric: 'CpuUtilization',
             aggregation: 'mean()',
-            tags: []
+            dimensions: []
           }
         ] }
       const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
@@ -57,7 +57,7 @@ describe('OCIDatasource', () => {
       expect(opts.targets.length).toBe(1)
       expect(opts.targets[0].region).toMatch(/uk-london-1/)
     })
-    test('should not have dimenisions in query if there are no tags', () => {
+    test('should not have dimensions in query if there are no dimensions', () => {
       const options = {
         targets: [
           {
@@ -68,7 +68,7 @@ describe('OCIDatasource', () => {
             window: '1m',
             metric: 'CpuUtilization',
             aggregation: 'mean()',
-            tags: []
+            dimensions: []
           }
         ] }
       const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
@@ -76,7 +76,7 @@ describe('OCIDatasource', () => {
       expect(opts.targets.length).toBe(1)
       expect(opts.targets[0].query).toMatch(/CpuUtilization\[1m\]\.mean\(\)/)
     })
-    test('should have dimenisions in query if there are tags', () => {
+    test('should have dimensions in query if there are dimensions', () => {
       const options = {
         targets: [
           {
@@ -87,7 +87,7 @@ describe('OCIDatasource', () => {
             window: '1m',
             metric: 'CpuUtilization',
             aggregation: 'mean()',
-            tags: [{ key: 'key', operator: '=', value: 'value' }]
+            dimensions: [{ key: 'key', operator: '=', value: 'value' }]
           }
         ] }
       const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
