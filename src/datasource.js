@@ -227,7 +227,7 @@ export default class OCIDatasource {
           const values = multiDims[dims[i].key] || [dims[i].value];
           for (let v of values) {
             for (let j = 0; j < prev.length; j++) {
-              if (next.length >= 10) {
+              if (next.length >= 20) {
                 // this algorithm of collecting multi valued dimensions is computantionally VERY expensive
                 // set the upper limit for quiries number
                 return next;
