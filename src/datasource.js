@@ -124,9 +124,9 @@ export default class OCIDatasource {
   buildQueryParameters(options) {
     let queries = options.targets
       .filter(t => !t.hide)
-      .filter(t => !_.isEmpty(this.getVariableValue(t.compartment)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
-      .filter(t => !_.isEmpty(this.getVariableValue(t.namespace)) && t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE)
-      .filter(t => !_.isEmpty(this.getVariableValue(t.metric)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)));
+      .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
+      .filter(t => !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) && t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE)
+      .filter(t => !_.isEmpty(this.getVariableValue(t.metric, options.scopedVars)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)));
 
     queries.forEach(t => {
       t.dimensions = (t.dimensions || [])
@@ -135,23 +135,23 @@ export default class OCIDatasource {
     });
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
-    queries = this.splitMultiValueDimensionsIntoQuieries(queries);
+    queries = this.splitMultiValueDimensionsIntoQuieries(queries, options);
 
     queries = queries.map(t => {
-      const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region);
-      let query = this.getVariableValue(t.target);
+      const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars);
+      let query = this.getVariableValue(t.target, options.scopedVars);
 
       if (_.isEmpty(query)) {
         //construct query
         const dimensions = (t.dimensions || []).reduce((result, dim) => {
-          const d = `${this.getVariableValue(dim.key)} ${dim.operator} "${this.getVariableValue(dim.value)}"`;
+          const d = `${this.getVariableValue(dim.key, options.scopedVars)} ${dim.operator} "${this.getVariableValue(dim.value, options.scopedVars)}"`;
           if (result.indexOf(d) < 0) {
             result.push(d);
           }
           return result;
         }, []);
         const dimension = _.isEmpty(dimensions) ? '' : `{${dimensions.join(',')}}`;
-        query = `${this.getVariableValue(t.metric)}[${t.window}]${dimension}.${t.aggregation}`;
+        query = `${this.getVariableValue(t.metric, options.scopedVars)}[${t.window}]${dimension}.${t.aggregation}`;
       }
 
       return {
@@ -164,8 +164,8 @@ export default class OCIDatasource {
         hide: t.hide,
         type: t.type || 'timeserie',
         region: _.isEmpty(region) ? this.defaultRegion : region,
-        compartment: this.getVariableValue(t.compartment),
-        namespace: this.getVariableValue(t.namespace),
+        compartment: this.getVariableValue(t.compartment, options.scopedVars),
+        namespace: this.getVariableValue(t.namespace, options.scopedVars),
         query: query
       }
     });
@@ -186,7 +186,7 @@ export default class OCIDatasource {
    *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_2", eventType = "Delete"}.mean()",
    *  ]
    */
-  splitMultiValueDimensionsIntoQuieries(queries) {
+  splitMultiValueDimensionsIntoQuieries(queries, options) {
     return queries.reduce((data, t) => {
 
       if (_.isEmpty(t.dimensions) || !_.isEmpty(t.target)) {
@@ -197,9 +197,8 @@ export default class OCIDatasource {
       // create a map key : [values] for multiple values
       const multipleValueDims = t.dimensions.reduce((data, dim) => {
         const key = dim.key;
-        const value = this.getVariableValue(dim.value);
-        const valueVarDesc = this.getVariableDescriptor(dim.value);
-        if (valueVarDesc && valueVarDesc.multi && value[0] === "{") {
+        const value = this.getVariableValue(dim.value, options.scopedVars);
+        if (value.startsWith("{") && value.endsWith("}")) {
           const values = value.slice(1, value.length - 1).split(',') || [];
           data[key] = (data[key] || []).concat(values);
         }
@@ -376,39 +375,62 @@ export default class OCIDatasource {
     });
   }
 
-  getDimensions(target) {
+  async getDimensions(target) {
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
+    
     const metric = target.metric === SELECT_PLACEHOLDERS.METRIC ? '' : this.getVariableValue(target.metric);
+    const metrics = metric.startsWith("{") && metric.endsWith("}") ? metric.slice(1, metric.length - 1).split(',') : [metric];
 
-    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(metric)) {
+    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(metrics)) {
       return this.q.when([]);
     }
 
-    return this.doRequest({
-      targets: [{
-        environment: this.environment,
-        datasourceId: this.id,
-        tenancyOCID: this.tenancyOCID,
-        queryType: 'dimensions',
-        region: _.isEmpty(region) ? this.defaultRegion : region,
-        compartment: compartment,
-        namespace: namespace,
-        metric: metric
-      }],
-      range: this.timeSrv.timeRange()
-    }).then((items) => {
-      const result = this.mapToTextValue(items, 'dimensions');
-      // remove duplicates from response
-      return result.reduce((data, item) => {
-        const existingItem = data.find(i => i.value === item.value)
-        if (!existingItem) {
-          data.push(item);
+    const dimensionsMap = {};
+    for (let m of metrics) {
+      if (dimensionsMap[m] !== undefined) {
+        continue;
+      }
+      dimensionsMap[m] = null;
+      await this.doRequest({
+        targets: [{
+          environment: this.environment,
+          datasourceId: this.id,
+          tenancyOCID: this.tenancyOCID,
+          queryType: 'dimensions',
+          region: _.isEmpty(region) ? this.defaultRegion : region,
+          compartment: compartment,
+          namespace: namespace,
+          metric: m
+        }],
+        range: this.timeSrv.timeRange()
+      }).then(result => {
+        const items = this.mapToTextValue(result, 'dimensions');
+        dimensionsMap[m] = [].concat(items);
+      }).finally(() => {
+        if (!dimensionsMap[m]) {
+          dimensionsMap[m] = [];
         }
-        return data;
-      }, []);
-    });
+      });
+    }
+
+    let result = [];
+    Object.values(dimensionsMap).forEach(dims => {
+      if (_.isEmpty(result)) {
+        result = dims;
+      } else {
+        const newResult = [];
+        dims.forEach(dim => {
+          if (!!result.find(d => d.value === dim.value) && !newResult.find(d => d.value === dim.value)) {
+            newResult.push(dim);
+          }
+        });
+        result = newResult;
+      }
+    })
+
+    return result;
   }
 
   getDimensionKeys(target) {
@@ -513,15 +535,6 @@ export default class OCIDatasource {
   }
 
   /** 
-   * @param varName valid varName contains '$'. Example: '$dimensionKey'
-   * Get all template variable descriptors
-   */
-  getVariableDescriptor(varName) {
-    let vars = this.getVariableDescriptors()
-    return vars.find(item => `$${item.name}` === varName);
-  }
-
-  /** 
    * List all variable names optionally filtered by regex or/and type
    * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
   */
@@ -534,8 +547,8 @@ export default class OCIDatasource {
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
    * Returns an array with variable values or empty array
   */
-  getVariableValue(varName) {
-    return this.templateSrv.replace(varName) || varName;
+  getVariableValue(varName, scopedVars = {}) {
+    return this.templateSrv.replace(varName, scopedVars) || varName;
   }
 
   /** 

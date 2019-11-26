@@ -142,10 +142,10 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
   getDimensionsCache() {
     const targetSelector = JSON.stringify({
-      region: this.target.region,
-      compartment: this.target.compartment,
-      namespace: this.target.namespace,
-      metric: this.target.metric
+      region: this.datasource.getVariableValue(this.target.region),
+      compartment: this.datasource.getVariableValue(this.target.compartment),
+      namespace: this.datasource.getVariableValue(this.target.namespace),
+      metric: this.datasource.getVariableValue(this.target.metric)
     });
 
     if (this.dimensionsCache[targetSelector]) {
