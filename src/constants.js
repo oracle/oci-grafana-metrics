@@ -9,9 +9,22 @@ export const windows = ['1m', '5m', '1h']
 export const environments = ['local', 'OCI Instance']
 
 
-export const compartmentsQueryRegex = /^compartments\(\)/;
-export const regionsQueryRegex = /^regions\(\)/;
-export const namespacesQueryRegex = /namespaces\((\$?\w+)(,\s*\$\w+)*\)/;
-export const metricsQueryRegex = /metrics\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/;
-export const dimensionKeysQueryRegex = /dimensions\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/;
-export const dimensionValuesQueryRegex = /dimensionOptions\((\s*\$?\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+)(\s*,\s*\$\w+\s*)*\)/;
+export const compartmentsQueryRegex = /^compartments\(\)\s*/;
+export const regionsQueryRegex = /^regions\(\)\s*/;
+export const namespacesQueryRegex = /^namespaces\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
+export const metricsQueryRegex = /^metrics\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
+export const dimensionKeysQueryRegex = /^dimensions\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
+export const dimensionValuesQueryRegex = /^dimensionOptions\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
+
+export const removeQuotes = str => {
+    if (!str) return str;
+
+    let res = str;
+    if (str.startsWith("'") || str.startsWith('"')) {
+        res = res.slice(1);
+    }
+    if (str.endsWith("'") || str.endsWith('"')) {
+        res = res.slice(0, res.length - 1);
+    }
+    return res;
+}

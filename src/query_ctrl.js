@@ -130,7 +130,6 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
         // return all the values for the key
         const vars = this.datasource.getVariables(dimensionValuesQueryRegex) || [];
-        const custom = this.datasource.getVariables(null, 'custom') || [];
         const optionsWithVariables = vars.concat(custom).concat(options);
         const segments = optionsWithVariables.map(v => this.uiSegmentSrv.newSegment({ value: v }));
         return segments;
