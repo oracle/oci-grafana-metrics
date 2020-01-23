@@ -41,8 +41,8 @@ export default class OCIDatasource {
    * Required method
    * Used by panels to get data
    */
-  query(options) {
-    var query = this.buildQueryParameters(options);
+  async query(options) {
+    var query = await this.buildQueryParameters(options);
 
     if (query.targets.length <= 0) {
       return this.q.when({ data: [] });
@@ -128,7 +128,7 @@ export default class OCIDatasource {
   /** 
    * Build and validate query parameters.
    */
-  buildQueryParameters(options) {
+  async buildQueryParameters(options) {
     let queries = options.targets
       .filter(t => !t.hide)
       .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
@@ -144,7 +144,8 @@ export default class OCIDatasource {
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
     queries = this.splitMultiValueDimensionsIntoQuieries(queries, options);
 
-    queries = queries.map(t => {
+    const results = [];
+    for (let t of queries) {
       const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars);
       let query = this.getVariableValue(t.target, options.scopedVars);
 
@@ -161,7 +162,8 @@ export default class OCIDatasource {
         query = `${this.getVariableValue(t.metric, options.scopedVars)}[${t.window}]${dimension}.${t.aggregation}`;
       }
 
-      return {
+      const compartmentId = await this.getCompartmentId(this.getVariableValue(t.compartment, options.scopedVars));
+      const result =  {
         environment: this.environment,
         datasourceId: this.id,
         tenancyOCID: this.tenancyOCID,
@@ -171,13 +173,14 @@ export default class OCIDatasource {
         hide: t.hide,
         type: t.type || 'timeserie',
         region: _.isEmpty(region) ? this.defaultRegion : region,
-        compartment: this.getVariableValue(t.compartment, options.scopedVars),
+        compartment: compartmentId,
         namespace: this.getVariableValue(t.namespace, options.scopedVars),
         query: query
       }
-    });
+      results.push(result);
+    };
 
-    options.targets = queries;
+    options.targets = results;
 
     return options;
   }
@@ -283,7 +286,9 @@ export default class OCIDatasource {
 
     let compartmentQuery = varString.match(compartmentsQueryRegex)
     if (compartmentQuery) {
-      return this.getCompartments().catch(err => { throw new Error('Unable to get compartments: ' + err) })
+      return this.getCompartments().then(compartments => {
+        return compartments.map(c => ({ text: c.text, value: c.text }));
+      }).catch(err => { throw new Error('Unable to get compartments: ' + err) })
     }
 
     let namespaceQuery = varString.match(namespacesQueryRegex)
