@@ -38,8 +38,6 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.getDimensionOperatorSegment = () => this.uiSegmentSrv.newOperator('=');
     this.getSelectDimensionValueSegment = () => uiSegmentSrv.newSegment({ value: SELECT_PLACEHOLDERS.DIMENSION_VALUE, type: 'value' });
 
-    this.regionsCache = [];
-    this.compartmentsCache = [];
     this.dimensionsCache = {};
 
     // rebuild dimensionSegments on query editor load
@@ -58,46 +56,32 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   // ****************************** Options **********************************
 
   getRegions() {
-    if (!_.isEmpty(this.regionsCache)) {
-      return this.q.when(this.regionsCache);
-    }
-    return this.datasource.getRegions()
-      .then((regions) => {
-        this.regionsCache = this.appendVariables(regions, regionsQueryRegex);
-        return this.regionsCache;
-      });
+    return this.datasource.getRegions().then(regions => {
+      return this.appendVariables(regions, regionsQueryRegex);
+    });
   }
 
   getCompartments() {
-    if (!_.isEmpty(this.compartmentsCache)) {
-      return this.q.when(this.compartmentsCache);
-    }
-    return this.datasource.getCompartments()
-      .then((compartments) => {
-        this.compartmentsCache = this.appendVariables(compartments, compartmentsQueryRegex);
-        return this.compartmentsCache;
-      });
+    return this.datasource.getCompartments().then(compartments => {
+      return this.appendVariables(compartments, compartmentsQueryRegex);
+    });
   }
 
   getNamespaces() {
-    return this.datasource.getNamespaces(this.target)
-      .then((namespaces) => {
-        return this.appendVariables(namespaces, namespacesQueryRegex);
-      });
+    return this.datasource.getNamespaces(this.target).then(namespaces => {
+      return this.appendVariables(namespaces, namespacesQueryRegex);
+    });
   }
 
   getMetrics() {
-    return this.datasource.metricFindQuery(this.target)
-      .then((metrics) => {
-        return this.appendVariables(metrics, metricsQueryRegex);
-      });
+    return this.datasource.metricFindQuery(this.target).then(metrics => {
+      return this.appendVariables(metrics, metricsQueryRegex);
+    });
   }
 
   getAggregations() {
-    return this.datasource.getAggregations().then((aggs) => {
-      return aggs.map((val) => {
-        return { text: val, value: val };
-      })
+    return this.datasource.getAggregations().then(aggs => {
+      return aggs.map((val) => ({ text: val, value: val }));
     });
   }
 
@@ -130,8 +114,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
         // return all the values for the key
         const vars = this.datasource.getVariables(dimensionValuesQueryRegex) || [];
-        const custom = this.datasource.getVariables(null, 'custom') || [];
-        const optionsWithVariables = vars.concat(custom).concat(options);
+        const optionsWithVariables = vars.concat(options);
         const segments = optionsWithVariables.map(v => this.uiSegmentSrv.newSegment({ value: v }));
         return segments;
       });

@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import _ from 'lodash'
-import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, adsQueryRegex } from './constants'
+import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, removeQuotes } from './constants'
 import retryOrThrow from './util/retry'
 import { SELECT_PLACEHOLDERS } from './query_ctrl'
 
@@ -20,6 +20,12 @@ export default class OCIDatasource {
     this.backendSrv = backendSrv
     this.templateSrv = templateSrv
     this.timeSrv = timeSrv
+
+    this.compartmentsCache = [];
+    this.regionsCache = [];
+
+    this.getRegions();
+    this.getCompartments();
   }
 
   /**
@@ -35,8 +41,8 @@ export default class OCIDatasource {
    * Required method
    * Used by panels to get data
    */
-  query(options) {
-    var query = this.buildQueryParameters(options);
+  async query(options) {
+    var query = await this.buildQueryParameters(options);
 
     if (query.targets.length <= 0) {
       return this.q.when({ data: [] });
@@ -88,7 +94,7 @@ export default class OCIDatasource {
    * Required method
    * Used by query editor to get metric suggestions
    */
-  metricFindQuery(target) {
+ async metricFindQuery(target) {
     if (typeof (target) === 'string') {
       // used in template editor for creating variables
       return this.templateMetricQuery(target);
@@ -102,6 +108,7 @@ export default class OCIDatasource {
       return this.q.when([]);
     }
 
+    const compartmentId = await this.getCompartmentId(compartment);
     return this.doRequest({
       targets: [{
         environment: this.environment,
@@ -109,7 +116,7 @@ export default class OCIDatasource {
         tenancyOCID: this.tenancyOCID,
         queryType: 'search',
         region: _.isEmpty(region) ? this.defaultRegion : region,
-        compartment: compartment,
+        compartment: compartmentId,
         namespace: namespace
       }],
       range: this.timeSrv.timeRange()
@@ -121,7 +128,7 @@ export default class OCIDatasource {
   /** 
    * Build and validate query parameters.
    */
-  buildQueryParameters(options) {
+  async buildQueryParameters(options) {
     let queries = options.targets
       .filter(t => !t.hide)
       .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
@@ -137,7 +144,8 @@ export default class OCIDatasource {
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
     queries = this.splitMultiValueDimensionsIntoQuieries(queries, options);
 
-    queries = queries.map(t => {
+    const results = [];
+    for (let t of queries) {
       const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars);
       let query = this.getVariableValue(t.target, options.scopedVars);
 
@@ -154,7 +162,8 @@ export default class OCIDatasource {
         query = `${this.getVariableValue(t.metric, options.scopedVars)}[${t.window}]${dimension}.${t.aggregation}`;
       }
 
-      return {
+      const compartmentId = await this.getCompartmentId(this.getVariableValue(t.compartment, options.scopedVars));
+      const result =  {
         environment: this.environment,
         datasourceId: this.id,
         tenancyOCID: this.tenancyOCID,
@@ -164,13 +173,14 @@ export default class OCIDatasource {
         hide: t.hide,
         type: t.type || 'timeserie',
         region: _.isEmpty(region) ? this.defaultRegion : region,
-        compartment: this.getVariableValue(t.compartment, options.scopedVars),
+        compartment: compartmentId,
         namespace: this.getVariableValue(t.namespace, options.scopedVars),
         query: query
       }
-    });
+      results.push(result);
+    };
 
-    options.targets = queries;
+    options.targets = results;
 
     return options;
   }
@@ -276,14 +286,16 @@ export default class OCIDatasource {
 
     let compartmentQuery = varString.match(compartmentsQueryRegex)
     if (compartmentQuery) {
-      return this.getCompartments().catch(err => { throw new Error('Unable to get compartments: ' + err) })
+      return this.getCompartments().then(compartments => {
+        return compartments.map(c => ({ text: c.text, value: c.text }));
+      }).catch(err => { throw new Error('Unable to get compartments: ' + err) })
     }
 
     let namespaceQuery = varString.match(namespacesQueryRegex)
     if (namespaceQuery) {
       let target = {
-        region: this.getVariableValue(namespaceQuery[1]),
-        compartment: this.getVariableValue(namespaceQuery[2]).replace(',', '').trim()
+        region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+        compartment: removeQuotes(this.getVariableValue(namespaceQuery[2]))
       }
       return this.getNamespaces(target).catch(err => { throw new Error('Unable to get namespaces: ' + err) })
     }
@@ -291,9 +303,9 @@ export default class OCIDatasource {
     let metricQuery = varString.match(metricsQueryRegex)
     if (metricQuery) {
       let target = {
-        region: this.getVariableValue(metricQuery[1].trim()),
-        compartment: this.getVariableValue(metricQuery[2].replace(',', '').trim()),
-        namespace: this.getVariableValue(metricQuery[3].replace(',', '').trim())
+        region: removeQuotes(this.getVariableValue(metricQuery[1])),
+        compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
+        namespace: removeQuotes(this.getVariableValue(metricQuery[3]))
       }
       return this.metricFindQuery(target).catch(err => { throw new Error('Unable to get metrics: ' + err) })
     }
@@ -301,10 +313,10 @@ export default class OCIDatasource {
     let dimensionsQuery = varString.match(dimensionKeysQueryRegex)
     if (dimensionsQuery) {
       let target = {
-        region: this.getVariableValue(dimensionsQuery[1].trim()),
-        compartment: this.getVariableValue(dimensionsQuery[2].replace(',', '').trim()),
-        namespace: this.getVariableValue(dimensionsQuery[3].replace(',', '').trim()),
-        metric: this.getVariableValue(dimensionsQuery[4].replace(',', '').trim()),
+        region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
+        compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
+        namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
+        metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
       }
       return this.getDimensionKeys(target).catch(err => { throw new Error('Unable to get dimensions: ' + err) })
     }
@@ -312,12 +324,12 @@ export default class OCIDatasource {
     let dimensionOptionsQuery = varString.match(dimensionValuesQueryRegex)
     if (dimensionOptionsQuery) {
       let target = {
-        region: this.getVariableValue(dimensionOptionsQuery[1].trim()),
-        compartment: this.getVariableValue(dimensionOptionsQuery[2].replace(',', '').trim()),
-        namespace: this.getVariableValue(dimensionOptionsQuery[3].replace(',', '').trim()),
-        metric: this.getVariableValue(dimensionOptionsQuery[4].replace(',', '').trim())
+        region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
+        compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
+        namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
+        metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4]))
       }
-      const dimensionKey = this.getVariableValue(dimensionOptionsQuery[5].replace(',', '').trim());
+      const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));
       return this.getDimensionValues(target, dimensionKey).catch(err => { throw new Error('Unable to get dimension options: ' + err) })
     }
 
@@ -325,6 +337,10 @@ export default class OCIDatasource {
   }
 
   getRegions() {
+    if (this.regionsCache && this.regionsCache.length > 0) {
+      return this.q.when(this.regionsCache);
+    }
+
     return this.doRequest({
       targets: [{
         environment: this.environment,
@@ -334,11 +350,16 @@ export default class OCIDatasource {
       }],
       range: this.timeSrv.timeRange()
     }).then((items) => {
-      return this.mapToTextValue(items, 'regions')
+      this.regionsCache = this.mapToTextValue(items, 'regions');
+      return this.regionsCache;
     });
   }
 
   getCompartments() {
+    if (this.compartmentsCache && this.compartmentsCache.length > 0) {
+      return this.q.when(this.compartmentsCache);
+    }
+
     return this.doRequest({
       targets: [{
         environment: this.environment,
@@ -349,17 +370,26 @@ export default class OCIDatasource {
       }],
       range: this.timeSrv.timeRange()
     }).then((items) => {
-      return this.mapToTextValue(items, 'compartments')
+      this.compartmentsCache = this.mapToTextValue(items, 'compartments');
+      return this.compartmentsCache;
     });
   }
 
-  getNamespaces(target) {
+  getCompartmentId(compartment) {
+    return this.getCompartments().then(compartments => {
+      const compartmentFound = compartments.find(c => c.text === compartment || c.value === compartment);
+      return compartmentFound ? compartmentFound.value : compartment;
+    });
+  }
+
+  async getNamespaces(target) {
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     if (_.isEmpty(compartment)) {
       return this.q.when([]);
     }
 
+    const compartmentId = await this.getCompartmentId(compartment);
     return this.doRequest({
       targets: [{
         environment: this.environment,
@@ -367,7 +397,7 @@ export default class OCIDatasource {
         tenancyOCID: this.tenancyOCID,
         queryType: 'namespaces',
         region: _.isEmpty(region) ? this.defaultRegion : region,
-        compartment: compartment
+        compartment: compartmentId
       }],
       range: this.timeSrv.timeRange()
     }).then((items) => {
@@ -393,6 +423,8 @@ export default class OCIDatasource {
         continue;
       }
       dimensionsMap[m] = null;
+
+      const compartmentId = await this.getCompartmentId(compartment);
       await this.doRequest({
         targets: [{
           environment: this.environment,
@@ -400,7 +432,7 @@ export default class OCIDatasource {
           tenancyOCID: this.tenancyOCID,
           queryType: 'dimensions',
           region: _.isEmpty(region) ? this.defaultRegion : region,
-          compartment: compartment,
+          compartment: compartmentId,
           namespace: namespace,
           metric: m
         }],
@@ -523,14 +555,18 @@ export default class OCIDatasource {
   /**  
    * Get all template variable descriptors
    */
-  getVariableDescriptors(regex, type) {
-    let vars = this.templateSrv.variables || [];
+  getVariableDescriptors(regex, includeCustom = true) {
+    const vars = this.templateSrv.variables || [];
+
     if (regex) {
-      vars = vars.filter(item => item.query.match(regex) !== null);
+      let regexVars = vars.filter(item => item.query.match(regex) !== null);
+      if (includeCustom) {
+        const custom = vars.filter(item => item.type === 'custom' || item.type === 'constant');
+        regexVars = regexVars.concat(custom);
+      }
+      return regexVars;
     }
-    if (type) {
-      vars = vars.filter(item => item.type === type)
-    }
+
     return vars;
   }
 
@@ -538,8 +574,8 @@ export default class OCIDatasource {
    * List all variable names optionally filtered by regex or/and type
    * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
   */
-  getVariables(regex, type) {
-    const varDescriptors = this.getVariableDescriptors(regex, type) || [];
+  getVariables(regex, includeCustom) {
+    const varDescriptors = this.getVariableDescriptors(regex, includeCustom) || [];
     return varDescriptors.map(item => `$${item.name}`);
   }
 
