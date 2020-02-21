@@ -100,7 +100,7 @@ export default class OCIDatasource {
       return this.templateMetricQuery(target);
     }
 
-    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(region);
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
 
