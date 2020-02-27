@@ -4,7 +4,7 @@
 */
 import { QueryCtrl } from 'app/plugins/sdk'
 import './css/query-editor.css!'
-import { windows, namespacesQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionKeysQueryRegex, dimensionValuesQueryRegex } from './constants'
+import { windows, namespacesQueryRegex, resourcegroupsQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionKeysQueryRegex, dimensionValuesQueryRegex } from './constants'
 import _ from 'lodash'
 
 export const SELECT_PLACEHOLDERS = {
@@ -13,6 +13,7 @@ export const SELECT_PLACEHOLDERS = {
   COMPARTMENT: 'select compartment',
   REGION: 'select region',
   NAMESPACE: 'select namespace',
+  RESOURCEGROUP: 'select resourcegroup',
   METRIC: 'select metric'
 };
 
@@ -26,6 +27,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.target.region = this.target.region || SELECT_PLACEHOLDERS.REGION;
     this.target.compartment = this.target.compartment || SELECT_PLACEHOLDERS.COMPARTMENT;
     this.target.namespace = this.target.namespace || SELECT_PLACEHOLDERS.NAMESPACE;
+    this.target.resourcegroup = this.target.resourcegroup || SELECT_PLACEHOLDERS.RESOURCEGROUP;
     this.target.metric = this.target.metric || SELECT_PLACEHOLDERS.METRIC;
     this.target.resolution = this.target.resolution || '1m';
     this.target.window = this.target.window || '1m';
@@ -70,6 +72,12 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   getNamespaces() {
     return this.datasource.getNamespaces(this.target).then(namespaces => {
       return this.appendVariables(namespaces, namespacesQueryRegex);
+    });
+  }
+
+  getResourceGroups() {
+    return this.datasource.getResourceGroups(this.target).then(resourcegroups => {
+      return this.appendVariables(resourcegroups, resourcegroupsQueryRegex);
     });
   }
 
@@ -128,6 +136,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
       region: this.datasource.getVariableValue(this.target.region),
       compartment: this.datasource.getVariableValue(this.target.compartment),
       namespace: this.datasource.getVariableValue(this.target.namespace),
+      resourcegroup: this.datasource.getVariableValue(this.target.resourcegroup),
       metric: this.datasource.getVariableValue(this.target.metric)
     });
 

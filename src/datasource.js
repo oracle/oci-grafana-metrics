@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import _ from 'lodash'
-import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, removeQuotes } from './constants'
+import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, resourcegroupsQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, removeQuotes } from './constants'
 import retryOrThrow from './util/retry'
 import { SELECT_PLACEHOLDERS } from './query_ctrl'
 
@@ -103,8 +103,9 @@ export default class OCIDatasource {
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
+    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? '' : this.getVariableValue(target.resourcegroup);
 
-    if (_.isEmpty(compartment) || _.isEmpty(namespace)) {
+    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(resourcegroup)) {
       return this.q.when([]);
     }
 
@@ -117,7 +118,8 @@ export default class OCIDatasource {
         queryType: 'search',
         region: _.isEmpty(region) ? this.defaultRegion : region,
         compartment: compartmentId,
-        namespace: namespace
+        namespace: namespace,
+        resourcegroup: resourcegroup
       }],
       range: this.timeSrv.timeRange()
     }).then((res) => {
@@ -130,10 +132,11 @@ export default class OCIDatasource {
    */
   async buildQueryParameters(options) {
     let queries = options.targets
-      .filter(t => !t.hide)
-      .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
-      .filter(t => !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) && t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE)
-      .filter(t => !_.isEmpty(this.getVariableValue(t.metric, options.scopedVars)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)));
+        .filter(t => !t.hide)
+        .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
+        .filter(t => !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) && t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE)
+        .filter(t => !_.isEmpty(this.getVariableValue(t.resourcegroup, options.scopedVars)) && t.resourcegroup !== SELECT_PLACEHOLDERS.RESOURCEGROUP)
+        .filter(t => !_.isEmpty(this.getVariableValue(t.metric, options.scopedVars)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)));
 
     queries.forEach(t => {
       t.dimensions = (t.dimensions || [])
@@ -175,6 +178,7 @@ export default class OCIDatasource {
         region: _.isEmpty(region) ? this.defaultRegion : region,
         compartment: compartmentId,
         namespace: this.getVariableValue(t.namespace, options.scopedVars),
+        resourcegroup: this.getVariableValue(t.resourcegroup, options.scopedVars),
         query: query
       }
       results.push(result);
@@ -300,12 +304,23 @@ export default class OCIDatasource {
       return this.getNamespaces(target).catch(err => { throw new Error('Unable to get namespaces: ' + err) })
     }
 
+    let resourcegroupQuery = varString.match(resourcegroupsQueryRegex)
+    if (resourcegroupQuery) {
+      let target = {
+        region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
+        compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2]))
+        namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3]))
+      }
+      return this.getResourceGroups(target).catch(err => { throw new Error('Unable to get resourcegroups: ' + err) })
+    }
+
     let metricQuery = varString.match(metricsQueryRegex)
     if (metricQuery) {
       let target = {
         region: removeQuotes(this.getVariableValue(metricQuery[1])),
         compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
-        namespace: removeQuotes(this.getVariableValue(metricQuery[3]))
+        namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
+        resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
       }
       return this.metricFindQuery(target).catch(err => { throw new Error('Unable to get metrics: ' + err) })
     }
@@ -317,6 +332,7 @@ export default class OCIDatasource {
         compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
         namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
         metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
+        resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5]))
       }
       return this.getDimensionKeys(target).catch(err => { throw new Error('Unable to get dimensions: ' + err) })
     }
@@ -327,7 +343,8 @@ export default class OCIDatasource {
         region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
         compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
         namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
-        metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4]))
+        metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
+        resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]))
       }
       const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));
       return this.getDimensionValues(target, dimensionKey).catch(err => { throw new Error('Unable to get dimension options: ' + err) })
@@ -405,15 +422,40 @@ export default class OCIDatasource {
     });
   }
 
+  async getResourceGroups(target) {
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
+    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
+    if (_.isEmpty(compartment)) {
+      return this.q.when([]);
+    }
+
+    const compartmentId = await this.getCompartmentId(compartment);
+    return this.doRequest({
+      targets: [{
+        environment: this.environment,
+        datasourceId: this.id,
+        tenancyOCID: this.tenancyOCID,
+        queryType: 'resourcegroups',
+        region: _.isEmpty(region) ? this.defaultRegion : region,
+        compartment: compartmentId,
+        namespace: namespace
+      }],
+      range: this.timeSrv.timeRange()
+    }).then((items) => {
+      return this.mapToTextValue(items, 'resourcegroups')
+    });
+  }
+
   async getDimensions(target) {
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
-    
+    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? '' : this.getVariableValue(target.resourcegroup);
     const metric = target.metric === SELECT_PLACEHOLDERS.METRIC ? '' : this.getVariableValue(target.metric);
     const metrics = metric.startsWith("{") && metric.endsWith("}") ? metric.slice(1, metric.length - 1).split(',') : [metric];
 
-    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(metrics)) {
+    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(resourcegroup) || _.isEmpty(metrics)) {
       return this.q.when([]);
     }
 
@@ -434,6 +476,7 @@ export default class OCIDatasource {
           region: _.isEmpty(region) ? this.defaultRegion : region,
           compartment: compartmentId,
           namespace: namespace,
+          resourcegroup: resourcegroup,
           metric: m
         }],
         range: this.timeSrv.timeRange()

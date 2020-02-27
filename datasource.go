@@ -52,6 +52,7 @@ type GrafanaOCIRequest struct {
 	Query      string
 	Resolution string
 	Namespace  string
+	ResourceGroup  string
 }
 
 //GrafanaSearchRequest incoming request body for search requests
@@ -107,6 +108,8 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 		return o.dimensionResponse(ctx, tsdbReq)
 	case "namespaces":
 		return o.namespaceResponse(ctx, tsdbReq)
+	case "resourcegroups":
+		return o.resourcegroupsResponse(ctx, tsdbReq)
 	case "regions":
 		return o.regionsResponse(ctx, tsdbReq)
 	case "search":
@@ -148,6 +151,7 @@ func (o *OCIDatasource) dimensionResponse(ctx context.Context, tsdbReq *datasour
 		json.Unmarshal([]byte(query.ModelJson), &ts)
 		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.Namespace = common.String(ts.Namespace)
+		reqDetails.ResourceGroup = common.String(ts.ResourceGroup)
 		reqDetails.Name = common.String(ts.Metric)
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
 		if err != nil {
@@ -219,6 +223,48 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, tsdbReq *datasour
 	}, nil
 }
 
+func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
+	table := datasource.Table{
+		Columns: []*datasource.TableColumn{
+			&datasource.TableColumn{Name: "text"},
+		},
+		Rows: make([]*datasource.TableRow, 0),
+	}
+	for _, query := range tsdbReq.Queries {
+		var ts GrafanaSearchRequest
+		json.Unmarshal([]byte(query.ModelJson), &ts)
+
+		reqDetails := monitoring.ListMetricsDetails{}
+		reqDetails.Namespace = []string{"Namespace"}
+		reqDetails.GroupBy = []string{"resourceGroup"}
+		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
+		}
+
+		rows := make([]*datasource.TableRow, 0)
+		for _, item := range items {
+			rows = append(rows, &datasource.TableRow{
+				Values: []*datasource.RowValue{
+					&datasource.RowValue{
+						Kind:        datasource.RowValue_TYPE_STRING,
+						StringValue: *(item.ResourceGroup),
+					},
+				},
+			})
+		}
+		table.Rows = rows
+	}
+	return &datasource.DatasourceResponse{
+		Results: []*datasource.QueryResult{
+			&datasource.QueryResult{
+				RefId:  "namespaces",
+				Tables: []*datasource.Table{&table},
+			},
+		},
+	}, nil
+}
+
 func getConfigProvider(environment string) (common.ConfigurationProvider, error) {
 	switch environment {
 	case "local":
@@ -243,6 +289,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 		json.Unmarshal([]byte(query.ModelJson), &ts)
 		reqDetails := monitoring.ListMetricsDetails{
 			Namespace: common.String(ts.Namespace),
+			ResourceGroup: common.String(ts.ResourceGroup),
 		}
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
 		if err != nil {
@@ -399,6 +446,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 		req := monitoring.SummarizeMetricsDataDetails{
 			Query:      common.String(ts.Query),
 			Namespace:  common.String(ts.Namespace),
+			ResourceGroup:  common.String(ts.ResourceGroup),
 			StartTime:  &common.SDKTime{start},
 			EndTime:    &common.SDKTime{end},
 			Resolution: common.String(ts.Resolution),

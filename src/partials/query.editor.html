@@ -29,6 +29,14 @@
 			  on-change="ctrl.onChangeInternal()">
             </gf-form-dropdown>
           </div>
+          <label class="gf-form-label query-keyword width-10">ResourceGroup</label>
+          <div class="gf-form-select-wrapper width-10">
+            <gf-form-dropdown
+                    model="ctrl.target.resourcegroup"
+                    get-options="ctrl.getResourceGroups()"
+                    on-change="ctrl.onChangeInternal()">
+            </gf-form-dropdown>
+          </div>
           <div class="gf-form">
             <label class="gf-form-label width-10 query-keyword">Resolution</label>
             <input type="text" class="input-small gf-form-input width-5" ng-model="ctrl.target.resolution" ng-change="ctrl.onChangeInternal()" placeholder="1m"/>
