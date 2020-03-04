@@ -60,6 +60,7 @@ type GrafanaSearchRequest struct {
 	GrafanaCommonRequest
 	Metric    string `json:"metric,omitempty"`
 	Namespace string
+	ResourceGroup  string
 }
 
 type GrafanaCompartmentRequest struct {
@@ -235,7 +236,7 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, tsdbReq *dat
 		json.Unmarshal([]byte(query.ModelJson), &ts)
 
 		reqDetails := monitoring.ListMetricsDetails{}
-		reqDetails.Namespace = []string{"Namespace"}
+		reqDetails.Namespace = common.String(ts.Namespace)
 		reqDetails.GroupBy = []string{"resourceGroup"}
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
 		if err != nil {
@@ -258,7 +259,7 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, tsdbReq *dat
 	return &datasource.DatasourceResponse{
 		Results: []*datasource.QueryResult{
 			&datasource.QueryResult{
-				RefId:  "namespaces",
+				RefId:  "resourcegroups",
 				Tables: []*datasource.Table{&table},
 			},
 		},
