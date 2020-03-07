@@ -37,10 +37,6 @@
                     on-change="ctrl.onChangeInternal()">
             </gf-form-dropdown>
           </div>
-          <div class="gf-form">
-            <label class="gf-form-label width-10 query-keyword">Resolution</label>
-            <input type="text" class="input-small gf-form-input width-5" ng-model="ctrl.target.resolution" ng-change="ctrl.onChangeInternal()" placeholder="1m"/>
-          </div>
         </div>
        <div class="gf-form gf-form--grow">
         <div class="gf-form-label gf-form-label--grow"></div>
@@ -78,6 +74,10 @@
               ng-change="ctrl.onChangeInternal()">
             </select>
           </div>
+        </div>
+        <div class="gf-form">
+          <label class="gf-form-label width-10 query-keyword">Resolution</label>
+          <input type="text" class="input-small gf-form-input width-5" ng-model="ctrl.target.resolution" ng-change="ctrl.onChangeInternal()" placeholder="1m"/>
         </div>
       </div>
      <div class="gf-form-inline">

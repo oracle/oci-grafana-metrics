@@ -102,6 +102,9 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 		o.config = configProvider
 	}
 
+	o.logger.Debug(spew.Sdump("QueryType"))
+	o.logger.Debug(spew.Sdump(queryType))
+
 	switch queryType {
 	case "compartments":
 		return o.compartmentsResponse(ctx, tsdbReq)
@@ -152,7 +155,9 @@ func (o *OCIDatasource) dimensionResponse(ctx context.Context, tsdbReq *datasour
 		json.Unmarshal([]byte(query.ModelJson), &ts)
 		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.Namespace = common.String(ts.Namespace)
-		reqDetails.ResourceGroup = common.String(ts.ResourceGroup)
+		if ts.ResourceGroup != "NoResourceGroup" {
+			reqDetails.ResourceGroup = common.String(ts.ResourceGroup)
+		}
 		reqDetails.Name = common.String(ts.Metric)
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
 		if err != nil {
@@ -231,6 +236,9 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, tsdbReq *dat
 		},
 		Rows: make([]*datasource.TableRow, 0),
 	}
+
+	var rows_placeholder = common.String("NoResourceGroup")
+
 	for _, query := range tsdbReq.Queries {
 		var ts GrafanaSearchRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
@@ -244,6 +252,14 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, tsdbReq *dat
 		}
 
 		rows := make([]*datasource.TableRow, 0)
+		rows = append(rows, &datasource.TableRow{
+			Values: []*datasource.RowValue{
+				&datasource.RowValue{
+					Kind:        datasource.RowValue_TYPE_STRING,
+					StringValue: *(rows_placeholder),
+				},
+			},
+		})
 		for _, item := range items {
 			rows = append(rows, &datasource.TableRow{
 				Values: []*datasource.RowValue{
@@ -288,10 +304,16 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 	for _, query := range tsdbReq.Queries {
 		var ts GrafanaSearchRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
-		reqDetails := monitoring.ListMetricsDetails{
-			Namespace: common.String(ts.Namespace),
-			ResourceGroup: common.String(ts.ResourceGroup),
+		reqDetails := monitoring.ListMetricsDetails{}
+		reqDetails.Namespace = common.String(ts.Namespace)
+		if ts.ResourceGroup != "NoResourceGroup" {
+			reqDetails.ResourceGroup = common.String(ts.ResourceGroup)
 		}
+		// reqDetails := monitoring.ListMetricsDetails{
+		//	Namespace: common.String(ts.Namespace),
+		//	ResourceGroup: common.String(ts.ResourceGroup),
+		// }
+		o.logger.Debug(spew.Sdump("Search loop"))
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
@@ -312,6 +334,8 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 				metricCache[*(item.Name)] = true
 			}
 		}
+		o.logger.Debug(spew.Sdump("Search Row"))
+		o.logger.Debug(spew.Sdump(rows))
 		table.Rows = rows
 	}
 	return &datasource.DatasourceResponse{
@@ -328,6 +352,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails) ([]monitoring.Metric, error) {
 	var items []monitoring.Metric
 	var page *string
+	o.logger.Debug(spew.Sdump(metricDetails))
 	for {
 		reg := common.StringToRegion(region)
 		o.metricsClient.SetRegion(string(reg))
@@ -336,6 +361,7 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 			ListMetricsDetails: metricDetails,
 			Page:               page,
 		})
+		o.logger.Debug(spew.Sdump(res))
 		if err != nil {
 			return nil, errors.Wrap(err, "list metrircs failed")
 		}
@@ -343,6 +369,7 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 		if res.OpcNextPage == nil {
 			break
 		}
+		o.logger.Debug(spew.Sdump(items))
 		page = res.OpcNextPage
 	}
 	return items, nil
@@ -434,6 +461,7 @@ type responseAndQuery struct {
 func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
 	results := make([]responseAndQuery, 0, len(tsdbReq.Queries))
 
+	o.logger.Debug(spew.Sdump("Inside Query......................"))
 	for _, query := range tsdbReq.Queries {
 		var ts GrafanaOCIRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
@@ -444,14 +472,24 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 		start = start.Truncate(time.Millisecond)
 		end = end.Truncate(time.Millisecond)
 
-		req := monitoring.SummarizeMetricsDataDetails{
-			Query:      common.String(ts.Query),
-			Namespace:  common.String(ts.Namespace),
-			ResourceGroup:  common.String(ts.ResourceGroup),
-			StartTime:  &common.SDKTime{start},
-			EndTime:    &common.SDKTime{end},
-			Resolution: common.String(ts.Resolution),
+		req := monitoring.SummarizeMetricsDataDetails{}
+		req.Query = common.String(ts.Query)
+		req.Namespace = common.String(ts.Namespace)
+		req.Resolution = common.String(ts.Resolution)
+		req.StartTime = &common.SDKTime{start}
+		req.EndTime = &common.SDKTime{end}
+		if ts.ResourceGroup != "NoResourceGroup" {
+			req.ResourceGroup = common.String(ts.ResourceGroup)
 		}
+		o.logger.Debug(spew.Sdump(req))
+		// req := monitoring.SummarizeMetricsDataDetails{
+		//	Query:      common.String(ts.Query),
+		//	Namespace:  common.String(ts.Namespace),
+		//	ResourceGroup:  common.String(ts.ResourceGroup),
+		//	StartTime:  &common.SDKTime{start},
+		//	EndTime:    &common.SDKTime{end},
+		//	Resolution: common.String(ts.Resolution),
+		//}
 		reg := common.StringToRegion(ts.Region)
 		o.metricsClient.SetRegion(string(reg))
 

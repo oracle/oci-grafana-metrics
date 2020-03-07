@@ -29,7 +29,7 @@ export default class OCIDatasource {
   }
 
   /**
-   * Each Grafana Data source should contain the following functions: 
+   * Each Grafana Data source should contain the following functions:
    *  - query(options) //used by panels to get data
    *  - testDatasource() //used by data source configuration page to make sure the connection is working
    *  - annotationQuery(options) // used by dashboards to get annotations
@@ -37,13 +37,12 @@ export default class OCIDatasource {
    * More information: https://grafana.com/docs/plugins/developing/datasources/
   */
 
-  /** 
+  /**
    * Required method
    * Used by panels to get data
    */
   async query(options) {
     var query = await this.buildQueryParameters(options);
-
     if (query.targets.length <= 0) {
       return this.q.when({ data: [] });
     }
@@ -90,7 +89,7 @@ export default class OCIDatasource {
     })
   }
 
-  /** 
+  /**
    * Required method
    * Used by query editor to get metric suggestions
    */
@@ -105,7 +104,7 @@ export default class OCIDatasource {
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
     const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? '' : this.getVariableValue(target.resourcegroup);
 
-    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(resourcegroup)) {
+    if (_.isEmpty(compartment) || _.isEmpty(namespace)) {
       return this.q.when([]);
     }
 
@@ -130,7 +129,7 @@ export default class OCIDatasource {
   /**
    * Build and validate query parameters.
    */
-  async buildQueryParameters(options) {
+  async buildQueryParameters (options) {
     let queries = options.targets
       .filter(t => !t.hide)
       .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
@@ -166,7 +165,7 @@ export default class OCIDatasource {
       }
 
       const compartmentId = await this.getCompartmentId(this.getVariableValue(t.compartment, options.scopedVars));
-      const result =  {
+      const result = {
         environment: this.environment,
         datasourceId: this.id,
         tenancyOCID: this.tenancyOCID,
@@ -454,7 +453,7 @@ export default class OCIDatasource {
     const metric = target.metric === SELECT_PLACEHOLDERS.METRIC ? '' : this.getVariableValue(target.metric);
     const metrics = metric.startsWith("{") && metric.endsWith("}") ? metric.slice(1, metric.length - 1).split(',') : [metric];
 
-    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(resourcegroup) || _.isEmpty(metrics)) {
+    if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(metrics)) {
       return this.q.when([]);
     }
 
