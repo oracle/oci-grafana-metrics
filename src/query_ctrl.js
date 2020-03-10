@@ -13,7 +13,7 @@ export const SELECT_PLACEHOLDERS = {
   COMPARTMENT: 'select compartment',
   REGION: 'select region',
   NAMESPACE: 'select namespace',
-  RESOURCEGROUP: 'NoResourceGroup',
+  RESOURCEGROUP: 'select namespace',
   METRIC: 'select metric'
 };
 
