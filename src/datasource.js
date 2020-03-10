@@ -6,6 +6,7 @@ import _ from 'lodash'
 import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, resourcegroupsQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, removeQuotes } from './constants'
 import retryOrThrow from './util/retry'
 import { SELECT_PLACEHOLDERS } from './query_ctrl'
+const DEFAULT_RESOURCE_GROUP = 'NoResourceGroup'
 
 export default class OCIDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
@@ -102,7 +103,7 @@ export default class OCIDatasource {
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
-    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? 'NoResourceGroup' : this.getVariableValue(target.resourcegroup);
+    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : this.getVariableValue(target.resourcegroup);
 
     if (_.isEmpty(compartment) || _.isEmpty(namespace)) {
       return this.q.when([]);
@@ -134,13 +135,15 @@ export default class OCIDatasource {
       .filter(t => !t.hide)
       .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
       .filter(t => !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) && t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE)
-      .filter(t => !_.isEmpty(this.getVariableValue(t.resourcegroup, options.scopedVars)) && t.resourcegroup !== SELECT_PLACEHOLDERS.RESOURCEGROUP)
+      .filter(t => !_.isEmpty(this.getVariableValue(t.resourcegroup, options.scopedVars)))
       .filter(t => !_.isEmpty(this.getVariableValue(t.metric, options.scopedVars)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)));
 
     queries.forEach(t => {
       t.dimensions = (t.dimensions || [])
         .filter(dim => !_.isEmpty(dim.key) && dim.key !== SELECT_PLACEHOLDERS.DIMENSION_KEY)
         .filter(dim => !_.isEmpty(dim.value) && dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE);
+
+      t.resourcegroup = t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : t.resourcegroup;
     });
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
@@ -449,7 +452,7 @@ export default class OCIDatasource {
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
-    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? '' : this.getVariableValue(target.resourcegroup);
+    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : this.getVariableValue(target.resourcegroup);
     const metric = target.metric === SELECT_PLACEHOLDERS.METRIC ? '' : this.getVariableValue(target.metric);
     const metrics = metric.startsWith("{") && metric.endsWith("}") ? metric.slice(1, metric.length - 1).split(',') : [metric];
 
