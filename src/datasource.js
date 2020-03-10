@@ -102,7 +102,7 @@ export default class OCIDatasource {
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
-    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? '' : this.getVariableValue(target.resourcegroup);
+    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? 'NoResourceGroup' : this.getVariableValue(target.resourcegroup);
 
     if (_.isEmpty(compartment) || _.isEmpty(namespace)) {
       return this.q.when([]);
