@@ -71,7 +71,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:c8d6a8d4d79e12aa5e13c7e8587e2a1f024a0041d6309162f996cad7c5e2e423"
+  digest = "1:c4278784afedcf2a253314c567e659c13b46ead950c3bc92b66fc6557fc1c64c"
   name = "github.com/oracle/oci-go-sdk"
   packages = [
     "common",
@@ -80,8 +80,8 @@
     "monitoring",
   ]
   pruneopts = ""
-  revision = "5295b14d42d1417490d318ff91475c5868e0fd8f"
-  version = "v4.1.0"
+  revision = "967e8c3dc33982d871496c044633ee10798f4659"
+  version = "v15.7.0"
 
 [[projects]]
   digest = "1:1d7e1867c49a6dd9856598ef7c3123604ea3daabf5b83f303ff457bcbc410b1d"
