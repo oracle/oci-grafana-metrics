@@ -377,7 +377,7 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, tsdbReq *datas
 	json.Unmarshal([]byte(tsdbReq.Queries[0].ModelJson), &ts)
 	if o.timeCacheUpdated.IsZero() || now.Sub(o.timeCacheUpdated) > cacheRefreshTime {
 
-		m, err := o.getCompartments(ctx, ts.TenancyOCID)
+		m, err := o.getCompartments(ctx, ts.Region, ts.TenancyOCID)
 		if err != nil {
 			o.logger.Error("Unable to refresh cache")
 			return nil, err
@@ -414,10 +414,13 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, tsdbReq *datas
 	}, nil
 }
 
-func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment string) (map[string]string, error) {
+func (o *OCIDatasource) getCompartments(ctx context.Context, region string, rootCompartment string) (map[string]string, error) {
 	m := make(map[string]string)
 	m["root compartment"] = rootCompartment
 	var page *string
+
+	reg := common.StringToRegion(region)
+	o.identityClient.SetRegion(string(reg))
 	for {
 		res, err := o.identityClient.ListCompartments(ctx,
 			identity.ListCompartmentsRequest{
