@@ -6,6 +6,7 @@ import _ from 'lodash'
 import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, resourcegroupsQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, removeQuotes } from './constants'
 import retryOrThrow from './util/retry'
 import { SELECT_PLACEHOLDERS } from './query_ctrl'
+import { resolveAutoWinRes } from './util/utilFunctions'
 const DEFAULT_RESOURCE_GROUP = 'NoResourceGroup'
 
 export default class OCIDatasource {
@@ -153,6 +154,7 @@ export default class OCIDatasource {
     for (let t of queries) {
       const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars);
       let query = this.getVariableValue(t.target, options.scopedVars);
+      let resolution = t.resolution
 
       if (_.isEmpty(query)) {
         // construct query
@@ -161,19 +163,26 @@ export default class OCIDatasource {
           if (result.indexOf(d) < 0) {
             result.push(d);
           }
-          return result;
-        }, []);
-        const dimension = _.isEmpty(dimensions) ? '' : `{${dimensions.join(',')}}`;
-        query = `${this.getVariableValue(t.metric, options.scopedVars)}[${t.window}]${dimension}.${t.aggregation}`;
+          return result
+        }, [])
+        const dimension = _.isEmpty(dimensions) ? '' : `{${dimensions.join(',')}}`
+        let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window)
+        resolution = this.getVariableValue(t.resolution)
+        // p.s : timeSrv.timeRange() results in a moment object
+        const rangeInMs = this.timeSrv.timeRange().to - this.timeSrv.timeRange().from
+        const resolvedWinResolObj = resolveAutoWinRes(window, resolution, rangeInMs)
+        window = resolvedWinResolObj.window
+        resolution = resolvedWinResolObj.resolution
+        query = `${this.getVariableValue(t.metric, options.scopedVars)}[${window}]${dimension}.${t.aggregation}`
       }
 
       const compartmentId = await this.getCompartmentId(this.getVariableValue(t.compartment, options.scopedVars));
       const result = {
+        resolution,
         environment: this.environment,
         datasourceId: this.id,
         tenancyOCID: this.tenancyOCID,
         queryType: 'query',
-        resolution: t.resolution,
         refId: t.refId,
         hide: t.hide,
         type: t.type || 'timeserie',
@@ -551,7 +560,7 @@ export default class OCIDatasource {
     return this.q.when(aggregations);
   }
 
-  /** 
+  /**
    * Calls grafana backend.
    * Retries 10 times before failure.
    */
@@ -570,7 +579,7 @@ export default class OCIDatasource {
     }, 10)
   }
 
-  /** 
+  /**
    * Converts data from grafana backend to UI format
    */
   mapToTextValue (result, searchField) {
@@ -596,7 +605,7 @@ export default class OCIDatasource {
 
   // **************************** Template variables helpers ****************************
 
-  /**  
+  /**
    * Get all template variable descriptors
    */
   getVariableDescriptors(regex, includeCustom = true) {
@@ -614,16 +623,21 @@ export default class OCIDatasource {
     return vars;
   }
 
-  /** 
+  /**
    * List all variable names optionally filtered by regex or/and type
    * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
+   *
+   * Updates:
+   * Notes on implementation :
+   * If a custom or constant is in  variables and  includeCustom, default is false.
+   * Hence,the varDescriptors list is filtered for a unique set of var names
   */
   getVariables(regex, includeCustom) {
     const varDescriptors = this.getVariableDescriptors(regex, includeCustom) || [];
-    return varDescriptors.map(item => `$${item.name}`);
+    return [ ...new Set(varDescriptors.map(item => `$${item.name}`))];
   }
 
-  /** 
+  /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
    * Returns an array with variable values or empty array
   */
@@ -631,7 +645,7 @@ export default class OCIDatasource {
     return this.templateSrv.replace(varName, scopedVars) || varName;
   }
 
-  /** 
+  /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
    * Returns true if variable with the given name is found
   */

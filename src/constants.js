@@ -2,10 +2,12 @@
 ** Copyright © 2019 Oracle and/or its affiliates. All rights reserved.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
+export const AUTO = 'auto'
 export const regions = ['ca-toronto-1', 'eu-frankfurt-1', 'uk-london-1', 'us-ashburn-1', 'us-phoenix-1']
 export const namespaces = ['oci_computeagent', 'oci_blockstore', 'oci_lbaas', 'oci_telemetry']
 export const aggregations = ['count()', 'max()', 'mean()', 'min()', 'rate()', 'sum()', 'percentile(.90)', 'percentile(.95)', 'percentile(.99)']
-export const windows = ['1m', '5m', '1h']
+export const windows = [AUTO, '1m', '5m', '1h']
+export const resolutions = [AUTO, '1m', '5m', '1h']
 export const environments = ['local', 'OCI Instance']
 
 
@@ -16,6 +18,7 @@ export const resourcegroupsQueryRegex = /^resourcegroups\(\s*(\".+\"|\'.+\'|\$\w
 export const metricsQueryRegex = /^metrics\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
 export const dimensionKeysQueryRegex = /^dimensions\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
 export const dimensionValuesQueryRegex = /^dimensionOptions\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
+export const windowsAndResolutionRegex = /^[0-9]+[mhs]$/;
 
 export const removeQuotes = str => {
     if (!str) return str;
@@ -29,3 +32,18 @@ export const removeQuotes = str => {
     }
     return res;
 }
+
+// if the user selects a time range less than 7 days ->  window will be 1m and resolution will be 1 min
+//
+// if the user selects a time range less than 30 days and more than 7 days ->   window will be 5m and resolution will be 5 min.
+//
+//   if the user select time range less than 90 days and more than 30 days -> a window will be 1h and resolution will be 1 h
+
+const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000
+const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000
+const ninetyDaysInMs = 90 * 24 * 60 * 60 * 1000
+export const autoTimeIntervals = [
+  [sevenDaysInMs, { window: '1m', resolution: '1m' }],
+  [thirtyDaysInMs, { window: '5m', resolution: '5m' }],
+  [ninetyDaysInMs, { window: '1h', resolution: '1h' }]
+]
