@@ -39,11 +39,16 @@ export const removeQuotes = str => {
 //
 //   if the user select time range less than 90 days and more than 30 days -> a window will be 1h and resolution will be 1 h
 
-const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000
-const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000
-const ninetyDaysInMs = 90 * 24 * 60 * 60 * 1000
+export const SEVEN_DAYS = 7
+export const THIRTY_DAYS = 30
+export const NINETY_DAYS = 90
+
+export const d0To7Config = { window: '1m', resolution: '1m' }
+export const d8To30Config = { window: '5m', resolution: '5m' }
+export const d31toInfConfig = { window: '1h', resolution: '1h' }
+
 export const autoTimeIntervals = [
-  [sevenDaysInMs, { window: '1m', resolution: '1m' }],
-  [thirtyDaysInMs, { window: '5m', resolution: '5m' }],
-  [ninetyDaysInMs, { window: '1h', resolution: '1h' }]
+  [SEVEN_DAYS, d0To7Config],
+  [THIRTY_DAYS, d8To30Config],
+  [NINETY_DAYS, d31toInfConfig]
 ]

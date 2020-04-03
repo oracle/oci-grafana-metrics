@@ -169,8 +169,8 @@ export default class OCIDatasource {
         let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window)
         resolution = this.getVariableValue(t.resolution)
         // p.s : timeSrv.timeRange() results in a moment object
-        const rangeInMs = this.timeSrv.timeRange().to - this.timeSrv.timeRange().from
-        const resolvedWinResolObj = resolveAutoWinRes(window, resolution, rangeInMs)
+        const numberOfDaysDiff = this.timeSrv.timeRange().to.diff(this.timeSrv.timeRange().from, 'days')
+        const resolvedWinResolObj = resolveAutoWinRes(window, resolution, numberOfDaysDiff)
         window = resolvedWinResolObj.window
         resolution = resolvedWinResolObj.resolution
         query = `${this.getVariableValue(t.metric, options.scopedVars)}[${window}]${dimension}.${t.aggregation}`
@@ -617,9 +617,10 @@ export default class OCIDatasource {
         const custom = vars.filter(item => item.type === 'custom' || item.type === 'constant');
         regexVars = regexVars.concat(custom);
       }
-      return regexVars;
+      const uniqueRegexVarsMap = new Map();
+      regexVars.forEach(varObj => uniqueRegexVarsMap.set(varObj.name, varObj))
+      return Array.from(uniqueRegexVarsMap.values())
     }
-
     return vars;
   }
 
@@ -634,7 +635,7 @@ export default class OCIDatasource {
   */
   getVariables(regex, includeCustom) {
     const varDescriptors = this.getVariableDescriptors(regex, includeCustom) || [];
-    return [ ...new Set(varDescriptors.map(item => `$${item.name}`))];
+    return varDescriptors.map(item => `$${item.name}`);
   }
 
   /**

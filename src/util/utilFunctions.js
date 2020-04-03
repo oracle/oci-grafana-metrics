@@ -7,9 +7,9 @@ import { AUTO, autoTimeIntervals } from '../constants'
  * @param timeRange
  * @returns {{window, resolution}}
  */
-const getWindowAndResolution = (autoWinResConfig, timeRange) => {
-  let i = 0
-  do { i++ } while (i < autoWinResConfig.length - 1 && timeRange >= autoWinResConfig[i][0])
+export const getWindowAndResolution = (autoWinResConfig, timeRange) => {
+  let i = -1
+  do { i++ } while (i < autoWinResConfig.length - 1 && timeRange > autoWinResConfig[i][0])
   const { window, resolution } = autoWinResConfig[i][1]
   return { window, resolution }
 }
@@ -22,15 +22,10 @@ const getWindowAndResolution = (autoWinResConfig, timeRange) => {
  * @returns {{window: *, resolution: *}}
  */
 export const resolveAutoWinRes = (windowSelected, resolutionSelected, timeRangeSelected) => {
-  let { window, resolution } = getWindowAndResolution(autoTimeIntervals, timeRangeSelected)
-
   const result = { window: windowSelected, resolution: resolutionSelected }
-
-  if (windowSelected === AUTO) {
-    result.window = window
-  }
-  if (resolutionSelected === AUTO) {
-    result.resolution = resolution
-  }
+  if (windowSelected !== AUTO && resolutionSelected !== AUTO) return result
+  const { window, resolution } = getWindowAndResolution(autoTimeIntervals, timeRangeSelected)
+  if (windowSelected === AUTO) result.window = window
+  if (resolutionSelected === AUTO) result.resolution = resolution
   return result
 }
