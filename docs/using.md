@@ -61,9 +61,35 @@ In order for these variables be available to be dynamically changed in your quer
 
 ![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screen%20Shot%202019-01-11%20at%203.19.51%20PM.png)
 
-Choose the save icon to save your dashboard. 
 
 
+For windows and resolution,
+
+You can use a custom or constant variable. 
+To create a custom, select the variable type as custom.
+Label(appears as the display name of the variable selected)
+  
+Custom variables provide the convenience of selecting a value
+out of many values. Try replicating the data in 
+the following screenshots for window and resolution.
+
+Custom window variable 
+![Custom variable for window](images/customWIndowVariableCreation.png)
+
+
+Custom reoslution variable
+![Custom variable for resolution](images/customResolution%20variable%20creation.png)
+
+Choose the save button to save your dashboard ! DO NOT FORGET 
+
+
+
+Now, on the top of panel, you would see windowLabel and resolutionLabel
+You can select the value for the variables from here  and use them in
+the dropdowns window and resolution  below the panel
+
+![Custom variable window dropdown](images/WithCustomDropDown.png)
+ 
 
 ### Dimensions
 
@@ -84,3 +110,62 @@ Oracle Cloud Infrastructure allows you to create [custom metrics namespaces](htt
 You can also see two custom metrics `CustomMetric` and `CustomMetric2` from the **Metric** dropdown. 
 
 ![Screen_Shot_2019-02-15_at_2.59.47_PM](images/Screen_Shot_2019-02-15_at_2.59.47_PM.png)
+
+
+----
+
+Now, variables can be used in  window and resolution drop downs
+
+#### MQL editor
+
+Click the pencil icon to  add or edit the query in editor mode
+
+
+For now, only the following fields can be updated in the query editor mode,
+1. Metric
+2. Window
+3. Aggregation 
+
+All other fields must be selected using the drop downs.
+Use the pencil icon to toggle the editor mode.
+
+Example:
+Try pasting this ```AllRequests[1m].max()```
+
+[1m] represents the value of window. Similarly, the value can be set to 2m, 3m , 1h etc
+where the 1st part reprsents a number the second part represents the time denomination. 
+
+
+
+| symbol            | Meaning                                                                     |
+| --------------- | ------------------------------------------------------------------------- |
+| s          |  second                                                           |
+| m          |  minute                                                           |
+| h          |  hour                                                           |
+
+Note : Only lower cases are allowed for the above
+
+
+
+###### Query with variables 
+
+Variables can be used for window selection ```AllRequests[$window].max()```
+
+Query with 'auto'.
+
+Auto can be used to select the window automatically depending upon the time range ,
+selected. ```AllRequests[auto].count()```
+
+
+---- 
+
+### Auto explained
+Auto option is available for window and resolution. This helps the user to 
+get an automatic configuration for window and resolution based on the following conditions. 
+
+If the user selects a time range
+
+1. Less than or equal to  7 days ->  window will be 1m and resolution will be 1 min
+2. Less than or equal to  30 days and more than 7 days ->   window will be 5m and resolution will be 5 min.
+3. More than 30 days -> a window will be 1h and resolution will be 1 h   
+ 

@@ -3,7 +3,18 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import _ from 'lodash'
-import { aggregations, dimensionKeysQueryRegex, namespacesQueryRegex, resourcegroupsQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionValuesQueryRegex, removeQuotes } from './constants'
+import {
+  aggregations,
+  dimensionKeysQueryRegex,
+  namespacesQueryRegex,
+  resourcegroupsQueryRegex,
+  metricsQueryRegex,
+  regionsQueryRegex,
+  compartmentsQueryRegex,
+  dimensionValuesQueryRegex,
+  removeQuotes,
+  AUTO
+} from './constants'
 import retryOrThrow from './util/retry'
 import { SELECT_PLACEHOLDERS } from './query_ctrl'
 import { resolveAutoWinRes } from './util/utilFunctions'
@@ -100,7 +111,6 @@ export default class OCIDatasource {
       // used in template editor for creating variables
       return this.templateMetricQuery(target);
     }
-
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
@@ -154,8 +164,17 @@ export default class OCIDatasource {
     for (let t of queries) {
       const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars);
       let query = this.getVariableValue(t.target, options.scopedVars);
-      let resolution = t.resolution
-
+      const numberOfDaysDiff = this.timeSrv.timeRange().to.diff(this.timeSrv.timeRange().from, 'days')
+      // The following replaces 'auto' in window portion of the query and replaces it with an appropriate value.
+      // If there is a functionality to access the window variable instead of matching [auto] in the query, it will be
+      // better
+      if (query) query = query.replace('[auto]', `[${resolveAutoWinRes(AUTO,'',numberOfDaysDiff).window}]`)
+      let resolution = this.getVariableValue(t.resolution, options.scopedVars)
+      let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window,options.scopedVars)
+      // p.s : timeSrv.timeRange() results in a moment object
+      const resolvedWinResolObj = resolveAutoWinRes(window, resolution, numberOfDaysDiff)
+      window = resolvedWinResolObj.window
+      resolution = resolvedWinResolObj.resolution
       if (_.isEmpty(query)) {
         // construct query
         const dimensions = (t.dimensions || []).reduce((result, dim) => {
@@ -166,13 +185,6 @@ export default class OCIDatasource {
           return result
         }, [])
         const dimension = _.isEmpty(dimensions) ? '' : `{${dimensions.join(',')}}`
-        let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window)
-        resolution = this.getVariableValue(t.resolution)
-        // p.s : timeSrv.timeRange() results in a moment object
-        const numberOfDaysDiff = this.timeSrv.timeRange().to.diff(this.timeSrv.timeRange().from, 'days')
-        const resolvedWinResolObj = resolveAutoWinRes(window, resolution, numberOfDaysDiff)
-        window = resolvedWinResolObj.window
-        resolution = resolvedWinResolObj.resolution
         query = `${this.getVariableValue(t.metric, options.scopedVars)}[${window}]${dimension}.${t.aggregation}`
       }
 
