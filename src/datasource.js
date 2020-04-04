@@ -100,7 +100,6 @@ export default class OCIDatasource {
       // used in template editor for creating variables
       return this.templateMetricQuery(target);
     }
-
     const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
     const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
     const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
@@ -154,8 +153,13 @@ export default class OCIDatasource {
     for (let t of queries) {
       const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars);
       let query = this.getVariableValue(t.target, options.scopedVars);
-      let resolution = t.resolution
-
+      let resolution = this.getVariableValue(t.resolution, options.scopedVars)
+      let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window,options.scopedVars)
+      // p.s : timeSrv.timeRange() results in a moment object
+      const numberOfDaysDiff = this.timeSrv.timeRange().to.diff(this.timeSrv.timeRange().from, 'days')
+      const resolvedWinResolObj = resolveAutoWinRes(window, resolution, numberOfDaysDiff)
+      window = resolvedWinResolObj.window
+      resolution = resolvedWinResolObj.resolution
       if (_.isEmpty(query)) {
         // construct query
         const dimensions = (t.dimensions || []).reduce((result, dim) => {
@@ -166,13 +170,6 @@ export default class OCIDatasource {
           return result
         }, [])
         const dimension = _.isEmpty(dimensions) ? '' : `{${dimensions.join(',')}}`
-        let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window)
-        resolution = this.getVariableValue(t.resolution)
-        // p.s : timeSrv.timeRange() results in a moment object
-        const numberOfDaysDiff = this.timeSrv.timeRange().to.diff(this.timeSrv.timeRange().from, 'days')
-        const resolvedWinResolObj = resolveAutoWinRes(window, resolution, numberOfDaysDiff)
-        window = resolvedWinResolObj.window
-        resolution = resolvedWinResolObj.resolution
         query = `${this.getVariableValue(t.metric, options.scopedVars)}[${window}]${dimension}.${t.aggregation}`
       }
 
