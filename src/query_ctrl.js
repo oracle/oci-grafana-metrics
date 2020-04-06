@@ -69,31 +69,31 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
   getRegions() {
     return this.datasource.getRegions().then(regions => {
-      return this.appendVariables(regions, regionsQueryRegex);
+      return this.appendVariables([ ...regions], regionsQueryRegex);
     });
   }
 
   getCompartments() {
     return this.datasource.getCompartments().then(compartments => {
-      return this.appendVariables(compartments, compartmentsQueryRegex);
+      return this.appendVariables([...compartments], compartmentsQueryRegex);
     });
   }
 
   getNamespaces() {
     return this.datasource.getNamespaces(this.target).then(namespaces => {
-      return this.appendVariables(namespaces, namespacesQueryRegex);
+      return this.appendVariables([...namespaces], namespacesQueryRegex);
     });
   }
 
   getResourceGroups() {
     return this.datasource.getResourceGroups(this.target).then(resourcegroups => {
-      return this.appendVariables(resourcegroups, resourcegroupsQueryRegex);
+      return this.appendVariables([...resourcegroups], resourcegroupsQueryRegex);
     });
   }
 
   getMetrics() {
     return this.datasource.metricFindQuery(this.target).then(metrics => {
-      return this.appendVariables(metrics, metricsQueryRegex);
+      return this.appendVariables([...metrics], metricsQueryRegex);
     });
   }
 
