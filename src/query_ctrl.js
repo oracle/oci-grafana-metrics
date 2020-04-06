@@ -4,8 +4,17 @@
 */
 import { QueryCtrl } from 'app/plugins/sdk'
 import './css/query-editor.css!'
-import { windows, namespacesQueryRegex, resourcegroupsQueryRegex, metricsQueryRegex, regionsQueryRegex, compartmentsQueryRegex, dimensionKeysQueryRegex, dimensionValuesQueryRegex } from './constants'
-import _ from 'lodash'
+import {
+  windows,
+  namespacesQueryRegex,
+  resourcegroupsQueryRegex,
+  metricsQueryRegex,
+  regionsQueryRegex,
+  compartmentsQueryRegex,
+  dimensionKeysQueryRegex,
+  dimensionValuesQueryRegex,
+  windowsAndResolutionRegex, resolutions, AUTO
+} from './constants'
 
 export const SELECT_PLACEHOLDERS = {
   DIMENSION_KEY: 'select dimension',
@@ -14,8 +23,9 @@ export const SELECT_PLACEHOLDERS = {
   REGION: 'select region',
   NAMESPACE: 'select namespace',
   RESOURCEGROUP: 'select resource group',
-  METRIC: 'select metric'
-};
+  METRIC: 'select metric',
+  WINDOW: 'select window'
+}
 
 export class OCIDatasourceQueryCtrl extends QueryCtrl {
   constructor($scope, $injector, $q, uiSegmentSrv) {
@@ -29,8 +39,8 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.target.namespace = this.target.namespace || SELECT_PLACEHOLDERS.NAMESPACE;
     this.target.resourcegroup = this.target.resourcegroup || SELECT_PLACEHOLDERS.RESOURCEGROUP;
     this.target.metric = this.target.metric || SELECT_PLACEHOLDERS.METRIC;
-    this.target.resolution = this.target.resolution || '1m';
-    this.target.window = this.target.window || '1m';
+    this.target.resolution = this.target.resolution || AUTO;
+    this.target.window = this.target.window || AUTO;
     this.target.aggregation = this.target.aggregation || 'mean()'
     this.target.dimensions = this.target.dimensions || [];
 
@@ -93,8 +103,12 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     });
   }
 
-  getWindows() {
-    return windows;
+  getWindows () {
+    return this.appendWindowsAndResolutionVariables([...windows], windowsAndResolutionRegex)
+  }
+
+  getResolutions () {
+    return this.appendWindowsAndResolutionVariables([...resolutions], windowsAndResolutionRegex)
   }
 
   /**
@@ -169,6 +183,10 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     return options;
   }
 
+  appendWindowsAndResolutionVariables (options, varQeueryRegex) {
+    const vars = this.datasource.getVariables(varQeueryRegex) || []
+    return [...options, ...vars].map(value => ({ value, text: value }))
+  }
   // ****************************** Callbacks **********************************
 
   toggleEditorMode() {
