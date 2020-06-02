@@ -360,7 +360,7 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 		}
 		items = append(items, res.Items...)
 		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
-		if res.OpcNextPage == nil  && pageNumber >= MAX_PAGES_TO_FETCH {
+		if res.OpcNextPage == nil  || pageNumber >= MAX_PAGES_TO_FETCH {
 			break
 		}
 
