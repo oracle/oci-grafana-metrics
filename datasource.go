@@ -13,8 +13,8 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana_plugin_model/go/datasource"
-	hclog "github.com/hashicorp/go-hclog"
-	plugin "github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
 	"github.com/oracle/oci-go-sdk/common"
 	"github.com/oracle/oci-go-sdk/common/auth"
 	"github.com/oracle/oci-go-sdk/identity"
@@ -339,10 +339,13 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 
 }
 
+const MAX_PAGES_TO_FETCH = 20
+
 func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails) ([]monitoring.Metric, error) {
 	var items []monitoring.Metric
 	var page *string
 
+	pageNumber := 0
 	for {
 		reg := common.StringToRegion(region)
 		o.metricsClient.SetRegion(string(reg))
@@ -356,11 +359,13 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 			return nil, errors.Wrap(err, "list metrircs failed")
 		}
 		items = append(items, res.Items...)
-		if res.OpcNextPage == nil {
+		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
+		if res.OpcNextPage == nil  || pageNumber >= MAX_PAGES_TO_FETCH {
 			break
 		}
 
 		page = res.OpcNextPage
+		pageNumber++
 	}
 	return items, nil
 }
