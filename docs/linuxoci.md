@@ -37,6 +37,16 @@ The plugin will be installed into your Grafana plugins directory, which by defau
 ### Manually installation 
 Alternatively, you can manually download the .tar file and unpack it into your /grafana/plugins directory. To do so, change to the Grafana plugins directory: `cd /usr/local/var/lib/grafana/plugins`. Download the OCI Grafana Plugin: wget `https://github.com/oracle/oci-grafana-plugin/releases/download/V1.1.1/plugin.tar`. Create a directory and install the plugin: `mkdir oci && tar -C oci -xvf plugin.tar` and then remove the tarball: `rm plugin.tar`. 
 
+>  **Additional step for Grafana 7**. Open the grafana configuration  *grafana.ini* file and add the `allow_loading_unsigned_plugins = "oci-datasource"`in the *plugins* section.
+
+*Example* 
+```
+    [plugins]
+    ;enable_alpha = false
+    ;app_tls_skip_verify_insecure = false
+    allow_loading_unsigned_plugins = "oci-datasource"
+```
+
 To start the Grafana server, run: `sudo systemctl start grafana-server`. 
 
 
