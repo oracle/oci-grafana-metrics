@@ -3,6 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import _ from 'lodash'
+import * as graf from '@grafana/data'
 import {
   aggregations,
   dimensionKeysQueryRegex,
@@ -18,10 +19,11 @@ import {
 import retryOrThrow from './util/retry'
 import { SELECT_PLACEHOLDERS } from './query_ctrl'
 import { resolveAutoWinRes } from './util/utilFunctions'
+import { MutableDataFrame } from '@grafana/data'
 const DEFAULT_RESOURCE_GROUP = 'NoResourceGroup'
 
 export default class OCIDatasource {
-  constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
+  constructor (instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = instanceSettings.type
     this.url = instanceSettings.url
     this.name = instanceSettings.name
@@ -34,11 +36,11 @@ export default class OCIDatasource {
     this.templateSrv = templateSrv
     this.timeSrv = timeSrv
 
-    this.compartmentsCache = [];
-    this.regionsCache = [];
+    this.compartmentsCache = []
+    this.regionsCache = []
 
-    this.getRegions();
-    this.getCompartments();
+    this.getRegions()
+    this.getCompartments()
   }
 
   /**
@@ -54,17 +56,21 @@ export default class OCIDatasource {
    * Required method
    * Used by panels to get data
    */
-  async query(options) {
-    var query = await this.buildQueryParameters(options);
+
+  async query (options) {
+    var query = await this.buildQueryParameters(options)
     if (query.targets.length <= 0) {
-      return this.q.when({ data: [] });
+      return this.q.when({ data: [] })
     }
 
     return this.doRequest(query).then(result => {
+      console.log('Received response  ', JSON.parse(JSON.stringify(result)))
+
       var res = []
       _.forEach(result.data.results, r => {
         _.forEach(r.series, s => {
-          res.push({ target: s.name, datapoints: s.points })
+          // the following change in datapoints is done to test the log panelrequirement : atleast 1 timestamp and 1 string must be present
+          res.push({ target: s.name, datapoints: s.points.map(sPoint => [ sPoint[0].toString(), sPoint[1]] ) })
         })
         _.forEach(r.tables, t => {
           t.type = 'table'
@@ -72,9 +78,24 @@ export default class OCIDatasource {
           res.push(t)
         })
       })
+      result.data = res
 
-      result.data = res;
-      return result;
+      const MutableDataFrame = graf.MutableDataFrame
+      const FieldType = graf.FieldType
+      const frame = new MutableDataFrame({
+        refId: query.refId,
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'content', type: FieldType.string, labels: { filename: 'file.txt' } }
+        ]
+      })
+
+      frame.add({ time: 1589189388597, content: 'user registered' })
+      frame.add({ time: 1589189406480, content: 'user logged in' })
+      console.log('frame to JSON', frame.toJSON())
+      result.data = res
+      console.log('processed response  ', JSON.parse(JSON.stringify(result)))
+      return result
     })
   }
 
@@ -82,7 +103,7 @@ export default class OCIDatasource {
    * Required method
    * Used by data source configuration page to make sure the connection is working
    */
-  testDatasource() {
+  testDatasource () {
     return this.doRequest({
       targets: [{
         queryType: 'test',
@@ -106,21 +127,21 @@ export default class OCIDatasource {
    * Required method
    * Used by query editor to get metric suggestions
    */
-  async metricFindQuery(target) {
+  async metricFindQuery (target) {
     if (typeof (target) === 'string') {
       // used in template editor for creating variables
-      return this.templateMetricQuery(target);
+      return this.templateMetricQuery(target)
     }
-    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
-    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
-    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
-    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : this.getVariableValue(target.resourcegroup);
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region)
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment)
+    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace)
+    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : this.getVariableValue(target.resourcegroup)
 
     if (_.isEmpty(compartment) || _.isEmpty(namespace)) {
-      return this.q.when([]);
+      return this.q.when([])
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = await this.getCompartmentId(compartment)
     return this.doRequest({
       targets: [{
         environment: this.environment,
@@ -147,30 +168,30 @@ export default class OCIDatasource {
       .filter(t => !_.isEmpty(this.getVariableValue(t.compartment, options.scopedVars)) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT)
       .filter(t => !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) && t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE)
       .filter(t => !_.isEmpty(this.getVariableValue(t.resourcegroup, options.scopedVars)))
-      .filter(t => !_.isEmpty(this.getVariableValue(t.metric, options.scopedVars)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)));
+      .filter(t => !_.isEmpty(this.getVariableValue(t.metric, options.scopedVars)) && t.metric !== SELECT_PLACEHOLDERS.METRIC || !_.isEmpty(this.getVariableValue(t.target)))
 
     queries.forEach(t => {
       t.dimensions = (t.dimensions || [])
         .filter(dim => !_.isEmpty(dim.key) && dim.key !== SELECT_PLACEHOLDERS.DIMENSION_KEY)
-        .filter(dim => !_.isEmpty(dim.value) && dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE);
+        .filter(dim => !_.isEmpty(dim.value) && dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE)
 
-      t.resourcegroup = t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : t.resourcegroup;
-    });
+      t.resourcegroup = t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : t.resourcegroup
+    })
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
-    queries = this.splitMultiValueDimensionsIntoQuieries(queries, options);
+    queries = this.splitMultiValueDimensionsIntoQuieries(queries, options)
 
-    const results = [];
+    const results = []
     for (let t of queries) {
-      const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars);
-      let query = this.getVariableValue(t.target, options.scopedVars);
+      const region = t.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(t.region, options.scopedVars)
+      let query = this.getVariableValue(t.target, options.scopedVars)
       const numberOfDaysDiff = this.timeSrv.timeRange().to.diff(this.timeSrv.timeRange().from, 'days')
       // The following replaces 'auto' in window portion of the query and replaces it with an appropriate value.
       // If there is a functionality to access the window variable instead of matching [auto] in the query, it will be
       // better
-      if (query) query = query.replace('[auto]', `[${resolveAutoWinRes(AUTO,'',numberOfDaysDiff).window}]`)
+      if (query) query = query.replace('[auto]', `[${resolveAutoWinRes(AUTO, '', numberOfDaysDiff).window}]`)
       let resolution = this.getVariableValue(t.resolution, options.scopedVars)
-      let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window,options.scopedVars)
+      let window = t.window === SELECT_PLACEHOLDERS.WINDOW ? '' : this.getVariableValue(t.window, options.scopedVars)
       // p.s : timeSrv.timeRange() results in a moment object
       const resolvedWinResolObj = resolveAutoWinRes(window, resolution, numberOfDaysDiff)
       window = resolvedWinResolObj.window
@@ -178,9 +199,9 @@ export default class OCIDatasource {
       if (_.isEmpty(query)) {
         // construct query
         const dimensions = (t.dimensions || []).reduce((result, dim) => {
-          const d = `${this.getVariableValue(dim.key, options.scopedVars)} ${dim.operator} "${this.getVariableValue(dim.value, options.scopedVars)}"`;
+          const d = `${this.getVariableValue(dim.key, options.scopedVars)} ${dim.operator} "${this.getVariableValue(dim.value, options.scopedVars)}"`
           if (result.indexOf(d) < 0) {
-            result.push(d);
+            result.push(d)
           }
           return result
         }, [])
@@ -188,7 +209,7 @@ export default class OCIDatasource {
         query = `${this.getVariableValue(t.metric, options.scopedVars)}[${window}]${dimension}.${t.aggregation}`
       }
 
-      const compartmentId = await this.getCompartmentId(this.getVariableValue(t.compartment, options.scopedVars));
+      const compartmentId = await this.getCompartmentId(this.getVariableValue(t.compartment, options.scopedVars))
       const result = {
         resolution,
         environment: this.environment,
@@ -204,12 +225,12 @@ export default class OCIDatasource {
         resourcegroup: this.getVariableValue(t.resourcegroup, options.scopedVars),
         query: query
       }
-      results.push(result);
+      results.push(result)
     };
 
-    options.targets = results;
+    options.targets = results
 
-    return options;
+    return options
   }
 
   /**
@@ -223,77 +244,76 @@ export default class OCIDatasource {
    *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_2", eventType = "Delete"}.mean()",
    *  ]
    */
-  splitMultiValueDimensionsIntoQuieries(queries, options) {
+  splitMultiValueDimensionsIntoQuieries (queries, options) {
     return queries.reduce((data, t) => {
-
       if (_.isEmpty(t.dimensions) || !_.isEmpty(t.target)) {
         // nothing to split or dimensions won't be used, query is set manually
-        return data.concat(t);
+        return data.concat(t)
       }
 
       // create a map key : [values] for multiple values
       const multipleValueDims = t.dimensions.reduce((data, dim) => {
-        const key = dim.key;
-        const value = this.getVariableValue(dim.value, options.scopedVars);
-        if (value.startsWith("{") && value.endsWith("}")) {
-          const values = value.slice(1, value.length - 1).split(',') || [];
-          data[key] = (data[key] || []).concat(values);
+        const key = dim.key
+        const value = this.getVariableValue(dim.value, options.scopedVars)
+        if (value.startsWith('{') && value.endsWith('}')) {
+          const values = value.slice(1, value.length - 1).split(',') || []
+          data[key] = (data[key] || []).concat(values)
         }
-        return data;
-      }, {});
+        return data
+      }, {})
 
       if (_.isEmpty(Object.keys(multipleValueDims))) {
         // no multiple values used, only single values
-        return data.concat(t);
+        return data.concat(t)
       }
 
       const splitDimensions = (dims, multiDims) => {
-        let prev = [];
-        let next = [];
+        let prev = []
+        let next = []
 
-        const firstDimKey = dims[0].key;
-        const firstDimValues = multiDims[firstDimKey] || [dims[0].value];
+        const firstDimKey = dims[0].key
+        const firstDimValues = multiDims[firstDimKey] || [dims[0].value]
         for (let v of firstDimValues) {
-          const newDim = _.cloneDeep(dims[0]);
-          newDim.value = v;
-          prev.push([newDim]);
+          const newDim = _.cloneDeep(dims[0])
+          newDim.value = v
+          prev.push([newDim])
         }
 
         for (let i = 1; i < dims.length; i++) {
-          const values = multiDims[dims[i].key] || [dims[i].value];
+          const values = multiDims[dims[i].key] || [dims[i].value]
           for (let v of values) {
             for (let j = 0; j < prev.length; j++) {
               if (next.length >= 20) {
                 // this algorithm of collecting multi valued dimensions is computantionally VERY expensive
                 // set the upper limit for quiries number
-                return next;
+                return next
               }
-              const newDim = _.cloneDeep(dims[i]);
-              newDim.value = v;
-              next.push(prev[j].concat(newDim));
+              const newDim = _.cloneDeep(dims[i])
+              newDim.value = v
+              next.push(prev[j].concat(newDim))
             }
           }
-          prev = next;
-          next = [];
+          prev = next
+          next = []
         }
 
-        return prev;
+        return prev
       }
 
-      const newDimsArray = splitDimensions(t.dimensions, multipleValueDims);
+      const newDimsArray = splitDimensions(t.dimensions, multipleValueDims)
 
-      const newQueries = [];
+      const newQueries = []
       for (let i = 0; i < newDimsArray.length; i++) {
-        const dims = newDimsArray[i];
-        const newQuery = _.cloneDeep(t);
-        newQuery.dimensions = dims;
+        const dims = newDimsArray[i]
+        const newQuery = _.cloneDeep(t)
+        newQuery.dimensions = dims
         if (i !== 0) {
-          newQuery.refId = `${newQuery.refId}${i}`;
+          newQuery.refId = `${newQuery.refId}${i}`
         }
-        newQueries.push(newQuery);
+        newQueries.push(newQuery)
       }
-      return data.concat(newQueries);
-    }, []);
+      return data.concat(newQueries)
+    }, [])
   }
 
   // **************************** Template variable helpers ****************************
@@ -303,8 +323,7 @@ export default class OCIDatasource {
    * Example:
    * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
    */
-  templateMetricQuery(varString) {
-
+  templateMetricQuery (varString) {
     let regionQuery = varString.match(regionsQueryRegex)
     if (regionQuery) {
       return this.getRegions().catch(err => { throw new Error('Unable to get regions: ' + err) })
@@ -313,7 +332,7 @@ export default class OCIDatasource {
     let compartmentQuery = varString.match(compartmentsQueryRegex)
     if (compartmentQuery) {
       return this.getCompartments().then(compartments => {
-        return compartments.map(c => ({ text: c.text, value: c.text }));
+        return compartments.map(c => ({ text: c.text, value: c.text }))
       }).catch(err => { throw new Error('Unable to get compartments: ' + err) })
     }
 
@@ -368,16 +387,16 @@ export default class OCIDatasource {
         metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
         resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]))
       }
-      const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));
+      const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]))
       return this.getDimensionValues(target, dimensionKey).catch(err => { throw new Error('Unable to get dimension options: ' + err) })
     }
 
-    throw new Error('Unable to parse templating string');
+    throw new Error('Unable to parse templating string')
   }
 
-  getRegions() {
+  getRegions () {
     if (this.regionsCache && this.regionsCache.length > 0) {
-      return this.q.when(this.regionsCache);
+      return this.q.when(this.regionsCache)
     }
 
     return this.doRequest({
@@ -389,14 +408,14 @@ export default class OCIDatasource {
       }],
       range: this.timeSrv.timeRange()
     }).then((items) => {
-      this.regionsCache = this.mapToTextValue(items, 'regions');
-      return this.regionsCache;
-    });
+      this.regionsCache = this.mapToTextValue(items, 'regions')
+      return this.regionsCache
+    })
   }
 
-  getCompartments() {
+  getCompartments () {
     if (this.compartmentsCache && this.compartmentsCache.length > 0) {
-      return this.q.when(this.compartmentsCache);
+      return this.q.when(this.compartmentsCache)
     }
 
     return this.doRequest({
@@ -409,26 +428,26 @@ export default class OCIDatasource {
       }],
       range: this.timeSrv.timeRange()
     }).then((items) => {
-      this.compartmentsCache = this.mapToTextValue(items, 'compartments');
-      return this.compartmentsCache;
-    });
+      this.compartmentsCache = this.mapToTextValue(items, 'compartments')
+      return this.compartmentsCache
+    })
   }
 
-  getCompartmentId(compartment) {
+  getCompartmentId (compartment) {
     return this.getCompartments().then(compartments => {
-      const compartmentFound = compartments.find(c => c.text === compartment || c.value === compartment);
-      return compartmentFound ? compartmentFound.value : compartment;
-    });
+      const compartmentFound = compartments.find(c => c.text === compartment || c.value === compartment)
+      return compartmentFound ? compartmentFound.value : compartment
+    })
   }
 
-  async getNamespaces(target) {
-    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
-    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
+  async getNamespaces (target) {
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region)
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment)
     if (_.isEmpty(compartment)) {
-      return this.q.when([]);
+      return this.q.when([])
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = await this.getCompartmentId(compartment)
     return this.doRequest({
       targets: [{
         environment: this.environment,
@@ -440,19 +459,19 @@ export default class OCIDatasource {
       }],
       range: this.timeSrv.timeRange()
     }).then((items) => {
-      return this.mapToTextValue(items, 'namespaces');
-    });
+      return this.mapToTextValue(items, 'namespaces')
+    })
   }
 
-  async getResourceGroups(target) {
-    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
-    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
-    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
+  async getResourceGroups (target) {
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region)
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment)
+    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace)
     if (_.isEmpty(compartment)) {
-      return this.q.when([]);
+      return this.q.when([])
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = await this.getCompartmentId(compartment)
     return this.doRequest({
       targets: [{
         environment: this.environment,
@@ -465,30 +484,30 @@ export default class OCIDatasource {
       }],
       range: this.timeSrv.timeRange()
     }).then((items) => {
-      return this.mapToTextValue(items, 'resourcegroups');
-    });
+      return this.mapToTextValue(items, 'resourcegroups')
+    })
   }
 
-  async getDimensions(target) {
-    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region);
-    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment);
-    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace);
-    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : this.getVariableValue(target.resourcegroup);
-    const metric = target.metric === SELECT_PLACEHOLDERS.METRIC ? '' : this.getVariableValue(target.metric);
-    const metrics = metric.startsWith("{") && metric.endsWith("}") ? metric.slice(1, metric.length - 1).split(',') : [metric];
+  async getDimensions (target) {
+    const region = target.region === SELECT_PLACEHOLDERS.REGION ? '' : this.getVariableValue(target.region)
+    const compartment = target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT ? '' : this.getVariableValue(target.compartment)
+    const namespace = target.namespace === SELECT_PLACEHOLDERS.NAMESPACE ? '' : this.getVariableValue(target.namespace)
+    const resourcegroup = target.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP ? DEFAULT_RESOURCE_GROUP : this.getVariableValue(target.resourcegroup)
+    const metric = target.metric === SELECT_PLACEHOLDERS.METRIC ? '' : this.getVariableValue(target.metric)
+    const metrics = metric.startsWith('{') && metric.endsWith('}') ? metric.slice(1, metric.length - 1).split(',') : [metric]
 
     if (_.isEmpty(compartment) || _.isEmpty(namespace) || _.isEmpty(metrics)) {
-      return this.q.when([]);
+      return this.q.when([])
     }
 
-    const dimensionsMap = {};
+    const dimensionsMap = {}
     for (let m of metrics) {
       if (dimensionsMap[m] !== undefined) {
-        continue;
+        continue
       }
-      dimensionsMap[m] = null;
+      dimensionsMap[m] = null
 
-      const compartmentId = await this.getCompartmentId(compartment);
+      const compartmentId = await this.getCompartmentId(compartment)
       await this.doRequest({
         targets: [{
           environment: this.environment,
@@ -503,80 +522,80 @@ export default class OCIDatasource {
         }],
         range: this.timeSrv.timeRange()
       }).then(result => {
-        const items = this.mapToTextValue(result, 'dimensions');
-        dimensionsMap[m] = [].concat(items);
+        const items = this.mapToTextValue(result, 'dimensions')
+        dimensionsMap[m] = [].concat(items)
       }).finally(() => {
         if (!dimensionsMap[m]) {
-          dimensionsMap[m] = [];
+          dimensionsMap[m] = []
         }
-      });
+      })
     }
 
-    let result = [];
+    let result = []
     Object.values(dimensionsMap).forEach(dims => {
       if (_.isEmpty(result)) {
-        result = dims;
+        result = dims
       } else {
-        const newResult = [];
+        const newResult = []
         dims.forEach(dim => {
           if (!!result.find(d => d.value === dim.value) && !newResult.find(d => d.value === dim.value)) {
-            newResult.push(dim);
+            newResult.push(dim)
           }
-        });
-        result = newResult;
+        })
+        result = newResult
       }
     })
 
-    return result;
+    return result
   }
 
-  getDimensionKeys(target) {
+  getDimensionKeys (target) {
     return this.getDimensions(target).then(dims => {
       const dimCache = dims.reduce((data, item) => {
-        const values = item.value.split('=') || [];
-        const key = values[0] || item.value;
-        const value = values[1];
+        const values = item.value.split('=') || []
+        const key = values[0] || item.value
+        const value = values[1]
 
         if (!data[key]) {
           data[key] = []
         }
-        data[key].push(value);
-        return data;
-      }, {});
-      return Object.keys(dimCache);
+        data[key].push(value)
+        return data
+      }, {})
+      return Object.keys(dimCache)
     }).then(items => {
       return items.map(item => ({ text: item, value: item }))
-    });
+    })
   }
 
-  getDimensionValues(target, dimKey) {
+  getDimensionValues (target, dimKey) {
     return this.getDimensions(target).then(dims => {
       const dimCache = dims.reduce((data, item) => {
-        const values = item.value.split('=') || [];
-        const key = values[0] || item.value;
-        const value = values[1];
+        const values = item.value.split('=') || []
+        const key = values[0] || item.value
+        const value = values[1]
 
         if (!data[key]) {
           data[key] = []
         }
-        data[key].push(value);
-        return data;
-      }, {});
-      return dimCache[this.getVariableValue(dimKey)] || [];
+        data[key].push(value)
+        return data
+      }, {})
+      return dimCache[this.getVariableValue(dimKey)] || []
     }).then(items => {
       return items.map(item => ({ text: item, value: item }))
-    });
+    })
   }
 
-  getAggregations() {
-    return this.q.when(aggregations);
+  getAggregations () {
+    return this.q.when(aggregations)
   }
 
   /**
    * Calls grafana backend.
    * Retries 10 times before failure.
    */
-  doRequest(options) {
+  doRequest (options) {
     let _this = this
     return retryOrThrow(() => {
       return _this.backendSrv.datasourceRequest({
@@ -596,12 +615,12 @@ export default class OCIDatasource {
    */
   mapToTextValue (result, searchField) {
     if (_.isEmpty(result) || _.isEmpty(searchField)) {
-      return [];
+      return []
     }
 
-    var table = result.data.results[searchField].tables[0];
+    var table = result.data.results[searchField].tables[0]
     if (!table) {
-      return [];
+      return []
     }
 
     var map = _.map(table.rows, (row, i) => {
@@ -612,7 +631,7 @@ export default class OCIDatasource {
       }
       return { text: row[0], value: row[0] }
     })
-    return map;
+    return map
   }
 
   // **************************** Template variables helpers ****************************
@@ -620,20 +639,20 @@ export default class OCIDatasource {
   /**
    * Get all template variable descriptors
    */
-  getVariableDescriptors(regex, includeCustom = true) {
-    const vars = this.templateSrv.variables || [];
+  getVariableDescriptors (regex, includeCustom = true) {
+    const vars = this.templateSrv.variables || []
 
     if (regex) {
-      let regexVars = vars.filter(item => item.query.match(regex) !== null);
+      let regexVars = vars.filter(item => item.query.match(regex) !== null)
       if (includeCustom) {
-        const custom = vars.filter(item => item.type === 'custom' || item.type === 'constant');
-        regexVars = regexVars.concat(custom);
+        const custom = vars.filter(item => item.type === 'custom' || item.type === 'constant')
+        regexVars = regexVars.concat(custom)
       }
-      const uniqueRegexVarsMap = new Map();
+      const uniqueRegexVarsMap = new Map()
       regexVars.forEach(varObj => uniqueRegexVarsMap.set(varObj.name, varObj))
       return Array.from(uniqueRegexVarsMap.values())
     }
-    return vars;
+    return vars
   }
 
   /**
@@ -645,25 +664,25 @@ export default class OCIDatasource {
    * If a custom or constant is in  variables and  includeCustom, default is false.
    * Hence,the varDescriptors list is filtered for a unique set of var names
   */
-  getVariables(regex, includeCustom) {
-    const varDescriptors = this.getVariableDescriptors(regex, includeCustom) || [];
-    return varDescriptors.map(item => `$${item.name}`);
+  getVariables (regex, includeCustom) {
+    const varDescriptors = this.getVariableDescriptors(regex, includeCustom) || []
+    return varDescriptors.map(item => `$${item.name}`)
   }
 
   /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
    * Returns an array with variable values or empty array
   */
-  getVariableValue(varName, scopedVars = {}) {
-    return this.templateSrv.replace(varName, scopedVars) || varName;
+  getVariableValue (varName, scopedVars = {}) {
+    return this.templateSrv.replace(varName, scopedVars) || varName
   }
 
   /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
    * Returns true if variable with the given name is found
   */
-  isVariable(varName) {
-    const varNames = this.getVariables() || [];
-    return !!varNames.find(item => item === varName);
+  isVariable (varName) {
+    const varNames = this.getVariables() || []
+    return !!varNames.find(item => item === varName)
   }
 }

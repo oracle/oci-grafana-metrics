@@ -1,0 +1,79 @@
+Arguments: 
+  /Users/athmural/.nvm/versions/node/v10.17.0/bin/node /usr/local/Cellar/yarn/1.22.4/libexec/bin/yarn.js add @grafana/data
+
+PATH: 
+  /Users/athmural/oci/go/bin:/Users/athmural/bin:/usr/local/Cellar/maven/3.6.1/bin:/Users/athmural/.nvm/versions/node/v10.17.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/athmural/oci/go/src/oci-grafana-plugin/node_modules/.bin:/usr/local/Cellar/go/1.14/libexec/bin:/Users/athmural/oci/go/bin:/Users/athmural/bin:/usr/local/Cellar/maven/3.6.1/bin:/Users/athmural/.nvm/versions/node/v10.17.0/bin
+
+Yarn version: 
+  1.22.4
+
+Node version: 
+  10.17.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: EACCES: permission denied, unlink '/Users/athmural/oci/go/src/oci-grafana-plugin/node_modules/.yarn-integrity'
+
+npm manifest: 
+  {
+    "name": "oci-grafana-plugin",
+    "private": true,
+    "version": "1.1.2",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "buildjs": "./node_modules/.bin/grunt",
+      "lint": "./node_modules/.bin/eslint src/",
+      "fix": "./node_modules/.bin/eslint --fix src/",
+      "bump": "./node_modules/.bin/grunt bump",
+      "test": "jest src/ --coverage"
+    },
+    "author": "",
+    "license": "UPL",
+    "engines": {
+      "node": ">6.10.0"
+    },
+    "engineStrict": true,
+    "devDependencies": {
+      "babel": "^6.23.0",
+      "babel-preset-react": "^6.24.1",
+      "eslint-plugin-import": "^2.14.0",
+      "eslint-plugin-node": "^8.0.1",
+      "eslint-plugin-promise": "^4.0.1",
+      "eslint-plugin-standard": "^4.0.0",
+      "grunt": "^1.0.4",
+      "grunt-babel": "~6.0.0",
+      "grunt-bump": "^0.8.0",
+      "grunt-cli": "^1.2.0",
+      "grunt-contrib-clean": "^1.1.0",
+      "grunt-contrib-copy": "^1.0.0",
+      "grunt-contrib-uglify": "^2.3.0",
+      "grunt-contrib-watch": "^1.0.0",
+      "grunt-execute": "~0.2.2",
+      "grunt-systemjs-builder": "^1.0.0",
+      "jest": "^24.5.0",
+      "jsdom": "~9.12.0",
+      "load-grunt-tasks": "^3.5.2",
+      "prunk": "^1.3.0",
+      "q": "^1.5.0"
+    },
+    "dependencies": {
+      "@babel/preset-env": "^7.3.4",
+      "babel-loader": "^8.0.4",
+      "babel-plugin-transform-es2015-for-of": "^6.6.0",
+      "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
+      "babel-preset-es2015": "^6.24.1",
+      "eslint": "^5.12.0",
+      "eslint-config-standard": "^12.0.0",
+      "lodash": "^4.17.4",
+      "js-yaml": "^3.13.1"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

@@ -12,6 +12,7 @@
   "alerting": false,
   "backend": true,
   "executable": "oci-plugin",
+  "logs": true,
 
   "info": {
     "description": "Oracle Cloud Infrastructure Data Source for Grafana",

@@ -11,6 +11,7 @@
   "annotations": false,
   "alerting": false,
   "backend": true,
+  "logs": true,
   "executable": "oci-plugin",
 
   "info": {
