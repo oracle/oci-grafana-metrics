@@ -70,7 +70,7 @@ export default class OCIDatasource {
       _.forEach(result.data.results, r => {
         _.forEach(r.series, s => {
           // the following change in datapoints is done to test the log panelrequirement : atleast 1 timestamp and 1 string must be present
-          res.push({ target: s.name, datapoints: s.points.map(sPoint => [ sPoint[0].toString(), sPoint[1]] ) })
+          res.push({ target: s.name, datapoints: s.points.map(sPoint => [ sPoint[0].toString(), sPoint[1]]) })
         })
         _.forEach(r.tables, t => {
           t.type = 'table'
@@ -86,15 +86,15 @@ export default class OCIDatasource {
         refId: query.refId,
         fields: [
           { name: 'time', type: FieldType.time },
-          { name: 'content', type: FieldType.string, labels: { filename: 'file.txt' } }
+          { name: 'content', type: FieldType.string, labels: { filename: 'file.txt' } },
+          { name: 'level', type: FieldType.string },
+          { name: 'id', type: FieldType.string }
         ]
       })
 
-      frame.add({ time: 1589189388597, content: 'user registered' })
-      frame.add({ time: 1589189406480, content: 'user logged in' })
-      console.log('frame to JSON', frame.toJSON())
-      result.data = res
-      console.log('processed response  ', JSON.parse(JSON.stringify(result)))
+      frame.add({ time: 1589189388597, content: 'user registered', level: 'info', id: 'd3b07384d113edec49eaa6238ad5ff00' })
+      frame.add({ time: 1589189406480, content: 'unknown error', level: 'error', id: 'c157a79031e1c40f85931829bc5fc552' })
+      result.data = [frame]
       return result
     })
   }
