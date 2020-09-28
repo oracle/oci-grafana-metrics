@@ -1,6 +1,6 @@
 {
   "name": "Oracle Cloud Infrastructure Metrics",
-  "id": "oci-datasource-metrics",
+  "id": "oci-metrics-datasource",
   "type": "datasource",
 
   "partials": {
