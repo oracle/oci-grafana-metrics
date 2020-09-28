@@ -1,5 +1,5 @@
 {
-  "name": "Oracle Cloud Infrastructure",
+  "name": "Oracle Cloud Infrastructure Metrics",
   "id": "oci-datasource",
   "type": "datasource",
 
@@ -14,7 +14,7 @@
   "executable": "oci-plugin",
 
   "info": {
-    "description": "Oracle Cloud Infrastructure Data Source for Grafana",
+    "description": "Oracle Cloud Infrastructure Metrics Data Source for Grafana",
     "author": {
       "name": "Oracle"
     },
