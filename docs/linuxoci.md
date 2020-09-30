@@ -28,7 +28,7 @@ Next, create a [policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Conc
 To [install the data source](https://grafana.com/plugins/oci-datasource/installation) make sure you are running [Grafana 3.0](https://grafana.com/get) or later. Use the [grafana-cli tool](http://docs.grafana.org/plugins/installation/) to install the Oracle Cloud Infrastructure Data Source for Grafana from the command line:
 
 ```
-grafana-cli plugins install oci-datasource
+grafana-cli plugins install oci-metrics-datasource
 ```
 **NOTE** Today the latest version of the plugin is available only with the manual installation
 
