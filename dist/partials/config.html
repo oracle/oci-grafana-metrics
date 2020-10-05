@@ -1,0 +1,30 @@
+<h3 class="page-heading">OCI settings</h3>
+
+<div class="gf-form-group">
+<div class="gf-form max-width-30">
+  <label class="gf-form-label width-10">Tenancy OCID</label>
+    <input class="gf-form-input " 
+		type="text" 
+		ng-required="true"
+    ng-model="ctrl.current.jsonData.tenancyOCID">
+  </input>
+  </div>
+  <div class="gf-form max-width-30">
+    <label class="gf-form-label width-10">Default Region</label>
+    <select
+      class="gf-form-input"
+      ng-model="ctrl.current.jsonData.defaultRegion"
+	  ng-required="true"
+      ng-options="o as o for o in ctrl.getRegions()">
+    </select>
+  </div>
+  <div class="gf-form max-width-30">
+    <label class="gf-form-label width-10">Environment</label>
+    <select
+      class="gf-form-input"
+      ng-model="ctrl.current.jsonData.environment"
+	  ng-required="true"
+      ng-options="o as o for o in ctrl.getEnvironments()">
+    </select>
+  </div>
+</div>
