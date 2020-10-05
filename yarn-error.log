@@ -1,0 +1,93 @@
+Arguments: 
+  /Users/athmural/.nvm/versions/node/v10.17.0/bin/node /usr/local/Cellar/yarn/1.22.4/libexec/bin/yarn.js install
+
+PATH: 
+  /Users/athmural/oci/go/bin:/Users/athmural/bin:/usr/local/Cellar/maven/3.6.1/bin:/Users/athmural/.nvm/versions/node/v10.17.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/athmural/oci/go/src/oci-grafana-plugin/node_modules/.bin:/usr/local/Cellar/go/1.14/libexec/bin:/Users/athmural/oci/go/bin:/Users/athmural/bin:/usr/local/Cellar/maven/3.6.1/bin:/Users/athmural/.nvm/versions/node/v10.17.0/bin
+
+Yarn version: 
+  1.22.4
+
+Node version: 
+  10.17.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/@grafana/toolkit/-/toolkit-7.3.0-pre.0-11e6cc10d4.tgz: Request failed "404 Not Found"
+      at ResponseError.ExtendableBuiltin (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:696:66)
+      at new ResponseError (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:802:124)
+      at Request.<anonymous> (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:67057:16)
+      at Request.emit (events.js:198:13)
+      at Request.module.exports.Request.onRequestResponse (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:141625:10)
+      at ClientRequest.emit (events.js:203:15)
+      at HTTPParser.parserOnIncomingClient [as onIncoming] (_http_client.js:556:21)
+      at HTTPParser.parserOnHeadersComplete (_http_common.js:109:17)
+      at TLSSocket.socketOnData (_http_client.js:442:20)
+      at TLSSocket.emit (events.js:198:13)
+
+npm manifest: 
+  {
+    "name": "oci-grafana-plugin",
+    "private": true,
+    "version": "2.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "buildjs": "./node_modules/.bin/grunt",
+      "lint": "./node_modules/.bin/eslint src/",
+      "fix": "./node_modules/.bin/eslint --fix src/",
+      "bump": "./node_modules/.bin/grunt bump",
+      "build": "grafana-toolkit plugin:build",
+      "test": "grafana-toolkit plugin:test",
+      "dev": "grafana-toolkit plugin:dev",
+      "watch": "grafana-toolkit plugin:dev --watch"
+    },
+    "author": "",
+    "license": "UPL",
+    "engines": {
+      "node": ">6.10.0"
+    },
+    "engineStrict": true,
+    "devDependencies": {
+      "babel": "^6.23.0",
+      "babel-preset-react": "^6.24.1",
+      "eslint-plugin-import": "^2.14.0",
+      "eslint-plugin-node": "^8.0.1",
+      "eslint-plugin-promise": "^4.0.1",
+      "eslint-plugin-standard": "^4.0.0",
+      "grunt": "^1.0.4",
+      "grunt-babel": "~6.0.0",
+      "grunt-bump": "^0.8.0",
+      "grunt-cli": "^1.2.0",
+      "grunt-contrib-clean": "^1.1.0",
+      "grunt-contrib-copy": "^1.0.0",
+      "grunt-contrib-uglify": "^2.3.0",
+      "grunt-contrib-watch": "^1.0.0",
+      "grunt-execute": "~0.2.2",
+      "grunt-systemjs-builder": "^1.0.0",
+      "jest": "^24.5.0",
+      "jsdom": "~9.12.0",
+      "load-grunt-tasks": "^3.5.2",
+      "prunk": "^1.3.0",
+      "q": "^1.5.0"
+    },
+    "dependencies": {
+      "@babel/preset-env": "^7.3.4",
+      "@grafana/toolkit": "canary",
+      "babel-loader": "^8.0.4",
+      "babel-plugin-transform-es2015-for-of": "^6.6.0",
+      "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
+      "babel-preset-es2015": "^6.24.1",
+      "eslint": "^5.12.0",
+      "eslint-config-standard": "^12.0.0",
+      "js-yaml": "^3.13.1",
+      "lodash": "^4.17.4"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
