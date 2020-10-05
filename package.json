@@ -27,7 +27,7 @@
     "eslint-plugin-node": "^8.0.1",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
-    "@grafana/toolkit": "canary",
+    "@grafana/toolkit": "^7.2.0",
     "grunt": "^1.0.4",
     "grunt-babel": "~6.0.0",
     "grunt-bump": "^0.8.0",

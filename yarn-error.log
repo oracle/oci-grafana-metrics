@@ -56,6 +56,7 @@ npm manifest:
       "eslint-plugin-node": "^8.0.1",
       "eslint-plugin-promise": "^4.0.1",
       "eslint-plugin-standard": "^4.0.0",
+      "@grafana/toolkit": "canary",
       "grunt": "^1.0.4",
       "grunt-babel": "~6.0.0",
       "grunt-bump": "^0.8.0",
@@ -74,7 +75,6 @@ npm manifest:
     },
     "dependencies": {
       "@babel/preset-env": "^7.3.4",
-      "@grafana/toolkit": "canary",
       "babel-loader": "^8.0.4",
       "babel-plugin-transform-es2015-for-of": "^6.6.0",
       "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
