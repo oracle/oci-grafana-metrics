@@ -9,7 +9,10 @@
     "lint": "./node_modules/.bin/eslint src/",
     "fix": "./node_modules/.bin/eslint --fix src/",
     "bump": "./node_modules/.bin/grunt bump",
-    "test": "jest src/ --coverage"
+    "build": "grafana-toolkit plugin:build",
+    "test": "grafana-toolkit plugin:test",
+    "dev": "grafana-toolkit plugin:dev",
+    "watch": "grafana-toolkit plugin:dev --watch"
   },
   "author": "",
   "license": "UPL",
