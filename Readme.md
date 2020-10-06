@@ -23,14 +23,14 @@ Begin by [installing the Oracle Cloud Infrastructure CLI](https://docs.cloud.ora
 
 In the OCI console under **Identity > Groups** click **Create Group** and create a new group called **GrafanaLoggingUserGroup**. Add the user configured in the OCI CLI to the newly-created group. 
 
-![alt text](docs/images/usrGp.png)
+![alt text](https://github.com/mayur-oci/loggingDocs/blob/main/images/usrGp.png?raw=true)
 
 Under the **Policy** tab switch to the root compartment and click **Create Policy**. Create a policy allowing the group to read tenancy metrics. Add the following policy statements:
 
 - `allow group GrafanaLoggingUserGroup to read log-groups in tenancy`
 - `allow group GrafanaLoggingUserGroup to read log-content in tenancy`
 
-![alt text](docs/images/usrPolicy.png)
+![alt text](https://github.com/mayur-oci/loggingDocs/blob/main/images/usrPolicy.png?raw=true)
 
 ### For compute-instance/VM on Oracle Cloud Infrastructure
 #### Create Dynamic Group for your instance 
@@ -38,7 +38,7 @@ Provision an Oracle Linux [virtual machine](https://docs.cloud.oracle.com/iaas/C
 
 After creating your VM, the next step is to create a [dynamic group](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingdynamicgroups.htm) used to group virtual machine or bare metal compute instances as “principals” (similar to user groups).
 You can define the dynamic group similar to below, where your instance is part of the compartment given in the definition of the dynamic group.
-![alt text](docs/images/dgGroup.png)
+![alt text](https://github.com/mayur-oci/loggingDocs/blob/main/images/dgGroup.png?raw=true)
 #### Create IAM policy for Dynamic Group for your instance 
 
 Next, create a [policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Concepts/policygetstarted.htm) named “grafana_policy” in the root compartment of your tenancy to permit instances in the dynamic group to make API calls against Oracle Cloud Infrastructure services. Add the following policy statements:
@@ -46,7 +46,7 @@ Next, create a [policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Conc
 * `allow dynamicgroup DynamicGroupForGrafanaInstances to read log-groups in tenancy`
 * `allow dynamicgroup DynamicGroupForGrafanaInstances to read log-content in tenancy`
 
-![alt text](docs/images/dgPolicy.png)
+![alt text](https://github.com/mayur-oci/loggingDocs/blob/main/images/dgPolicy.png?raw=true)
 
 ## For more information
 [Github repository](https://github.com/oracle/oci-grafana-plugin)
