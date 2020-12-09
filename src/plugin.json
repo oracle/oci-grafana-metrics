@@ -26,12 +26,12 @@
       {"name": "GitHub", "url": "https://github.com/oracle/oci-grafana-plugin"},
       {"name": "UPL", "url": "https://oss.oracle.com/licenses/upl"}
     ],
-    "version": "1.1.4",
+    "version": "2.2.0",
     "updated": "2020-12-08"
   },
 
   "dependencies": {
-    "grafanaVersion": "3.x.x",
+    "grafanaVersion": "7.3.x",
     "plugins": [ ]
   }
 }

@@ -44,3 +44,5 @@ GOOS=$GOOS go build -o ./dist/oci-plugin$POST
  GOOS=windows GOARCH=amd64 go build -o ./dist/oci-plugin_windows_amd64.exe
  tar cvf plugin.tar ./dist
 
+#For grafana publishing
+#yarn install --pure-lockfile && yarn build

@@ -117,7 +117,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e5494339bc0888d0b8da5541b3222d718c60a56816ad5c208bb24781f600887a"
+  digest = "1:d62380c64b72460879e53710b38bf6a00817d8989b7a68c20691d79766a23bfd"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -129,18 +129,18 @@
     "trace",
   ]
   pruneopts = ""
-  revision = "c7110b5ffcbb9f2ac4de9fbd2600e37d42473a9a"
+  revision = "ac852fbbde11df194bfd5004603c7c8e117901f2"
 
 [[projects]]
   branch = "master"
-  digest = "1:daca4a3335dddd4163f881a2a3d2fd0ec65d9d467f66171a62a8edad2871f95d"
+  digest = "1:dd4fc2813ebed2df3c7248ffca72531445b6f5b54b0e91039aad26442758cfeb"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = ""
-  revision = "ed752295db8857b3a7f36c3f57e38509cadff471"
+  revision = "d4d67f95c62d573f21c7627795af8a6c2ab475a5"
 
 [[projects]]
   digest = "1:fddc0a63dca46ccbb24699dad1f8a9ac28ebe295c8826f7c251cd86b385ebd39"
@@ -169,11 +169,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:045f3d995f872aa1fcc160071f871e6e2d79934db79125b678e208bb37e408f1"
+  digest = "1:6adff8e38c66473c5683be5ce750ed309e2f985b4a4a0f82139666b8b36e1531"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = ""
-  revision = "9ee31aac76e7782920c6994b99fc3444fc48486a"
+  revision = "f92720507ed448d745918592ec42d583d5de8bb2"
 
 [[projects]]
   digest = "1:712e704d919c5034c577fff26365f2f030214c18b479808f178ae994afef66ec"

@@ -36,3 +36,7 @@ coverage/
 dist/
 *_orig
 .idea
+
+#Ignore the built tar and zip files
+*.tar
+*.zip
