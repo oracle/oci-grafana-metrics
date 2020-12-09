@@ -10,8 +10,16 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:d395f805a6db56e6adadcaec4dc64593d73ce6e154b2ae44e26b5ae096d7cdc9"
+  name = "github.com/fatih/color"
+  packages = ["."]
+  pruneopts = ""
+  revision = "bc2269661d49c6c9d0e514eef49710556883f3fa"
+  version = "v1.10.0"
+
+[[projects]]
   branch = "master"
-  digest = "1:e7a63d1fca4abe974d91ed8c720fed05daec96d3de4e60af9deb931f5df55625"
+  digest = "1:6532affeeaaccdc6919d5773516176b77de02b4af8cf9a7fac16bae77aa319c5"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -21,7 +29,7 @@
     "ptypes/timestamp",
   ]
   pruneopts = ""
-  revision = "1918e1ff6ffd2be7bed0553df8650672c3bfe80d"
+  revision = "4846b58453b3708320bdb524f25cc5a1d9cda4d4"
 
 [[projects]]
   branch = "renderer"
@@ -32,12 +40,12 @@
   revision = "84176c64269d8060f99e750ee8aba6f062753336"
 
 [[projects]]
-  branch = "master"
-  digest = "1:3a69e25efed2066afab18f7dd44d5eb2192ce2c11eaffa327d15057e465a150a"
+  digest = "1:1d3927361529fac92d13b73b27abe8173fc56a09df4cef9847d156c3918f6150"
   name = "github.com/hashicorp/go-hclog"
   packages = ["."]
   pruneopts = ""
-  revision = "61d530d6c27f994fb6c83b80f99a69c54125ec8a"
+  revision = "e59fd7e1110848012d4335fcd0d3bb88e0cdf9e7"
+  version = "v0.15.0"
 
 [[projects]]
   digest = "1:de20979176f5f326a028fd0d3698f4ec18f6921b46c9d68a35200355c6e8e6b9"
@@ -48,30 +56,46 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f9a62feb8295380942889460d0008f9fc34c4ad288821efb2ec15168a91b3404"
+  digest = "1:9ed2bf445521b38a8c3d46a3ab18287ef0c4ebc1ec2f575d7794274f5cd88311"
   name = "github.com/hashicorp/yamux"
   packages = ["."]
   pruneopts = ""
-  revision = "2f1d1f20f75d5404f53b9edf6b53ed5505508675"
+  revision = "aecfd211c9ce5303cd19780c8fc96a01b42fa298"
 
 [[projects]]
-  digest = "1:9adf43f9a17af07a6d587e3b493e2111ad8e07283d5cd58e44e70d23bf6dc644"
+  digest = "1:040c78e2a456bb7bb0dfebf7d5f7cd229fbc991c440ff80dd8af90d3714dee70"
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2e1b0c1546e0173c0907cf05c67b8ba29ed8b4d1"
+  version = "v0.1.8"
+
+[[projects]]
+  digest = "1:87fecb4f5564bd9bc810e4c83d4ac434fd17599edc7b35e27580c2cfc48cdb7c"
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  pruneopts = ""
+  revision = "7b513a986450394f7bbf1476909911b3aa3a55ce"
+  version = "v0.0.12"
+
+[[projects]]
+  digest = "1:7fe7a8fc8e73eb84c85a4bb6ddcd6e16d7f72ab0f38c896ea95e0674f4acfd72"
   name = "github.com/mitchellh/go-testing-interface"
   packages = ["."]
   pruneopts = ""
-  revision = "6d0b8010fcc857872e42fc6c931227569016843c"
-  version = "v1.0.0"
+  revision = "93f0c65740d3e21a23304be03030037f06e933ea"
+  version = "v1.14.1"
 
 [[projects]]
-  digest = "1:94e9081cc450d2cdf4e6886fc2c06c07272f86477df2d74ee5931951fa3d2577"
+  digest = "1:396c2ed5c96e6934e3d4aae3c7843fd74010911e608614c9db83560e01226671"
   name = "github.com/oklog/run"
   packages = ["."]
   pruneopts = ""
-  revision = "4dadeb3030eda0273a12382bb2348ffc7c9d1a39"
-  version = "v1.0.0"
+  revision = "9c53bcd6fefd554246da88d55efcc283aff63659"
+  version = "v1.1.0"
 
 [[projects]]
-  digest = "1:c4278784afedcf2a253314c567e659c13b46ead950c3bc92b66fc6557fc1c64c"
+  digest = "1:53fa3ae2aff8e77f4fd59fc37afdca49927c269b43acb9b477e7b5333308813e"
   name = "github.com/oracle/oci-go-sdk"
   packages = [
     "common",
@@ -80,8 +104,8 @@
     "monitoring",
   ]
   pruneopts = ""
-  revision = "967e8c3dc33982d871496c044633ee10798f4659"
-  version = "v15.7.0"
+  revision = "2e10e2a480882956ea101da0e590f17b51a81472"
+  version = "v24.3.0"
 
 [[projects]]
   digest = "1:1d7e1867c49a6dd9856598ef7c3123604ea3daabf5b83f303ff457bcbc410b1d"
@@ -93,7 +117,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:41055845ee2a3f0b0fbf94f12b7a6c5322ae66c166d192e38156e0d63a6e2993"
+  digest = "1:e5494339bc0888d0b8da5541b3222d718c60a56816ad5c208bb24781f600887a"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -105,24 +129,29 @@
     "trace",
   ]
   pruneopts = ""
-  revision = "c44066c5c816ec500d459a2a324a753f78531ae0"
+  revision = "c7110b5ffcbb9f2ac4de9fbd2600e37d42473a9a"
 
 [[projects]]
   branch = "master"
-  digest = "1:ff65401e40494de90fddaecf09b2954179d872a45d9c68b9b31da60f35e4ea73"
+  digest = "1:daca4a3335dddd4163f881a2a3d2fd0ec65d9d467f66171a62a8edad2871f95d"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "internal/unsafeheader",
+    "unix",
+  ]
   pruneopts = ""
-  revision = "7e31e0c00fa05cb5fbf4347b585621d6709e19a4"
+  revision = "ed752295db8857b3a7f36c3f57e38509cadff471"
 
 [[projects]]
-  digest = "1:5acd3512b047305d49e8763eef7ba423901e85d5dd2fd1e71778a0ea8de10bd4"
+  digest = "1:fddc0a63dca46ccbb24699dad1f8a9ac28ebe295c8826f7c251cd86b385ebd39"
   name = "golang.org/x/text"
   packages = [
     "collate",
     "collate/build",
     "internal/colltab",
     "internal/gen",
+    "internal/language",
+    "internal/language/compact",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
@@ -135,25 +164,29 @@
     "unicode/rangetable",
   ]
   pruneopts = ""
-  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
-  version = "v0.3.0"
+  revision = "22f1617af38ed4cd65b3b96e02bab267e560155c"
+  version = "v0.3.4"
 
 [[projects]]
   branch = "master"
-  digest = "1:5bc459e4630e2f2adcd04005a06d6f9cdf614c6ffa751309497096efcab79150"
+  digest = "1:045f3d995f872aa1fcc160071f871e6e2d79934db79125b678e208bb37e408f1"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = ""
-  revision = "b69ba1387ce2108ac9bc8e8e5e5a46e7d5c72313"
+  revision = "9ee31aac76e7782920c6994b99fc3444fc48486a"
 
 [[projects]]
-  digest = "1:1293087271e314cfa2b3decededba2ecba0ff327e7b7809e00f73f616449191c"
+  digest = "1:712e704d919c5034c577fff26365f2f030214c18b479808f178ae994afef66ec"
   name = "google.golang.org/grpc"
   packages = [
     ".",
+    "attributes",
+    "backoff",
     "balancer",
     "balancer/base",
+    "balancer/grpclb/state",
     "balancer/roundrobin",
+    "binarylog/grpc_binarylog_v1",
     "codes",
     "connectivity",
     "credentials",
@@ -164,24 +197,75 @@
     "health/grpc_health_v1",
     "internal",
     "internal/backoff",
+    "internal/balancerload",
+    "internal/binarylog",
+    "internal/buffer",
     "internal/channelz",
+    "internal/credentials",
     "internal/envconfig",
+    "internal/grpclog",
     "internal/grpcrand",
+    "internal/grpcsync",
+    "internal/grpcutil",
+    "internal/resolver",
+    "internal/resolver/dns",
+    "internal/resolver/passthrough",
+    "internal/resolver/unix",
+    "internal/serviceconfig",
+    "internal/status",
+    "internal/syscall",
     "internal/transport",
+    "internal/transport/networktype",
     "keepalive",
     "metadata",
-    "naming",
     "peer",
     "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
+    "serviceconfig",
     "stats",
     "status",
     "tap",
   ]
   pruneopts = ""
-  revision = "2e463a05d100327ca47ac218281906921038fd95"
-  version = "v1.16.0"
+  revision = "2cf12a82ed4381ce0b0f7d487ee2eca772ee18e3"
+  version = "v1.34.0"
+
+[[projects]]
+  digest = "1:0d049ff01749ce1d6092c85cb90a02dfdb3b401939b13415b7e608f36bc8ecee"
+  name = "google.golang.org/protobuf"
+  packages = [
+    "encoding/prototext",
+    "encoding/protowire",
+    "internal/descfmt",
+    "internal/descopts",
+    "internal/detrand",
+    "internal/encoding/defval",
+    "internal/encoding/messageset",
+    "internal/encoding/tag",
+    "internal/encoding/text",
+    "internal/errors",
+    "internal/fieldsort",
+    "internal/filedesc",
+    "internal/filetype",
+    "internal/flags",
+    "internal/genid",
+    "internal/impl",
+    "internal/mapsort",
+    "internal/pragma",
+    "internal/set",
+    "internal/strs",
+    "internal/version",
+    "proto",
+    "reflect/protoreflect",
+    "reflect/protoregistry",
+    "runtime/protoiface",
+    "runtime/protoimpl",
+    "types/known/anypb",
+    "types/known/durationpb",
+    "types/known/timestamppb",
+  ]
+  pruneopts = ""
+  revision = "3f7a61f89bb6813f89d981d1870ed68da0b3c3f1"
+  version = "v1.25.0"
 
 [solve-meta]
   analyzer-name = "dep"
