@@ -49,13 +49,14 @@ Repeat the process for the following OCI variables:
 | region          | `regions()`                                                               |
 | compartment     | `compartments()`                                                          |
 | namespace       | `namespaces($region,$compartment)`                                        |
-| metric          | `metrics($region,$compartment,$namespace)`                                |
-| dimensionKey    | `dimensions($region,$compartment,$namespace,$metric)`                     |
-| dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey)` |
+| resourcegroup   | `resourcegroups($region, $compartment, $namespace)`                                        |
+| metric          | `metrics($region,$compartment, $namespace, $resourcegroup)`                                |
+| dimensionKey    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup)`                     |
+| dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
 
 The final list of variables should look like this: 
 
-![Screen Shot 2019-01-11 at 3.19.58 PM](images/Screen%20Shot%202019-01-11%20at%203.19.58%20PM.png)
+![Metrics dashboard variables screenshot](images/metrics-dashboard-variables-screenshot.png)
 
 In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
 
