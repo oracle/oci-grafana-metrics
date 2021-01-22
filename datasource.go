@@ -301,6 +301,8 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 		var ts GrafanaSearchRequest
 		json.Unmarshal([]byte(query.ModelJson), &ts)
 		reqDetails := monitoring.ListMetricsDetails{}
+		// Group by is needed to get all  metrics without missing any as it is limited by the max pages
+		reqDetails.GroupBy = []string{"name"}
 		reqDetails.Namespace = common.String(ts.Namespace)
 		if ts.ResourceGroup != "NoResourceGroup" {
 			reqDetails.ResourceGroup = common.String(ts.ResourceGroup)
