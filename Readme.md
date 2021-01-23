@@ -1,3 +1,9 @@
+# About OCI Grafana Metrics plugin  
+
+> Describe your project's features, functionality and target audience
+
+## Installation
+
 # Oracle Cloud Infrastructure Metrics Data Source
 ## Introduction
 
@@ -11,7 +17,6 @@ If you are running Grafana anywhere else, make sure you have `~/.oci` configured
 
 If you're using a version of Grafana that's older than 6.0, you will need to download the zip file and install this plugin manually, or chmod the binary that is downloaded to make it executable.
 
-## Installation Documentation
 
 In order to simplify the installation process, we created detailed guides for you to follow:
 
@@ -25,8 +30,6 @@ Once you have the data source installed, configure your datasource with your ten
 
 We also have documentation for how to use the newly installed and configured plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/using.md) walkthrough.
 
-## Development
-
 ### Debugging
 
 If you want to debug golang backend plugin code, follow the steps below:
@@ -34,3 +37,47 @@ If you want to debug golang backend plugin code, follow the steps below:
 * Run `gops` and find processId for `oci-plugin_darwin_amd64` process
 * Copy this processId to the `.vscode/launch.json`
 * In your VSCode from 'Debug' menu call 'Start Debugging'
+
+
+
+## Documentation
+
+> Please refer to  <https://docs.oracle.com>.
+
+## Examples
+
+> N/A
+
+## Help
+
+> Inform users on where to get help or how to receive official support from Oracle
+  (if applicable).
+
+## Contributing
+
+This project welcomes contributions from the community. Before submitting a pull
+request, please [review our contribution guide](./CONTRIBUTING.md).
+
+## Security
+
+Please consult the [security guide](./SECURITY.md) for our responsible security
+vulnerability disclosure process.
+
+## License
+
+> The correct copyright notice format for both documentation and software
+  is `Copyright (c) [year,] year Oracle and/or its affiliates.`
+  You must include the year the content was first released (on any platform) and
+  the most recent year in which it was revised.
+
+Copyright (c) 2021 Oracle and/or its affiliates.
+
+Released under the Universal Permissive License v1.0 as shown at
+<https://oss.oracle.com/licenses/upl/>.
+
+
+
+
+
+
+
