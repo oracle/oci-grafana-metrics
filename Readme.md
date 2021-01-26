@@ -1,6 +1,5 @@
 # About OCI Grafana Metrics plugin  
 
-> Describe your project's features, functionality and target audience
 
 ## Installation
 
