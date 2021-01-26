@@ -3,7 +3,7 @@
 
 ## Installation
 
-# Oracle Cloud Infrastructure Metrics Data Source
+### Oracle Cloud Infrastructure Metrics Data Source
 ## Introduction
 
 This plugin makes queries to the Oracle Cloud Infrastructure Monitoring Service and displays them on Grafana.
