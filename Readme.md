@@ -50,6 +50,8 @@ If you want to debug golang backend plugin code, follow the steps below:
 
 ## Help
 
+  Issues and questions about this plugin can be posted [here](https://github.com/oracle/oci-grafana-plugin/issues)
+
 > Inform users on where to get help or how to receive official support from Oracle
   (if applicable).
 
