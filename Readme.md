@@ -39,7 +39,7 @@ If you want to debug golang backend plugin code, follow the steps below:
 
 ## Documentation
 
-Please refer to  <https://docs.oracle.com>.
+Please refer to the [docs folder in this repo](./docs)
 
 ## Help
 
