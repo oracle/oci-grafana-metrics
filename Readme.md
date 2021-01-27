@@ -37,22 +37,13 @@ If you want to debug golang backend plugin code, follow the steps below:
 * Copy this processId to the `.vscode/launch.json`
 * In your VSCode from 'Debug' menu call 'Start Debugging'
 
-
-
 ## Documentation
 
-> Please refer to  <https://docs.oracle.com>.
-
-## Examples
-
-> N/A
+Please refer to  <https://docs.oracle.com>.
 
 ## Help
 
-  Issues and questions about this plugin can be posted [here](https://github.com/oracle/oci-grafana-plugin/issues)
-
-> Inform users on where to get help or how to receive official support from Oracle
-  (if applicable).
+Issues and questions about this plugin can be posted [as an issue in this GitHub repository](https://github.com/oracle/oci-grafana-plugin/issues)
 
 ## Contributing
 
@@ -70,10 +61,3 @@ Copyright (c) 2021 Oracle and/or its affiliates.
 
 Released under the Universal Permissive License v1.0 as shown at
 <https://oss.oracle.com/licenses/upl/>.
-
-
-
-
-
-
-
