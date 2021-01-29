@@ -10,10 +10,10 @@
     "fix": "./node_modules/.bin/eslint --fix src/",
     "bump": "./node_modules/.bin/grunt bump",
     "test": "jest src/ --coverage",
-    "gBuild" :  "yarn install --pure-lockfile && yarn buildjs  && zip ${npm_package_name}-${npm_package_version}.zip ./dist -r"
+    "gBuild": "yarn install --pure-lockfile && yarn buildjs  && zip ${npm_package_name}-${npm_package_version}.zip ./dist -r"
   },
   "author": "",
-  "license": "UPL",
+  "license": "UPL-1.0",
   "engines": {
     "node": ">6.10.0"
   },
