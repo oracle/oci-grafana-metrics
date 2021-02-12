@@ -26,22 +26,22 @@ that is downloaded to make it executable.
 In order to simplify the installation process, we created detailed guides for you to follow:
 
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana
- on a Linux host using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md).
+ on a Linux host using [this document](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/linux.md).
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana
- on a MacOS host using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/macos.md).
+ on a MacOS host using [this document](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/macos.md).
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana
- on a virtual machine in Oracle Cloud Infrastructure using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linuxoci.md).
+ on a virtual machine in Oracle Cloud Infrastructure using [this document](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/linuxoci.md).
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana 
-on a virtual machine in Oracle Cloud Infrastructure using Terraform using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/terraform.md).
+on a virtual machine in Oracle Cloud Infrastructure using Terraform using [this document](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/terraform.md).
 * Install Grafana and the Oracle Cloud Infrastructure Data Source for Grafana 
-on Kubernetes in Oracle Cloud Infrastructure using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/kubernetes.md)
+on Kubernetes in Oracle Cloud Infrastructure using [this document](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/kubernetes.md)
 
 Once you have the data source installed, configure your datasource with your 
 tenancy OCID, default region, and where you're running the plugin 
 (Oracle Cloud or elsewhere).
 
 We also have documentation for how to use the newly installed and configured 
-plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/using.md) walkthrough.
+plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/using.md) walkthrough.
 
 ### Debugging
 
@@ -58,7 +58,7 @@ Please refer to the [docs folder in this repo](./docs)
 
 ## Help
 
-Issues and questions about this plugin can be posted [as an issue in this GitHub repository](https://github.com/oracle/oci-grafana-plugin/issues)
+Issues and questions about this plugin can be posted [as an issue in this GitHub repository](https://github.com/oracle/oci-grafana-metrics/issues)
 
 ## Contributing
 
