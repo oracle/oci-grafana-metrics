@@ -337,8 +337,8 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		}
 
 		frame := data.NewFrame(query.RefID,
-				data.NewField("text", nil, []string{}),
-				data.NewField("text", nil, []string{}),
+				data.NewField("name", nil, []string{}),
+				data.NewField("compartmentID", nil, []string{}),
 		)
 		for name, id := range o.nameToOCID {
 				frame.AppendRow(name, id)
