@@ -18,13 +18,7 @@ import {
 import retryOrThrow from "./util/retry";
 import { SELECT_PLACEHOLDERS } from "./query_ctrl";
 import { resolveAutoWinRes } from "./util/utilFunctions";
-import { arrowTableToDataFrame } from "@grafana/data";
-
-const base64StringToArrowTable =
-  require("@grafana/data").base64StringToArrowTable;
-const DEFAULT_RESOURCE_GROUP = "NoResourceGroup";
-con;
-
+import { toDataQueryResponse } from "@grafana/runtime";
 // function base64StringToArrowTable(text) {
 //   const b64 = atob(text);
 //   const arr = Uint8Array.from(b64, (c) => {
@@ -758,7 +752,7 @@ export default class OCIDatasource {
           queries: options.targets,
         },
       });
-    }, 10);
+    }, 10).then((res) => toDataQueryResponse(res, options));
   }
 
   /**
