@@ -19,6 +19,7 @@ import retryOrThrow from "./util/retry";
 import { SELECT_PLACEHOLDERS } from "./query_ctrl";
 import { resolveAutoWinRes } from "./util/utilFunctions";
 import { toDataQueryResponse } from "@grafana/runtime";
+
 // function base64StringToArrowTable(text) {
 //   const b64 = atob(text);
 //   const arr = Uint8Array.from(b64, (c) => {
@@ -744,7 +745,7 @@ export default class OCIDatasource {
     let _this = this;
     return retryOrThrow(() => {
       return _this.backendSrv.datasourceRequest({
-        url: "/api/tsdb/query",
+        url: "/api/ds/query",
         method: "POST",
         data: {
           from: options.range.from.valueOf().toString(),
@@ -759,39 +760,24 @@ export default class OCIDatasource {
    * Converts data from grafana backend to UI format
    */
   mapToTextValue(result, searchField) {
-    if (_.isEmpty(result)) {
-      return [];
-    }
+    if (_.isEmpty(result)) return [];
+
     debugger;
-    const text = result.data.results["A"].dataframes[0];
-    if (!text) return [];
 
-    const arrowTable = base64StringToArrowTable(text);
-
-    const dr = arrowTableToDataFrame(arrowTable).table.toArray();
-    console.log(dr);
-
-    // const map = _.map(dr.rows, (row, i) => {
-    //   if (row.length > 1) {
-    //     return { text: row[0], value: row[1] }
-    //   } else if (_.isObject(row[0])) {
-    //     return { text: row[0], value: i }
-    //   }
-    //   return { text: row[0], value: row[0] }
-    // })
-
-    const map = dr.map((obj) => {
-      switch (searchField) {
-        case "regions":
-          return { text: obj["text"] };
-        case "compartments":
-          return { text: obj["name"], value: obj["compartmentID"] };
-        default:
-          return {};
-      }
-    });
-
-    return map;
+    switch (searchField) {
+      case "regions":
+        return result.data[0].fields[0].values.buffer.map((val) => ({
+          text: val,
+        }));
+      case "compartments":
+        return result.data[0].fields[0].values.buffer.map((name, i) => ({
+          text: name,
+          value: result.data[0].fields[1].values.buffer[i],
+        }));
+      // remaining  cases will be completed once the fix works for the above two
+      default:
+        return {};
+    }
   }
 
   // **************************** Template variables helpers ****************************
