@@ -38,7 +38,7 @@ Add the **region** variable to this page. Give the variable the name `region`, c
 
 ![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
 
-The page will load a preview of valuables available for that variable. Scroll down and click **Add** to create a template variable for regions. 
+The page will load a preview of values  available for that variable. Scroll down and click **Add** to create a template variable for regions. 
 
 ![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
 

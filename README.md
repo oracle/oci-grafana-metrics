@@ -45,6 +45,8 @@ plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https
 
 ### Debugging
 
+Please make sure that the golang version installed is ```1.16``` and grafana version installed is < 8 
+
 If you want to debug golang backend plugin code, follow the steps below:
 
 * Install [gops](https://github.com/google/gops) to list running go processes on your machine
