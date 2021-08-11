@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.105.0
 	github.com/hashicorp/go-hclog v0.15.0 // indirect
-	github.com/hashicorp/go-plugin v1.2.2
+	github.com/hashicorp/go-plugin v1.2.2 // indirect
 	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/oklog/run v1.1.0 // indirect
