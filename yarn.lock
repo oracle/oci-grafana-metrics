@@ -878,7 +878,7 @@
   resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/@grafana/aws-sdk/-/aws-sdk-0.0.3.tgz#bc632c6c77971a5474acbe45847420503679fc75"
   integrity sha1-vGMsbHeXGlR0rL5FhHQgUDZ5/HU=
 
-"@grafana/data@7.5", "@grafana/data@7.5.9":
+"@grafana/data@7.5.9":
   version "7.5.9"
   resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/@grafana/data/-/data-7.5.9.tgz#6777f4e0947c810b391078855128623bcef1665b"
   integrity sha1-Z3f04JR8gQs5EHiFUShiO87xZls=
