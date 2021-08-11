@@ -435,7 +435,6 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 						err,
 				})
 		}
-
 		resp := backend.NewQueryDataResponse()
 		for _, q := range results {
 				respD := resp.Responses[q.query.RefID]
