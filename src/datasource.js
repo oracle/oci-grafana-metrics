@@ -20,13 +20,7 @@ import { SELECT_PLACEHOLDERS } from "./query_ctrl";
 import { resolveAutoWinRes } from "./util/utilFunctions";
 import { toDataQueryResponse } from "@grafana/runtime";
 
-// function base64StringToArrowTable(text) {
-//   const b64 = atob(text);
-//   const arr = Uint8Array.from(b64, (c) => {
-//     return c.charCodeAt(0);
-//   });
-//   return Table.from(arr);
-// }
+const DEFAULT_RESOURCE_GROUP = "NoResourceGroup";
 
 export default class OCIDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
@@ -762,18 +756,22 @@ export default class OCIDatasource {
   mapToTextValue(result, searchField) {
     if (_.isEmpty(result)) return [];
 
-    debugger;
-
     switch (searchField) {
-      case "regions":
-        return result.data[0].fields[0].values.buffer.map((val) => ({
-          text: val,
-        }));
-      case "compartments":
+
+      case 'compartments':
         return result.data[0].fields[0].values.buffer.map((name, i) => ({
           text: name,
           value: result.data[0].fields[1].values.buffer[i],
-        }));
+        }))
+      case 'regions' :
+      case 'namespaces':
+      case 'resourcegroups':
+      case 'search' :
+      case 'dimensions' :
+        return result.data[0].fields[0].values.buffer.map((name) => ({
+          text: name,
+          value: name,
+        }))
       // remaining  cases will be completed once the fix works for the above two
       default:
         return {};

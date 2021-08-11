@@ -200,7 +200,7 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.Quer
 
 				frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 				for _, item := range items {
-						frame.AppendRow(*(item.ResourceGroup))
+						frame.AppendRow(*(item.Namespace))
 				}
 
 				respD := resp.Responses[query.RefID]
