@@ -64,15 +64,12 @@ export default class OCIDatasource {
 
     return this.doRequest(query).then((result) => {
       var res = [];
-      _.forEach(result.data.results, (r) => {
-        _.forEach(r.series, (s) => {
-          res.push({ target: s.name, datapoints: s.points });
-        });
-        _.forEach(r.tables, (t) => {
-          t.type = "table";
-          t.refId = r.refId;
-          res.push(t);
-        });
+      _.forEach(result.data, (r) => {
+        const name = r.fields[1].config.displayNameFromDS;
+        const timeArr = r.fields[0].values.toArray();
+        const values = r.fields[1].values.toArray();
+        const points = timeArr.map((t, i) => [values[i], t]);
+        res.push({ target: name, datapoints: points });
       });
 
       result.data = res;
@@ -756,22 +753,25 @@ export default class OCIDatasource {
   mapToTextValue(result, searchField) {
     if (_.isEmpty(result)) return [];
 
-    switch (searchField) {
+    // All drop-downs send a request to the backend and based on the query type, the backend sends a response
+    // Depending on the data available , options are shaped
+    // Values in fields are of type vectors (Based on the info from Grafana)
 
-      case 'compartments':
+    switch (searchField) {
+      case "compartments":
         return result.data[0].fields[0].values.buffer.map((name, i) => ({
           text: name,
           value: result.data[0].fields[1].values.buffer[i],
-        }))
-      case 'regions' :
-      case 'namespaces':
-      case 'resourcegroups':
-      case 'search' :
-      case 'dimensions' :
+        }));
+      case "regions":
+      case "namespaces":
+      case "resourcegroups":
+      case "search":
+      case "dimensions":
         return result.data[0].fields[0].values.buffer.map((name) => ({
           text: name,
           value: name,
-        }))
+        }));
       // remaining  cases will be completed once the fix works for the above two
       default:
         return {};
