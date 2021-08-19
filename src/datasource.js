@@ -759,16 +759,16 @@ export default class OCIDatasource {
 
     switch (searchField) {
       case "compartments":
-        return result.data[0].fields[0].values.buffer.map((name, i) => ({
+        return result.data[0].fields[0].values.toArray().map((name, i) => ({
           text: name,
-          value: result.data[0].fields[1].values.buffer[i],
+          value: result.data[0].fields[1].values.toArray()[i],
         }));
       case "regions":
       case "namespaces":
       case "resourcegroups":
       case "search":
       case "dimensions":
-        return result.data[0].fields[0].values.buffer.map((name) => ({
+        return result.data[0].fields[0].values.toArray().map((name) => ({
           text: name,
           value: name,
         }));

@@ -23,15 +23,18 @@
       "large": "img/Oracle-cloud.svg"
     },
     "links": [
-      {"name": "GitHub", "url": "https://github.com/oracle/oci-grafana-plugin"},
-      {"name": "UPL", "url": "https://oss.oracle.com/licenses/upl"}
+      {
+        "name": "GitHub",
+        "url": "https://github.com/oracle/oci-grafana-plugin"
+      },
+      { "name": "UPL", "url": "https://oss.oracle.com/licenses/upl" }
     ],
-    "version": "2.2.4",
-    "updated": "2021-08-05"
+    "version": "3.0.0-alpha",
+    "updated": "2021-08-19"
   },
 
   "dependencies": {
-    "grafanaVersion": "7.3.x",
-    "plugins": [ ]
+    "grafanaVersion": "8.0.x",
+    "plugins": []
   }
 }
