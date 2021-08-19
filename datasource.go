@@ -480,7 +480,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 						)
 
 						for _, metric := range item.AggregatedDatapoints {
-								frame.AppendRow(metric.Timestamp.UnixNano()/1000000, *(metric.Value))
+								frame.AppendRow(metric.Timestamp.Time, *(metric.Value))
 						}
 
 						respD.Frames = append(respD.Frames, frame)
