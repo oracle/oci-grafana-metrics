@@ -49,18 +49,18 @@ func NewOCIDatasource(pluginLogger hclog.Logger) (*OCIDatasource, error) {
 // GrafanaOCIRequest - Query Request comning in from the front end
 type GrafanaOCIRequest struct {
 	GrafanaCommonRequest
-	Query      string
-	Resolution string
-	Namespace  string
-	ResourceGroup  string
+	Query         string
+	Resolution    string
+	Namespace     string
+	ResourceGroup string
 }
 
 //GrafanaSearchRequest incoming request body for search requests
 type GrafanaSearchRequest struct {
 	GrafanaCommonRequest
-	Metric    string `json:"metric,omitempty"`
-	Namespace string
-	ResourceGroup  string
+	Metric        string `json:"metric,omitempty"`
+	Namespace     string
+	ResourceGroup string
 }
 
 type GrafanaCompartmentRequest struct {
@@ -362,7 +362,7 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 		}
 		items = append(items, res.Items...)
 		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
-		if res.OpcNextPage == nil  || pageNumber >= MAX_PAGES_TO_FETCH {
+		if res.OpcNextPage == nil || pageNumber >= MAX_PAGES_TO_FETCH {
 			break
 		}
 
@@ -423,9 +423,23 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, tsdbReq *datas
 
 func (o *OCIDatasource) getCompartments(ctx context.Context, region string, rootCompartment string) (map[string]string, error) {
 	m := make(map[string]string)
-	m["root compartment"] = rootCompartment
-	var page *string
 
+	tenancyOcid := rootCompartment
+
+	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
+	// Send the request using the service client
+	resp, err := o.identityClient.GetTenancy(context.Background(), req)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("This is what we were trying to get %s", " : fetching tenancy name"))
+	}
+
+	mapFromIdToName := make(map[string]string)
+	mapFromIdToName[tenancyOcid] = *resp.Name //tenancy name
+
+	mapFromIdToParentCmptId := make(map[string]string)
+	mapFromIdToParentCmptId[tenancyOcid] = "" //since root cmpt does not have a parent
+
+	var page *string
 	reg := common.StringToRegion(region)
 	o.identityClient.SetRegion(string(reg))
 	for {
@@ -441,7 +455,8 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 		}
 		for _, compartment := range res.Items {
 			if compartment.LifecycleState == identity.CompartmentLifecycleStateActive {
-				m[*(compartment.Name)] = *(compartment.Id)
+				mapFromIdToName[*(compartment.Id)] = *(compartment.Name)
+				mapFromIdToParentCmptId[*(compartment.Id)] = *(compartment.CompartmentId)
 			}
 		}
 		if res.OpcNextPage == nil {
@@ -449,6 +464,32 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 		}
 		page = res.OpcNextPage
 	}
+
+	mapFromIdToFullCmptName := make(map[string]string)
+	mapFromIdToFullCmptName[tenancyOcid] = mapFromIdToName[tenancyOcid] + "(tenancy, shown as '/')"
+
+	for len(mapFromIdToFullCmptName) < len(mapFromIdToName) {
+		for cmptId, cmptParentCmptId := range mapFromIdToParentCmptId {
+			_, isCmptNameResolvedFullyAlready := mapFromIdToFullCmptName[cmptId]
+			if !isCmptNameResolvedFullyAlready {
+				if cmptParentCmptId == tenancyOcid {
+					// If tenancy/rootCmpt my parent
+					// cmpt name itself is fully qualified, just prepend '/' for tenancy aka rootCmpt
+					mapFromIdToFullCmptName[cmptId] = "/" + mapFromIdToName[cmptId]
+				} else {
+					fullNameOfParentCmpt, isMyParentNameResolvedFully := mapFromIdToFullCmptName[cmptParentCmptId]
+					if isMyParentNameResolvedFully {
+						mapFromIdToFullCmptName[cmptId] = fullNameOfParentCmpt + "/" + mapFromIdToName[cmptId]
+					}
+				}
+			}
+		}
+	}
+
+	for cmptId, fullyQualifiedCmptName := range mapFromIdToFullCmptName {
+		m[fullyQualifiedCmptName] = cmptId
+	}
+
 	return m, nil
 }
 
