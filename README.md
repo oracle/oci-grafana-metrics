@@ -43,16 +43,17 @@ tenancy OCID, default region, and where you're running the plugin
 We also have documentation for how to use the newly installed and configured 
 plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/using.md) walkthrough.
 
-### Debugging
+### Testing
 
-Please make sure that the golang version installed is ```1.16``` and grafana version installed is < 8 
+Please make sure that the golang version installed is atleast ```1.16```
 
 If you want to debug golang backend plugin code, follow the steps below:
-
-* Install [gops](https://github.com/google/gops) to list running go processes on your machine
-* Run `gops` and find processId for `oci-plugin_darwin_amd64` process
-* Copy this processId to the `.vscode/launch.json`
-* In your VSCode from 'Debug' menu call 'Start Debugging'
+```
+yarn install
+yarn run build
+mage -v
+```
+copy the dist directory in the local plugin directory of grafana
 
 ## Documentation
 

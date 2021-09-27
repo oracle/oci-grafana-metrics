@@ -1,0 +1,46 @@
+package constants
+
+import "time"
+
+const (
+	OCI_CLI_AUTH_PROVIDER             = "oci-cli"
+	OCI_INSTANCE_AUTH_PROVIDER        = "oci-instance"
+	DEFAULT_CONFIG_DIR_NAME           = ".oci"
+	DEFAULT_CONFIG_FILE               = "~/.oci/config"
+	DEFAULT_PROFILE                   = "DEFAULT"
+	DEFAULT_INSTANCE_PROFILE          = "instance_profile"
+	DEFAULT_MULTI_TENANCY_FILE        = "~/.oci/tenancies"
+	DEFAULT_RESOURCE_GROUP            = "NoResourceGroup"
+	DEFAULT_RESOURCE_PLACEHOLDER      = "select resourcegroup (optional)"
+	DEFAULT_COMPARTMENT_PLACEHOLDER   = "select compartment"
+	MULTI_TENANCY_MODE_PROFILE        = "multi-profile"
+	MULTI_TENANCY_MODE_POLICY         = "cross-tenancy-policy"
+	YES                               = "yes"
+	NO                                = "no"
+	QUERYTYPE_TENANCIES               = "tenancies"
+	QUERYTYPE_REGIONS                 = "regions"
+	QUERYTYPE_COMPARTMENTS            = "compartments"
+	QUERYTYPE_NAMESPACES_WITH_METRICS = "namespaces_with_metrics"
+	QUERYTYPE_METRICS_SUMMARY         = "metrics_summary"
+	CACHE_KEY_RESOURCE_TAGS           = "resourceTags"
+	CACHE_KEY_RESOURCE_IDS_PER_TAG    = "resourceIDsPerTag"
+	ALL_REGION                        = "all-subscribed-region"
+	ALL_COMPARTMENT                   = "all-compartment"
+	FETCH_FOR_NAMESPACE               = "namespace"
+	FETCH_FOR_RESOURCE_GROUP          = "resource-group"
+	FETCH_FOR_DIMENSION               = "dimension"
+	TIME_IN_MINUTES                   = 5 * time.Minute
+	OCI_TARGET_COMPUTE                = "compute"
+	OCI_TARGET_VCN                    = "vcn"
+	OCI_TARGET_LBAAS                  = "lbaas"
+)
+
+var (
+	OCI_NAMESPACES = map[string]string{
+		"oci_computeagent":                  OCI_TARGET_COMPUTE,
+		"oci_compute":                       OCI_TARGET_COMPUTE,
+		"oci_compute_infrastructure_health": OCI_TARGET_COMPUTE,
+		"oci_vcn":                           OCI_TARGET_VCN,
+		"oci_lbaas":                         OCI_TARGET_LBAAS,
+	}
+)
