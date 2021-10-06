@@ -11,15 +11,22 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/oracle/oci-go-sdk/v48/common"
-	"github.com/oracle/oci-go-sdk/v48/core"
-	"github.com/oracle/oci-go-sdk/v48/identity"
-	"github.com/oracle/oci-go-sdk/v48/loadbalancer"
-	"github.com/oracle/oci-go-sdk/v48/monitoring"
+	"github.com/oracle/oci-go-sdk/v49/common"
+	"github.com/oracle/oci-go-sdk/v49/core"
+	"github.com/oracle/oci-go-sdk/v49/database"
+	"github.com/oracle/oci-go-sdk/v49/healthchecks"
+	"github.com/oracle/oci-go-sdk/v49/identity"
+	"github.com/oracle/oci-go-sdk/v49/loadbalancer"
+	"github.com/oracle/oci-go-sdk/v49/monitoring"
 
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
+
+type metricDataBank struct {
+	dataPoints     []monitoring.MetricData
+	resourceLabels map[string]map[string]string
+}
 
 type OCIClients struct {
 	authProvide      string
@@ -564,6 +571,8 @@ func (oc *OCIClients) GetMetricDataPoints(
 	backend.Logger.Debug("client", "GetMetricDataPoints", "fetching the metrics datapoints under compartment '"+requestParams.CompartmentOCID+"' for query '"+requestParams.QueryText+"'")
 
 	times := []time.Time{}
+	dataValuesWithTime := map[common.SDKTime][]float64{}
+	dataPointsWithResourceSerialNo := map[int]models.OCIMetricDataPoints{}
 	dataPoints := []models.OCIMetricDataPoints{}
 	resourceIDsPerTag := map[string]map[string]struct{}{}
 
@@ -621,15 +630,17 @@ func (oc *OCIClients) GetMetricDataPoints(
 		}
 	}
 
+	// fetching the metrics data for specified region in parallel
 	var wg sync.WaitGroup
 	for _, subscribedRegion := range subscribedRegions {
 		if subscribedRegion != constants.ALL_REGION {
-			client.monitoringClient.SetRegion(subscribedRegion)
+			//client.monitoringClient.SetRegion(subscribedRegion)
 
 			wg.Add(1)
 			go func(mc monitoring.MonitoringClient, sRegion string) {
 				defer wg.Done()
 
+				mc.SetRegion(sRegion)
 				resp, err := mc.SummarizeMetricsData(ctx, metricsDataRequest)
 				if err != nil {
 					backend.Logger.Error("client", "GetMetricDataPoints", err)
@@ -637,12 +648,28 @@ func (oc *OCIClients) GetMetricDataPoints(
 				}
 
 				if len(resp.Items) > 0 {
-					allRegionsMetricsDataPoint.Store(sRegion, resp.Items)
+					// fetching the resource labels
+					var rl map[string]map[string]string
+					labelCacheKey := strings.Join([]string{requestParams.TenancyOCID, requestParams.CompartmentOCID, sRegion, requestParams.Namespace, "resource_labels"}, "-")
+					for {
+						if cachedResourceLabels, found := oc.cache.Get(labelCacheKey); found {
+							rl = cachedResourceLabels.(map[string]map[string]string)
+							break
+						}
+					}
+
+					// storing the data to calculate later
+					allRegionsMetricsDataPoint.Store(sRegion, metricDataBank{
+						dataPoints:     resp.Items,
+						resourceLabels: rl,
+					})
 				}
 			}(client.monitoringClient, subscribedRegion)
 		}
 	}
 	wg.Wait()
+
+	resourcesFetched := 0
 
 	allRegionsMetricsDataPoint.Range(func(key, value interface{}) bool {
 		regionInUse := key.(string)
@@ -664,12 +691,13 @@ func (oc *OCIClients) GetMetricDataPoints(
 			}
 		}
 
-		metricDataPoints := value.([]monitoring.MetricData)
+		//metricDatas := value.([]monitoring.MetricData)
+		metricData := value.(metricDataBank)
 
-		for _, metricDataItem := range metricDataPoints {
+		for _, metricDataItem := range metricData.dataPoints {
 			found := false
-			values := []float64{}
 
+			// for tag based filtering
 			uniqueDataID, rIDPresent := metricDataItem.Dimensions["resourceId"]
 			if !rIDPresent {
 				for _, v := range metricDataItem.Dimensions {
@@ -693,32 +721,96 @@ func (oc *OCIClients) GetMetricDataPoints(
 			metricDatapoints := metricDataItem.AggregatedDatapoints
 
 			if len(metricDatapoints) != calculatedDataPointsCount {
-				continue
+				//continue
+				// backend.Logger.Warn("client", "check", "not same")
+				backend.Logger.Warn("client", "metricDatapoints", len(metricDatapoints))
+				backend.Logger.Warn("client", "calculatedDataPointsCount", calculatedDataPointsCount)
 			}
 
+			// sorting the data by increasing time
 			sort.SliceStable(metricDatapoints, func(i, j int) bool {
 				return metricDatapoints[i].Timestamp.Time.Before(metricDatapoints[j].Timestamp.Time)
 			})
 
+			// sometimes 2 different resource datapoint have mismatched no of values
+			// to make it equal fill the extra point with 0
+			resourcesFetched += 1
 			for _, eachMetricDataPoint := range metricDatapoints {
-				if len(times) < len(metricDatapoints) {
-					times = append(times, eachMetricDataPoint.Timestamp.Time)
+				t := *eachMetricDataPoint.Timestamp
+				v := *eachMetricDataPoint.Value
+
+				if _, ok := dataValuesWithTime[t]; ok {
+					dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
+				} else {
+					if resourcesFetched == 1 {
+						dataValuesWithTime[t] = []float64{v}
+						continue
+					}
+
+					// adjustment for previous non-existance values
+					// when the time comes in later data points
+					dataValuesWithTime[t] = []float64{0.0}
+					for i := 2; i < resourcesFetched; i++ {
+						dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
+					}
+					dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
 				}
-				values = append(values, *eachMetricDataPoint.Value)
 			}
 
-			dataPoints = append(dataPoints, models.OCIMetricDataPoints{
+			dataPointsWithResourceSerialNo[resourcesFetched-1] = models.OCIMetricDataPoints{
 				TenancyName:  oc.tenanciesMap[requestParams.TenancyOCID],
 				Region:       regionInUse,
 				MetricName:   *metricDataItem.Name,
 				ResourceName: metricDataItem.Dimensions["resourceDisplayName"],
 				UniqueDataID: uniqueDataID,
-				DataPoints:   values,
-			})
+				Labels:       metricData.resourceLabels[uniqueDataID],
+			}
 		}
 
 		return true
 	})
+
+	timesToFetch := []common.SDKTime{}
+	// adjustment for later non-existance values
+	for t, dvs := range dataValuesWithTime {
+		times = append(times, t.Time)
+		timesToFetch = append(timesToFetch, t)
+
+		if len(dvs) == resourcesFetched {
+			continue
+		}
+
+		for i := 0; i < resourcesFetched-len(dvs); i++ {
+			dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
+		}
+	}
+
+	// sorting the time slice, for grafana
+	sort.SliceStable(times, func(i, j int) bool {
+		return times[i].Before(times[j])
+	})
+	// sorting the time slice, for internal fetch
+	sort.SliceStable(timesToFetch, func(i, j int) bool {
+		return timesToFetch[i].Time.Before(timesToFetch[j].Time)
+	})
+
+	dataValuesWithResourceSerialNo := map[int][]float64{}
+	// final preparation
+	for _, t := range timesToFetch {
+		dvIndex := 0
+		for i := 0; i < resourcesFetched; i++ {
+			dataValuesWithResourceSerialNo[i] = append(dataValuesWithResourceSerialNo[i], dataValuesWithTime[t][dvIndex])
+			dvIndex += 1
+		}
+	}
+
+	// extracting for grafana
+	for i, dps := range dataValuesWithResourceSerialNo {
+		dp := dataPointsWithResourceSerialNo[i]
+		dp.DataPoints = dps
+
+		dataPoints = append(dataPoints, dp)
+	}
 
 	return times, dataPoints
 }
@@ -735,7 +827,7 @@ func (oc *OCIClients) GetTags(
 	compartmentOCID string,
 	region string,
 	namespace string) []models.OCIResourceTags {
-	backend.Logger.Info("client", "GetTags", "fetching the tags under compartment '"+compartmentOCID+"' for namespace '"+namespace+"'")
+	backend.Logger.Debug("client", "GetTags", "fetching the tags under compartment '"+compartmentOCID+"' for namespace '"+namespace+"'")
 
 	resourceTagsList := []models.OCIResourceTags{}
 
@@ -761,6 +853,8 @@ func (oc *OCIClients) GetTags(
 	var cc core.ComputeClient
 	var vc core.VirtualNetworkClient
 	var lbc loadbalancer.LoadBalancerClient
+	var hcc healthchecks.HealthChecksClient
+	var dbc database.DatabaseClient
 	var cErr error
 
 	switch constants.OCI_NAMESPACES[namespace] {
@@ -770,6 +864,10 @@ func (oc *OCIClients) GetTags(
 		vc, cErr = client.GetVCNClient()
 	case constants.OCI_TARGET_LBAAS:
 		lbc, cErr = client.GetLBaaSClient()
+	case constants.OCI_TARGET_HEALTHCHECK:
+		hcc, cErr = client.GetHealthChecksClient()
+	case constants.OCI_TARGET_DATABASE:
+		dbc, cErr = client.GetDatabaseClient()
 	}
 
 	var allRegionsResourceTags sync.Map
@@ -810,8 +908,11 @@ func (oc *OCIClients) GetTags(
 					return
 				}
 
+				labelCacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, sRegion, namespace, "resource_labels"}, "-")
+
 				resourceTags := map[string][]string{}
 				resourceIDsPerTag := map[string]map[string]struct{}{}
+				resourceLabels := map[string]map[string]string{}
 
 				switch constants.OCI_NAMESPACES[namespace] {
 				case constants.OCI_TARGET_COMPUTE:
@@ -839,6 +940,31 @@ func (oc *OCIClients) GetTags(
 						Limit:          common.Int64(500),
 						LifecycleState: loadbalancer.LoadBalancerLifecycleStateActive,
 					})
+				case constants.OCI_TARGET_HEALTHCHECK:
+					hcc.SetRegion(sRegion)
+					resourceTags, resourceIDsPerTag = getHealthChecksTagsPerRegion(ctx, hcc, healthchecks.ListPingMonitorsRequest{
+						CompartmentId: common.String(compartmentOCID),
+						SortBy:        healthchecks.ListPingMonitorsSortByDisplayname,
+						Limit:         common.Int(300),
+					})
+				case constants.OCI_TARGET_DATABASE:
+					dbc.SetRegion(sRegion)
+					db := OCIDatabase{
+						ctx:    ctx,
+						client: dbc,
+					}
+
+					switch namespace {
+					case "oracle_oci_database":
+						resourceTags, resourceIDsPerTag, resourceLabels = db.GetDatabaseTagsPerRegion(compartmentOCID)
+					case "oracle_external_database":
+						resourceTags, resourceIDsPerTag, resourceLabels = db.GetExternalPluggableDatabaseTagsPerRegion(compartmentOCID)
+					case "oci_autonomous_database":
+						resourceTags, resourceIDsPerTag, resourceLabels = db.GetAutonomousDatabaseTagsPerRegion(compartmentOCID)
+					}
+
+					// storing the labels in cache to use along with metric data
+					oc.cache.SetWithTTL(labelCacheKey, resourceLabels, 1, 15*time.Minute)
 				}
 
 				// saving in cache - previous was 30
@@ -856,6 +982,9 @@ func (oc *OCIClients) GetTags(
 	// clearing up
 	cc = core.ComputeClient{}
 	vc = core.VirtualNetworkClient{}
+	lbc = loadbalancer.LoadBalancerClient{}
+	hcc = healthchecks.HealthChecksClient{}
+	dbc = database.DatabaseClient{}
 
 	allRegionsResourceTags.Range(func(key, value interface{}) bool {
 		backend.Logger.Info("client", "getResourceTags", "Resource tags got for region-"+key.(string))
@@ -901,7 +1030,7 @@ func (oc *OCIClients) GetTags(
 		})
 	}
 
-	backend.Logger.Info("client", "GetTags", resourceTagsList)
+	backend.Logger.Debug("client", "GetTags", resourceTagsList)
 
 	return resourceTagsList
 }

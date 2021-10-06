@@ -271,6 +271,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
   const onNamespaceChange = (data: any) => {
+    new Promise<Array<SelectableValue<string>>>(() => {
+      setTimeout(async () => {
+        await datasource.getTags(query.tenancyOCID, query.compartmentOCID, query.region, data.label);
+      }, 0);
+    });
+
     onApplyQueryChange(
       {
         ...query,

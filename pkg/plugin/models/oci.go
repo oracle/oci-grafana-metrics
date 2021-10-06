@@ -33,10 +33,12 @@ type OCIMetricDataPoints struct {
 	ResourceName    string
 	UniqueDataID    string
 	DataPoints      []float64
+	Labels          map[string]string
 }
 
 type OCIResourceTagsResponse struct {
 	ResourceID   string
+	ResourceName string
 	DefinedTags  map[string]map[string]interface{}
 	FreeFormTags map[string]string
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
@@ -48,26 +47,28 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	times, metricDataValues := ocidx.clients.GetMetricDataPoints(ctx, metricsDataRequest, qm.TagsValues)
 
 	// plotting the x axis with time as unit
-	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, times),
-	)
+	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
 
 	for _, metricDataValue := range metricDataValues {
 		name := metricDataValue.ResourceName
 		dl := data.Labels{
 			"tenancy": metricDataValue.TenancyName,
+			"ocid":    metricDataValue.UniqueDataID,
+			"region":  metricDataValue.Region,
 		}
 
-		if qm.Region == constants.ALL_REGION {
-			dl["region"] = metricDataValue.Region
-		}
+		// if qm.Region == constants.ALL_REGION {
+		// 	dl["region"] = metricDataValue.Region
+		// }
 
-		if len(name) == 0 {
-			// case: for aggregation filter
-			name = metricDataValue.UniqueDataID
-		} else {
-			// case: for all other use case
-			dl["ocid"] = metricDataValue.UniqueDataID
+		for k, v := range metricDataValue.Labels {
+			if k != "resource_name" {
+				dl[k] = v
+			} else {
+				if len(name) == 0 {
+					name = v
+				}
+			}
 		}
 
 		frame.Fields = append(frame.Fields,

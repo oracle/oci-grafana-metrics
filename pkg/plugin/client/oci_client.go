@@ -2,11 +2,13 @@ package client
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/oracle/oci-go-sdk/v48/common"
-	"github.com/oracle/oci-go-sdk/v48/core"
-	"github.com/oracle/oci-go-sdk/v48/identity"
-	"github.com/oracle/oci-go-sdk/v48/loadbalancer"
-	"github.com/oracle/oci-go-sdk/v48/monitoring"
+	"github.com/oracle/oci-go-sdk/v49/common"
+	"github.com/oracle/oci-go-sdk/v49/core"
+	"github.com/oracle/oci-go-sdk/v49/database"
+	"github.com/oracle/oci-go-sdk/v49/healthchecks"
+	"github.com/oracle/oci-go-sdk/v49/identity"
+	"github.com/oracle/oci-go-sdk/v49/loadbalancer"
+	"github.com/oracle/oci-go-sdk/v49/monitoring"
 )
 
 // OCIClient stores all the clients related to OCI
@@ -59,4 +61,32 @@ func (oc *OCIClient) GetLBaaSClient() (loadbalancer.LoadBalancerClient, error) {
 	lbaasClient.Configuration.RetryPolicy = &crp
 
 	return lbaasClient, nil
+}
+
+func (oc *OCIClient) GetHealthChecksClient() (healthchecks.HealthChecksClient, error) {
+	crp := clientRetryPolicy()
+	// creating oci health checks client
+	hcClient, err := healthchecks.NewHealthChecksClientWithConfigurationProvider(oc.clientConfigProvider)
+	if err != nil {
+		backend.Logger.Error("client.oci_client", "GetHealthChecksClient", "could not create oci health checks client: %v", err)
+		return healthchecks.HealthChecksClient{}, err
+	}
+
+	hcClient.Configuration.RetryPolicy = &crp
+
+	return hcClient, nil
+}
+
+func (oc *OCIClient) GetDatabaseClient() (database.DatabaseClient, error) {
+	crp := clientRetryPolicy()
+	// creating oci database client
+	dbClient, err := database.NewDatabaseClientWithConfigurationProvider(oc.clientConfigProvider)
+	if err != nil {
+		backend.Logger.Error("client.oci_client", "GetDatabaseClient", "could not create oci database client: %v", err)
+		return database.DatabaseClient{}, err
+	}
+
+	dbClient.Configuration.RetryPolicy = &crp
+
+	return dbClient, nil
 }

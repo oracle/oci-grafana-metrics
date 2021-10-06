@@ -13,12 +13,13 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/oracle/oci-go-sdk/v48/common"
-	"github.com/oracle/oci-go-sdk/v48/common/auth"
-	"github.com/oracle/oci-go-sdk/v48/core"
-	"github.com/oracle/oci-go-sdk/v48/identity"
-	"github.com/oracle/oci-go-sdk/v48/loadbalancer"
-	"github.com/oracle/oci-go-sdk/v48/monitoring"
+	"github.com/oracle/oci-go-sdk/v49/common"
+	"github.com/oracle/oci-go-sdk/v49/common/auth"
+	"github.com/oracle/oci-go-sdk/v49/core"
+	"github.com/oracle/oci-go-sdk/v49/healthchecks"
+	"github.com/oracle/oci-go-sdk/v49/identity"
+	"github.com/oracle/oci-go-sdk/v49/loadbalancer"
+	"github.com/oracle/oci-go-sdk/v49/monitoring"
 
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
@@ -378,9 +379,7 @@ func listMetricsMetadataFromAllRegion(
 }
 
 func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string][]string, map[string]map[string]struct{}) {
-	backend.Logger.Info("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
-
-	backend.Logger.Info("client.utils", "fetchResourceTags", resourceTagsResponse)
+	backend.Logger.Debug("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
 
 	resourceTags := map[string][]string{}
 	resourceIDsPerTag := map[string]map[string]struct{}{}
@@ -561,6 +560,44 @@ func getLBaaSResourceTagsPerRegion(ctx context.Context, lbClient loadbalancer.Lo
 		resp, err := lbClient.ListLoadBalancers(ctx, req)
 		if err != nil {
 			backend.Logger.Error("client.utils", "getVCNResourceTagsPerRegion", err)
+			break
+		}
+
+		fetchedResourceDetails = append(fetchedResourceDetails, resp.Items...)
+		if len(resp.RawResponse.Header.Get("opc-next-page")) != 0 {
+			pageHeader = *resp.OpcNextPage
+		} else {
+			break
+		}
+	}
+
+	for _, item := range fetchedResourceDetails {
+		resourceTagsResponse = append(resourceTagsResponse, models.OCIResourceTagsResponse{
+			ResourceID:   *item.Id,
+			DefinedTags:  item.DefinedTags,
+			FreeFormTags: item.FreeformTags,
+		})
+	}
+
+	return fetchResourceTags(resourceTagsResponse)
+}
+
+func getHealthChecksTagsPerRegion(ctx context.Context, hcClient healthchecks.HealthChecksClient, req healthchecks.ListPingMonitorsRequest) (map[string][]string, map[string]map[string]struct{}) {
+	backend.Logger.Debug("client.utils", "getHealthChecksTagsPerRegion", "Fetching the health check resource tags from the oci")
+
+	var fetchedResourceDetails []healthchecks.PingMonitorSummary
+	var pageHeader string
+
+	resourceTagsResponse := []models.OCIResourceTagsResponse{}
+
+	for {
+		if len(pageHeader) != 0 {
+			req.Page = common.String(pageHeader)
+		}
+
+		resp, err := hcClient.ListPingMonitors(ctx, req)
+		if err != nil {
+			backend.Logger.Error("client.utils", "getHealthChecksTagsPerRegion", err)
 			break
 		}
 

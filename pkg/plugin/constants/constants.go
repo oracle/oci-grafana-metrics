@@ -33,6 +33,8 @@ const (
 	OCI_TARGET_COMPUTE                = "compute"
 	OCI_TARGET_VCN                    = "vcn"
 	OCI_TARGET_LBAAS                  = "lbaas"
+	OCI_TARGET_HEALTHCHECK            = "healthchecks"
+	OCI_TARGET_DATABASE               = "database"
 )
 
 var (
@@ -42,5 +44,9 @@ var (
 		"oci_compute_infrastructure_health": OCI_TARGET_COMPUTE,
 		"oci_vcn":                           OCI_TARGET_VCN,
 		"oci_lbaas":                         OCI_TARGET_LBAAS,
+		"oci_healthchecks":                  OCI_TARGET_HEALTHCHECK,
+		"oci_autonomous_database":           OCI_TARGET_DATABASE,
+		"oracle_oci_database":               OCI_TARGET_DATABASE,
+		"oracle_external_database":          OCI_TARGET_DATABASE,
 	}
 )
