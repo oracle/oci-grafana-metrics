@@ -498,6 +498,7 @@ func getComputeResourceTagsPerRegion(ctx context.Context, cClient core.ComputeCl
 	for _, item := range fetchedResourceDetails {
 		resourceTagsResponse = append(resourceTagsResponse, models.OCIResourceTagsResponse{
 			ResourceID:   *item.Id,
+			ResourceName: *item.DisplayName,
 			DefinedTags:  item.DefinedTags,
 			FreeFormTags: item.FreeformTags,
 		})
@@ -536,6 +537,7 @@ func getVCNResourceTagsPerRegion(ctx context.Context, vClient core.VirtualNetwor
 	for _, item := range fetchedResourceDetails {
 		resourceTagsResponse = append(resourceTagsResponse, models.OCIResourceTagsResponse{
 			ResourceID:   *item.Id,
+			ResourceName: *item.DisplayName,
 			DefinedTags:  item.DefinedTags,
 			FreeFormTags: item.FreeformTags,
 		})
@@ -574,6 +576,7 @@ func getLBaaSResourceTagsPerRegion(ctx context.Context, lbClient loadbalancer.Lo
 	for _, item := range fetchedResourceDetails {
 		resourceTagsResponse = append(resourceTagsResponse, models.OCIResourceTagsResponse{
 			ResourceID:   *item.Id,
+			ResourceName: *item.DisplayName,
 			DefinedTags:  item.DefinedTags,
 			FreeFormTags: item.FreeformTags,
 		})
@@ -612,6 +615,7 @@ func getHealthChecksTagsPerRegion(ctx context.Context, hcClient healthchecks.Hea
 	for _, item := range fetchedResourceDetails {
 		resourceTagsResponse = append(resourceTagsResponse, models.OCIResourceTagsResponse{
 			ResourceID:   *item.Id,
+			ResourceName: *item.DisplayName,
 			DefinedTags:  item.DefinedTags,
 			FreeFormTags: item.FreeformTags,
 		})

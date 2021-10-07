@@ -242,6 +242,7 @@ func (oc *OCIClients) GetCompartments(ctx context.Context, tenancyOCID string) [
 		return cachedCompartments.([]models.OCIResource)
 	}
 
+	compartments := map[string]string{}
 	// calling the api if not present in cache
 	compartmentList := []models.OCIResource{}
 	var fetchedCompartments []identity.Compartment
@@ -279,10 +280,24 @@ func (oc *OCIClients) GetCompartments(ctx context.Context, tenancyOCID string) [
 		}
 	}
 
+	// storing compartment ocid and name
 	for _, item := range fetchedCompartments {
+		compartments[*item.Id] = *item.Name
+	}
+
+	// checking if parent compartment is there or not, and update name accordingly
+	for _, item := range fetchedCompartments {
+		compartmentName := *item.Name
+		compartmentOCID := *item.Id
+		parentCompartmentOCID := *item.CompartmentId
+
+		if pcn, found := compartments[parentCompartmentOCID]; found {
+			compartmentName = pcn + " > " + compartmentName
+		}
+
 		compartmentList = append(compartmentList, models.OCIResource{
-			Name: *item.Name,
-			OCID: *item.Id,
+			Name: compartmentName,
+			OCID: compartmentOCID,
 		})
 	}
 
@@ -293,6 +308,12 @@ func (oc *OCIClients) GetCompartments(ctx context.Context, tenancyOCID string) [
 		})
 	}
 
+	// sorting based on compartment name
+	sort.SliceStable(compartmentList, func(i, j int) bool {
+		return compartmentList[i].Name < compartmentList[j].Name
+	})
+
+	// saving in the cache
 	oc.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
 	oc.cache.Wait()
 
@@ -651,11 +672,14 @@ func (oc *OCIClients) GetMetricDataPoints(
 					// fetching the resource labels
 					var rl map[string]map[string]string
 					labelCacheKey := strings.Join([]string{requestParams.TenancyOCID, requestParams.CompartmentOCID, sRegion, requestParams.Namespace, "resource_labels"}, "-")
-					for {
+
+					// max try for 5 seconds
+					for i := 0; i < 5; i++ {
 						if cachedResourceLabels, found := oc.cache.Get(labelCacheKey); found {
 							rl = cachedResourceLabels.(map[string]map[string]string)
 							break
 						}
+						time.Sleep(time.Second)
 					}
 
 					// storing the data to calculate later
