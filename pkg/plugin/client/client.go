@@ -32,6 +32,7 @@ type OCIClients struct {
 	authProvide      string
 	configPath       string
 	baseTenancyOCID  string
+	baseTenancyName  string
 	baseRegion       string
 	tenanciesMap     map[string]string // store in <ocid>:<profile name> format profile name and tenancy name must be same
 	clientPerProfile map[string]*OCIClient
@@ -62,7 +63,10 @@ func New(ociSettings *models.OCIDatasourceSettings, rCache *ristretto.Cache) (*O
 
 	// setting base tenancy ocid
 	ociClients.baseTenancyOCID = baseOciClient.tenancyOCID
-	ociClients.tenanciesMap[baseOciClient.tenancyOCID] = ociSettings.TenancyName
+	ociClients.baseTenancyName = ociSettings.TenancyName
+
+	// setting the tenancies map with ocid and profile name
+	ociClients.tenanciesMap[baseOciClient.tenancyOCID] = ociSettings.ConfigProfile
 	if ociSettings.MultiTenancyChoice == constants.YES {
 		if err := readMultiTenancySourceFile(ociSettings.MultiTenancyFile, ociClients.tenanciesMap); err != nil {
 			backend.Logger.Error("client", "New", err)
@@ -162,6 +166,11 @@ func (oc *OCIClients) GetTenancies(ctx context.Context) []models.OCIResource {
 	tenancyList := []models.OCIResource{}
 
 	for k, v := range oc.tenanciesMap {
+		// for base client
+		if v == constants.DEFAULT_PROFILE {
+			v = oc.baseTenancyName
+		}
+
 		tenancyList = append(tenancyList, models.OCIResource{
 			Name: v,
 			OCID: k,
@@ -781,8 +790,15 @@ func (oc *OCIClients) GetMetricDataPoints(
 				}
 			}
 
+			// for base tenancy
+			tenancyName := oc.tenanciesMap[requestParams.TenancyOCID]
+			if tenancyName == constants.DEFAULT_PROFILE {
+				tenancyName = oc.baseTenancyName
+			}
+
+			// preparing the metric data to display
 			dataPointsWithResourceSerialNo[resourcesFetched-1] = models.OCIMetricDataPoints{
-				TenancyName:  oc.tenanciesMap[requestParams.TenancyOCID],
+				TenancyName:  tenancyName,
 				Region:       regionInUse,
 				MetricName:   *metricDataItem.Name,
 				ResourceName: metricDataItem.Dimensions["resourceDisplayName"],

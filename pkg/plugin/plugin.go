@@ -39,12 +39,14 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	})
 	if err != nil {
 		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to create cache: "+err.Error())
+		return nil, err
 	}
 	ociDx.cache = cache
 
 	ociClients, err := client.New(dsSettings, cache)
 	if err != nil {
 		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci client: "+err.Error())
+		return nil, err
 	}
 	ociDx.clients = ociClients
 

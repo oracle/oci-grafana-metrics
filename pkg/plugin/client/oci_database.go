@@ -15,6 +15,52 @@ type OCIDatabase struct {
 	client database.DatabaseClient
 }
 
+// getDatabaseHomes to fetch db home details
+func (od *OCIDatabase) getDatabaseHomes(compartmentOCID string) []map[string]string {
+	backend.Logger.Debug("client.utils", "getDatabaseHomes", "Fetching the database homes from the oci for compartment>"+compartmentOCID)
+
+	var fetchedResourceDetails []database.DbHomeSummary
+	var pageHeader string
+
+	resourceInfo := []map[string]string{}
+
+	req := database.ListDbHomesRequest{
+		CompartmentId: common.String(compartmentOCID),
+	}
+
+	backend.Logger.Debug("client.utils", "getDatabaseHomes", req)
+
+	for {
+		if len(pageHeader) != 0 {
+			req.Page = common.String(pageHeader)
+		}
+
+		resp, err := od.client.ListDbHomes(od.ctx, req)
+		if err != nil {
+			backend.Logger.Error("client.utils", "getDatabaseHomes", err)
+			break
+		}
+
+		fetchedResourceDetails = append(fetchedResourceDetails, resp.Items...)
+		if len(resp.RawResponse.Header.Get("opc-next-page")) != 0 {
+			pageHeader = *resp.OpcNextPage
+		} else {
+			break
+		}
+	}
+
+	for _, item := range fetchedResourceDetails {
+		resourceInfo = append(resourceInfo, map[string]string{
+			"db_home_id":   *item.Id,
+			"db_home_name": *item.DisplayName,
+			"db_system_id": *item.DbSystemId,
+			"db_version":   *item.DbVersion,
+		})
+	}
+
+	return resourceInfo
+}
+
 // GetDatabaseTagsPerRegion To fetch tags from an Oracle Database on a bare metal or virtual machine DB system.
 func (od *OCIDatabase) GetDatabaseTagsPerRegion(compartmentOCID string) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
 	backend.Logger.Debug("client.utils", "GetDatabaseTagsPerRegion", "Fetching the database resource tags from the oci for compartment>"+compartmentOCID)
@@ -75,52 +121,6 @@ func (od *OCIDatabase) GetDatabaseTagsPerRegion(compartmentOCID string) (map[str
 	resourceTags, resourceIDsPerTag := fetchResourceTags(resourceTagsResponse)
 
 	return resourceTags, resourceIDsPerTag, resourceLabels
-}
-
-// getDatabaseHomes to fetch db home details
-func (od *OCIDatabase) getDatabaseHomes(compartmentOCID string) []map[string]string {
-	backend.Logger.Debug("client.utils", "getDatabaseHomes", "Fetching the database homes from the oci for compartment>"+compartmentOCID)
-
-	var fetchedResourceDetails []database.DbHomeSummary
-	var pageHeader string
-
-	resourceInfo := []map[string]string{}
-
-	req := database.ListDbHomesRequest{
-		CompartmentId: common.String(compartmentOCID),
-	}
-
-	backend.Logger.Debug("client.utils", "getDatabaseHomes", req)
-
-	for {
-		if len(pageHeader) != 0 {
-			req.Page = common.String(pageHeader)
-		}
-
-		resp, err := od.client.ListDbHomes(od.ctx, req)
-		if err != nil {
-			backend.Logger.Error("client.utils", "getDatabaseHomes", err)
-			break
-		}
-
-		fetchedResourceDetails = append(fetchedResourceDetails, resp.Items...)
-		if len(resp.RawResponse.Header.Get("opc-next-page")) != 0 {
-			pageHeader = *resp.OpcNextPage
-		} else {
-			break
-		}
-	}
-
-	for _, item := range fetchedResourceDetails {
-		resourceInfo = append(resourceInfo, map[string]string{
-			"db_home_id":   *item.Id,
-			"db_home_name": *item.DisplayName,
-			"db_system_id": *item.DbSystemId,
-			"db_version":   *item.DbVersion,
-		})
-	}
-
-	return resourceInfo
 }
 
 // GetAutonomousDatabaseTagsPerRegion To fetch tags from an Oracle Autonomous Database.

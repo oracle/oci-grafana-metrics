@@ -57,10 +57,6 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 			"region":  metricDataValue.Region,
 		}
 
-		// if qm.Region == constants.ALL_REGION {
-		// 	dl["region"] = metricDataValue.Region
-		// }
-
 		for k, v := range metricDataValue.Labels {
 			if k != "resource_name" {
 				dl[k] = v

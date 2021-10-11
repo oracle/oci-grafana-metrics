@@ -57,7 +57,7 @@ func newClientPerProfile(authProvider string, configPath string, configProfile s
 	// creating oci identity client
 	ociClient.identityClient, err = identity.NewIdentityClientWithConfigurationProvider(cp)
 	if err != nil {
-		backend.Logger.Error("client.utils", "newClientPerProfile", "could not create oci identity client: %v", err)
+		backend.Logger.Error("client.utils", "newClientPerProfile", "could not create oci identity client: "+err.Error())
 		return nil, err
 	}
 	ociClient.identityClient.Configuration.RetryPolicy = &irp
@@ -66,7 +66,7 @@ func newClientPerProfile(authProvider string, configPath string, configProfile s
 	// creating oci monitoring client
 	ociClient.monitoringClient, err = monitoring.NewMonitoringClientWithConfigurationProvider(cp)
 	if err != nil {
-		backend.Logger.Error("client.utils", "newClientPerProfile", "could not create oci monitoring client: %v", err)
+		backend.Logger.Error("client.utils", "newClientPerProfile", "could not create oci monitoring client: "+err.Error())
 		return nil, err
 	}
 	ociClient.monitoringClient.Configuration.RetryPolicy = &mrp
@@ -75,7 +75,7 @@ func newClientPerProfile(authProvider string, configPath string, configProfile s
 	// creating oci core compute client
 	ociClient.computeClient, err = core.NewComputeClientWithConfigurationProvider(cp)
 	if err != nil {
-		backend.Logger.Error("client.utils", "newClientPerProfile", "could not create oci core compute client: %v", err)
+		backend.Logger.Error("client.utils", "newClientPerProfile", "could not create oci core compute client: "+err.Error())
 		return nil, err
 	}
 	ociClient.computeClient.Configuration.RetryPolicy = &crp
@@ -143,12 +143,12 @@ func readMultiTenancySourceFile(filePath string, tenanciesMap map[string]string)
 
 	f, err := os.Open(*fptr)
 	if err != nil {
-		backend.Logger.Error("client.utils", "readMultiTenancySourceFile", "could not open Multi-Tenancy File: %v", err.Error())
+		backend.Logger.Error("client.utils", "readMultiTenancySourceFile", "could not open Multi-Tenancy File: "+err.Error())
 		return err
 	}
 	defer func() {
 		if err = f.Close(); err != nil {
-			backend.Logger.Error("client.utils", "readMultiTenancySourceFile", "could not close Multi-Tenancy File: %v", err.Error())
+			backend.Logger.Error("client.utils", "readMultiTenancySourceFile", "could not close Multi-Tenancy File: "+err.Error())
 			return
 		}
 	}()
@@ -160,7 +160,7 @@ func readMultiTenancySourceFile(filePath string, tenanciesMap map[string]string)
 	}
 	err = s.Err()
 	if err != nil {
-		backend.Logger.Error("client.utils", "readMultiTenancySourceFile", "could not read Multi-Tenancy File: %v", err.Error())
+		backend.Logger.Error("client.utils", "readMultiTenancySourceFile", "could not read Multi-Tenancy File: "+err.Error())
 		return err
 	}
 
