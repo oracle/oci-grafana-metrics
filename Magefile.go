@@ -11,7 +11,7 @@ import (
 
 // Hello prints a message (shows that you can define custom Mage targets).
 func Hello() {
-	fmt.Println("hello! We are building binary only for linux amd64!")
+	fmt.Println("hello! We are building binary for supported OS flavour")
 }
 
 // Default configures the default target.
