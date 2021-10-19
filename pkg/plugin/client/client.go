@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -132,9 +131,10 @@ func (oc *OCIClients) TestConnectivity(ctx context.Context) error {
 		CompartmentId:          common.String(oc.baseTenancyOCID),
 		AccessLevel:            identity.ListCompartmentsAccessLevelAny,
 		CompartmentIdInSubtree: common.Bool(true),
+		Limit:                  common.Int(5),
 	})
 	if cErr != nil {
-		backend.Logger.Error("client", "TestConnectivity", "error to list compartments: %v", cErr.Error())
+		backend.Logger.Error("client", "TestConnectivity", "error to list compartments: "+cErr.Error())
 		return cErr
 	}
 	if cRes.RawResponse.StatusCode < 200 || cRes.RawResponse.StatusCode >= 300 {
@@ -147,7 +147,7 @@ func (oc *OCIClients) TestConnectivity(ctx context.Context) error {
 		Limit:                  common.Int(1),
 	})
 	if mErr != nil {
-		backend.Logger.Error("client", "TestConnectivity", "error to list metrics: %v", mErr.Error())
+		backend.Logger.Error("client", "TestConnectivity", "error to list metrics: "+mErr.Error())
 		return mErr
 	}
 	if mRes.RawResponse.StatusCode < 200 || mRes.RawResponse.StatusCode >= 300 {
@@ -499,7 +499,6 @@ func (oc *OCIClients) GetResourceGroups(
 	// saving into the cache
 	oc.cache.SetWithTTL(cacheKey, metricResourceGroupsList, 1, 5*time.Minute)
 	oc.cache.Wait()
-	//backend.Logger.Info("client", "GetResourceGroups", metricResourceGroupsList)
 
 	return metricResourceGroupsList
 }
@@ -583,7 +582,6 @@ func (oc *OCIClients) GetDimensions(
 	// saving into the cache
 	oc.cache.SetWithTTL(cacheKey, metricDimensionsList, 1, 5*time.Minute)
 	oc.cache.Wait()
-	//backend.Logger.Info("client", "GetDimensions", metricDimensionsList)
 
 	return metricDimensionsList
 }
@@ -611,19 +609,6 @@ func (oc *OCIClients) GetMetricDataPoints(
 	if client == nil {
 		return times, dataPoints
 	}
-
-	// checking queryTimeRange
-	timeDiff := requestParams.EndTime.Sub(requestParams.StartTime)
-	timeRange := map[string]int{
-		"m": int(timeDiff.Minutes()),
-		"h": int(timeDiff.Hours()),
-		"d": int(timeDiff.Hours() / 24),
-	}
-
-	focalIndex := len(requestParams.Interval) - 1
-	intervalUnit := requestParams.Interval[focalIndex:]
-	intervalVal, _ := strconv.Atoi(requestParams.Interval[:focalIndex])
-	calculatedDataPointsCount := int(timeRange[intervalUnit] / int(intervalVal))
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
 		CompartmentId:          common.String(requestParams.CompartmentOCID),
@@ -753,13 +738,6 @@ func (oc *OCIClients) GetMetricDataPoints(
 
 			metricDatapoints := metricDataItem.AggregatedDatapoints
 
-			if len(metricDatapoints) != calculatedDataPointsCount {
-				//continue
-				// backend.Logger.Warn("client", "check", "not same")
-				backend.Logger.Warn("client", "metricDatapoints", len(metricDatapoints))
-				backend.Logger.Warn("client", "calculatedDataPointsCount", calculatedDataPointsCount)
-			}
-
 			// sorting the data by increasing time
 			sort.SliceStable(metricDatapoints, func(i, j int) bool {
 				return metricDatapoints[i].Timestamp.Time.Before(metricDatapoints[j].Timestamp.Time)
@@ -870,8 +848,6 @@ func (oc *OCIClients) GetTags(
 	backend.Logger.Debug("client", "GetTags", "fetching the tags under compartment '"+compartmentOCID+"' for namespace '"+namespace+"'")
 
 	resourceTagsList := []models.OCIResourceTags{}
-
-	//resourceTags := oc.getResourceTags(ctx, tenancyOCID, compartmentOCID, region, namespace)
 	allResourceTags := map[string][]string{}
 
 	// getting the client
@@ -1069,8 +1045,6 @@ func (oc *OCIClients) GetTags(
 			Values: v,
 		})
 	}
-
-	backend.Logger.Debug("client", "GetTags", resourceTagsList)
 
 	return resourceTagsList
 }

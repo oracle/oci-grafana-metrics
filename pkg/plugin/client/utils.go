@@ -295,8 +295,6 @@ func listMetricsMetadataPerRegion(
 	ci.SetWithTTL(cacheKey, sortedMetadataWithMetricNames, 1, 5*time.Minute)
 	ci.Wait()
 
-	//backend.Logger.Info("client", "region", mClient.Host, "listMetrics", sortedMetadataWithMetricNames)
-
 	return sortedMetadataWithMetricNames
 }
 
@@ -325,12 +323,9 @@ func listMetricsMetadataFromAllRegion(
 				defer wg.Done()
 
 				newCacheKey := strings.ReplaceAll(cacheKey, constants.ALL_REGION, subscribedRegion)
-
 				metadata := listMetricsMetadataPerRegion(ctx, ci, newCacheKey, fetchFor, mc, req)
-				//backend.Logger.Info("client.utils", "listMetricsPerAllRegion-region", req)
 
 				if len(metadata) > 0 {
-					//backend.Logger.Info("client.utils", "listMetricsPerAllRegion-region", sRegion)
 					allRegionsData.Store(sRegion, metadata)
 				}
 			}(mClient, subscribedRegion)

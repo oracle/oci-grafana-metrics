@@ -26,7 +26,7 @@ func (oc *OCIClient) GetComputeClient() (core.ComputeClient, error) {
 	// creating oci core compute client
 	computeClient, err := core.NewComputeClientWithConfigurationProvider(oc.clientConfigProvider)
 	if err != nil {
-		backend.Logger.Error("client.oci_client", "GetComputeClient", "could not create oci core compute client: %v", err)
+		backend.Logger.Error("client.oci_client", "GetComputeClient", "could not create oci core compute client: "+err.Error())
 		return core.ComputeClient{}, err
 	}
 
@@ -40,7 +40,7 @@ func (oc *OCIClient) GetVCNClient() (core.VirtualNetworkClient, error) {
 	// creating oci core vcn client
 	vcnClient, err := core.NewVirtualNetworkClientWithConfigurationProvider(oc.clientConfigProvider)
 	if err != nil {
-		backend.Logger.Error("client.oci_client", "GetVCNClient", "could not create oci core vcn client: %v", err)
+		backend.Logger.Error("client.oci_client", "GetVCNClient", "could not create oci core vcn client: "+err.Error())
 		return core.VirtualNetworkClient{}, err
 	}
 
@@ -54,7 +54,7 @@ func (oc *OCIClient) GetLBaaSClient() (loadbalancer.LoadBalancerClient, error) {
 	// creating oci lbaas client
 	lbaasClient, err := loadbalancer.NewLoadBalancerClientWithConfigurationProvider(oc.clientConfigProvider)
 	if err != nil {
-		backend.Logger.Error("client.oci_client", "GetLBaaSClient", "could not create oci lbaas client: %v", err)
+		backend.Logger.Error("client.oci_client", "GetLBaaSClient", "could not create oci lbaas client: "+err.Error())
 		return loadbalancer.LoadBalancerClient{}, err
 	}
 
@@ -68,7 +68,7 @@ func (oc *OCIClient) GetHealthChecksClient() (healthchecks.HealthChecksClient, e
 	// creating oci health checks client
 	hcClient, err := healthchecks.NewHealthChecksClientWithConfigurationProvider(oc.clientConfigProvider)
 	if err != nil {
-		backend.Logger.Error("client.oci_client", "GetHealthChecksClient", "could not create oci health checks client: %v", err)
+		backend.Logger.Error("client.oci_client", "GetHealthChecksClient", "could not create oci health checks client: "+err.Error())
 		return healthchecks.HealthChecksClient{}, err
 	}
 
@@ -82,7 +82,7 @@ func (oc *OCIClient) GetDatabaseClient() (database.DatabaseClient, error) {
 	// creating oci database client
 	dbClient, err := database.NewDatabaseClientWithConfigurationProvider(oc.clientConfigProvider)
 	if err != nil {
-		backend.Logger.Error("client.oci_client", "GetDatabaseClient", "could not create oci database client: %v", err)
+		backend.Logger.Error("client.oci_client", "GetDatabaseClient", "could not create oci database client: "+err.Error())
 		return database.DatabaseClient{}, err
 	}
 
