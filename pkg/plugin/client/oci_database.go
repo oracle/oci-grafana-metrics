@@ -17,7 +17,7 @@ type OCIDatabase struct {
 
 // getDatabaseHomes to fetch db home details
 func (od *OCIDatabase) getDatabaseHomes(compartmentOCID string) []map[string]string {
-	backend.Logger.Debug("client.utils", "getDatabaseHomes", "Fetching the database homes from the oci for compartment>"+compartmentOCID)
+	backend.Logger.Debug("client.oci_database", "getDatabaseHomes", "Fetching the database homes from the oci for compartment>"+compartmentOCID)
 
 	var fetchedResourceDetails []database.DbHomeSummary
 	var pageHeader string
@@ -28,7 +28,7 @@ func (od *OCIDatabase) getDatabaseHomes(compartmentOCID string) []map[string]str
 		CompartmentId: common.String(compartmentOCID),
 	}
 
-	backend.Logger.Debug("client.utils", "getDatabaseHomes", req)
+	// backend.Logger.Debug("client.oci_database", "getDatabaseHomes", req)
 
 	for {
 		if len(pageHeader) != 0 {
@@ -37,7 +37,7 @@ func (od *OCIDatabase) getDatabaseHomes(compartmentOCID string) []map[string]str
 
 		resp, err := od.client.ListDbHomes(od.ctx, req)
 		if err != nil {
-			backend.Logger.Error("client.utils", "getDatabaseHomes", err)
+			backend.Logger.Error("client.oci_database", "getDatabaseHomes", err)
 			break
 		}
 
@@ -63,7 +63,7 @@ func (od *OCIDatabase) getDatabaseHomes(compartmentOCID string) []map[string]str
 
 // GetDatabaseTagsPerRegion To fetch tags from an Oracle Database on a bare metal or virtual machine DB system.
 func (od *OCIDatabase) GetDatabaseTagsPerRegion(compartmentOCID string) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
-	backend.Logger.Debug("client.utils", "GetDatabaseTagsPerRegion", "Fetching the database resource tags from the oci for compartment>"+compartmentOCID)
+	backend.Logger.Debug("client.oci_database", "GetDatabaseTagsPerRegion", "Fetching the database resource tags from the oci for compartment>"+compartmentOCID)
 
 	var fetchedResourceDetails []database.DatabaseSummary
 	var pageHeader string
@@ -87,7 +87,7 @@ func (od *OCIDatabase) GetDatabaseTagsPerRegion(compartmentOCID string) (map[str
 
 			resp, err := od.client.ListDatabases(od.ctx, req)
 			if err != nil {
-				backend.Logger.Error("client.utils", "GetDatabaseTagsPerRegion", err)
+				backend.Logger.Error("client.oci_database", "GetDatabaseTagsPerRegion", err)
 				break
 			}
 
@@ -125,7 +125,7 @@ func (od *OCIDatabase) GetDatabaseTagsPerRegion(compartmentOCID string) (map[str
 
 // GetAutonomousDatabaseTagsPerRegion To fetch tags from an Oracle Autonomous Database.
 func (od *OCIDatabase) GetAutonomousDatabaseTagsPerRegion(compartmentOCID string) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
-	backend.Logger.Debug("client.utils", "GetAutonomousDatabaseTagsPerRegion", "Fetching the autonomous database resource tags from the oci")
+	backend.Logger.Debug("client.oci_database", "GetAutonomousDatabaseTagsPerRegion", "Fetching the autonomous database resource tags from the oci")
 
 	var fetchedResourceDetails []database.AutonomousDatabaseSummary
 	var pageHeader string
@@ -144,7 +144,7 @@ func (od *OCIDatabase) GetAutonomousDatabaseTagsPerRegion(compartmentOCID string
 
 		resp, err := od.client.ListAutonomousDatabases(od.ctx, req)
 		if err != nil {
-			backend.Logger.Error("client.utils", "GetAutonomousDatabaseTagsPerRegion", err)
+			backend.Logger.Error("client.oci_database", "GetAutonomousDatabaseTagsPerRegion", err)
 			break
 		}
 
@@ -179,7 +179,7 @@ func (od *OCIDatabase) GetAutonomousDatabaseTagsPerRegion(compartmentOCID string
 
 // GetExternalPluggableDatabaseTagsPerRegion To fetch tags from an external pluggable database, an external Oracle container database
 func (od *OCIDatabase) GetExternalPluggableDatabaseTagsPerRegion(compartmentOCID string) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
-	backend.Logger.Debug("client.utils", "GetExternalPluggableDatabaseTagsPerRegion", "Fetching the external pluggable database resource tags from the oci")
+	backend.Logger.Debug("client.oci_database", "GetExternalPluggableDatabaseTagsPerRegion", "Fetching the external pluggable database resource tags from the oci")
 
 	fetchedPDBResourceDetailsChan := make(chan []database.ExternalPluggableDatabaseSummary)
 	fetchedPCDResourceDetailsChan := make(chan []database.ExternalContainerDatabaseSummary)
@@ -237,7 +237,7 @@ func (od *OCIDatabase) GetExternalPluggableDatabaseTagsPerRegion(compartmentOCID
 
 // GetExternalContainerDatabaseTagsPerRegion To fetch tags from an external Oracle container database.
 func (od *OCIDatabase) getExternalPluggableDatabaseTags(compartmentOCID string, resourceDetailsChan chan []database.ExternalPluggableDatabaseSummary) {
-	backend.Logger.Debug("client.utils", "getExternalPluggableDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
+	backend.Logger.Debug("client.oci_database", "getExternalPluggableDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
 
 	var fetchedResourceDetails []database.ExternalPluggableDatabaseSummary
 	var pageHeader string
@@ -252,7 +252,7 @@ func (od *OCIDatabase) getExternalPluggableDatabaseTags(compartmentOCID string, 
 
 		resp, err := od.client.ListExternalPluggableDatabases(od.ctx, req)
 		if err != nil {
-			backend.Logger.Error("client.utils", "getExternalPluggableDatabaseTags", err)
+			backend.Logger.Error("client.oci_database", "getExternalPluggableDatabaseTags", err)
 			break
 		}
 
@@ -269,7 +269,7 @@ func (od *OCIDatabase) getExternalPluggableDatabaseTags(compartmentOCID string, 
 
 // getExternalContainerDatabaseTags To fetch tags from an external Oracle container database.
 func (od *OCIDatabase) getExternalContainerDatabaseTags(compartmentOCID string, resourceDetailsChan chan []database.ExternalContainerDatabaseSummary) {
-	backend.Logger.Debug("client.utils", "getExternalContainerDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
+	backend.Logger.Debug("client.oci_database", "getExternalContainerDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
 
 	var fetchedResourceDetails []database.ExternalContainerDatabaseSummary
 	var pageHeader string
@@ -285,7 +285,7 @@ func (od *OCIDatabase) getExternalContainerDatabaseTags(compartmentOCID string, 
 
 		resp, err := od.client.ListExternalContainerDatabases(od.ctx, req)
 		if err != nil {
-			backend.Logger.Error("client.utils", "getExternalContainerDatabaseTags", err)
+			backend.Logger.Error("client.oci_database", "getExternalContainerDatabaseTags", err)
 			break
 		}
 

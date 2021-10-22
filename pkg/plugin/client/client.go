@@ -649,8 +649,6 @@ func (oc *OCIClients) GetMetricDataPoints(
 	var wg sync.WaitGroup
 	for _, subscribedRegion := range subscribedRegions {
 		if subscribedRegion != constants.ALL_REGION {
-			//client.monitoringClient.SetRegion(subscribedRegion)
-
 			wg.Add(1)
 			go func(mc monitoring.MonitoringClient, sRegion string) {
 				defer wg.Done()
@@ -709,7 +707,6 @@ func (oc *OCIClients) GetMetricDataPoints(
 			}
 		}
 
-		//metricDatas := value.([]monitoring.MetricData)
 		metricData := value.(metricDataBank)
 
 		for _, metricDataItem := range metricData.dataPoints {
@@ -866,8 +863,8 @@ func (oc *OCIClients) GetTags(
 		}
 	}
 
-	var cc core.ComputeClient
-	var vc core.VirtualNetworkClient
+	var ccc core.ComputeClient
+	var vcc core.VirtualNetworkClient
 	var lbc loadbalancer.LoadBalancerClient
 	var hcc healthchecks.HealthChecksClient
 	var dbc database.DatabaseClient
@@ -875,9 +872,10 @@ func (oc *OCIClients) GetTags(
 
 	switch constants.OCI_NAMESPACES[namespace] {
 	case constants.OCI_TARGET_COMPUTE:
-		cc, cErr = client.GetComputeClient()
+		ccc, cErr = client.GetComputeClient()
 	case constants.OCI_TARGET_VCN:
-		vc, cErr = client.GetVCNClient()
+		ccc, cErr = client.GetComputeClient()
+		vcc, cErr = client.GetVCNClient()
 	case constants.OCI_TARGET_LBAAS:
 		lbc, cErr = client.GetLBaaSClient()
 	case constants.OCI_TARGET_HEALTHCHECK:
@@ -932,37 +930,34 @@ func (oc *OCIClients) GetTags(
 
 				switch constants.OCI_NAMESPACES[namespace] {
 				case constants.OCI_TARGET_COMPUTE:
-					cc.SetRegion(sRegion)
-					resourceTags, resourceIDsPerTag = getComputeResourceTagsPerRegion(ctx, cc, core.ListInstancesRequest{
-						CompartmentId:  common.String(compartmentOCID),
-						SortBy:         core.ListInstancesSortByDisplayname,
-						Limit:          common.Int(300),
-						LifecycleState: core.InstanceLifecycleStateRunning,
-					})
+					ccc.SetRegion(sRegion)
+					ocic := OCICore{
+						ctx:           ctx,
+						computeClient: ccc,
+					}
+					resourceTags, resourceIDsPerTag, resourceLabels = ocic.GetComputeResourceTagsPerRegion(compartmentOCID)
 				case constants.OCI_TARGET_VCN:
-					vc.SetRegion(sRegion)
-					resourceTags, resourceIDsPerTag = getVCNResourceTagsPerRegion(ctx, vc, core.ListVcnsRequest{
-						CompartmentId:  common.String(compartmentOCID),
-						SortBy:         core.ListVcnsSortByDisplayname,
-						Limit:          common.Int(300),
-						LifecycleState: core.VcnLifecycleStateAvailable,
-					})
+					vcc.SetRegion(sRegion)
+					ccc.SetRegion(sRegion)
+					ocic := OCICore{
+						ctx:           ctx,
+						computeClient: ccc,
+					}
+					resourceTags, resourceIDsPerTag, resourceLabels = ocic.GetVNicResourceTagsPerRegion(compartmentOCID)
 				case constants.OCI_TARGET_LBAAS:
 					lbc.SetRegion(sRegion)
-					resourceTags, resourceIDsPerTag = getLBaaSResourceTagsPerRegion(ctx, lbc, loadbalancer.ListLoadBalancersRequest{
-						CompartmentId:  common.String(compartmentOCID),
-						Detail:         common.String("full"),
-						SortBy:         loadbalancer.ListLoadBalancersSortByDisplayname,
-						Limit:          common.Int64(500),
-						LifecycleState: loadbalancer.LoadBalancerLifecycleStateActive,
-					})
+					ocilb := OCILoadBalancer{
+						ctx:    ctx,
+						client: lbc,
+					}
+					resourceTags, resourceIDsPerTag, resourceLabels = ocilb.GetLBaaSResourceTagsPerRegion(compartmentOCID)
 				case constants.OCI_TARGET_HEALTHCHECK:
 					hcc.SetRegion(sRegion)
-					resourceTags, resourceIDsPerTag = getHealthChecksTagsPerRegion(ctx, hcc, healthchecks.ListPingMonitorsRequest{
-						CompartmentId: common.String(compartmentOCID),
-						SortBy:        healthchecks.ListPingMonitorsSortByDisplayname,
-						Limit:         common.Int(300),
-					})
+					ocihc := OCIHealthChecks{
+						ctx:               ctx,
+						healthCheckClient: hcc,
+					}
+					resourceTags, resourceIDsPerTag, resourceLabels = ocihc.GetHealthChecksTagsPerRegion(compartmentOCID)
 				case constants.OCI_TARGET_DATABASE:
 					dbc.SetRegion(sRegion)
 					db := OCIDatabase{
@@ -978,11 +973,10 @@ func (oc *OCIClients) GetTags(
 					case "oci_autonomous_database":
 						resourceTags, resourceIDsPerTag, resourceLabels = db.GetAutonomousDatabaseTagsPerRegion(compartmentOCID)
 					}
-
-					// storing the labels in cache to use along with metric data
-					oc.cache.SetWithTTL(labelCacheKey, resourceLabels, 1, 15*time.Minute)
 				}
 
+				// storing the labels in cache to use along with metric data
+				oc.cache.SetWithTTL(labelCacheKey, resourceLabels, 1, 15*time.Minute)
 				// saving in cache - previous was 30
 				oc.cache.SetWithTTL(rTagsCacheKey, resourceTags, 1, 1*time.Minute)
 				oc.cache.SetWithTTL(rIDsPerTagCacheKey, resourceIDsPerTag, 1, 1*time.Minute)
@@ -996,8 +990,8 @@ func (oc *OCIClients) GetTags(
 	wg.Wait()
 
 	// clearing up
-	cc = core.ComputeClient{}
-	vc = core.VirtualNetworkClient{}
+	ccc = core.ComputeClient{}
+	vcc = core.VirtualNetworkClient{}
 	lbc = loadbalancer.LoadBalancerClient{}
 	hcc = healthchecks.HealthChecksClient{}
 	dbc = database.DatabaseClient{}
