@@ -153,7 +153,14 @@ func readMultiTenancySourceFile(filePath string, tenanciesMap map[string]string)
 
 	s := bufio.NewScanner(f)
 	for s.Scan() {
-		t := strings.Split(s.Text(), ",")
+		line := strings.TrimSpace(s.Text())
+		// when there is blank line
+		if line == "" {
+			continue
+		}
+
+		// creating tenancies map, key=tenancy_ocid, value=tenancy_name
+		t := strings.Split(line, ",")
 		tenanciesMap[t[1]] = t[0]
 	}
 	err = s.Err()
