@@ -161,6 +161,10 @@ func readMultiTenancySourceFile(filePath string, tenanciesMap map[string]string)
 
 		// creating tenancies map, key=tenancy_ocid, value=tenancy_name
 		t := strings.Split(line, ",")
+		// line has no proper content
+		if len(t) != 2 {
+			continue
+		}
 		tenanciesMap[t[1]] = t[0]
 	}
 	err = s.Err()
