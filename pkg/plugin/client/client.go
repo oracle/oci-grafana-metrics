@@ -604,10 +604,7 @@ func (oc *OCIClients) GetDimensions(
 // Links:
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/MetricData/SummarizeMetricsData
-func (oc *OCIClients) GetMetricDataPoints(
-	ctx context.Context,
-	requestParams models.MetricsDataRequest,
-	selectedTags []string) ([]time.Time, []models.OCIMetricDataPoints) {
+func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams models.MetricsDataRequest) ([]time.Time, []models.OCIMetricDataPoints) {
 	backend.Logger.Debug("client", "GetMetricDataPoints", "fetching the metrics datapoints under compartment '"+requestParams.CompartmentOCID+"' for query '"+requestParams.QueryText+"'")
 
 	times := []time.Time{}
@@ -621,6 +618,8 @@ func (oc *OCIClients) GetMetricDataPoints(
 	if client == nil {
 		return times, dataPoints
 	}
+
+	selectedTags := requestParams.TagsValues
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
 		CompartmentId:          common.String(requestParams.CompartmentOCID),
@@ -675,16 +674,17 @@ func (oc *OCIClients) GetMetricDataPoints(
 				if len(resp.Items) > 0 {
 					// fetching the resource labels
 					var rl map[string]map[string]string
-					labelCacheKey := strings.Join([]string{requestParams.TenancyOCID, requestParams.CompartmentOCID, sRegion, requestParams.Namespace, "resource_labels"}, "-")
 
-					// max try for 5 seconds
-					for i := 0; i < 5; i++ {
-						if cachedResourceLabels, found := oc.cache.Get(labelCacheKey); found {
-							rl = cachedResourceLabels.(map[string]map[string]string)
-							break
-						}
-						time.Sleep(time.Second)
-					}
+					cachedResourceLabels := oc.fetchFromCache(
+						ctx,
+						requestParams.TenancyOCID,
+						requestParams.CompartmentOCID,
+						sRegion,
+						requestParams.Namespace,
+						"resource_labels",
+					)
+
+					rl = cachedResourceLabels.(map[string]map[string]string)
 
 					// storing the data to calculate later
 					allRegionsMetricsDataPoint.Store(sRegion, metricDataBank{
@@ -706,17 +706,16 @@ func (oc *OCIClients) GetMetricDataPoints(
 
 		// get the selected tags
 		if len(selectedTags) != 0 {
-			rIDsPerTagCacheKey := strings.Join([]string{
+			cachedResourceNamesPerTag := oc.fetchFromCache(
+				ctx,
 				requestParams.TenancyOCID,
 				requestParams.CompartmentOCID,
 				regionInUse,
 				requestParams.Namespace,
 				constants.CACHE_KEY_RESOURCE_IDS_PER_TAG,
-			}, "-")
+			)
 
-			if rawResourceNamesPerTag, foundNames := oc.cache.Get(rIDsPerTagCacheKey); foundNames {
-				resourceIDsPerTag = rawResourceNamesPerTag.(map[string]map[string]struct{})
-			}
+			resourceIDsPerTag = cachedResourceNamesPerTag.(map[string]map[string]struct{})
 		}
 
 		metricData := value.(metricDataBank)
@@ -800,10 +799,14 @@ func (oc *OCIClients) GetMetricDataPoints(
 					continue
 				}
 
+				dp := dataPointsWithResourceSerialNo[resourcesFetched-1]
+
 				// adding to the existing labels
 				for k, v := range cmdbData {
-					dataPointsWithResourceSerialNo[resourcesFetched-1].Labels[k] = v
+					dp.Labels[k] = v
 				}
+
+				dataPointsWithResourceSerialNo[resourcesFetched-1] = dp
 			}
 		}
 
@@ -853,6 +856,20 @@ func (oc *OCIClients) GetMetricDataPoints(
 	}
 
 	return times, dataPoints
+}
+
+// fetchFromCache will fetch value from cache and if it not present it will fetch via api and store to cache and return
+func (oc *OCIClients) fetchFromCache(ctx context.Context, tenancyOCID string, compartmentOCID string, region string, namespace string, suffix string) interface{} {
+	backend.Logger.Debug("client", "fetchFromCache", "fetching from cache")
+
+	labelCacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, suffix}, "-")
+
+	if _, found := oc.cache.Get(labelCacheKey); !found {
+		oc.GetTags(ctx, tenancyOCID, compartmentOCID, region, namespace)
+	}
+
+	cachedResource, _ := oc.cache.Get(labelCacheKey)
+	return cachedResource
 }
 
 // GetTags Returns all the defined as well as freeform tags attached with resources for a namespace under a compartment
@@ -1003,8 +1020,8 @@ func (oc *OCIClients) GetTags(
 				// storing the labels in cache to use along with metric data
 				oc.cache.SetWithTTL(labelCacheKey, resourceLabels, 1, 15*time.Minute)
 				// saving in cache - previous was 30
-				oc.cache.SetWithTTL(rTagsCacheKey, resourceTags, 1, 1*time.Minute)
-				oc.cache.SetWithTTL(rIDsPerTagCacheKey, resourceIDsPerTag, 1, 1*time.Minute)
+				oc.cache.SetWithTTL(rTagsCacheKey, resourceTags, 1, 15*time.Minute)
+				oc.cache.SetWithTTL(rIDsPerTagCacheKey, resourceIDsPerTag, 1, 15*time.Minute)
 				oc.cache.Wait()
 
 				// to store all resource tags for all region

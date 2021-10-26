@@ -11,6 +11,8 @@ type MetricsDataRequest struct {
 	QueryText       string
 	Interval        string
 	ResourceGroup   string
+	DimensionValues []string
+	TagsValues      []string
 	StartTime       time.Time
 	EndTime         time.Time
 }

@@ -15,11 +15,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
     if (runQuery) {
       const queryModel = new QueryModel(changedQuery, getTemplateSrv());
       if (queryModel.isQueryReady()) {
-        // changedQuery.queryType = 'metrics';
         changedQuery.queryText = queryModel.buildQuery();
 
         onChange({ ...changedQuery });
-        //alert(JSON.stringify(changedQuery.tagsValues));
         onRunQuery();
       }
     } else {

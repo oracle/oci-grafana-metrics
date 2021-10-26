@@ -37,6 +37,8 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 		QueryText:       qm.QueryText,
 		Interval:        qm.Interval[1 : len(qm.Interval)-1],
 		ResourceGroup:   qm.ResourceGroup,
+		DimensionValues: qm.DimensionValues,
+		TagsValues:      qm.TagsValues,
 		StartTime:       query.TimeRange.From.UTC(),
 		EndTime:         query.TimeRange.To.UTC(),
 	}
@@ -44,7 +46,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	// create data frame response
 	frame := data.NewFrame("response").SetMeta(&data.FrameMeta{ExecutedQueryString: qm.QueryText})
 
-	times, metricDataValues := ocidx.clients.GetMetricDataPoints(ctx, metricsDataRequest, qm.TagsValues)
+	times, metricDataValues := ocidx.clients.GetMetricDataPoints(ctx, metricsDataRequest)
 
 	// plotting the x axis with time as unit
 	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
