@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react';
-import { Input, Select, InlineField, FieldSet } from '@grafana/ui';
+import { Input, Select, InlineField, FieldSet, InlineSwitch, FileDropzone } from '@grafana/ui';
+import { DropzoneOptions } from 'react-dropzone';
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
 import { OCIDataSourceOptions, DefaultOCIOptions } from '../types';
 import {
@@ -13,6 +15,7 @@ import {
   MultiTenancyChoiceOptions,
   MultiTenancyModeOptions,
 } from '../config.options';
+import * as XLSX from 'ts-xlsx';
 
 interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {}
 
@@ -21,6 +24,30 @@ interface State {}
 export class ConfigEditor extends PureComponent<Props, State> {
   render() {
     const { options } = this.props;
+
+    let cmdbFileOptions: DropzoneOptions = { maxFiles: 1, multiple: false };
+
+    const readCMDBExcelFile = (result: string | ArrayBuffer | null) => {
+      if (result === null || typeof result === 'string') {
+        return;
+      }
+
+      let data = new Uint8Array(result);
+      let arr: any[] = [];
+      for (let i = 0; i !== data.length; ++i) {
+        arr[i] = String.fromCharCode(data[i]);
+      }
+
+      let bstr = arr.join('');
+      let workbook = XLSX.read(bstr, { type: 'binary' });
+      let cmdbData: any = {};
+      for (let ws_name of workbook.SheetNames) {
+        let ws = workbook.Sheets[ws_name];
+        cmdbData[ws_name] = XLSX.utils.sheet_to_json(ws, { raw: true });
+      }
+
+      options.jsonData.cmdbFileContent = JSON.stringify(cmdbData);
+    };
 
     return (
       <FieldSet label="Connection Details">
@@ -121,6 +148,41 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     onChange={onUpdateDatasourceJsonDataOption(this.props, 'multiTenancyFile')}
                   />
                 </InlineField>
+              </>
+            )}
+          </>
+        )}
+        <InlineField
+          label="Enable Customer Mapping"
+          labelWidth={28}
+          tooltip="Provide more metadata about resources under tenancy. Possible via two way. 1. Using oracle CMDB, 2. Using user provide customer mapping file"
+        >
+          <InlineSwitch
+            className="width-30"
+            css=""
+            value={!!options.jsonData.enableCMDB}
+            defaultChecked={false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'enableCMDB')}
+          />
+        </InlineField>
+        {options.jsonData.enableCMDB === true && (
+          <>
+            <InlineField
+              label="Enable Mapping via file (excel)"
+              labelWidth={28}
+              tooltip="Customer mapping excel for tenancy resource. It must be an excel file."
+            >
+              <InlineSwitch
+                className="width-30"
+                css=""
+                value={!!options.jsonData.enableCMDBUploadFile}
+                defaultChecked={false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'enableCMDBUploadFile')}
+              />
+            </InlineField>
+            {options.jsonData.enableCMDBUploadFile === true && (
+              <>
+                <FileDropzone options={cmdbFileOptions} onLoad={readCMDBExcelFile} readAs={'readAsArrayBuffer'} />
               </>
             )}
           </>

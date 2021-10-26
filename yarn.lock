@@ -2181,6 +2181,11 @@
     anymatch "^3.0.0"
     source-map "^0.6.0"
 
+"@types/xlsx@0.0.34":
+  version "0.0.34"
+  resolved "https://registry.yarnpkg.com/@types/xlsx/-/xlsx-0.0.34.tgz#2b49e60dcbd3553a6bf211a3af1a6f4c7cb2c8b9"
+  integrity sha1-K0nmDcvTVTpr8hGjrxpvTHyyyLk=
+
 "@types/yargs-parser@*":
   version "20.2.1"
   resolved "https://registry.yarnpkg.com/@types/yargs-parser/-/yargs-parser-20.2.1.tgz#3b9ce2489919d9e4fea439b76916abc34b2df129"
@@ -12413,6 +12418,13 @@ ts-node@^9.0.0:
     make-error "^1.1.1"
     source-map-support "^0.5.17"
     yn "3.1.1"
+
+ts-xlsx@^0.0.11:
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/ts-xlsx/-/ts-xlsx-0.0.11.tgz#5a5fbcdd0f59d558c287af4c74fd5ea9a4bbeb39"
+  integrity sha1-Wl+83Q9Z1VjCh69MdP1eqaS76zk=
+  dependencies:
+    "@types/xlsx" "0.0.34"
 
 tslib@2.2.0:
   version "2.2.0"

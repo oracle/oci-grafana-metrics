@@ -33,13 +33,14 @@ type OCIClients struct {
 	baseTenancyOCID  string
 	baseTenancyName  string
 	baseRegion       string
-	tenanciesMap     map[string]string // store in <ocid>:<profile name> format profile name and tenancy name must be same
+	tenanciesMap     map[string]string                       // store in <ocid>:<profile name> format profile name and tenancy name must be same
+	cmdbData         map[string]map[string]map[string]string // store in
 	clientPerProfile map[string]*OCIClient
 	cache            *ristretto.Cache
 }
 
 func New(ociSettings *models.OCIDatasourceSettings, rCache *ristretto.Cache) (*OCIClients, error) {
-	backend.Logger.Debug("client", "New", ociSettings)
+	backend.Logger.Debug("client", "New", ociSettings.TenancyName)
 
 	ociClients := &OCIClients{
 		authProvide: ociSettings.AuthProvider,
@@ -71,6 +72,17 @@ func New(ociSettings *models.OCIDatasourceSettings, rCache *ristretto.Cache) (*O
 			backend.Logger.Error("client", "New", err)
 			return nil, err
 		}
+	}
+
+	// setting cmdb data, when enabled
+	if ociSettings.EnableCMDB && ociSettings.EnableCMDBUploadFile {
+		cmdbData, err := constructCMDBData(ociSettings.CMDBFileContent)
+		if err != nil {
+			backend.Logger.Error("client", "New", err)
+			return nil, err
+		}
+
+		ociClients.cmdbData = cmdbData
 	}
 
 	// setting base oci client
@@ -779,6 +791,19 @@ func (oc *OCIClients) GetMetricDataPoints(
 				ResourceName: metricDataItem.Dimensions["resourceDisplayName"],
 				UniqueDataID: uniqueDataID,
 				Labels:       metricData.resourceLabels[uniqueDataID],
+			}
+
+			// adding cmdb data as labels
+			for ocid, cmdbData := range oc.cmdbData[tenancyName] {
+				if ocid != uniqueDataID {
+					// when there is no data for the resource ocid
+					continue
+				}
+
+				// adding to the existing labels
+				for k, v := range cmdbData {
+					dataPointsWithResourceSerialNo[resourcesFetched-1].Labels[k] = v
+				}
 			}
 		}
 

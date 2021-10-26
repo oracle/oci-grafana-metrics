@@ -21,7 +21,7 @@ type OCIDatasource struct {
 }
 
 func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	backend.Logger.Debug("plugin", "NewOCIDatasource", settings)
+	backend.Logger.Debug("plugin", "NewOCIDatasource", settings.ID)
 	ociDx := &OCIDatasource{}
 	dsSettings := &models.OCIDatasourceSettings{}
 
@@ -94,7 +94,7 @@ func (ocidx *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDat
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (ocidx *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	backend.Logger.Debug("plugin", "CheckHealth", req)
+	backend.Logger.Debug("plugin", "CheckHealth", req.PluginContext.PluginID)
 
 	hRes := &backend.CheckHealthResult{}
 

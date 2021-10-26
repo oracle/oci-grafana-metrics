@@ -42,3 +42,15 @@ type OCIResourceTagsResponse struct {
 	DefinedTags  map[string]map[string]interface{}
 	FreeFormTags map[string]string
 }
+
+type CMDBFileData struct {
+	Customer        string
+	EnvironmentName string
+	ResourceType    string
+	ResourceOCID    string
+}
+
+type CMDBCustomerData struct {
+	Customer        string
+	EnvironmentData map[string]map[string][]string // environmentName: resourceType: ocids
+}

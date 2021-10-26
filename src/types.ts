@@ -102,6 +102,9 @@ export interface OCIDataSourceOptions extends DataSourceJsonData {
   multiTenancyFile?: string; // Default is ~/.oci/tenancies, if enabled
   configPath?: string; // Config file path. Default is ~/.oci/config
   configProfile?: string; // Config profile name, as specified in ~/.oci/config. Default is DEFAULT
+  enableCMDB?: boolean; // Choice to enable oracel cmdb datasource mapping
+  enableCMDBUploadFile?: boolean; // Choice to enable user to upload customer mapping file
+  cmdbFileContent: string; // CMDB file content as json string
 }
 
 /**

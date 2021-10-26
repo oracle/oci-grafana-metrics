@@ -14,13 +14,16 @@ import (
 
 // OCIDatasourceSettings holds the datasource configuration information for OCI
 type OCIDatasourceSettings struct {
-	AuthProvider       string `json:"authProvider"`
-	ConfigPath         string `json:"configPath"`
-	ConfigProfile      string `json:"configProfile"`
-	MultiTenancyChoice string `json:"multiTenancyChoice"`
-	MultiTenancyMode   string `json:"multiTenancyMode"`
-	MultiTenancyFile   string `json:"multiTenancyFile"`
-	TenancyName        string `json:"tenancyName,omitempty"`
+	AuthProvider         string `json:"authProvider"`
+	ConfigPath           string `json:"configPath"`
+	ConfigProfile        string `json:"configProfile"`
+	MultiTenancyChoice   string `json:"multiTenancyChoice"`
+	MultiTenancyMode     string `json:"multiTenancyMode"`
+	MultiTenancyFile     string `json:"multiTenancyFile"`
+	TenancyName          string `json:"tenancyName,omitempty"`
+	EnableCMDB           bool   `json:"enableCMDB"`
+	EnableCMDBUploadFile bool   `json:"enableCMDBUploadFile"`
+	CMDBFileContent      string `json:"cmdbFileContent"`
 }
 
 func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSettings) error {

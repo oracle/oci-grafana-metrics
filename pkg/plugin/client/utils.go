@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"flag"
 	"os"
 	"sort"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/oracle/oci-go-sdk/v49/common"
 	"github.com/oracle/oci-go-sdk/v49/common/auth"
 	"github.com/oracle/oci-go-sdk/v49/core"
@@ -136,10 +136,9 @@ func getOCIConfigurationProvider(authProvider string, configPath string, configP
 
 // readMultiTenancySourceFile Reads either default or user provided source file for all remote tenancies
 func readMultiTenancySourceFile(filePath string, tenanciesMap map[string]string) error {
-	fptr := flag.String("tfpath", filePath, "tenancies file path to read from")
-	flag.Parse()
+	backend.Logger.Debug("client.utils", "readMultiTenancySourceFile", "reading tenancies from file:"+filePath)
 
-	f, err := os.Open(*fptr)
+	f, err := os.Open(filePath)
 	if err != nil {
 		backend.Logger.Error("client.utils", "readMultiTenancySourceFile", "could not open Multi-Tenancy File: "+err.Error())
 		return err
@@ -174,6 +173,83 @@ func readMultiTenancySourceFile(filePath string, tenanciesMap map[string]string)
 	}
 
 	return nil
+}
+
+/*
+func constructCMDBData(cmdbFileData string) (map[string]models.CMDBCustomerData, error) {
+	backend.Logger.Debug("client.utils", "constructCMDBData", "converting data in proper format")
+
+	var formattedCMDBFileData map[string][]models.CMDBFileData
+	if err := jsoniter.Unmarshal([]byte(cmdbFileData), &formattedCMDBFileData); err != nil {
+		backend.Logger.Error("client.utils", "constructCMDBData", "converting data in proper format: "+err.Error())
+		return nil, err
+	}
+
+	cmdbData := map[string]models.CMDBCustomerData{}
+	for tenancyName, tenancyResourceData := range formattedCMDBFileData {
+		tenancyCMDBData := models.CMDBCustomerData{}
+		cmdbEnvData := map[string]map[string][]string{}
+
+		for _, resourceData := range tenancyResourceData {
+			if tenancyCMDBData.Customer == "" {
+				tenancyCMDBData.Customer = resourceData.Customer
+			}
+
+			// for new environment entry
+			if _, ok := cmdbEnvData[resourceData.EnvironmentName]; !ok {
+				cmdbEnvData[resourceData.EnvironmentName] = map[string][]string{
+					resourceData.ResourceType: {resourceData.ResourceOCID},
+				}
+				continue
+			}
+
+			// for new resource type entry under environment
+			if _, ok := cmdbEnvData[resourceData.EnvironmentName][resourceData.ResourceType]; !ok {
+				cmdbEnvData[resourceData.EnvironmentName][resourceData.ResourceType] = []string{resourceData.ResourceOCID}
+				continue
+			}
+
+			cmdbEnvData[resourceData.EnvironmentName][resourceData.ResourceType] = append(cmdbEnvData[resourceData.EnvironmentName][resourceData.ResourceType], resourceData.ResourceOCID)
+		}
+
+		tenancyCMDBData.EnvironmentData = cmdbEnvData
+		cmdbData[tenancyName] = tenancyCMDBData
+	}
+
+	backend.Logger.Warn("client.utils", "constructCMDBData", cmdbData)
+
+	return cmdbData, nil
+}
+*/
+
+// constructCMDBData will format uploaded cmdb file data as per requirement to show as labels
+func constructCMDBData(cmdbFileData string) (map[string]map[string]map[string]string, error) {
+	backend.Logger.Debug("client.utils", "constructCMDBData", "converting data in proper format")
+
+	var formattedCMDBFileData map[string][]models.CMDBFileData
+	if err := jsoniter.Unmarshal([]byte(cmdbFileData), &formattedCMDBFileData); err != nil {
+		backend.Logger.Error("client.utils", "constructCMDBData", "converting data in proper format: "+err.Error())
+		return nil, err
+	}
+
+	// to store data in the following format:
+	// tenancyName: ocid: {labels}
+	cmdbData := map[string]map[string]map[string]string{}
+	for tenancyName, tenancyResourceData := range formattedCMDBFileData {
+		tenancyCMDBData := map[string]map[string]string{}
+
+		for _, resourceData := range tenancyResourceData {
+			tenancyCMDBData[resourceData.ResourceOCID] = map[string]string{
+				"customer":      resourceData.Customer,
+				"environment":   resourceData.EnvironmentName,
+				"resource_type": resourceData.ResourceType,
+			}
+		}
+
+		cmdbData[tenancyName] = tenancyCMDBData
+	}
+
+	return cmdbData, nil
 }
 
 // listMetrics will list all metrics with namespaces
