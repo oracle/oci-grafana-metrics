@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { Input, Select, InlineField, FieldSet, InlineSwitch, FileDropzone } from '@grafana/ui';
-import { DropzoneOptions } from 'react-dropzone';
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
@@ -25,7 +24,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
   render() {
     const { options } = this.props;
 
-    let cmdbFileOptions: DropzoneOptions = { maxFiles: 1, multiple: false };
+    const cmdbFileValidator = (cmdbFile: File) => {
+      let fName = cmdbFile.name;
+      let ext = fName.substr(fName.lastIndexOf('.') + 1);
+      if (ext !== 'xlsx') {
+        return { code: 'file-invalid-type', message: 'Only excel (.xlsx) is supported' };
+      }
+
+      return null;
+    };
 
     const readCMDBExcelFile = (result: string | ArrayBuffer | null) => {
       if (result === null || typeof result === 'string') {
@@ -48,6 +55,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
       options.jsonData.cmdbFileContent = JSON.stringify(cmdbData);
     };
+
+    let cmdbFileOptions = { maxFiles: 1, multiple: false, validator: cmdbFileValidator };
 
     return (
       <FieldSet label="Connection Details">
