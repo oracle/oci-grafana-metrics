@@ -2,13 +2,13 @@ package client
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/oracle/oci-go-sdk/v49/common"
-	"github.com/oracle/oci-go-sdk/v49/core"
-	"github.com/oracle/oci-go-sdk/v49/database"
-	"github.com/oracle/oci-go-sdk/v49/healthchecks"
-	"github.com/oracle/oci-go-sdk/v49/identity"
-	"github.com/oracle/oci-go-sdk/v49/loadbalancer"
-	"github.com/oracle/oci-go-sdk/v49/monitoring"
+	"github.com/oracle/oci-go-sdk/v50/common"
+	"github.com/oracle/oci-go-sdk/v50/core"
+	"github.com/oracle/oci-go-sdk/v50/database"
+	"github.com/oracle/oci-go-sdk/v50/healthchecks"
+	"github.com/oracle/oci-go-sdk/v50/identity"
+	"github.com/oracle/oci-go-sdk/v50/loadbalancer"
+	"github.com/oracle/oci-go-sdk/v50/monitoring"
 )
 
 // OCIClient stores all the clients related to OCI

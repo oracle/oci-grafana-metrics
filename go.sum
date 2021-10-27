@@ -265,6 +265,8 @@ github.com/oracle/oci-go-sdk/v49 v49.1.0 h1:hUjdP+BZahIBTjJmdio3/yGCJrcRd+mj06gH
 github.com/oracle/oci-go-sdk/v49 v49.1.0/go.mod h1:a73341zd+PThjefFMCR7tJZoFy7hqfXx72I1OUPs/pI=
 github.com/oracle/oci-go-sdk/v49 v49.2.0 h1:l4PUk81EKdTDD4mDg5wrELpdWFqYeE9KYejfNgtsyUI=
 github.com/oracle/oci-go-sdk/v49 v49.2.0/go.mod h1:E8q2DXmXnSozLdXHUFF+o3L2gzcWbiFIPFYOYWdqOfc=
+github.com/oracle/oci-go-sdk/v50 v50.0.0 h1:B3/n1aVTzSPPTrVrDoGth7jVYivS6TgoWajiBxodRQo=
+github.com/oracle/oci-go-sdk/v50 v50.0.0/go.mod h1:5tboHcoGIrAUerGgH3Sdc6eJdhw5YyywE78g99hzHpw=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
