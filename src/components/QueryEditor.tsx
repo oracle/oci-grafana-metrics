@@ -76,20 +76,46 @@ export const QueryEditor: React.FC<Props> = (props) => {
     });
   };
   const getCompartmentOptions = () => {
-    return new Promise<Array<SelectableValue<string>>>((resolve) => {
-      setTimeout(async () => {
-        const response = query.compartments || [];
-        resolve(response);
-      }, 0);
-    });
+    const existingCompartmentsResponse = query.compartments;
+
+    if (query.namespace !== undefined) {
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {
+          const response = await datasource.getCompartments(query.tenancyOCID);
+          const result = response.map((res: any) => {
+            return { label: res.name, value: res.ocid };
+          });
+          resolve(result);
+        }, 0);
+      });
+    } else {
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {
+          resolve(existingCompartmentsResponse);
+        }, 0);
+      });
+    }
   };
   const getSubscribedRegionOptions = () => {
-    return new Promise<Array<SelectableValue<string>>>((resolve) => {
-      setTimeout(async () => {
-        const response = query.regions || [];
-        resolve(response);
-      }, 0);
-    });
+    const existingRegionsResponse = query.regions;
+
+    if (query.namespace !== undefined) {
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {
+          const response = await datasource.getSubscribedRegions(query.tenancyOCID);
+          let result = response.map((res: any) => {
+            return { label: res, value: res };
+          });
+          resolve(result);
+        }, 0);
+      });
+    } else {
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {
+          resolve(existingRegionsResponse);
+        }, 0);
+      });
+    }
   };
   const getNamespaceOptions = () => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
