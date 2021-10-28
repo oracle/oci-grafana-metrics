@@ -55,6 +55,11 @@ mage -v
 ```
 copy the dist directory in the local plugin directory of grafana
 
+### Installation
+
+Create 'oci-metrics-datasource' directory under plugins directory of Grafana.
+Download specified versioned zipped dist file from releases directory into 'oci-metrics-datasource' and unzip it.
+
 ## Documentation
 
 Please refer to the [docs folder in this repo](./docs)
