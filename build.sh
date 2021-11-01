@@ -1,6 +1,13 @@
 #!/bin/bash
 
 #Do grunt work
+# nvm install 12.20
+# nvm use 12.20
+
+# rm -rf node_modules
+
+# yarn 
+
 
 if [[ ! -d ./node_modules ]]; then
   echo "dependencies not installed try running: yarn"
@@ -39,26 +46,30 @@ echo "building go binary"
 GOOS=$GOOS go build -o ./dist/oci-plugin$POST
 
 # For debugger
-# GOOS=$GOOS go build -o ./dist/oci-plugin$POST -gcflags="all=-N -l"
+#  GOOS=$GOOS go build -o ./dist/oci-plugin$POST -gcflags="all=-N -l"
 
 # For release
  GOOS=linux go build -o ./dist/oci-plugin_linux_amd64
  GOOS=windows GOARCH=amd64 go build -o ./dist/oci-plugin_windows_amd64.exe
- 
- tar cvf plugin.tar ./dist
 
-# Instructions for signing 
-# Please make sure 
-# nvm install 12.20 
+grafana-toolkit plugin:sign
+
+tar cvf plugin.tar ./dist
+
+zip -r oci-metrics-datasource-g8 ./dist
+
+# Instructions for signing
+# Please make sure
+# nvm install 12.20
 
 # nvm use 12.20
 
-# yarn 
-#For grafana publishing
-#yarn install --pure-lockfile && yarn build
+# yarn
+# For grafana publishing
+# yarn install --pure-lockfile && yarn build
 
 # Please make sure if you have the api keys installed in bash profile in name,  GRAFANA_API_KEY
 # Note : Please make sure that you are running the commands in a non-proxy env and without vpn, else grafana signing might fail"
-# yarn  global add @grafana/toolkit 
+# yarn  global add @grafana/toolkit
 # grafana-toolkit plugin:sign
 

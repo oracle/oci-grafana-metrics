@@ -1,87 +1,98 @@
 /*
-** Copyright © 2019 Oracle and/or its affiliates. All rights reserved.
-** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
-*/
-module.exports = function(grunt) {
+ ** Copyright © 2019 Oracle and/or its affiliates. All rights reserved.
+ ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+ */
+module.exports = function (grunt) {
+  require("load-grunt-tasks")(grunt);
 
-  require('load-grunt-tasks')(grunt);
-
-  grunt.loadNpmTasks('grunt-execute');
-  grunt.loadNpmTasks('grunt-contrib-clean');
-
+  grunt.loadNpmTasks("grunt-execute");
+  grunt.loadNpmTasks("grunt-contrib-clean");
 
   grunt.initConfig({
-
     clean: ["dist"],
 
     copy: {
       src_to_dist: {
-        cwd: 'src',
+        cwd: "src",
         expand: true,
-        src: ['**/*', '!**/*.js', '!**/*.scss'],
-        dest: 'dist'
+        src: ["**/*", "!**/*.js", "!**/*.scss"],
+        dest: "dist",
       },
       pluginDef: {
         expand: true,
-        src: ['README.md'],
-        dest: 'dist'
-      }
+        src: ["README.md"],
+        dest: "dist",
+      },
     },
 
     watch: {
       rebuild_all: {
-        files: ['src/**/*'],
-        tasks: ['default'],
-        options: {spawn: false}
-      }
+        files: ["src/**/*"],
+        tasks: ["default"],
+        options: { spawn: false },
+      },
     },
 
     babel: {
       options: {
         sourceMap: true,
-        presets:  ['es2015']
+        presets: ["es2015"],
       },
       dist: {
         options: {
-          plugins: ['transform-es2015-modules-systemjs', 'transform-es2015-for-of']
+          plugins: [
+            "transform-es2015-modules-systemjs",
+            "transform-es2015-for-of",
+          ],
         },
-        files: [{
-          cwd: 'src',
-          expand: true,
-          src: ['**/*.js'],
-          dest: 'dist',
-          ext:'.js'
-        }]
+        files: [
+          {
+            cwd: "src",
+            expand: true,
+            src: ["**/*.js"],
+            dest: "dist",
+            ext: ".js",
+          },
+        ],
       },
       distTestNoSystemJs: {
-        files: [{
-          cwd: 'src',
-          expand: true,
-          src: ['**/*.js'],
-          dest: 'dist/test',
-          ext:'.js'
-        }]
+        files: [
+          {
+            cwd: "src",
+            expand: true,
+            src: ["**/*.js"],
+            dest: "dist/test",
+            ext: ".js",
+          },
+        ],
       },
       distTestsSpecsNoSystemJs: {
-        files: [{
-          expand: true,
-          cwd: 'spec',
-          src: ['**/*.js'],
-          dest: 'dist/test/spec',
-          ext:'.js'
-        }]
-      }
+        files: [
+          {
+            expand: true,
+            cwd: "spec",
+            src: ["**/*.js"],
+            dest: "dist/test/spec",
+            ext: ".js",
+          },
+        ],
+      },
     },
     bump: {
       options: {
-        files: ['plugin.json', 'package.json', 'src/plugin.json'],
-        commitFiles: ['-a'],
-        pushTo: 'origin',
-        commitMessage: '[skip ci] Release v%VERSION%',
-      }
-    }
+        files: ["plugin.json", "package.json", "src/plugin.json"],
+        commitFiles: ["-a"],
+        pushTo: "origin",
+        commitMessage: "[skip ci] Release v%VERSION%",
+      },
+    },
   });
-  grunt.loadNpmTasks('grunt-bump');
+  grunt.loadNpmTasks("grunt-bump");
 
-  grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'copy:pluginDef', 'babel']);
+  grunt.registerTask("default", [
+    "clean",
+    "copy:src_to_dist",
+    "copy:pluginDef",
+    "babel",
+  ]);
 };
