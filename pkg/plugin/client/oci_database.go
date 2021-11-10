@@ -61,6 +61,71 @@ func (od *OCIDatabase) getDatabaseHomes(compartmentOCID string) []map[string]str
 	return resourceInfo
 }
 
+// GetExternalContainerDatabaseTagsPerRegion To fetch tags from an external Oracle container database.
+func (od *OCIDatabase) getExternalPluggableDatabaseTags(compartmentOCID string, resourceDetailsChan chan []database.ExternalPluggableDatabaseSummary) {
+	backend.Logger.Debug("client.oci_database", "getExternalPluggableDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
+
+	var fetchedResourceDetails []database.ExternalPluggableDatabaseSummary
+	var pageHeader string
+
+	req := database.ListExternalPluggableDatabasesRequest{
+		CompartmentId: common.String(compartmentOCID),
+	}
+	for {
+		if len(pageHeader) != 0 {
+			req.Page = common.String(pageHeader)
+		}
+
+		resp, err := od.client.ListExternalPluggableDatabases(od.ctx, req)
+		if err != nil {
+			backend.Logger.Error("client.oci_database", "getExternalPluggableDatabaseTags", err)
+			break
+		}
+
+		fetchedResourceDetails = append(fetchedResourceDetails, resp.Items...)
+		if len(resp.RawResponse.Header.Get("opc-next-page")) != 0 {
+			pageHeader = *resp.OpcNextPage
+		} else {
+			break
+		}
+	}
+
+	resourceDetailsChan <- fetchedResourceDetails
+}
+
+// getExternalContainerDatabaseTags To fetch tags from an external Oracle container database.
+func (od *OCIDatabase) getExternalContainerDatabaseTags(compartmentOCID string, resourceDetailsChan chan []database.ExternalContainerDatabaseSummary) {
+	backend.Logger.Debug("client.oci_database", "getExternalContainerDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
+
+	var fetchedResourceDetails []database.ExternalContainerDatabaseSummary
+	var pageHeader string
+
+	req := database.ListExternalContainerDatabasesRequest{
+		CompartmentId: common.String(compartmentOCID),
+	}
+
+	for {
+		if len(pageHeader) != 0 {
+			req.Page = common.String(pageHeader)
+		}
+
+		resp, err := od.client.ListExternalContainerDatabases(od.ctx, req)
+		if err != nil {
+			backend.Logger.Error("client.oci_database", "getExternalContainerDatabaseTags", err)
+			break
+		}
+
+		fetchedResourceDetails = append(fetchedResourceDetails, resp.Items...)
+		if len(resp.RawResponse.Header.Get("opc-next-page")) != 0 {
+			pageHeader = *resp.OpcNextPage
+		} else {
+			break
+		}
+	}
+
+	resourceDetailsChan <- fetchedResourceDetails
+}
+
 // GetDatabaseTagsPerRegion To fetch tags from an Oracle Database on a bare metal or virtual machine DB system.
 func (od *OCIDatabase) GetDatabaseTagsPerRegion(compartmentOCID string) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
 	backend.Logger.Debug("client.oci_database", "GetDatabaseTagsPerRegion", "Fetching the database resource tags from the oci for compartment>"+compartmentOCID)
@@ -233,69 +298,4 @@ func (od *OCIDatabase) GetExternalPluggableDatabaseTagsPerRegion(compartmentOCID
 	resourceTags, resourceIDsPerTag := fetchResourceTags(resourceTagsResponse)
 
 	return resourceTags, resourceIDsPerTag, resourceLabels
-}
-
-// GetExternalContainerDatabaseTagsPerRegion To fetch tags from an external Oracle container database.
-func (od *OCIDatabase) getExternalPluggableDatabaseTags(compartmentOCID string, resourceDetailsChan chan []database.ExternalPluggableDatabaseSummary) {
-	backend.Logger.Debug("client.oci_database", "getExternalPluggableDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
-
-	var fetchedResourceDetails []database.ExternalPluggableDatabaseSummary
-	var pageHeader string
-
-	req := database.ListExternalPluggableDatabasesRequest{
-		CompartmentId: common.String(compartmentOCID),
-	}
-	for {
-		if len(pageHeader) != 0 {
-			req.Page = common.String(pageHeader)
-		}
-
-		resp, err := od.client.ListExternalPluggableDatabases(od.ctx, req)
-		if err != nil {
-			backend.Logger.Error("client.oci_database", "getExternalPluggableDatabaseTags", err)
-			break
-		}
-
-		fetchedResourceDetails = append(fetchedResourceDetails, resp.Items...)
-		if len(resp.RawResponse.Header.Get("opc-next-page")) != 0 {
-			pageHeader = *resp.OpcNextPage
-		} else {
-			break
-		}
-	}
-
-	resourceDetailsChan <- fetchedResourceDetails
-}
-
-// getExternalContainerDatabaseTags To fetch tags from an external Oracle container database.
-func (od *OCIDatabase) getExternalContainerDatabaseTags(compartmentOCID string, resourceDetailsChan chan []database.ExternalContainerDatabaseSummary) {
-	backend.Logger.Debug("client.oci_database", "getExternalContainerDatabaseTags", "Fetching the external pluggable container database resource tags from the oci")
-
-	var fetchedResourceDetails []database.ExternalContainerDatabaseSummary
-	var pageHeader string
-
-	req := database.ListExternalContainerDatabasesRequest{
-		CompartmentId: common.String(compartmentOCID),
-	}
-
-	for {
-		if len(pageHeader) != 0 {
-			req.Page = common.String(pageHeader)
-		}
-
-		resp, err := od.client.ListExternalContainerDatabases(od.ctx, req)
-		if err != nil {
-			backend.Logger.Error("client.oci_database", "getExternalContainerDatabaseTags", err)
-			break
-		}
-
-		fetchedResourceDetails = append(fetchedResourceDetails, resp.Items...)
-		if len(resp.RawResponse.Header.Get("opc-next-page")) != 0 {
-			pageHeader = *resp.OpcNextPage
-		} else {
-			break
-		}
-	}
-
-	resourceDetailsChan <- fetchedResourceDetails
 }

@@ -906,18 +906,18 @@ func (oc *OCIClients) GetTags(
 	}
 
 	var ccc core.ComputeClient
-	var vcc core.VirtualNetworkClient
+	//var vcc core.VirtualNetworkClient
 	var lbc loadbalancer.LoadBalancerClient
 	var hcc healthchecks.HealthChecksClient
 	var dbc database.DatabaseClient
 	var cErr error
 
 	switch constants.OCI_NAMESPACES[namespace] {
-	case constants.OCI_TARGET_COMPUTE:
+	case constants.OCI_TARGET_COMPUTE, constants.OCI_TARGET_VCN:
 		ccc, cErr = client.GetComputeClient()
-	case constants.OCI_TARGET_VCN:
-		ccc, cErr = client.GetComputeClient()
-		vcc, cErr = client.GetVCNClient()
+	// case constants.OCI_TARGET_VCN:
+	// 	ccc, cErr = client.GetComputeClient()
+	// 	vcc, cErr = client.GetVCNClient()
 	case constants.OCI_TARGET_LBAAS:
 		lbc, cErr = client.GetLBaaSClient()
 	case constants.OCI_TARGET_HEALTHCHECK:
@@ -979,7 +979,7 @@ func (oc *OCIClients) GetTags(
 					}
 					resourceTags, resourceIDsPerTag, resourceLabels = ocic.GetComputeResourceTagsPerRegion(compartmentOCID)
 				case constants.OCI_TARGET_VCN:
-					vcc.SetRegion(sRegion)
+					//vcc.SetRegion(sRegion)
 					ccc.SetRegion(sRegion)
 					ocic := OCICore{
 						ctx:           ctx,
@@ -1033,7 +1033,7 @@ func (oc *OCIClients) GetTags(
 
 	// clearing up
 	ccc = core.ComputeClient{}
-	vcc = core.VirtualNetworkClient{}
+	//vcc = core.VirtualNetworkClient{}
 	lbc = loadbalancer.LoadBalancerClient{}
 	hcc = healthchecks.HealthChecksClient{}
 	dbc = database.DatabaseClient{}

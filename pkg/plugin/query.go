@@ -54,19 +54,23 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	for _, metricDataValue := range metricDataValues {
 		name := metricDataValue.ResourceName
 		dl := data.Labels{
-			"tenancy": metricDataValue.TenancyName,
-			"ocid":    metricDataValue.UniqueDataID,
-			"region":  metricDataValue.Region,
+			"tenancy":   metricDataValue.TenancyName,
+			"unique_id": metricDataValue.UniqueDataID,
+			"region":    metricDataValue.Region,
 		}
 
 		for k, v := range metricDataValue.Labels {
-			if k != "resource_name" {
-				dl[k] = v
-			} else {
-				if len(name) == 0 {
-					name = v
-				}
+			dl[k] = v
+			if k == "resource_name" && len(name) == 0 {
+				name = v
 			}
+			// if k != "resource_name" {
+			// 	dl[k] = v
+			// } else {
+			// 	if len(name) == 0 {
+			// 		name = v
+			// 	}
+			// }
 		}
 
 		frame.Fields = append(frame.Fields,
