@@ -872,6 +872,29 @@ func (oc *OCIClients) fetchFromCache(ctx context.Context, tenancyOCID string, co
 	return cachedResource
 }
 
+func (oc *OCIClients) fetchCompartments(ctx context.Context, tenancyOCID string) []string {
+	backend.Logger.Debug("client", "fetchCompartments", "fetching the compartments for tenancy wise call")
+
+	var compartments []models.OCIResource
+	compartmentOCIDs := []string{}
+	cacheKey := strings.Join([]string{tenancyOCID, "cs"}, "-")
+
+	if cachedCompartments, found := oc.cache.Get(cacheKey); found {
+		backend.Logger.Debug("client", "fetchCompartments", "getting the compartment data from cache")
+		compartments = cachedCompartments.([]models.OCIResource)
+	} else {
+		compartments = oc.GetCompartments(ctx, tenancyOCID)
+	}
+
+	for _, compartment := range compartments {
+		if compartment.OCID != "" {
+			compartmentOCIDs = append(compartmentOCIDs, compartment.OCID)
+		}
+	}
+
+	return compartmentOCIDs
+}
+
 // GetTags Returns all the defined as well as freeform tags attached with resources for a namespace under a compartment
 // fetching the resources based on which type resources we want
 // API Operation: ListInstances, ListVcns
@@ -896,13 +919,19 @@ func (oc *OCIClients) GetTags(
 	}
 
 	subscribedRegions := []string{}
-
 	if region == constants.ALL_REGION {
 		subscribedRegions = append(subscribedRegions, oc.GetSubscribedRegions(ctx, tenancyOCID)...)
 	} else {
 		if region != "" {
 			subscribedRegions = append(subscribedRegions, region)
 		}
+	}
+
+	compartmentOCIDs := []string{}
+	if len(compartmentOCID) == 0 {
+		compartmentOCIDs = append(compartmentOCIDs, oc.fetchCompartments(ctx, tenancyOCID)...)
+	} else {
+		compartmentOCIDs = append(compartmentOCIDs, compartmentOCID)
 	}
 
 	var ccc core.ComputeClient
@@ -992,7 +1021,7 @@ func (oc *OCIClients) GetTags(
 						ctx:    ctx,
 						client: lbc,
 					}
-					resourceTags, resourceIDsPerTag, resourceLabels = ocilb.GetLBaaSResourceTagsPerRegion(compartmentOCID)
+					resourceTags, resourceIDsPerTag, resourceLabels = ocilb.GetLBaaSResourceTagsPerRegion(compartmentOCIDs)
 				case constants.OCI_TARGET_HEALTHCHECK:
 					hcc.SetRegion(sRegion)
 					ocihc := OCIHealthChecks{
