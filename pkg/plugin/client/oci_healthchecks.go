@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/oracle/oci-go-sdk/v50/common"
-	"github.com/oracle/oci-go-sdk/v50/healthchecks"
+	"github.com/oracle/oci-go-sdk/v51/common"
+	"github.com/oracle/oci-go-sdk/v51/healthchecks"
 
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
