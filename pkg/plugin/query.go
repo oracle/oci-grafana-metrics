@@ -32,6 +32,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	metricsDataRequest := models.MetricsDataRequest{
 		TenancyOCID:     qm.TenancyOCID,
 		CompartmentOCID: qm.CompartmentOCID,
+		CompartmentName: qm.CompartmentName,
 		Region:          qm.Region,
 		Namespace:       qm.Namespace,
 		QueryText:       qm.QueryText,

@@ -31,10 +31,11 @@ type dimensionRequest struct {
 	MetricName  string `json:"metric_name"`
 }
 type tagRequest struct {
-	Tenancy     string `json:"tenancy"`
-	Compartment string `json:"compartment"`
-	Region      string `json:"region"`
-	Namespace   string `json:"namespace"`
+	Tenancy         string `json:"tenancy"`
+	Compartment     string `json:"compartment"`
+	CompartmentName string `json:"compartment_name"`
+	Region          string `json:"region"`
+	Namespace       string `json:"namespace"`
 }
 
 func (ocidx *OCIDatasource) registerRoutes(mux *http.ServeMux) {
@@ -161,7 +162,7 @@ func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Req
 		return
 	}
 
-	tags := ocidx.clients.GetTags(req.Context(), tr.Tenancy, tr.Compartment, tr.Region, tr.Namespace)
+	tags := ocidx.clients.GetTags(req.Context(), tr.Tenancy, tr.Compartment, tr.CompartmentName, tr.Region, tr.Namespace)
 
 	writeResponse(rw, tags)
 }

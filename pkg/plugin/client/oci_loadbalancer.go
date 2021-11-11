@@ -16,7 +16,7 @@ type OCILoadBalancer struct {
 	client loadbalancer.LoadBalancerClient
 }
 
-func (olb *OCILoadBalancer) GetLBaaSResourceTagsPerRegion(compartmentOCIDs []string) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
+func (olb *OCILoadBalancer) GetLBaaSResourceTagsPerRegion(compartments []models.OCIResource) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
 	backend.Logger.Debug("client.oci_loadbalancer", "GetLBaaSResourceTagsPerRegion", "Fetching the load balancer resource tags from the oci")
 
 	resourceLabels := map[string]map[string]string{}
@@ -27,16 +27,16 @@ func (olb *OCILoadBalancer) GetLBaaSResourceTagsPerRegion(compartmentOCIDs []str
 	var wg sync.WaitGroup
 
 	// fetching data per compartment
-	for _, compartmentOCID := range compartmentOCIDs {
+	for _, compartmentInAction := range compartments {
 		wg.Add(1)
 
-		go func(ocid string) {
+		go func(resource models.OCIResource) {
 			defer wg.Done()
 
 			var fetchedLbDetails []loadbalancer.LoadBalancer
 
 			req := loadbalancer.ListLoadBalancersRequest{
-				CompartmentId:  common.String(ocid),
+				CompartmentId:  common.String(resource.OCID),
 				Detail:         common.String("full"),
 				SortBy:         loadbalancer.ListLoadBalancersSortByDisplayname,
 				LifecycleState: loadbalancer.LoadBalancerLifecycleStateActive,
@@ -61,13 +61,14 @@ func (olb *OCILoadBalancer) GetLBaaSResourceTagsPerRegion(compartmentOCIDs []str
 				}
 			}
 
-			allCompartmentData.Store(ocid, fetchedLbDetails)
-		}(compartmentOCID)
+			allCompartmentData.Store(resource.Name, fetchedLbDetails)
+		}(compartmentInAction)
 	}
 	wg.Wait()
 
 	// collecting the data from all compartments
 	allCompartmentData.Range(func(key, value interface{}) bool {
+		compartmentName := key.(string)
 		fetchedLbData := value.([]loadbalancer.LoadBalancer)
 
 		for _, item := range fetchedLbData {
@@ -85,6 +86,7 @@ func (olb *OCILoadBalancer) GetLBaaSResourceTagsPerRegion(compartmentOCIDs []str
 
 			resourceLabels[*item.Id] = map[string]string{
 				"resource_name":  *item.DisplayName,
+				"compartment":    compartmentName,
 				"lb_shape":       *item.ShapeName,
 				"lb_access_type": lbType,
 			}

@@ -6,6 +6,7 @@ import "time"
 type MetricsDataRequest struct {
 	TenancyOCID     string
 	CompartmentOCID string
+	CompartmentName string
 	Region          string
 	Namespace       string
 	QueryText       string

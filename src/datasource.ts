@@ -156,6 +156,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   async getTags(
     tenancyOCID: any,
     compartmentOCID: any,
+    compartmentName: any,
     region: any,
     namespace: any
   ): Promise<OCIResourceMetadataItem[]> {
@@ -172,10 +173,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
       compartmentOCID = '';
     }
+    if (compartmentName === undefined) {
+      compartmentName = '';
+    }
 
     const reqBody: JSON = {
       tenancy: tenancyOCID,
       compartment: compartmentOCID,
+      compartment_name: compartmentName,
       region: region,
       namespace: namespace,
     } as unknown as JSON;

@@ -208,6 +208,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         const response = await datasource.getTags(
           query.tenancyOCID,
           query.compartmentOCID,
+          query.compartmentName,
           query.region,
           query.namespace
         );
@@ -240,7 +241,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
             value: res.key,
           };
         });
-        //result.push({ label: QueryPlaceholder.GroupBy, value: QueryPlaceholder.GroupBy });
         resolve(result);
       }, 0);
     });
@@ -297,7 +297,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const onNamespaceChange = (data: any) => {
     new Promise<Array<SelectableValue<string>>>(() => {
       setTimeout(async () => {
-        await datasource.getTags(query.tenancyOCID, query.compartmentOCID, query.region, data.label);
+        await datasource.getTags(
+          query.tenancyOCID,
+          query.compartmentOCID,
+          query.compartmentName,
+          query.region,
+          data.label
+        );
       }, 0);
     });
 

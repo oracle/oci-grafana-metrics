@@ -679,6 +679,7 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 						ctx,
 						requestParams.TenancyOCID,
 						requestParams.CompartmentOCID,
+						requestParams.CompartmentName,
 						sRegion,
 						requestParams.Namespace,
 						"resource_labels",
@@ -710,6 +711,7 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 				ctx,
 				requestParams.TenancyOCID,
 				requestParams.CompartmentOCID,
+				requestParams.CompartmentName,
 				regionInUse,
 				requestParams.Namespace,
 				constants.CACHE_KEY_RESOURCE_IDS_PER_TAG,
@@ -859,40 +861,17 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 }
 
 // fetchFromCache will fetch value from cache and if it not present it will fetch via api and store to cache and return
-func (oc *OCIClients) fetchFromCache(ctx context.Context, tenancyOCID string, compartmentOCID string, region string, namespace string, suffix string) interface{} {
+func (oc *OCIClients) fetchFromCache(ctx context.Context, tenancyOCID string, compartmentOCID string, compartmentName string, region string, namespace string, suffix string) interface{} {
 	backend.Logger.Debug("client", "fetchFromCache", "fetching from cache")
 
 	labelCacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, suffix}, "-")
 
 	if _, found := oc.cache.Get(labelCacheKey); !found {
-		oc.GetTags(ctx, tenancyOCID, compartmentOCID, region, namespace)
+		oc.GetTags(ctx, tenancyOCID, compartmentOCID, compartmentName, region, namespace)
 	}
 
 	cachedResource, _ := oc.cache.Get(labelCacheKey)
 	return cachedResource
-}
-
-func (oc *OCIClients) fetchCompartments(ctx context.Context, tenancyOCID string) []string {
-	backend.Logger.Debug("client", "fetchCompartments", "fetching the compartments for tenancy wise call")
-
-	var compartments []models.OCIResource
-	compartmentOCIDs := []string{}
-	cacheKey := strings.Join([]string{tenancyOCID, "cs"}, "-")
-
-	if cachedCompartments, found := oc.cache.Get(cacheKey); found {
-		backend.Logger.Debug("client", "fetchCompartments", "getting the compartment data from cache")
-		compartments = cachedCompartments.([]models.OCIResource)
-	} else {
-		compartments = oc.GetCompartments(ctx, tenancyOCID)
-	}
-
-	for _, compartment := range compartments {
-		if compartment.OCID != "" {
-			compartmentOCIDs = append(compartmentOCIDs, compartment.OCID)
-		}
-	}
-
-	return compartmentOCIDs
 }
 
 // GetTags Returns all the defined as well as freeform tags attached with resources for a namespace under a compartment
@@ -905,6 +884,7 @@ func (oc *OCIClients) GetTags(
 	ctx context.Context,
 	tenancyOCID string,
 	compartmentOCID string,
+	compartmentName string,
 	region string,
 	namespace string) []models.OCIResourceTags {
 	backend.Logger.Debug("client", "GetTags", "fetching the tags under compartment '"+compartmentOCID+"' for namespace '"+namespace+"'")
@@ -918,6 +898,7 @@ func (oc *OCIClients) GetTags(
 		return []models.OCIResourceTags{}
 	}
 
+	// building the regions list
 	subscribedRegions := []string{}
 	if region == constants.ALL_REGION {
 		subscribedRegions = append(subscribedRegions, oc.GetSubscribedRegions(ctx, tenancyOCID)...)
@@ -927,11 +908,14 @@ func (oc *OCIClients) GetTags(
 		}
 	}
 
-	compartmentOCIDs := []string{}
+	compartments := []models.OCIResource{}
 	if len(compartmentOCID) == 0 {
-		compartmentOCIDs = append(compartmentOCIDs, oc.fetchCompartments(ctx, tenancyOCID)...)
+		compartments = append(compartments, oc.GetCompartments(ctx, tenancyOCID)...)
 	} else {
-		compartmentOCIDs = append(compartmentOCIDs, compartmentOCID)
+		compartments = append(compartments, models.OCIResource{
+			Name: compartmentName,
+			OCID: compartmentOCID,
+		})
 	}
 
 	var ccc core.ComputeClient
@@ -1021,14 +1005,14 @@ func (oc *OCIClients) GetTags(
 						ctx:    ctx,
 						client: lbc,
 					}
-					resourceTags, resourceIDsPerTag, resourceLabels = ocilb.GetLBaaSResourceTagsPerRegion(compartmentOCIDs)
+					resourceTags, resourceIDsPerTag, resourceLabels = ocilb.GetLBaaSResourceTagsPerRegion(compartments)
 				case constants.OCI_TARGET_HEALTHCHECK:
 					hcc.SetRegion(sRegion)
 					ocihc := OCIHealthChecks{
 						ctx:               ctx,
 						healthCheckClient: hcc,
 					}
-					resourceTags, resourceIDsPerTag, resourceLabels = ocihc.GetHealthChecksTagsPerRegion(compartmentOCID)
+					resourceTags, resourceIDsPerTag, resourceLabels = ocihc.GetHealthChecksTagsPerRegion(compartments)
 				case constants.OCI_TARGET_DATABASE:
 					dbc.SetRegion(sRegion)
 					db := OCIDatabase{
