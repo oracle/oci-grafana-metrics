@@ -35,6 +35,8 @@ const (
 	OCI_TARGET_LBAAS                  = "lbaas"
 	OCI_TARGET_HEALTHCHECK            = "healthchecks"
 	OCI_TARGET_DATABASE               = "database"
+	OCI_TARGET_APM                    = "apm"
+	OCI_NS_APM                        = "oracle_apm_synthetics"
 )
 
 var (
@@ -48,5 +50,6 @@ var (
 		"oci_autonomous_database":           OCI_TARGET_DATABASE,
 		"oracle_oci_database":               OCI_TARGET_DATABASE,
 		"oracle_external_database":          OCI_TARGET_DATABASE,
+		"oracle_apm_synthetics":             OCI_TARGET_APM,
 	}
 )

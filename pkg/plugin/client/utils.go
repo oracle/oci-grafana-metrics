@@ -547,3 +547,55 @@ func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (m
 
 	return resourceTags, resourceIDsPerTag
 }
+
+func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (string, string, string, bool) {
+	monitorID := ""
+
+	// getting the resource unique ID
+	resourceID, found := dimensions["resourceId"]
+	if !found {
+		resourceID, found = dimensions["ResourceId"]
+		if !found {
+			// as only one key and value pair will be present based on group by key selection
+			for _, v := range dimensions {
+				resourceID = v
+			}
+		}
+	}
+
+	// getting the resource name
+	resourceDisplayName := resourceID
+	if v, got := dimensions["resourceDisplayName"]; got {
+		resourceDisplayName = v
+	}
+
+	// getting the extra unique id as per namespace
+	if namespace == constants.OCI_NS_APM {
+		monitorID = dimensions["MonitorId"]
+	}
+
+	return resourceID, resourceDisplayName, monitorID, found
+}
+
+func addDimensionsAsLabels(namespace string, existingLabels map[string]string, dimensions map[string]string) map[string]string {
+	if namespace != constants.OCI_NS_APM {
+		return existingLabels
+	}
+
+	keysToInclude := map[string]struct{}{
+		"ErrorCategory":    {},
+		"Genre":            {},
+		"OracleApmType":    {},
+		"UserAgent":        {},
+		"VantagePoint":     {},
+		"VantagePointType": {},
+	}
+
+	for k, v := range dimensions {
+		if _, ok := keysToInclude[k]; ok {
+			existingLabels[strings.ToLower(k)] = v
+		}
+	}
+
+	return existingLabels
+}

@@ -2,6 +2,8 @@ package client
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/oracle/oci-go-sdk/v51/apmcontrolplane"
+	"github.com/oracle/oci-go-sdk/v51/apmsynthetics"
 	"github.com/oracle/oci-go-sdk/v51/common"
 	"github.com/oracle/oci-go-sdk/v51/core"
 	"github.com/oracle/oci-go-sdk/v51/database"
@@ -89,4 +91,26 @@ func (oc *OCIClient) GetDatabaseClient() (database.DatabaseClient, error) {
 	dbClient.Configuration.RetryPolicy = &crp
 
 	return dbClient, nil
+}
+
+func (oc *OCIClient) GetApmClients() (apmcontrolplane.ApmDomainClient, apmsynthetics.ApmSyntheticClient, error) {
+	crp := clientRetryPolicy()
+
+	// creating oci apm domain client
+	apmDomainClient, admErr := apmcontrolplane.NewApmDomainClientWithConfigurationProvider(oc.clientConfigProvider)
+	if admErr != nil {
+		backend.Logger.Error("client.oci_client", "GetApmClients", "could not create oci apm domain client: "+admErr.Error())
+		return apmcontrolplane.ApmDomainClient{}, apmsynthetics.ApmSyntheticClient{}, admErr
+	}
+	apmDomainClient.Configuration.RetryPolicy = &crp
+
+	// creating oci apm synthetic client
+	apmSyntheticClient, asmErr := apmsynthetics.NewApmSyntheticClientWithConfigurationProvider(oc.clientConfigProvider)
+	if asmErr != nil {
+		backend.Logger.Error("client.oci_client", "GetApmClients", "could not create oci apm synthetic client: "+asmErr.Error())
+		return apmDomainClient, apmsynthetics.ApmSyntheticClient{}, asmErr
+	}
+	apmSyntheticClient.Configuration.RetryPolicy = &crp
+
+	return apmDomainClient, apmSyntheticClient, nil
 }

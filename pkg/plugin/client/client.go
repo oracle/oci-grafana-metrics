@@ -10,6 +10,8 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/oracle/oci-go-sdk/v51/apmcontrolplane"
+	"github.com/oracle/oci-go-sdk/v51/apmsynthetics"
 	"github.com/oracle/oci-go-sdk/v51/common"
 	"github.com/oracle/oci-go-sdk/v51/core"
 	"github.com/oracle/oci-go-sdk/v51/database"
@@ -725,13 +727,7 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 		for _, metricDataItem := range metricData.dataPoints {
 			found := false
 
-			// for tag based filtering
-			uniqueDataID, rIDPresent := metricDataItem.Dimensions["resourceId"]
-			if !rIDPresent {
-				for _, v := range metricDataItem.Dimensions {
-					uniqueDataID = v
-				}
-			}
+			uniqueDataID, resourceDisplayName, extraUniqueID, rIDPresent := getUniqueIdsForLabels(requestParams.Namespace, metricDataItem.Dimensions)
 
 			if rIDPresent {
 				for _, selectedTag := range selectedTags {
@@ -756,25 +752,37 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 			// sometimes 2 different resource datapoint have mismatched no of values
 			// to make it equal fill the extra point with 0
 			resourcesFetched += 1
+			previousValue := 0.0
 			for _, eachMetricDataPoint := range metricDatapoints {
 				t := *eachMetricDataPoint.Timestamp
 				v := *eachMetricDataPoint.Value
 
 				if _, ok := dataValuesWithTime[t]; ok {
 					dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
+					previousValue = v
 				} else {
 					if resourcesFetched == 1 {
 						dataValuesWithTime[t] = []float64{v}
+						previousValue = v
 						continue
 					}
 
 					// adjustment for previous non-existance values
 					// when the time comes in later data points
-					dataValuesWithTime[t] = []float64{0.0}
+					// dataValuesWithTime[t] = []float64{0.0}
+					// for i := 2; i < resourcesFetched; i++ {
+					// 	dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
+					// }
+					// dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
+
+					// adjustment for previous non-existance values with the immediate previous value
+					// when the time comes in later data points
+					dataValuesWithTime[t] = []float64{previousValue}
 					for i := 2; i < resourcesFetched; i++ {
-						dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
+						dataValuesWithTime[t] = append(dataValuesWithTime[t], previousValue)
 					}
 					dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
+					previousValue = v
 				}
 			}
 
@@ -784,15 +792,25 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 				tenancyName = oc.baseTenancyName
 			}
 
+			// to get the resource labels
+			labelKey := uniqueDataID + extraUniqueID
+			if strings.Contains(resourceDisplayName, "ocid") {
+				resourceDisplayName = metricData.resourceLabels[labelKey]["resource_name"]
+			}
+
+			labelsToAdd := addDimensionsAsLabels(requestParams.Namespace, metricData.resourceLabels[labelKey], metricDataItem.Dimensions)
+
 			// preparing the metric data to display
 			dataPointsWithResourceSerialNo[resourcesFetched-1] = models.OCIMetricDataPoints{
 				TenancyName:  tenancyName,
 				Region:       regionInUse,
 				MetricName:   *metricDataItem.Name,
-				ResourceName: metricDataItem.Dimensions["resourceDisplayName"],
+				ResourceName: resourceDisplayName,
 				UniqueDataID: uniqueDataID,
-				Labels:       metricData.resourceLabels[uniqueDataID],
+				Labels:       labelsToAdd,
 			}
+
+			//metricData.resourceLabels[labelKey]
 
 			// adding cmdb data as labels
 			for ocid, cmdbData := range oc.cmdbData[tenancyName] {
@@ -816,7 +834,7 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 	})
 
 	timesToFetch := []common.SDKTime{}
-	// adjustment for later non-existance values
+	// adjustment for later non-existance values with last value
 	for t, dvs := range dataValuesWithTime {
 		times = append(times, t.Time)
 		timesToFetch = append(timesToFetch, t)
@@ -825,8 +843,13 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 			continue
 		}
 
+		// for i := 0; i < resourcesFetched-len(dvs); i++ {
+		// 	dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
+		// }
+
+		lastValue := dataValuesWithTime[t][len(dataValuesWithTime[t])-1]
 		for i := 0; i < resourcesFetched-len(dvs); i++ {
-			dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
+			dataValuesWithTime[t] = append(dataValuesWithTime[t], lastValue)
 		}
 	}
 
@@ -923,6 +946,8 @@ func (oc *OCIClients) GetTags(
 	var lbc loadbalancer.LoadBalancerClient
 	var hcc healthchecks.HealthChecksClient
 	var dbc database.DatabaseClient
+	var adc apmcontrolplane.ApmDomainClient
+	var asc apmsynthetics.ApmSyntheticClient
 	var cErr error
 
 	switch constants.OCI_NAMESPACES[namespace] {
@@ -937,6 +962,8 @@ func (oc *OCIClients) GetTags(
 		hcc, cErr = client.GetHealthChecksClient()
 	case constants.OCI_TARGET_DATABASE:
 		dbc, cErr = client.GetDatabaseClient()
+	case constants.OCI_TARGET_APM:
+		adc, asc, cErr = client.GetApmClients()
 	}
 
 	var allRegionsResourceTags sync.Map
@@ -1028,6 +1055,15 @@ func (oc *OCIClients) GetTags(
 					case "oci_autonomous_database":
 						resourceTags, resourceIDsPerTag, resourceLabels = db.GetAutonomousDatabaseTagsPerRegion(compartmentOCID)
 					}
+				case constants.OCI_TARGET_APM:
+					adc.SetRegion(sRegion)
+					asc.SetRegion(sRegion)
+					apm := OCIApm{
+						ctx:             ctx,
+						domainClient:    adc,
+						syntheticClient: asc,
+					}
+					resourceTags, resourceIDsPerTag, resourceLabels = apm.GetApmTagsPerRegion(compartments)
 				}
 
 				// storing the labels in cache to use along with metric data
