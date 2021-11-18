@@ -18,7 +18,7 @@ type OCIApm struct {
 	syntheticClient apmsynthetics.ApmSyntheticClient
 }
 
-func (oa *OCIApm) getApmDomainTags(compartmentOCID string) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
+func (oa *OCIApm) getApmDomainTags(compartmentOCID string) (map[string]map[string]struct{}, map[string]map[string]struct{}, map[string]map[string]string) {
 	backend.Logger.Debug("client.oci_apm", "getApmDomainTags", "Fetching the apm domains for compartment: "+compartmentOCID)
 
 	var fetchedResourceDetails []apmcontrolplane.ApmDomainSummary
@@ -65,18 +65,9 @@ func (oa *OCIApm) getApmDomainTags(compartmentOCID string) (map[string][]string,
 			"apm_domain_name": *item.DisplayName,
 			"resource_name":   *item.DisplayName,
 		}
-
-		// apmDomainLabels[*item.Id] = map[string]string{
-		// 	"apm_domain_name": *item.DisplayName,
-		// 	"apm_domain_free": "false",
-		// }
-
-		// if item.IsFreeTier != nil && *item.IsFreeTier {
-		// 	apmDomainLabels[*item.Id]["apm_domain_free"] = "true"
-		// }
 	}
 
-	resourceTags, resourceIDsPerTag := fetchResourceTags(resourceTagsResponse)
+	resourceTags, resourceIDsPerTag := collectResourceTags(resourceTagsResponse)
 
 	return resourceTags, resourceIDsPerTag, apmDomainLabels
 }
@@ -119,10 +110,12 @@ func (oa *OCIApm) getApmMonitorLabelsPerDomain(apmDomainOCID string) map[string]
 		apmMonitorLabels[*item.Id] = map[string]string{
 			"apm_monitor_name":             *item.DisplayName,
 			"apm_monitor_type":             string(item.MonitorType),
-			"apm_monitor_target":           *item.Target,
 			"apm_monitor_repeat_interval":  strconv.Itoa(*item.RepeatIntervalInSeconds) + "s",
 			"apm_monitor_timeout_interval": strconv.Itoa(*item.TimeoutInSeconds) + "s",
-			//"apm_monitor_vantage_points_count": strconv.Itoa(*item.VantagePointCount),
+		}
+
+		if item.Target != nil {
+			apmMonitorLabels[*item.Id]["apm_monitor_target"] = *item.Target
 		}
 
 		if item.ScriptName != nil {
@@ -146,7 +139,7 @@ func (oa *OCIApm) getApmMonitorLabelsPerDomain(apmDomainOCID string) map[string]
 	return apmMonitorLabels
 }
 
-func (oa *OCIApm) getApmTagsPerCompartment(compartment models.OCIResource) (map[string][]string, map[string]map[string]struct{}, map[string]map[string]string) {
+func (oa *OCIApm) getApmTagsPerCompartment(compartment models.OCIResource) (map[string]map[string]struct{}, map[string]map[string]struct{}, map[string]map[string]string) {
 	backend.Logger.Debug("client.oci_apm", "getApmTagsPerCompartment", "Fetching the apm tags for compartment : "+compartment.Name)
 
 	var wg sync.WaitGroup
@@ -202,24 +195,101 @@ func (oa *OCIApm) GetApmTagsPerRegion(compartments []models.OCIResource) (map[st
 
 	// when queried for a single compartment
 	if len(compartments) == 1 {
-		return oa.getApmTagsPerCompartment(compartments[0])
+		resourceTags, resourceIDsPerTag, apmLabels := oa.getApmTagsPerCompartment(compartments[0])
+		return convertToArray(resourceTags), resourceIDsPerTag, apmLabels
 	}
 
-	return nil, nil, nil
+	// holds key: value1, value2, for UI
+	allResourceTags := map[string]map[string]struct{}{}
+	// holds key.value: map of resourceIDs, for caching
+	allResourceIDsPerTag := map[string]map[string]struct{}{}
+	allResourceLabels := map[string]map[string]string{}
 
-	// var allCompartmentData sync.Map
-	// var wg sync.WaitGroup
+	var allCompartmentData sync.Map
+	var wg sync.WaitGroup
 
-	// // fetching data per compartment
-	// for _, compartmentInAction := range compartments {
-	// 	wg.Add(1)
+	// fetching data per compartment
+	for _, compartmentInAction := range compartments {
+		wg.Add(1)
 
-	// 	go func(compartment models.OCIResource) {
-	// 		defer wg.Done()
+		go func(compartment models.OCIResource) {
+			defer wg.Done()
 
-	// 		resourceTags, resourceIDsPerTag, resourceLabels := oa.getApmTagsPerCompartment(compartment)
+			resourceTags, resourceIDsPerTag, resourceLabels := oa.getApmTagsPerCompartment(compartment)
 
-	// 	}(compartmentInAction)
-	// }
-	// wg.Wait()
+			allCompartmentData.Store(compartment.OCID, map[string]interface{}{
+				"resourceTags":      resourceTags,
+				"resourceIDsPerTag": resourceIDsPerTag,
+				"resourceLabels":    resourceLabels,
+			})
+
+		}(compartmentInAction)
+	}
+	wg.Wait()
+
+	// collecting the data from all compartments
+	allCompartmentData.Range(func(key, value interface{}) bool {
+		// compartmentOCID := key.(string)
+		apmAllCompartmentData := value.(map[string]interface{})
+
+		newResourceTags := apmAllCompartmentData["resourceTags"].(map[string]map[string]struct{})
+		newResourceIDsPerTag := apmAllCompartmentData["resourceIDsPerTag"].(map[string]map[string]struct{})
+		newResourceLabels := apmAllCompartmentData["resourceLabels"].(map[string]map[string]string)
+
+		if len(allResourceTags) == 0 {
+			allResourceTags = newResourceTags
+			allResourceIDsPerTag = newResourceIDsPerTag
+			allResourceLabels = newResourceLabels
+
+			return true
+		}
+
+		// checking each new key and values, for resource tags
+		for newTagKey, newTagValues := range newResourceTags {
+			// when the key is already present in the collected
+			if existingTagValues, ok := allResourceTags[newTagKey]; ok {
+				// checking each new value in the collected ones
+				for v := range newTagValues {
+					// add it when not found
+					if _, found := existingTagValues[v]; !found {
+						existingTagValues[v] = struct{}{}
+						allResourceTags[newTagKey] = existingTagValues
+					}
+				}
+			} else {
+				// for new key
+				allResourceTags[newTagKey] = newTagValues
+			}
+		}
+
+		// checking each new key and values, for resource ids
+		for newTagKey, newTagValues := range newResourceIDsPerTag {
+			// when the key is already present in the collected
+			if existingTagValues, ok := allResourceIDsPerTag[newTagKey]; ok {
+				// checking each new value in the collected ones
+				for v := range newTagValues {
+					// add it when not found
+					if _, found := existingTagValues[v]; !found {
+						existingTagValues[v] = struct{}{}
+						allResourceIDsPerTag[newTagKey] = existingTagValues
+					}
+				}
+			} else {
+				// for new key
+				allResourceIDsPerTag[newTagKey] = newTagValues
+			}
+		}
+
+		// checking each new key and values, for resource labels
+		for newResourceID, newResourceLabelValues := range newResourceLabels {
+			// when the key is already present in the collected
+			if _, ok := allResourceLabels[newResourceID]; !ok {
+				allResourceLabels[newResourceID] = newResourceLabelValues
+			}
+		}
+
+		return true
+	})
+
+	return convertToArray(allResourceTags), allResourceIDsPerTag, allResourceLabels
 }

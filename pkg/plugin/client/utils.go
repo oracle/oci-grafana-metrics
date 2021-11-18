@@ -461,7 +461,9 @@ func listMetricsMetadataFromAllRegion(
 func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string][]string, map[string]map[string]struct{}) {
 	backend.Logger.Debug("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
 
+	// holds key: value1, value2, for UI
 	resourceTags := map[string][]string{}
+	// holds key.value: map of resourceIDs, for caching
 	resourceIDsPerTag := map[string]map[string]struct{}{}
 
 	for _, item := range resourceTagsResponse {
@@ -546,6 +548,108 @@ func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (m
 	}
 
 	return resourceTags, resourceIDsPerTag
+}
+
+func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string]map[string]struct{}, map[string]map[string]struct{}) {
+	backend.Logger.Debug("client.utils", "collectResourceTags", "Fetching the tags from the oci call response")
+
+	// holds key: map pf values, for UI
+	resourceTags := map[string]map[string]struct{}{}
+	// holds key.value: map of resourceIDs, for caching
+	resourceIDsPerTag := map[string]map[string]struct{}{}
+
+	for _, item := range resourceTagsResponse {
+		resourceID := item.ResourceID
+		// for defined tags
+		for rootTagKey, rootTags := range item.DefinedTags {
+			if rootTagKey == "Oracle-Tags" {
+				continue
+			}
+
+			for k, v := range rootTags {
+				if k == "Created_On" {
+					continue
+				}
+				tagValue := v.(string)
+
+				tagKey := strings.Join([]string{rootTagKey, k}, ".")
+				cacheKey := strings.Join([]string{rootTagKey, k, tagValue}, ".")
+
+				// for UI
+				// when the tag key is already present
+				if existingVs, ok := resourceTags[tagKey]; ok {
+					// if the value for the tag key is not added before
+					if _, found := existingVs[tagValue]; !found {
+						existingVs[tagValue] = struct{}{}
+						resourceTags[tagKey] = existingVs
+					}
+				} else {
+					// when the tag key is added for first time
+					resourceTags[tagKey] = map[string]struct{}{
+						tagValue: {},
+					}
+				}
+
+				// for caching
+				if len(resourceIDsPerTag[cacheKey]) == 0 {
+					resourceIDsPerTag[cacheKey] = map[string]struct{}{
+						resourceID: {},
+					}
+				} else {
+					resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+				}
+			}
+		}
+
+		// for freeform tags
+		for tagKey, tagValue := range item.FreeFormTags {
+			cacheKey := strings.Join([]string{tagKey, tagValue}, ".")
+
+			// for UI
+			// when the tag key is already present
+			if existingVs, ok := resourceTags[tagKey]; ok {
+				// if the value for the tag key is not added before
+				if _, found := existingVs[tagValue]; !found {
+					existingVs[tagValue] = struct{}{}
+					resourceTags[tagKey] = existingVs
+				}
+			} else {
+				// when the tag key is added for first time
+				resourceTags[tagKey] = map[string]struct{}{
+					tagValue: {},
+				}
+			}
+
+			// for caching
+			if len(resourceIDsPerTag[cacheKey]) == 0 {
+				resourceIDsPerTag[cacheKey] = map[string]struct{}{
+					resourceID: {},
+				}
+			} else {
+				resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+			}
+		}
+	}
+
+	return resourceTags, resourceIDsPerTag
+}
+
+func convertToArray(input map[string]map[string]struct{}) map[string][]string {
+	backend.Logger.Debug("client.utils", "convertToArray", "Converting to array")
+
+	output := map[string][]string{}
+
+	for key, values := range input {
+		for v := range values {
+			if len(output[key]) == 0 {
+				output[key] = []string{v}
+			} else {
+				output[key] = append(output[key], v)
+			}
+		}
+	}
+
+	return output
 }
 
 func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (string, string, string, bool) {
