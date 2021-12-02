@@ -1019,7 +1019,7 @@ func (oc *OCIClients) GetTags(
 						ctx:           ctx,
 						computeClient: ccc,
 					}
-					resourceTags, resourceIDsPerTag, resourceLabels = ocic.GetComputeResourceTagsPerRegion(compartmentOCID)
+					resourceTags, resourceIDsPerTag, resourceLabels = ocic.GetComputeResourceTagsPerRegion(compartments)
 				case constants.OCI_TARGET_VCN:
 					//vcc.SetRegion(sRegion)
 					ccc.SetRegion(sRegion)
@@ -1027,7 +1027,7 @@ func (oc *OCIClients) GetTags(
 						ctx:           ctx,
 						computeClient: ccc,
 					}
-					resourceTags, resourceIDsPerTag, resourceLabels = ocic.GetVNicResourceTagsPerRegion(compartmentOCID)
+					resourceTags, resourceIDsPerTag, resourceLabels = ocic.GetVNicResourceTagsPerRegion(compartments)
 				case constants.OCI_TARGET_LBAAS:
 					lbc.SetRegion(sRegion)
 					ocilb := OCILoadBalancer{
