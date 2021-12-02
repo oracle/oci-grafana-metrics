@@ -667,6 +667,9 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (stri
 		}
 	}
 
+	// some data give ocid in all caps
+	resourceID = strings.ToLower(resourceID)
+
 	// getting the resource name
 	resourceDisplayName := resourceID
 	if v, got := dimensions["resourceDisplayName"]; got {

@@ -37,6 +37,9 @@ const (
 	OCI_TARGET_DATABASE               = "database"
 	OCI_TARGET_APM                    = "apm"
 	OCI_NS_APM                        = "oracle_apm_synthetics"
+	OCI_NS_DB_ORACLE                  = "oracle_oci_database"
+	OCI_NS_DB_EXTERNAL                = "oracle_external_database"
+	OCI_NS_DB_AUTONOMOUS              = "oci_autonomous_database"
 )
 
 var (

@@ -25,7 +25,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 	// checking if the query has valid tenancy detail
 	if qm.TenancyOCID == "" {
-		backend.Logger.Warn("plugin.query", "query", "tenancy ocid is mandatory but it is not present in query")
+		//backend.Logger.Warn("plugin.query", "query", "tenancy ocid is mandatory but it is not present in query")
 		return response
 	}
 

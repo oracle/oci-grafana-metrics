@@ -912,7 +912,7 @@ func (oc *OCIClients) GetTags(
 	compartmentName string,
 	region string,
 	namespace string) []models.OCIResourceTags {
-	backend.Logger.Debug("client", "GetTags", "fetching the tags under compartment '"+compartmentOCID+"' for namespace '"+namespace+"'")
+	backend.Logger.Debug("client", "GetTags", "fetching the tags for namespace '"+namespace+"'")
 
 	resourceTagsList := []models.OCIResourceTags{}
 	allResourceTags := map[string][]string{}
@@ -1050,12 +1050,12 @@ func (oc *OCIClients) GetTags(
 					}
 
 					switch namespace {
-					case "oracle_oci_database":
-						resourceTags, resourceIDsPerTag, resourceLabels = db.GetDatabaseTagsPerRegion(compartmentOCID)
-					case "oracle_external_database":
-						resourceTags, resourceIDsPerTag, resourceLabels = db.GetExternalPluggableDatabaseTagsPerRegion(compartmentOCID)
-					case "oci_autonomous_database":
-						resourceTags, resourceIDsPerTag, resourceLabels = db.GetAutonomousDatabaseTagsPerRegion(compartmentOCID)
+					case constants.OCI_NS_DB_ORACLE:
+						resourceTags, resourceIDsPerTag, resourceLabels = db.GetOracleDatabaseTagsPerRegion(compartments)
+					case constants.OCI_NS_DB_EXTERNAL:
+						resourceTags, resourceIDsPerTag, resourceLabels = db.GetExternalPluggableDatabaseTagsPerRegion(compartments)
+					case constants.OCI_NS_DB_AUTONOMOUS:
+						resourceTags, resourceIDsPerTag, resourceLabels = db.GetAutonomousDatabaseTagsPerRegion(compartments)
 					}
 				case constants.OCI_TARGET_APM:
 					adc.SetRegion(sRegion)
