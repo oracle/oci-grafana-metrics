@@ -622,6 +622,7 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 	}
 
 	selectedTags := requestParams.TagsValues
+	selectedDimensions := requestParams.DimensionValues
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
 		CompartmentId:          common.String(requestParams.CompartmentOCID),
@@ -750,7 +751,7 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 			})
 
 			// sometimes 2 different resource datapoint have mismatched no of values
-			// to make it equal fill the extra point with 0
+			// to make it equal fill the extra point with previous value
 			resourcesFetched += 1
 			previousValue := 0.0
 			for _, eachMetricDataPoint := range metricDatapoints {
@@ -798,7 +799,10 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 				resourceDisplayName = metricData.resourceLabels[labelKey]["resource_name"]
 			}
 
-			labelsToAdd := addDimensionsAsLabels(requestParams.Namespace, metricData.resourceLabels[labelKey], metricDataItem.Dimensions)
+			// adding the selected dimensions as labels
+			labelsToAdd := addSelectedValuesLabels(metricData.resourceLabels[labelKey], selectedDimensions)
+			// adding the selected tags as labels
+			labelsToAdd = addSelectedValuesLabels(labelsToAdd, selectedTags)
 
 			// preparing the metric data to display
 			dataPointsWithResourceSerialNo[resourcesFetched-1] = models.OCIMetricDataPoints{
@@ -809,8 +813,6 @@ func (oc *OCIClients) GetMetricDataPoints(ctx context.Context, requestParams mod
 				UniqueDataID: uniqueDataID,
 				Labels:       labelsToAdd,
 			}
-
-			//metricData.resourceLabels[labelKey]
 
 			// adding cmdb data as labels
 			for ocid, cmdbData := range oc.cmdbData[tenancyName] {

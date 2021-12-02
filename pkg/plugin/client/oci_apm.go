@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"strconv"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -108,14 +107,8 @@ func (oa *OCIApm) getApmMonitorLabelsPerDomain(apmDomainOCID string) map[string]
 
 	for _, item := range fetchedResourceDetails {
 		apmMonitorLabels[*item.Id] = map[string]string{
-			"apm_monitor_name":             *item.DisplayName,
-			"apm_monitor_type":             string(item.MonitorType),
-			"apm_monitor_repeat_interval":  strconv.Itoa(*item.RepeatIntervalInSeconds) + "s",
-			"apm_monitor_timeout_interval": strconv.Itoa(*item.TimeoutInSeconds) + "s",
-		}
-
-		if item.Target != nil {
-			apmMonitorLabels[*item.Id]["apm_monitor_target"] = *item.Target
+			"apm_monitor_name": *item.DisplayName,
+			"apm_monitor_type": string(item.MonitorType),
 		}
 
 		if item.ScriptName != nil {
@@ -132,9 +125,38 @@ func (oa *OCIApm) getApmMonitorLabelsPerDomain(apmDomainOCID string) map[string]
 				vantagePoints += ","
 			}
 		}
-
 		apmMonitorLabels[*item.Id]["apm_monitor_vantage_points"] = vantagePoints
 	}
+
+	// for _, item := range fetchedResourceDetails {
+	// 	apmMonitorLabels[*item.Id] = map[string]string{
+	// 		"apm_monitor_name":             *item.DisplayName,
+	// 		"apm_monitor_type":             string(item.MonitorType),
+	// 		"apm_monitor_repeat_interval":  strconv.Itoa(*item.RepeatIntervalInSeconds) + "s",
+	// 		"apm_monitor_timeout_interval": strconv.Itoa(*item.TimeoutInSeconds) + "s",
+	// 	}
+
+	// 	if item.Target != nil {
+	// 		apmMonitorLabels[*item.Id]["apm_monitor_target"] = *item.Target
+	// 	}
+
+	// 	if item.ScriptName != nil {
+	// 		apmMonitorLabels[*item.Id]["apm_monitor_script_name"] = *item.ScriptName
+	// 	}
+
+	// 	noOfVantagePoints := *item.VantagePointCount
+	// 	vantagePoints := ""
+	// 	for _, vp := range item.VantagePoints {
+	// 		vantagePoints += *vp.Name
+	// 		noOfVantagePoints -= 1
+
+	// 		if noOfVantagePoints != 0 {
+	// 			vantagePoints += ","
+	// 		}
+	// 	}
+
+	// 	apmMonitorLabels[*item.Id]["apm_monitor_vantage_points"] = vantagePoints
+	// }
 
 	return apmMonitorLabels
 }

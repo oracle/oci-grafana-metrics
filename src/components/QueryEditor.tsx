@@ -50,7 +50,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
         initialTags.push({
           label: key + ' > ' + val,
-          value: key + '.' + val,
+          value: key + '=' + val,
         });
       }
     }
@@ -217,7 +217,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             label: res.key,
             value: res.key,
             options: res.values.map((val: any) => {
-              return { label: res.key + ' > ' + val, value: res.key + '.' + val };
+              return { label: res.key + ' > ' + val, value: res.key + '=' + val };
             }),
           };
         });

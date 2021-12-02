@@ -482,7 +482,7 @@ func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (m
 				tagValue := v.(string)
 
 				key := strings.Join([]string{rootTagKey, k}, ".")
-				cacheKey := strings.Join([]string{rootTagKey, k, tagValue}, ".")
+				cacheKey := strings.Join([]string{key, tagValue}, "=")
 
 				// for UI
 				existingVs, ok := resourceTags[key]
@@ -516,7 +516,7 @@ func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (m
 		isExist = false
 		// for freeform tags
 		for k, v := range item.FreeFormTags {
-			cacheKey := strings.Join([]string{k, v}, ".")
+			cacheKey := strings.Join([]string{k, v}, "=")
 
 			// for UI
 			existingVs, ok := resourceTags[k]
@@ -553,7 +553,7 @@ func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (m
 func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string]map[string]struct{}, map[string]map[string]struct{}) {
 	backend.Logger.Debug("client.utils", "collectResourceTags", "Fetching the tags from the oci call response")
 
-	// holds key: map pf values, for UI
+	// holds key: map of values, for UI
 	resourceTags := map[string]map[string]struct{}{}
 	// holds key.value: map of resourceIDs, for caching
 	resourceIDsPerTag := map[string]map[string]struct{}{}
@@ -573,7 +573,7 @@ func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) 
 				tagValue := v.(string)
 
 				tagKey := strings.Join([]string{rootTagKey, k}, ".")
-				cacheKey := strings.Join([]string{rootTagKey, k, tagValue}, ".")
+				cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
 
 				// for UI
 				// when the tag key is already present
@@ -603,7 +603,7 @@ func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) 
 
 		// for freeform tags
 		for tagKey, tagValue := range item.FreeFormTags {
-			cacheKey := strings.Join([]string{tagKey, tagValue}, ".")
+			cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
 
 			// for UI
 			// when the tag key is already present
@@ -681,24 +681,15 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (stri
 	return resourceID, resourceDisplayName, monitorID, found
 }
 
-func addDimensionsAsLabels(namespace string, existingLabels map[string]string, dimensions map[string]string) map[string]string {
-	if namespace != constants.OCI_NS_APM {
-		return existingLabels
+func addSelectedValuesLabels(existingLabels map[string]string, selectedValuePairs []string) map[string]string {
+	if existingLabels == nil {
+		existingLabels = map[string]string{}
 	}
 
-	keysToInclude := map[string]struct{}{
-		"ErrorCategory":    {},
-		"Genre":            {},
-		"OracleApmType":    {},
-		"UserAgent":        {},
-		"VantagePoint":     {},
-		"VantagePointType": {},
-	}
+	for _, valuePair := range selectedValuePairs {
+		kv := strings.Split(valuePair, "=")
 
-	for k, v := range dimensions {
-		if _, ok := keysToInclude[k]; ok {
-			existingLabels[strings.ToLower(k)] = v
-		}
+		existingLabels[strings.ToLower(kv[0])] = strings.TrimPrefix(strings.TrimSuffix(kv[1], "\""), "\"")
 	}
 
 	return existingLabels
