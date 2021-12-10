@@ -32,14 +32,9 @@ Next, create a [policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Conc
 
 Next, we are going to install the stable Helm chart for Grafana. We will do this in two parts: First, update the stable repository by running: `helm repo update`
 
-Next, install the stable chart for Grafana. To do this run: `helm install --name grafana stable/grafana`
+Next, install the chart for Grafana. 
+ For OSS Grafana run: `helm install --set plugins=oci-metrics-datasource grafana bitnami/grafana`
 
-We can now make a change to the deployment that was created for Grafana by running `kubectl edit deployment grafana`, and adding an additional environment variable to the Grafana contianer which will download the plugin. After saving the deployment, the changes will be reflected with a new pod.
-
-```
-        - name: GF_INSTALL_PLUGINS
-          value: oci-datasource
-```
 
 ## Accessing Grafana
 
