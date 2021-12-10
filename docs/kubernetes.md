@@ -38,11 +38,7 @@ Next, install the chart for Grafana.
 
 ## Accessing Grafana
 
-To see if everything is working correctly, access Grafana using Kubernetes port-forwarding. To do this run: `export POD_NAME=$(kubectl get pods --namespace default -l "app=grafana,release=grafana" -o jsonpath="{.items[0].metadata.name}")`
-
-Followed by: `kubectl --namespace default port-forward $POD_NAME 3000`
-
-You can obtain the password for the admin user by running: `kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo`
+Follow the instructions given in the output, after the helm chart install for accessing Grafana, retrieving password for admin user account etc.
 
 ## Configure Grafana
 
