@@ -29,12 +29,12 @@
       },
       { "name": "UPL", "url": "https://oss.oracle.com/licenses/upl" }
     ],
-    "version": "3.0.0-alpha",
-    "updated": "2021-08-19"
+    "version": "3.0.1-alpha",
+    "updated": "2022-01-14"
   },
 
   "dependencies": {
-    "grafanaVersion": "8.0.x",
-    "plugins": []
+    "grafanaDependency": "8.x.x",
+    "plugins": [ ]
   }
 }
