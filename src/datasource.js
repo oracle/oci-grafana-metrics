@@ -787,7 +787,7 @@ export default class OCIDatasource {
     const vars = this.templateSrv.variables || [];
 
     if (regex) {
-      let regexVars = vars.filter((item) => item.query.match(regex) !== null);
+      let regexVars = vars.filter((item) => _.isString(item.query) && item.query.match(regex) !== null);
       if (includeCustom) {
         const custom = vars.filter(
           (item) => item.type === "custom" || item.type === "constant"

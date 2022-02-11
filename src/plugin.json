@@ -29,8 +29,8 @@
       },
       { "name": "UPL", "url": "https://oss.oracle.com/licenses/upl" }
     ],
-    "version": "3.0.2",
-    "updated": "2022-02-09"
+    "version": "3.0.3",
+    "updated": "2022-02-10"
   },
 
   "dependencies": {
