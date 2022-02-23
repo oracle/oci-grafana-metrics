@@ -11,7 +11,7 @@
   "annotations": false,
   "alerting": false,
   "backend": true,
-  "executable": "oci-plugin",
+  "executable": "oci-metrics-plugin",
 
   "info": {
     "description": "Oracle Cloud Infrastructure Metrics Data Source for Grafana",
@@ -30,7 +30,7 @@
       { "name": "UPL", "url": "https://oss.oracle.com/licenses/upl" }
     ],
     "version": "3.0.3",
-    "updated": "2022-02-10"
+    "updated": "2022-02-22"
   },
 
   "dependencies": {

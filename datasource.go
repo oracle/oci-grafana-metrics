@@ -37,6 +37,7 @@ type OCIDatasource struct {
 	metricsClient    monitoring.MonitoringClient
 	identityClient   identity.IdentityClient
 	config           common.ConfigurationProvider
+	cmptid           string
 	logger           log.Logger
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
@@ -103,6 +104,9 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 		o.identityClient = identityClient
 		o.metricsClient = metricsClient
 		o.config = configProvider
+		if ts.Compartment != "" {
+			o.cmptid = ts.Compartment
+		}
 	}
 
 	switch queryType {
@@ -133,8 +137,9 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		return &backend.QueryDataResponse{}, err
 	}
 
+	//o.logger.Error("ts.Com is " + ts.Compartment)
 	listMetrics := monitoring.ListMetricsRequest{
-		CompartmentId: common.String(ts.TenancyOCID),
+		CompartmentId: common.String(ts.Compartment),
 	}
 	reg := common.StringToRegion(ts.Region)
 	o.metricsClient.SetRegion(string(reg))
@@ -421,7 +426,7 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 	}
 
 	for cmptId, fullyQualifiedCmptName := range mapFromIdToFullCmptName {
-		if o.isCmptMetricsAllowed(ctx, region, cmptId, fullyQualifiedCmptName) {
+		if o.cmptid == cmptId || o.isCmptMetricsAllowed(ctx, region, cmptId, fullyQualifiedCmptName) {
 			m[fullyQualifiedCmptName] = cmptId
 		}
 	}
@@ -453,9 +458,9 @@ func (o *OCIDatasource) isCmptMetricsAllowed(ctx context.Context, region string,
 			return false
 		}
 	} else if res.RawResponse.StatusCode == 404 { // access allowed
-		o.logger.Error("404 Access to cmptId:" + cmptId + "with name:" + cmptName)
+		//o.logger.Error("404 Access to cmptId:" + cmptId + "with name:" + cmptName)
 	} else if res.RawResponse.StatusCode == 401 { // access allowed
-		o.logger.Error("401 Access to cmptId:" + cmptId + "with name:" + cmptName)
+		//o.logger.Error("401 Access to cmptId:" + cmptId + "with name:" + cmptName)
 	}
 	return false
 }
