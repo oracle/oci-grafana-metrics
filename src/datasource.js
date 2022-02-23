@@ -29,6 +29,7 @@ export default class OCIDatasource {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.tenancyOCID = instanceSettings.jsonData.tenancyOCID;
+    this.cmptOCID = instanceSettings.jsonData.cmptOCID
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.environment = instanceSettings.jsonData.environment;
     this.q = $q;
@@ -88,7 +89,7 @@ export default class OCIDatasource {
           queryType: "test",
           region: this.defaultRegion,
           tenancyOCID: this.tenancyOCID,
-          compartment: "",
+          compartment: this.cmptOCID,
           environment: this.environment,
           datasourceId: this.id,
         },
@@ -640,6 +641,7 @@ export default class OCIDatasource {
             environment: this.environment,
             datasourceId: this.id,
             tenancyOCID: this.tenancyOCID,
+            cmptOCID: this.cmptOCID,
             queryType: "dimensions",
             region: _.isEmpty(region) ? this.defaultRegion : region,
             compartment: compartmentId,

@@ -9,6 +9,7 @@ export class OCIConfigCtrl {
   constructor ($scope, backendSrv) {
     this.backendSrv = backendSrv
     this.tenancyOCID = this.current.jsonData.tenancyOCID
+    this.cmptOCID = this.current.jsonData.cmptOCID
     this.defaultRegion = this.current.jsonData.defaultRegion
     this.environment = this.current.jsonData.environment
   }
