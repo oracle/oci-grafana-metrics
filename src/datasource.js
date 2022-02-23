@@ -144,7 +144,7 @@ export default class OCIDatasource {
       return this.q.when([]);
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = this.cmptOCID || await this.getCompartmentId(compartment);
     return this.doRequest({
       targets: [
         {
@@ -264,7 +264,7 @@ export default class OCIDatasource {
         )}[${window}]${dimension}.${t.aggregation}`;
       }
 
-      const compartmentId = await this.getCompartmentId(
+      const compartmentId = this.cmptOCID || await this.getCompartmentId(
         this.getVariableValue(t.compartment, options.scopedVars)
       );
       const result = {
@@ -490,6 +490,7 @@ export default class OCIDatasource {
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           queryType: "regions",
+          compartment: this.cmptOCID
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -512,6 +513,7 @@ export default class OCIDatasource {
           tenancyOCID: this.tenancyOCID,
           queryType: "compartments",
           region: this.defaultRegion, // compartments are registered for the all regions, so no difference which region to use here
+          compartment: this.cmptOCID
         },
       ],
       range: this.timeSrv.timeRange(),

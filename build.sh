@@ -43,20 +43,20 @@ if [[ ! -d ./vendor ]]; then
 fi
 
 echo "building go binary"
-GOOS=$GOOS go build -o ./dist/oci-plugin$POST
+# GOOS=$GOOS go build -o ./dist/oci-metrics-plugin$POST
 
 # For debugger
-#  GOOS=$GOOS go build -o ./dist/oci-plugin$POST -gcflags="all=-N -l"
+ GOOS=$GOOS go build -o ./dist/oci-metrics-plugin$POST -gcflags="all=-N -l"
 
 # For release
- GOOS=linux go build -o ./dist/oci-plugin_linux_amd64
- GOOS=windows GOARCH=amd64 go build -o ./dist/oci-plugin_windows_amd64.exe
+#  GOOS=linux go build -o ./dist/oci-metrics-plugin_linux_amd64
+#  GOOS=windows GOARCH=amd64 go build -o ./dist/oci-metrics-plugin_windows_amd64.exe
 
-grafana-toolkit plugin:sign
+# grafana-toolkit plugin:sign
 
-tar cvf plugin.tar ./dist
+# tar cvf plugin.tar ./dist
 
-zip -r oci-metrics-datasource-g8 ./dist
+# zip -r oci-metrics-datasource-g8 ./dist
 
 # Instructions for signing
 # Please make sure

@@ -9,7 +9,7 @@
             "type": "go",
             "request": "attach",
             "mode": "local",
-            "processId": 10458
+            "processId": "${command:pickGoProcess}"
         }
     ]
 }
