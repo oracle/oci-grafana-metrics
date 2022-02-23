@@ -9,6 +9,7 @@
             "type": "go",
             "request": "attach",
             "mode": "local",
+            "program":"${workspaceRoot}",
             "processId": "${command:pickGoProcess}"
         }
     ]
