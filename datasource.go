@@ -426,43 +426,11 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 	}
 
 	for cmptId, fullyQualifiedCmptName := range mapFromIdToFullCmptName {
-		if o.cmptid == cmptId || o.isCmptMetricsAllowed(ctx, region, cmptId, fullyQualifiedCmptName) {
+		if o.cmptid == cmptId {
 			m[fullyQualifiedCmptName] = cmptId
 		}
 	}
 	return m, nil
-}
-
-func (o *OCIDatasource) isCmptMetricsAllowed(ctx context.Context, region string, cmptId string, cmptName string) bool {
-	reg := common.StringToRegion(region)
-	o.metricsClient.SetRegion(string(reg))
-
-	res, _ := o.metricsClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
-		CompartmentId: common.String(cmptId),
-		Page:          nil,
-	})
-
-	if res.RawResponse.StatusCode == 200 { // access allowed
-		o.logger.Error("Success Access to cmptId:" + cmptId + "with name:" + cmptName)
-		return true
-	} else if res.RawResponse.StatusCode == 429 { // throttled? try again
-		time.Sleep(4 * time.Second)
-		res1, _ := o.metricsClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
-			CompartmentId: common.String(cmptId),
-			Page:          nil,
-		})
-		if res1.RawResponse.StatusCode == 200 { // access allowed
-			return true
-		} else {
-			o.logger.Error("error loading filtered compartments")
-			return false
-		}
-	} else if res.RawResponse.StatusCode == 404 { // access allowed
-		//o.logger.Error("404 Access to cmptId:" + cmptId + "with name:" + cmptName)
-	} else if res.RawResponse.StatusCode == 401 { // access allowed
-		//o.logger.Error("401 Access to cmptId:" + cmptId + "with name:" + cmptName)
-	}
-	return false
 }
 
 type responseAndQuery struct {
