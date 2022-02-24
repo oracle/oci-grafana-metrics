@@ -3,37 +3,16 @@
 package main
 
 import (
-	"github.com/grafana/grafana_plugin_model/go/datasource"
-	hclog "github.com/hashicorp/go-hclog"
-	plugin "github.com/hashicorp/go-plugin"
+		"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+		"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+		"os"
 )
 
-var pluginLogger = hclog.New(&hclog.LoggerOptions{
-	Name:  "simple-json-datasource",
-	Level: hclog.LevelFromString("DEBUG"),
-})
-
 func main() {
-	pluginLogger.Debug("Running GRPC server")
-	// fetch all out variables
+		log.DefaultLogger.Debug("Running GRPC server")
 
-	ociDatasource, err := NewOCIDatasource(pluginLogger)
-	if err != nil {
-		pluginLogger.Error("Unable to create plugin")
-	}
-
-	plugin.Serve(&plugin.ServeConfig{
-
-		HandshakeConfig: plugin.HandshakeConfig{
-			ProtocolVersion:  1,
-			MagicCookieKey:   "grafana_plugin_type",
-			MagicCookieValue: "datasource",
-		},
-		Plugins: map[string]plugin.Plugin{
-			"backend-datasource": &datasource.DatasourcePluginImpl{Plugin: ociDatasource},
-		},
-
-		// A non-nil value here enables gRPC serving for this plugin...
-		GRPCServer: plugin.DefaultGRPCServer,
-	})
+		if err := datasource.Manage("myorgid-simple-backend-datasource", NewOCIDatasource, datasource.ManageOpts{}); err != nil {
+				log.DefaultLogger.Error(err.Error())
+				os.Exit(1)
+		}
 }

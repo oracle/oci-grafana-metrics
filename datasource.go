@@ -6,15 +6,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/davecgh/go-spew/spew"
-	"github.com/grafana/grafana_plugin_model/go/datasource"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
 	"github.com/oracle/oci-go-sdk/common"
 	"github.com/oracle/oci-go-sdk/common/auth"
 	"github.com/oracle/oci-go-sdk/identity"
@@ -22,49 +25,46 @@ import (
 	"github.com/pkg/errors"
 )
 
-//how often to refresh our compartmentID cache
-var cacheRefreshTime = time.Minute
+const MaxPagesToFetch = 20
+
+var (
+	cacheRefreshTime = time.Minute // how often to refresh our compartmentID cache
+	re               = regexp.MustCompile(`(?m)\w+Name`)
+)
 
 //OCIDatasource - pulls in data from telemtry/various oci apis
 type OCIDatasource struct {
-	plugin.NetRPCUnsupportedPlugin
 	metricsClient    monitoring.MonitoringClient
 	identityClient   identity.IdentityClient
 	config           common.ConfigurationProvider
-	logger           hclog.Logger
+	logger           log.Logger
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
 }
 
 //NewOCIDatasource - constructor
-func NewOCIDatasource(pluginLogger hclog.Logger) (*OCIDatasource, error) {
-	m := make(map[string]string)
-
+func NewOCIDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &OCIDatasource{
-		logger:     pluginLogger,
-		nameToOCID: m,
+		logger:     log.DefaultLogger,
+		nameToOCID: make(map[string]string),
 	}, nil
 }
 
 // GrafanaOCIRequest - Query Request comning in from the front end
 type GrafanaOCIRequest struct {
 	GrafanaCommonRequest
-	Query      string
-	Resolution string
-	Namespace  string
-	ResourceGroup  string
+	Query         string
+	Resolution    string
+	Namespace     string
+	ResourceGroup string
 }
 
 //GrafanaSearchRequest incoming request body for search requests
 type GrafanaSearchRequest struct {
 	GrafanaCommonRequest
-	Metric    string `json:"metric,omitempty"`
-	Namespace string
-	ResourceGroup  string
-}
-
-type GrafanaCompartmentRequest struct {
-	GrafanaCommonRequest
+	Metric        string `json:"metric,omitempty"`
+	Namespace     string
+	ResourceGroup string
 }
 
 // GrafanaCommonRequest - captures the common parts of the search and metricsRequests
@@ -77,9 +77,13 @@ type GrafanaCommonRequest struct {
 }
 
 // Query - Determine what kind of query we're making
-func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
+func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
-	json.Unmarshal([]byte(tsdbReq.Queries[0].ModelJson), &ts)
+
+	query := req.Queries[0]
+	if err := json.Unmarshal(query.JSON, &ts); err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
 
 	queryType := ts.QueryType
 	if o.config == nil {
@@ -93,7 +97,7 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 		}
 		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 		if err != nil {
-			log.Printf("error with client")
+			o.logger.Error("error with client")
 			panic(err)
 		}
 		o.identityClient = identityClient
@@ -103,27 +107,31 @@ func (o *OCIDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasourc
 
 	switch queryType {
 	case "compartments":
-		return o.compartmentsResponse(ctx, tsdbReq)
+		return o.compartmentsResponse(ctx, req)
 	case "dimensions":
-		return o.dimensionResponse(ctx, tsdbReq)
+		return o.dimensionResponse(ctx, req)
 	case "namespaces":
-		return o.namespaceResponse(ctx, tsdbReq)
+		return o.namespaceResponse(ctx, req)
 	case "resourcegroups":
-		return o.resourcegroupsResponse(ctx, tsdbReq)
+		return o.resourcegroupsResponse(ctx, req)
 	case "regions":
-		return o.regionsResponse(ctx, tsdbReq)
+		return o.regionsResponse(ctx, req)
 	case "search":
-		return o.searchResponse(ctx, tsdbReq)
+		return o.searchResponse(ctx, req)
 	case "test":
-		return o.testResponse(ctx, tsdbReq)
+		return o.testResponse(ctx, req)
 	default:
-		return o.queryResponse(ctx, tsdbReq)
+		return o.queryResponse(ctx, req)
 	}
 }
 
-func (o *OCIDatasource) testResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
+func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
-	json.Unmarshal([]byte(tsdbReq.Queries[0].ModelJson), &ts)
+
+	query := req.Queries[0]
+	if err := json.Unmarshal(query.JSON, &ts); err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
 
 	listMetrics := monitoring.ListMetricsRequest{
 		CompartmentId: common.String(ts.TenancyOCID),
@@ -131,24 +139,25 @@ func (o *OCIDatasource) testResponse(ctx context.Context, tsdbReq *datasource.Da
 	reg := common.StringToRegion(ts.Region)
 	o.metricsClient.SetRegion(string(reg))
 	res, err := o.metricsClient.ListMetrics(ctx, listMetrics)
+	if err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
 	status := res.RawResponse.StatusCode
 	if status >= 200 && status < 300 {
-		return &datasource.DatasourceResponse{}, nil
+		return &backend.QueryDataResponse{}, nil
 	}
 	return nil, errors.Wrap(err, fmt.Sprintf("list metrircs failed %s %d", spew.Sdump(res), status))
 }
 
-func (o *OCIDatasource) dimensionResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
-	table := datasource.Table{
-		Columns: []*datasource.TableColumn{
-			&datasource.TableColumn{Name: "text"},
-		},
-		Rows: make([]*datasource.TableRow, 0),
-	}
+func (o *OCIDatasource) dimensionResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
 
-	for _, query := range tsdbReq.Queries {
+	for _, query := range req.Queries {
 		var ts GrafanaSearchRequest
-		json.Unmarshal([]byte(query.ModelJson), &ts)
+		if err := json.Unmarshal(query.JSON, &ts); err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
+
 		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.Namespace = common.String(ts.Namespace)
 		if ts.ResourceGroup != "NoResourceGroup" {
@@ -159,41 +168,30 @@ func (o *OCIDatasource) dimensionResponse(ctx context.Context, tsdbReq *datasour
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
-		rows := make([]*datasource.TableRow, 0)
+
+		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
+
 		for _, item := range items {
 			for dimension, value := range item.Dimensions {
-				rows = append(rows, &datasource.TableRow{
-					Values: []*datasource.RowValue{
-						&datasource.RowValue{
-							Kind:        datasource.RowValue_TYPE_STRING,
-							StringValue: fmt.Sprintf("%s=%s", dimension, value),
-						},
-					},
-				})
+				frame.AppendRow(fmt.Sprintf("%s=%s", dimension, value))
 			}
 		}
-		table.Rows = rows
+
+		respD := resp.Responses[query.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[query.RefID] = respD
 	}
-	return &datasource.DatasourceResponse{
-		Results: []*datasource.QueryResult{
-			&datasource.QueryResult{
-				RefId:  "dimensions",
-				Tables: []*datasource.Table{&table},
-			},
-		},
-	}, nil
+	return resp, nil
 }
 
-func (o *OCIDatasource) namespaceResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
-	table := datasource.Table{
-		Columns: []*datasource.TableColumn{
-			&datasource.TableColumn{Name: "text"},
-		},
-		Rows: make([]*datasource.TableRow, 0),
-	}
-	for _, query := range tsdbReq.Queries {
+func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, query := range req.Queries {
 		var ts GrafanaSearchRequest
-		json.Unmarshal([]byte(query.ModelJson), &ts)
+		if err := json.Unmarshal(query.JSON, &ts); err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
 
 		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.GroupBy = []string{"namespace"}
@@ -202,42 +200,26 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, tsdbReq *datasour
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
 
-		rows := make([]*datasource.TableRow, 0)
+		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 		for _, item := range items {
-			rows = append(rows, &datasource.TableRow{
-				Values: []*datasource.RowValue{
-					&datasource.RowValue{
-						Kind:        datasource.RowValue_TYPE_STRING,
-						StringValue: *(item.Namespace),
-					},
-				},
-			})
+			frame.AppendRow(*(item.Namespace))
 		}
-		table.Rows = rows
+
+		respD := resp.Responses[query.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[query.RefID] = respD
 	}
-	return &datasource.DatasourceResponse{
-		Results: []*datasource.QueryResult{
-			&datasource.QueryResult{
-				RefId:  "namespaces",
-				Tables: []*datasource.Table{&table},
-			},
-		},
-	}, nil
+	return resp, nil
 }
 
-func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
-	table := datasource.Table{
-		Columns: []*datasource.TableColumn{
-			&datasource.TableColumn{Name: "text"},
-		},
-		Rows: make([]*datasource.TableRow, 0),
-	}
+func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
 
-	var rows_placeholder = common.String("NoResourceGroup")
-
-	for _, query := range tsdbReq.Queries {
+	for _, query := range req.Queries {
 		var ts GrafanaSearchRequest
-		json.Unmarshal([]byte(query.ModelJson), &ts)
+		if err := json.Unmarshal(query.JSON, &ts); err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
 
 		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.Namespace = common.String(ts.Namespace)
@@ -247,35 +229,18 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, tsdbReq *dat
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
 
-		rows := make([]*datasource.TableRow, 0)
-		rows = append(rows, &datasource.TableRow{
-			Values: []*datasource.RowValue{
-				&datasource.RowValue{
-					Kind:        datasource.RowValue_TYPE_STRING,
-					StringValue: *(rows_placeholder),
-				},
-			},
-		})
+		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
+
+		frame.AppendRow(*(common.String("NoResourceGroup")))
 		for _, item := range items {
-			rows = append(rows, &datasource.TableRow{
-				Values: []*datasource.RowValue{
-					&datasource.RowValue{
-						Kind:        datasource.RowValue_TYPE_STRING,
-						StringValue: *(item.ResourceGroup),
-					},
-				},
-			})
+			frame.AppendRow(*(item.ResourceGroup))
 		}
-		table.Rows = rows
+
+		respD := resp.Responses[query.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[query.RefID] = respD
 	}
-	return &datasource.DatasourceResponse{
-		Results: []*datasource.QueryResult{
-			&datasource.QueryResult{
-				RefId:  "resourcegroups",
-				Tables: []*datasource.Table{&table},
-			},
-		},
-	}, nil
+	return resp, nil
 }
 
 func getConfigProvider(environment string) (common.ConfigurationProvider, error) {
@@ -289,17 +254,14 @@ func getConfigProvider(environment string) (common.ConfigurationProvider, error)
 	}
 }
 
-func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
-	table := datasource.Table{
-		Columns: []*datasource.TableColumn{
-			&datasource.TableColumn{Name: "text"},
-		},
-		Rows: make([]*datasource.TableRow, 0),
-	}
+func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
 
-	for _, query := range tsdbReq.Queries {
+	for _, query := range req.Queries {
 		var ts GrafanaSearchRequest
-		json.Unmarshal([]byte(query.ModelJson), &ts)
+		if err := json.Unmarshal(query.JSON, &ts); err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
 		reqDetails := monitoring.ListMetricsDetails{}
 		// Group by is needed to get all  metrics without missing any as it is limited by the max pages
 		reqDetails.GroupBy = []string{"name"}
@@ -313,35 +275,22 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, tsdbReq *datasource.
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
 
-		rows := make([]*datasource.TableRow, 0)
 		metricCache := make(map[string]bool)
+
+		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 		for _, item := range items {
 			if _, ok := metricCache[*(item.Name)]; !ok {
-				rows = append(rows, &datasource.TableRow{
-					Values: []*datasource.RowValue{
-						&datasource.RowValue{
-							Kind:        datasource.RowValue_TYPE_STRING,
-							StringValue: *(item.Name),
-						},
-					},
-				})
+				frame.AppendRow(*(item.Name))
 				metricCache[*(item.Name)] = true
 			}
 		}
-		table.Rows = rows
+		respD := resp.Responses[query.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[query.RefID] = respD
 	}
-	return &datasource.DatasourceResponse{
-		Results: []*datasource.QueryResult{
-			&datasource.QueryResult{
-				RefId:  "search",
-				Tables: []*datasource.Table{&table},
-			},
-		},
-	}, nil
 
+	return resp, nil
 }
-
-const MAX_PAGES_TO_FETCH = 20
 
 func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails) ([]monitoring.Metric, error) {
 	var items []monitoring.Metric
@@ -362,7 +311,7 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 		}
 		items = append(items, res.Items...)
 		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
-		if res.OpcNextPage == nil  || pageNumber >= MAX_PAGES_TO_FETCH {
+		if res.OpcNextPage == nil || pageNumber >= MaxPagesToFetch {
 			break
 		}
 
@@ -372,18 +321,15 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 	return items, nil
 }
 
-func (o *OCIDatasource) compartmentsResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
-	table := datasource.Table{
-		Columns: []*datasource.TableColumn{
-			&datasource.TableColumn{Name: "text"},
-			&datasource.TableColumn{Name: "text"},
-		},
-	}
-	now := time.Now()
+func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaSearchRequest
-	json.Unmarshal([]byte(tsdbReq.Queries[0].ModelJson), &ts)
-	if o.timeCacheUpdated.IsZero() || now.Sub(o.timeCacheUpdated) > cacheRefreshTime {
 
+	query := req.Queries[0]
+	if err := json.Unmarshal(query.JSON, &ts); err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
+
+	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
 		m, err := o.getCompartments(ctx, ts.Region, ts.TenancyOCID)
 		if err != nil {
 			o.logger.Error("Unable to refresh cache")
@@ -392,30 +338,18 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, tsdbReq *datas
 		o.nameToOCID = m
 	}
 
-	rows := make([]*datasource.TableRow, 0, len(o.nameToOCID))
+	frame := data.NewFrame(query.RefID,
+		data.NewField("name", nil, []string{}),
+		data.NewField("compartmentID", nil, []string{}),
+	)
 	for name, id := range o.nameToOCID {
-		val := &datasource.RowValue{
-			Kind:        datasource.RowValue_TYPE_STRING,
-			StringValue: name,
-		}
-		id := &datasource.RowValue{
-			Kind:        datasource.RowValue_TYPE_STRING,
-			StringValue: id,
-		}
-
-		rows = append(rows, &datasource.TableRow{
-			Values: []*datasource.RowValue{
-				val,
-				id,
-			},
-		})
+		frame.AppendRow(name, id)
 	}
-	table.Rows = rows
-	return &datasource.DatasourceResponse{
-		Results: []*datasource.QueryResult{
-			&datasource.QueryResult{
-				RefId:  "compartments",
-				Tables: []*datasource.Table{&table},
+
+	return &backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			query.RefID: {
+				Frames: data.Frames{frame},
 			},
 		},
 	}, nil
@@ -423,9 +357,23 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, tsdbReq *datas
 
 func (o *OCIDatasource) getCompartments(ctx context.Context, region string, rootCompartment string) (map[string]string, error) {
 	m := make(map[string]string)
-	m["root compartment"] = rootCompartment
-	var page *string
 
+	tenancyOcid := rootCompartment
+
+	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
+	// Send the request using the service client
+	resp, err := o.identityClient.GetTenancy(context.Background(), req)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("This is what we were trying to get %s", " : fetching tenancy name"))
+	}
+
+	mapFromIdToName := make(map[string]string)
+	mapFromIdToName[tenancyOcid] = *resp.Name //tenancy name
+
+	mapFromIdToParentCmptId := make(map[string]string)
+	mapFromIdToParentCmptId[tenancyOcid] = "" //since root cmpt does not have a parent
+
+	var page *string
 	reg := common.StringToRegion(region)
 	o.identityClient.SetRegion(string(reg))
 	for {
@@ -441,7 +389,8 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 		}
 		for _, compartment := range res.Items {
 			if compartment.LifecycleState == identity.CompartmentLifecycleStateActive {
-				m[*(compartment.Name)] = *(compartment.Id)
+				mapFromIdToName[*(compartment.Id)] = *(compartment.Name)
+				mapFromIdToParentCmptId[*(compartment.Id)] = *(compartment.CompartmentId)
 			}
 		}
 		if res.OpcNextPage == nil {
@@ -449,24 +398,54 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 		}
 		page = res.OpcNextPage
 	}
+
+	mapFromIdToFullCmptName := make(map[string]string)
+	mapFromIdToFullCmptName[tenancyOcid] = mapFromIdToName[tenancyOcid] + "(tenancy, shown as '/')"
+
+	for len(mapFromIdToFullCmptName) < len(mapFromIdToName) {
+		for cmptId, cmptParentCmptId := range mapFromIdToParentCmptId {
+			_, isCmptNameResolvedFullyAlready := mapFromIdToFullCmptName[cmptId]
+			if !isCmptNameResolvedFullyAlready {
+				if cmptParentCmptId == tenancyOcid {
+					// If tenancy/rootCmpt my parent
+					// cmpt name itself is fully qualified, just prepend '/' for tenancy aka rootCmpt
+					mapFromIdToFullCmptName[cmptId] = "/" + mapFromIdToName[cmptId]
+				} else {
+					fullNameOfParentCmpt, isMyParentNameResolvedFully := mapFromIdToFullCmptName[cmptParentCmptId]
+					if isMyParentNameResolvedFully {
+						mapFromIdToFullCmptName[cmptId] = fullNameOfParentCmpt + "/" + mapFromIdToName[cmptId]
+					}
+				}
+			}
+		}
+	}
+
+	for cmptId, fullyQualifiedCmptName := range mapFromIdToFullCmptName {
+		m[fullyQualifiedCmptName] = cmptId
+	}
+
 	return m, nil
 }
 
 type responseAndQuery struct {
 	ociRes monitoring.SummarizeMetricsDataResponse
-	query  *datasource.Query
+	query  backend.DataQuery
 	err    error
 }
 
-func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
-	results := make([]responseAndQuery, 0, len(tsdbReq.Queries))
+func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	results := make([]responseAndQuery, 0, len(req.Queries))
 
-	for _, query := range tsdbReq.Queries {
+	for _, query := range req.Queries {
 		var ts GrafanaOCIRequest
-		json.Unmarshal([]byte(query.ModelJson), &ts)
+		if err := json.Unmarshal(query.JSON, &ts); err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
 
-		start := time.Unix(tsdbReq.TimeRange.FromEpochMs/1000, (tsdbReq.TimeRange.FromEpochMs%1000)*1000000).UTC()
-		end := time.Unix(tsdbReq.TimeRange.ToEpochMs/1000, (tsdbReq.TimeRange.ToEpochMs%1000)*1000000).UTC()
+		fromMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		toMs := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+		start := time.Unix(fromMs/1000, (fromMs%1000)*1000000).UTC()
+		end := time.Unix(toMs/1000, (toMs%1000)*1000000).UTC()
 
 		start = start.Truncate(time.Millisecond)
 		end = end.Truncate(time.Millisecond)
@@ -475,8 +454,8 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 		req.Query = common.String(ts.Query)
 		req.Namespace = common.String(ts.Namespace)
 		req.Resolution = common.String(ts.Resolution)
-		req.StartTime = &common.SDKTime{start}
-		req.EndTime = &common.SDKTime{end}
+		req.StartTime = &common.SDKTime{Time: start}
+		req.EndTime = &common.SDKTime{Time: end}
 		if ts.ResourceGroup != "NoResourceGroup" {
 			req.ResourceGroup = common.String(ts.ResourceGroup)
 		}
@@ -499,104 +478,113 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, tsdbReq *datasource.D
 			err,
 		})
 	}
-	queryRes := make([]*datasource.QueryResult, 0, len(results))
+	resp := backend.NewQueryDataResponse()
 	for _, q := range results {
-		res := &datasource.QueryResult{
-			RefId: q.query.RefId,
-		}
+		respD := resp.Responses[q.query.RefID]
+
 		if q.err != nil {
-			res.Error = q.err.Error()
-			queryRes = append(queryRes, res)
+			respD.Error = fmt.Errorf(q.err.Error())
 			continue
 		}
-		//Items -> timeserries
-		series := make([]*datasource.TimeSeries, 0, len(q.ociRes.Items))
+
 		for _, item := range q.ociRes.Items {
-			t := &datasource.TimeSeries{
-				Name: *(item.Name),
-			}
-			var re = regexp.MustCompile(`(?m)\w+Name`)
+			name := *(item.Name)
+
+			item.Dimensions["resourceId"] = strings.ToLower(item.Dimensions["resourceId"])
 			dimensionKeys := make([]string, len(item.Dimensions))
 			i := 0
 
-			for key, dimension := range item.Dimensions {
-				if re.MatchString(key) {
-					t.Name = fmt.Sprintf("%s, {%s}", t.Name, dimension)
-				}
+			for key := range item.Dimensions {
 				dimensionKeys[i] = key
 				i++
 			}
 
-			// if there isn't a human readable name fallback to resourceId
-			if t.Name == *(item).Name {
-				var preDisplayName string = ""
-				sort.Strings(dimensionKeys)
-				for _, dimensionKey := range dimensionKeys {
-					if preDisplayName == "" {
-						preDisplayName = item.Dimensions[dimensionKey]
-					} else {
-						preDisplayName = preDisplayName + ", " + item.Dimensions[dimensionKey]
+			sort.Strings(dimensionKeys)
+
+			var dmValueListForMetricStream = ""
+			for _, dimensionKey := range dimensionKeys {
+				var dimValue = item.Dimensions[dimensionKey]
+
+				if strings.HasPrefix(dimValue, "ocid1.") {
+					ocidParts := strings.SplitAfter(dimValue, ".")
+					if len(ocidParts[len(ocidParts)-1]) > 5 {
+						var alphaOcidId = ocidParts[len(ocidParts)-1]
+						ocidParts[len(ocidParts)-1] = "XXXX" + alphaOcidId[len(alphaOcidId)-6:]
 					}
+					dimValue = strings.Join(ocidParts, "")
 				}
 
-				t.Name = fmt.Sprintf("%s, {%s}", t.Name, preDisplayName)
+				if dmValueListForMetricStream == "" {
+					dmValueListForMetricStream = "[" + dimValue
+				} else {
+					dmValueListForMetricStream = dmValueListForMetricStream + "," + dimValue
+				}
+			}
+			dmValueListForMetricStream = dmValueListForMetricStream + "]"
+			fullDisplayName := name + dmValueListForMetricStream
+
+			//dimeString, _ := json.Marshal(item.Dimensions)
+			var fieldConfig = data.FieldConfig{}
+
+			if _, okMinRange := item.Metadata["minRange"]; okMinRange {
+				minFloat, err := strconv.ParseFloat(item.Metadata["minRange"], 64)
+				if err == nil {
+					fieldConfig = *(&fieldConfig).SetMin(minFloat)
+				}
+			}
+			if _, okMinRange := item.Metadata["maxRange"]; okMinRange {
+				maxFloat, err := strconv.ParseFloat(item.Metadata["maxRange"], 64)
+				if err == nil {
+					fieldConfig = *(&fieldConfig).SetMax(maxFloat)
+				}
 			}
 
-			p := make([]*datasource.Point, 0, len(item.AggregatedDatapoints))
+			if _, okUnitName := item.Metadata["unit"]; okUnitName {
+				fieldConfig.Unit = item.Metadata["unit"]
+			}
+
+			o.logger.Info("item.Metadata " + fmt.Sprint(item.Metadata))
+
+			fieldConfig.DisplayNameFromDS = fullDisplayName
+
+			frame := data.NewFrame(q.query.RefID,
+				data.NewField("Time", nil, []time.Time{}),
+				data.NewField("Value", item.Dimensions, []float64{}).SetConfig(&fieldConfig),
+			)
+
 			for _, metric := range item.AggregatedDatapoints {
-				point := &datasource.Point{
-					Timestamp: int64(metric.Timestamp.UnixNano() / 1000000),
-					Value:     *(metric.Value),
-				}
-				p = append(p, point)
+				frame.AppendRow(metric.Timestamp.Time, *(metric.Value))
 			}
-			t.Points = p
-			series = append(series, t)
+
+			respD.Frames = append(respD.Frames, frame)
+			resp.Responses[q.query.RefID] = respD
 		}
-		res.Series = series
-		queryRes = append(queryRes, res)
 	}
-
-	response := &datasource.DatasourceResponse{
-		Results: queryRes,
-	}
-
-	return response, nil
+	return resp, nil
 }
 
-func (o *OCIDatasource) regionsResponse(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
-	table := datasource.Table{
-		Columns: []*datasource.TableColumn{
-			&datasource.TableColumn{Name: "text"},
-		},
-		Rows: make([]*datasource.TableRow, 0),
-	}
-	for _, query := range tsdbReq.Queries {
+func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, query := range req.Queries {
 		var ts GrafanaOCIRequest
-		json.Unmarshal([]byte(query.ModelJson), &ts)
+		if err := json.Unmarshal(query.JSON, &ts); err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
 		res, err := o.identityClient.ListRegions(ctx)
 		if err != nil {
 			return nil, errors.Wrap(err, "error fetching regions")
 		}
-		rows := make([]*datasource.TableRow, 0, len(res.Items))
+
+		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
+
 		for _, item := range res.Items {
-			rows = append(rows, &datasource.TableRow{
-				Values: []*datasource.RowValue{
-					&datasource.RowValue{
-						Kind:        datasource.RowValue_TYPE_STRING,
-						StringValue: *(item.Name),
-					},
-				},
-			})
+			frame.AppendRow(*(item.Name))
 		}
-		table.Rows = rows
+
+		respD := resp.Responses[query.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[query.RefID] = respD
 	}
-	return &datasource.DatasourceResponse{
-		Results: []*datasource.QueryResult{
-			&datasource.QueryResult{
-				RefId:  "regions",
-				Tables: []*datasource.Table{&table},
-			},
-		},
-	}, nil
+	return resp, nil
 }

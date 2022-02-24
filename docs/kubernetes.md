@@ -32,22 +32,13 @@ Next, create a [policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Conc
 
 Next, we are going to install the stable Helm chart for Grafana. We will do this in two parts: First, update the stable repository by running: `helm repo update`
 
-Next, install the stable chart for Grafana. To do this run: `helm install --name grafana stable/grafana`
+Next, install the chart for Grafana. 
+ For OSS Grafana run: `helm install --set plugins=oci-metrics-datasource grafana bitnami/grafana`
 
-We can now make a change to the deployment that was created for Grafana by running `kubectl edit deployment grafana`, and adding an additional environment variable to the Grafana contianer which will download the plugin. After saving the deployment, the changes will be reflected with a new pod.
-
-```
-        - name: GF_INSTALL_PLUGINS
-          value: oci-datasource
-```
 
 ## Accessing Grafana
 
-To see if everything is working correctly, access Grafana using Kubernetes port-forwarding. To do this run: `export POD_NAME=$(kubectl get pods --namespace default -l "app=grafana,release=grafana" -o jsonpath="{.items[0].metadata.name}")`
-
-Followed by: `kubectl --namespace default port-forward $POD_NAME 3000`
-
-You can obtain the password for the admin user by running: `kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo`
+Follow the instructions given in the output, after the helm chart install for accessing Grafana, retrieving password for admin user account etc.
 
 ## Configure Grafana
 
