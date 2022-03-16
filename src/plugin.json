@@ -2,17 +2,11 @@
   "name": "Oracle Cloud Infrastructure Metrics",
   "id": "oci-metrics-datasource",
   "type": "datasource",
-
-  "partials": {
-    "config": "public/app/plugins/datasource/oracle-oci-datasource/partials/config.html"
-  },
-
   "metrics": true,
   "annotations": false,
   "alerting": false,
   "backend": true,
-  "executable": "oci-plugin",
-
+  "executable": "oci-metrics-plugin",
   "info": {
     "description": "Oracle Cloud Infrastructure Metrics Data Source for Grafana",
     "author": {
@@ -25,16 +19,24 @@
     "links": [
       {
         "name": "GitHub",
-        "url": "https://github.com/oracle/oci-grafana-plugin"
+        "url": "https://github.com/oracle/oci-grafana-metrics"
       },
       { "name": "UPL", "url": "https://oss.oracle.com/licenses/upl" }
     ],
-    "version": "3.0.3",
-    "updated": "2022-02-10"
+    "version": "3.0.4",
+    "updated": "2022-03-16",
+    "screenshots":[
+      {
+        "name":"OCI Metrics Dashboard",
+        "path":"docs/images/Screen_Shot_2019-02-15_at_3.06.49_PM.png"
+      }
+    ],
+    "keywords": [
+      "oci", "oracle", "metrics"
+    ]
   },
-
   "dependencies": {
-    "grafanaDependency": "8.x.x",
+    "grafanaDependency": ">=8.0.0",
     "plugins": [ ]
   }
 }
