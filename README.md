@@ -63,7 +63,7 @@ If you want to debug golang backend plugin code, follow the steps below:
 
   
 
-Please refer to the [docs folder in this repo](./docs)
+Please refer to the [docs folder in this repo](https://github.com/oracle/oci-grafana-metrics/tree/master/docs)
 
   
 
@@ -81,7 +81,7 @@ Issues and questions about this plugin can be posted [as an issue in this GitHub
 
 This project welcomes contributions from the community. Before submitting a pull
 
-request, please [review our contribution guide](./CONTRIBUTING.md).
+request, please [review our contribution guide](https://github.com/oracle/oci-grafana-metrics/blob/master/CONTRIBUTING.md).
 
   
 
@@ -89,7 +89,7 @@ request, please [review our contribution guide](./CONTRIBUTING.md).
 
   
 
-Please consult the [security guide](./SECURITY.md) for our responsible security
+Please consult the [security guide](https://github.com/oracle/oci-grafana-metrics/blob/master/SECURITY.md) for our responsible security
 
 vulnerability disclosure process.
 
