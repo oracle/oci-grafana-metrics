@@ -24,11 +24,11 @@
       { "name": "UPL", "url": "https://oss.oracle.com/licenses/upl" }
     ],
     "version": "3.0.4",
-    "updated": "2022-03-16",
+    "updated": "2022-03-31",
     "screenshots":[
       {
         "name":"OCI Metrics Dashboard",
-        "path":"docs/images/Screen_Shot_2019-02-15_at_3.06.49_PM.png"
+        "path":"src/img/OCI_Metrics.png"
       }
     ],
     "keywords": [
