@@ -1910,7 +1910,7 @@ async-limiter@~1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.1.tgz#dd379e94f0db8310b08291f9d64c3209766617fd"
 
-async@^1.5.2, async@~1.5.2:
+async@^1.5.2:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
 
@@ -1919,6 +1919,11 @@ async@^2.6.0:
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.3.tgz#d72625e2344a3656e3a3ad4fa749fa83299d82ff"
   dependencies:
     lodash "^4.17.14"
+
+async@~3.2.0:
+  version "3.2.4"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/async/-/async-3.2.4.tgz#2d22e00f8cddeb5fde5dd33522b56d1cf569a81c"
+  integrity sha1-LSLgD4zd61/eXdM1IrVtHPVpqBw=
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -2572,6 +2577,13 @@ braces@^2.3.1:
     snapdragon-node "^2.0.1"
     split-string "^3.0.2"
     to-regex "^3.0.1"
+
+braces@^3.0.2:
+  version "3.0.2"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/braces/-/braces-3.0.2.tgz#3454e1a462ee8d599e236df336cd9ea4f8afe107"
+  integrity sha1-NFThpGLujVmeI23zNs2epPiv4Qc=
+  dependencies:
+    fill-range "^7.0.1"
 
 browser-process-hrtime@^1.0.0:
   version "1.0.0"
@@ -3863,7 +3875,7 @@ execa@^1.0.0:
     signal-exit "^3.0.0"
     strip-eof "^1.0.0"
 
-exit@^0.1.2, exit@~0.1.1, exit@~0.1.2:
+exit@^0.1.2, exit@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/exit/-/exit-0.1.2.tgz#0632638f8d877cc82107d30a0fff1a17cba1cd0c"
 
@@ -3915,9 +3927,10 @@ extend-shallow@^3.0.0, extend-shallow@^3.0.2:
     assign-symbols "^1.0.0"
     is-extendable "^1.0.1"
 
-extend@^3.0.0, extend@~3.0.2:
+extend@^3.0.0, extend@^3.0.2, extend@~3.0.2:
   version "3.0.2"
-  resolved "https://registry.yarnpkg.com/extend/-/extend-3.0.2.tgz#f8b1136b4071fbd8eb140aff858b1019ec2915fa"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/extend/-/extend-3.0.2.tgz#f8b1136b4071fbd8eb140aff858b1019ec2915fa"
+  integrity sha1-+LETa0Bx+9jrFAr/hYsQGewpFfo=
 
 external-editor@^3.0.3:
   version "3.1.0"
@@ -4008,6 +4021,13 @@ fill-range@^4.0.0:
     repeat-string "^1.6.1"
     to-regex-range "^2.1.0"
 
+fill-range@^7.0.1:
+  version "7.0.1"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/fill-range/-/fill-range-7.0.1.tgz#1919a6a7c75fe38b2c7c77e5198535da9acdda40"
+  integrity sha1-GRmmp8df44ssfHflGYU12prN2kA=
+  dependencies:
+    to-regex-range "^5.0.1"
+
 find-cache-dir@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/find-cache-dir/-/find-cache-dir-3.3.1.tgz#89b33fad4a4670daa94f855f7fbe31d6d84fe880"
@@ -4071,15 +4091,26 @@ findup-sync@^2.0.0:
     micromatch "^3.0.4"
     resolve-dir "^1.0.1"
 
+findup-sync@^4.0.0:
+  version "4.0.0"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/findup-sync/-/findup-sync-4.0.0.tgz#956c9cdde804052b881b428512905c4a5f2cdef0"
+  integrity sha1-lWyc3egEBSuIG0KFEpBcSl8s3vA=
+  dependencies:
+    detect-file "^1.0.0"
+    is-glob "^4.0.0"
+    micromatch "^4.0.2"
+    resolve-dir "^1.0.1"
+
 findup-sync@~0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/findup-sync/-/findup-sync-0.3.0.tgz#37930aa5d816b777c03445e1966cc6790a4c0b16"
   dependencies:
     glob "~5.0.0"
 
-fined@^1.0.1:
+fined@^1.0.1, fined@^1.2.0:
   version "1.2.0"
-  resolved "https://registry.yarnpkg.com/fined/-/fined-1.2.0.tgz#d00beccf1aa2b475d16d423b0238b713a2c4a37b"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/fined/-/fined-1.2.0.tgz#d00beccf1aa2b475d16d423b0238b713a2c4a37b"
+  integrity sha1-0AvszxqitHXRbUI7Aji3E6LEo3s=
   dependencies:
     expand-tilde "^2.0.2"
     is-plain-object "^2.0.3"
@@ -4087,9 +4118,10 @@ fined@^1.0.1:
     object.pick "^1.2.0"
     parse-filepath "^1.0.1"
 
-flagged-respawn@^1.0.0:
+flagged-respawn@^1.0.0, flagged-respawn@^1.0.1:
   version "1.0.1"
-  resolved "https://registry.yarnpkg.com/flagged-respawn/-/flagged-respawn-1.0.1.tgz#e7de6f1279ddd9ca9aac8a5971d618606b3aab41"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/flagged-respawn/-/flagged-respawn-1.0.1.tgz#e7de6f1279ddd9ca9aac8a5971d618606b3aab41"
+  integrity sha1-595vEnnd2cqarIpZcdYYYGs6q0E=
 
 flat-cache@^2.0.1:
   version "2.0.1"
@@ -4228,9 +4260,10 @@ get-window@^1.1.1:
   dependencies:
     get-document "1"
 
-getobject@~0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/getobject/-/getobject-0.1.0.tgz#047a449789fa160d018f5486ed91320b6ec7885c"
+getobject@~1.0.0:
+  version "1.0.2"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/getobject/-/getobject-1.0.2.tgz#25ec87a50370f6dcc3c6ba7ef43c4c16215c4c89"
+  integrity sha1-JeyHpQNw9tzDxrp+9DxMFiFcTIk=
 
 getpass@^0.1.1:
   version "0.1.7"
@@ -4317,7 +4350,7 @@ grunt-bump@^0.8.0:
   dependencies:
     semver "^5.1.0"
 
-grunt-cli@^1.2.0, grunt-cli@~1.3.2:
+grunt-cli@^1.2.0:
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/grunt-cli/-/grunt-cli-1.3.2.tgz#60f12d12c1b5aae94ae3469c6b5fe24e960014e8"
   dependencies:
@@ -4326,6 +4359,17 @@ grunt-cli@^1.2.0, grunt-cli@~1.3.2:
     liftoff "~2.5.0"
     nopt "~4.0.1"
     v8flags "~3.1.1"
+
+grunt-cli@~1.4.3:
+  version "1.4.3"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/grunt-cli/-/grunt-cli-1.4.3.tgz#22c9f1a3d2780bf9b0d206e832e40f8f499175ff"
+  integrity sha1-Isnxo9J4C/mw0gboMuQPj0mRdf8=
+  dependencies:
+    grunt-known-options "~2.0.0"
+    interpret "~1.1.0"
+    liftup "~3.0.1"
+    nopt "~4.0.1"
+    v8flags "~3.2.0"
 
 grunt-contrib-clean@^1.1.0:
   version "1.1.0"
@@ -4368,6 +4412,11 @@ grunt-known-options@~1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/grunt-known-options/-/grunt-known-options-1.1.1.tgz#6cc088107bd0219dc5d3e57d91923f469059804d"
 
+grunt-known-options@~2.0.0:
+  version "2.0.0"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/grunt-known-options/-/grunt-known-options-2.0.0.tgz#cac641e897f9a0a680b8c9839803d35f3325103c"
+  integrity sha1-ysZB6Jf5oKaAuMmDmAPTXzMlEDw=
+
 grunt-legacy-log-utils@~2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/grunt-legacy-log-utils/-/grunt-legacy-log-utils-2.1.0.tgz#49a8c7dc74051476dcc116c32faf9db8646856ef"
@@ -4384,17 +4433,18 @@ grunt-legacy-log@~3.0.0:
     hooker "~0.2.3"
     lodash "~4.17.19"
 
-grunt-legacy-util@~2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/grunt-legacy-util/-/grunt-legacy-util-2.0.0.tgz#34d20f2a26c6adebfe9a9bdc8823f7016b0369c3"
+grunt-legacy-util@~2.0.1:
+  version "2.0.1"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/grunt-legacy-util/-/grunt-legacy-util-2.0.1.tgz#0f929d13a2faf9988c9917c82bff609e2d9ba255"
+  integrity sha1-D5KdE6L6+ZiMmRfIK/9gni2bolU=
   dependencies:
-    async "~1.5.2"
-    exit "~0.1.1"
-    getobject "~0.1.0"
+    async "~3.2.0"
+    exit "~0.1.2"
+    getobject "~1.0.0"
     hooker "~0.2.3"
-    lodash "~4.17.20"
+    lodash "~4.17.21"
     underscore.string "~3.3.5"
-    which "~1.3.0"
+    which "~2.0.2"
 
 grunt-systemjs-builder@^1.0.0:
   version "1.0.0"
@@ -4402,19 +4452,20 @@ grunt-systemjs-builder@^1.0.0:
   dependencies:
     systemjs-builder "0.14.11 - 0.16.x"
 
-grunt@^1.0.4:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/grunt/-/grunt-1.3.0.tgz#55db6ccd80c6fb53722e496f680620a2e681f809"
+grunt@^1.5.3:
+  version "1.5.3"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/grunt/-/grunt-1.5.3.tgz#3214101d11257b7e83cf2b38ea173b824deab76a"
+  integrity sha1-MhQQHREle36Dzys46hc7gk3qt2o=
   dependencies:
     dateformat "~3.0.3"
     eventemitter2 "~0.4.13"
     exit "~0.1.2"
     findup-sync "~0.3.0"
     glob "~7.1.6"
-    grunt-cli "~1.3.2"
-    grunt-known-options "~1.1.0"
+    grunt-cli "~1.4.3"
+    grunt-known-options "~2.0.0"
     grunt-legacy-log "~3.0.0"
-    grunt-legacy-util "~2.0.0"
+    grunt-legacy-util "~2.0.1"
     iconv-lite "~0.4.13"
     js-yaml "~3.14.0"
     minimatch "~3.0.4"
@@ -4697,6 +4748,13 @@ is-core-module@^2.2.0:
   dependencies:
     has "^1.0.3"
 
+is-core-module@^2.8.1:
+  version "2.9.0"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/is-core-module/-/is-core-module-2.9.0.tgz#e1c34429cd51c6dd9e09e0799e396e27b19a9c69"
+  integrity sha1-4cNEKc1Rxt2eCeB5njluJ7GanGk=
+  dependencies:
+    has "^1.0.3"
+
 is-data-descriptor@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/is-data-descriptor/-/is-data-descriptor-0.1.4.tgz#0b5ee648388e2c860282e793f1856fec3f301b56"
@@ -4739,9 +4797,10 @@ is-extendable@^1.0.1:
   dependencies:
     is-plain-object "^2.0.4"
 
-is-extglob@^2.1.0:
+is-extglob@^2.1.0, is-extglob@^2.1.1:
   version "2.1.1"
-  resolved "https://registry.yarnpkg.com/is-extglob/-/is-extglob-2.1.1.tgz#a88c02535791f02ed37c76a1b9ea9773c833f8c2"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/is-extglob/-/is-extglob-2.1.1.tgz#a88c02535791f02ed37c76a1b9ea9773c833f8c2"
+  integrity sha1-qIwCU1eR8C7TfHahueqXc8gz+MI=
 
 is-finite@^1.0.0:
   version "1.1.0"
@@ -4760,6 +4819,13 @@ is-glob@^3.1.0:
   resolved "https://registry.yarnpkg.com/is-glob/-/is-glob-3.1.0.tgz#7ba5ae24217804ac70707b96922567486cc3e84a"
   dependencies:
     is-extglob "^2.1.0"
+
+is-glob@^4.0.0:
+  version "4.0.3"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/is-glob/-/is-glob-4.0.3.tgz#64f61e42cbbb2eec2071a9dac0b28ba1e65d5084"
+  integrity sha1-ZPYeQsu7LuwgcanawLKLoeZdUIQ=
+  dependencies:
+    is-extglob "^2.1.1"
 
 is-hotkey@0.1.4:
   version "0.1.4"
@@ -4780,6 +4846,11 @@ is-number@^3.0.0:
   resolved "https://registry.yarnpkg.com/is-number/-/is-number-3.0.0.tgz#24fd6201a4782cf50561c810276afc7d12d71195"
   dependencies:
     kind-of "^3.0.2"
+
+is-number@^7.0.0:
+  version "7.0.0"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/is-number/-/is-number-7.0.0.tgz#7535345b896734d5f80c4d06c50955527a14f12b"
+  integrity sha1-dTU0W4lnNNX4DE0GxQlVUnoU8Ss=
 
 is-plain-object@^2.0.3, is-plain-object@^2.0.4:
   version "2.0.4"
@@ -5455,6 +5526,20 @@ liftoff@~2.5.0:
     rechoir "^0.6.2"
     resolve "^1.1.7"
 
+liftup@~3.0.1:
+  version "3.0.1"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/liftup/-/liftup-3.0.1.tgz#1cb81aff0f368464ed3a5f1a7286372d6b1a60ce"
+  integrity sha1-HLga/w82hGTtOl8acoY3LWsaYM4=
+  dependencies:
+    extend "^3.0.2"
+    findup-sync "^4.0.0"
+    fined "^1.2.0"
+    flagged-respawn "^1.0.1"
+    is-plain-object "^2.0.4"
+    object.map "^1.0.1"
+    rechoir "^0.7.0"
+    resolve "^1.19.0"
+
 lines-and-columns@^1.1.6:
   version "1.1.6"
   resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/lines-and-columns/-/lines-and-columns-1.1.6.tgz#1c00c743b433cd0a4e80758f7b64a57440d9ff00"
@@ -5548,12 +5633,12 @@ lodash.sortby@^4.7.0:
   version "4.7.0"
   resolved "https://registry.yarnpkg.com/lodash.sortby/-/lodash.sortby-4.7.0.tgz#edd14c824e2cc9c1e0b0a1b42bb5210516a42438"
 
-lodash@4.17.21, lodash@^4.0.1, lodash@^4.1.1, lodash@^4.17.15:
+lodash@4.17.21, lodash@^4.0.1, lodash@^4.1.1, lodash@^4.17.15, lodash@~4.17.21:
   version "4.17.21"
   resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha1-Z5WRxWTDv/quhFTPCz3zcMPWkRw=
 
-lodash@^4.17.10, lodash@^4.17.11, lodash@^4.17.12, lodash@^4.17.14, lodash@^4.17.19, lodash@^4.17.4, lodash@~4.17.10, lodash@~4.17.19, lodash@~4.17.20:
+lodash@^4.17.10, lodash@^4.17.11, lodash@^4.17.12, lodash@^4.17.14, lodash@^4.17.19, lodash@^4.17.4, lodash@~4.17.10, lodash@~4.17.19:
   version "4.17.20"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
 
@@ -5683,6 +5768,14 @@ micromatch@^3.0.4, micromatch@^3.1.10, micromatch@^3.1.4:
     regex-not "^1.0.0"
     snapdragon "^0.8.1"
     to-regex "^3.0.2"
+
+micromatch@^4.0.2:
+  version "4.0.5"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/micromatch/-/micromatch-4.0.5.tgz#bc8999a7cbbf77cdc89f132f6e467051b49090c6"
+  integrity sha1-vImZp8u/d83InxMvbkZwUbSQkMY=
+  dependencies:
+    braces "^3.0.2"
+    picomatch "^2.3.1"
 
 mime-db@1.45.0:
   version "1.45.0"
@@ -5945,9 +6038,10 @@ object.getownpropertydescriptors@^2.1.1:
     define-properties "^1.1.3"
     es-abstract "^1.18.0-next.1"
 
-object.map@^1.0.0:
+object.map@^1.0.0, object.map@^1.0.1:
   version "1.0.1"
-  resolved "https://registry.yarnpkg.com/object.map/-/object.map-1.0.1.tgz#cf83e59dc8fcc0ad5f4250e1f78b3b81bd801d37"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/object.map/-/object.map-1.0.1.tgz#cf83e59dc8fcc0ad5f4250e1f78b3b81bd801d37"
+  integrity sha1-z4Plncj8wK1fQlDh94s7gb2AHTc=
   dependencies:
     for-own "^1.0.0"
     make-iterator "^1.0.0"
@@ -6168,6 +6262,11 @@ path-parse@^1.0.6:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.6.tgz#d62dbb5679405d72c4737ec58600e9ddcf06d24c"
 
+path-parse@^1.0.7:
+  version "1.0.7"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/path-parse/-/path-parse-1.0.7.tgz#fbc114b60ca42b30d9daf5858e4bd68bbedb6735"
+  integrity sha1-+8EUtgykKzDZ2vWFjkvWi77bZzU=
+
 path-root-regex@^0.1.0:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/path-root-regex/-/path-root-regex-0.1.2.tgz#bfccdc8df5b12dc52c8b43ec38d18d72c04ba96d"
@@ -6206,6 +6305,11 @@ path-type@^4.0.0:
 performance-now@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"
+
+picomatch@^2.3.1:
+  version "2.3.1"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/picomatch/-/picomatch-2.3.1.tgz#3ba3833733646d9d3e4995946c1365a67fb07a42"
+  integrity sha1-O6ODNzNkbZ0+SZWUbBNlpn+wekI=
 
 pify@^2.0.0:
   version "2.3.0"
@@ -6810,6 +6914,13 @@ rechoir@^0.6.2:
   dependencies:
     resolve "^1.1.6"
 
+rechoir@^0.7.0:
+  version "0.7.1"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/rechoir/-/rechoir-0.7.1.tgz#9478a96a1ca135b5e88fc027f03ee92d6c645686"
+  integrity sha1-lHipahyhNbXoj8An8D7pLWxkVoY=
+  dependencies:
+    resolve "^1.9.0"
+
 redent@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/redent/-/redent-1.0.0.tgz#cf916ab1fd5f1f16dfb20822dd6ec7f730c2afde"
@@ -7047,6 +7158,15 @@ resolve@^1.12.0:
   dependencies:
     is-core-module "^2.2.0"
     path-parse "^1.0.6"
+
+resolve@^1.19.0, resolve@^1.9.0:
+  version "1.22.0"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/resolve/-/resolve-1.22.0.tgz#5e0b8c67c15df57a89bdbabe603a002f21731198"
+  integrity sha1-XguMZ8Fd9XqJvbq+YDoALyFzEZg=
+  dependencies:
+    is-core-module "^2.8.1"
+    path-parse "^1.0.7"
+    supports-preserve-symlinks-flag "^1.0.0"
 
 restore-cursor@^2.0.0:
   version "2.0.0"
@@ -7584,6 +7704,11 @@ supports-color@^7.1.0:
   dependencies:
     has-flag "^4.0.0"
 
+supports-preserve-symlinks-flag@^1.0.0:
+  version "1.0.0"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
+  integrity sha1-btpL00SjyUrqN21MwxvHcxEDngk=
+
 symbol-tree@^3.2.1, symbol-tree@^3.2.2:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
@@ -7771,6 +7896,13 @@ to-regex-range@^2.1.0:
   dependencies:
     is-number "^3.0.0"
     repeat-string "^1.6.1"
+
+to-regex-range@^5.0.1:
+  version "5.0.1"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/to-regex-range/-/to-regex-range-5.0.1.tgz#1648c44aae7c8d988a326018ed72f5b4dd0392e4"
+  integrity sha1-FkjESq58jZiKMmAY7XL1tN0DkuQ=
+  dependencies:
+    is-number "^7.0.0"
 
 to-regex@^3.0.1, to-regex@^3.0.2:
   version "3.0.2"
@@ -8005,6 +8137,13 @@ v8flags@~3.1.1:
   dependencies:
     homedir-polyfill "^1.0.1"
 
+v8flags@~3.2.0:
+  version "3.2.0"
+  resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/v8flags/-/v8flags-3.2.0.tgz#b243e3b4dfd731fa774e7492128109a0fe66d656"
+  integrity sha1-skPjtN/XMfp3TnSSEoEJoP5m1lY=
+  dependencies:
+    homedir-polyfill "^1.0.1"
+
 validate-npm-package-license@^3.0.1:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/validate-npm-package-license/-/validate-npm-package-license-3.0.4.tgz#fc91f6b9c7ba15c857f4cb2c5defeec39d4f410a"
@@ -8100,13 +8239,13 @@ which-module@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/which-module/-/which-module-2.0.0.tgz#d9ef07dce77b9902b8a3a8fa4b31c3e3f7e6e87a"
 
-which@^1.2.14, which@^1.2.9, which@^1.3.0, which@~1.3.0:
+which@^1.2.14, which@^1.2.9, which@^1.3.0:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/which/-/which-1.3.1.tgz#a45043d54f5805316da8d62f9f50918d3da70b0a"
   dependencies:
     isexe "^2.0.0"
 
-which@^2.0.1:
+which@^2.0.1, which@~2.0.2:
   version "2.0.2"
   resolved "https://artifactory.oci.oraclecorp.com:443/api/npm/global-dev-npm/which/-/which-2.0.2.tgz#7c6a8dd0a636a0327e10b59c9286eee93f3f51b1"
   integrity sha1-fGqN0KY2oDJ+ELWckobu6T8/UbE=

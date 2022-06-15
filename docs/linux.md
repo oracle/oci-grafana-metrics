@@ -14,8 +14,7 @@ The [Oracle Cloud Infrastructure CLI](https://docs.cloud.oracle.com/iaas/Content
 
 Begin by [installing the Oracle Cloud Infrastructure CLI](https://docs.cloud.oracle.com/iaas/Content/API/SDKDocs/cliinstall.htm). Follow the installation prompts to install the CLI on your local environment. After the installation is complete, use the `oci setup config` command to have the CLI walk you through the first-time setup process. If you haven't already uploaded your public API signing key through the console, follow the instructions [here](https://docs.us-phoenix-1.oraclecloud.com/Content/API/Concepts/apisigningkey.htm#How2) to do so. 
 
-After the CLI has been configured, move the `~/.oci` folder to `/usr/share/grafana` and then change ownership of the `/usr/share/grafana/.oci folder` to the “grafana” user: `sudo chown -R grafana:grafana /usr/share/grafana/.oci`. 
-
+After the CLI has been configured, move the `~/.oci` folder to `/usr/share/grafana` and then change ownership of the `/usr/share/grafana/.oci folder` to the “grafana” user: `sudo chown -R grafana:grafana /usr/share/grafana/.oci`. Update the `key_file` location in `/usr/share/grafana/.oci/config` to the current folder `/usr/share/grafana/.oci/your_key.pem`.
 ## Configure OCI Identity Policies
 
 In the OCI console under **Identity > Groups** click **Create Group** and create a new group called **grafana**. Add the user configured in the OCI CLI to the newly-created group. 
