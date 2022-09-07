@@ -4,9 +4,9 @@
 # nvm install 12.20
 # nvm use 12.20
 
-# rm -rf node_modules
+rm -rf node_modules
 
-# yarn 
+yarn 
 
 
 if [[ ! -d ./node_modules ]]; then
@@ -18,43 +18,9 @@ rm ./oci-metrics-datasource.zip
 rm ./plugin.tar
 ./node_modules/.bin/grunt
 
-# build go
+mage --debug -v
 
-POST=''
-GOOS=''
-
-OS="`uname`"
-case $OS in
-  'Linux')
-      POST='_linux_amd64'
-      GOOS="linux"
-    ;;
-  'Darwin')
-      POST='_darwin_amd64'
-      GOOS="darwin"
-    ;;
-  'AIX') ;;
-  *) ;;
-esac
-
-go mod vendor
-
-if [[ ! -d ./vendor ]]; then
-  echo "dependencies not installed try running | go mod vendor didn't work as expected"
-  exit 1
-fi
-
-echo "building go binary"
-GOOS=$GOOS go build -o ./dist/oci-metrics-plugin$POST
-
-# For debugger
-#  GOOS=$GOOS go build -o ./dist/oci-metrics-plugin$POST -gcflags="all=-N -l"
-
-# For release
- GOOS=linux go build -o ./dist/oci-metrics-plugin_linux_amd64
- GOOS=windows GOARCH=amd64 go build -o ./dist/oci-metrics-plugin_windows_amd64.exe
-
-grafana-toolkit plugin:sign
+#grafana-toolkit plugin:sign
 
 mv ./dist ./oci-metrics-datasource
 tar cvf plugin.tar ./oci-metrics-datasource
