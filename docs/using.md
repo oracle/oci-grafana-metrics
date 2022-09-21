@@ -113,14 +113,14 @@ where each of these placeholders is replaced by the relevant metric name and dim
 
 Many OCI metrics have quite a few dimensions, as a result the default label in a data panel legend for such metrics may be quite long. The metrics plugin provides a means for you to customize the presentation of metrics labels in a data panel legend via the **Legend Format** field in the metrics query editor as shown in the following image.
 
-![Explore Metrics Query Editor](images/MetricsPlugin-ExploreMetricsQueryEditor-Screenshot.png]
+![Explore Metrics Query Editor](images/MetricsPlugin-ExploreMetricsQueryEditor-Screenshot.png)
 
 The Legend Format field for a metrics query can contain any literal text sequences (printable characters only) along with any number of the following placeholders. 
 
-| Placeholder     | Value that will replace the placeholder       |
-| --------------- | --------------------------------------------- |
-| {{metric}}      | The name of metric	                          |
-| {{dimension}}   | The value of the specified metric dimension   |
+| Placeholder       | Value that will replace the placeholder           |
+| ----------------- | ------------------------------------------------- |
+| {{metric}}        | The name of metric	                            |
+| {{dimensionName}} | The value of the specified metric dimension name  |
 
 When the Legend Format field contains a defined format, the metrics plugin will generate a label for each metric that follows the defind format where each of the referenced placeholders is replaced by the relevant value for the metric. Any placeholders (or other text) in the legend format that do not line up with one of these placeholders will be unchanged. Note that placeholder labels are treated as case sensitive.
 
