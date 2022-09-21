@@ -622,7 +622,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 	// more characters that are not the right curly brace (or whitespace) followed
 	// finally by a right curly brace. The inclusion of the <label> portion of the
 	// pattern is to allow the logic to extract the label text from the placeholder.
-	rePlaceholderLabel, err := regexp.Compile(`\{\s*(?P<label>[^} ]+)\s*\}`)
+	rePlaceholderLabel, err := regexp.Compile(`\{\{\s*(?P<label>[^} ]+)\s*\}\}`)
 
 	if err != nil {
 		o.logger.Error("Compilation of legend format placeholders regex failed")

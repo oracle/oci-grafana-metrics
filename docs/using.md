@@ -119,20 +119,20 @@ The Legend Format field for a metrics query can contain any literal text sequenc
 
 | Placeholder     | Value that will replace the placeholder       |
 | --------------- | --------------------------------------------- |
-| {metric}        | The name of metric	                          |
-| {dimension}     | The value of the specified metric dimension   |
+| {{metric}}      | The name of metric	                          |
+| {{dimension}}   | The value of the specified metric dimension   |
 
 When the Legend Format field contains a defined format, the metrics plugin will generate a label for each metric that follows the defind format where each of the referenced placeholders is replaced by the relevant value for the metric. Any placeholders (or other text) in the legend format that do not line up with one of these placeholders will be unchanged. Note that placeholder labels are treated as case sensitive.
 
 Examples of custom legend formats that could be defined for metrics associated with OCI resources include:
 
-| Metric Namespace  | Example Metric   | Example Legend/Label Format                  | Example Resulting Metric Label    |
-| ----------------- | ---------------- | -------------------------------------------- | --------------------------------- |
-| oci_computeagent  | CpuUtilization   | {metric} - {resourceDisplayName}             | CpuUtilization - InstanceName-123 |
-| oci_computeagent  | DiskBytesWritten | {availabilityDomain} - {resourceDisplayName} |	bwAI:PHX-AD-2 - InstanceName-456  |
-| oci_lbaas	        | BytesReceived    | {lbName} / {backendSetName}                  | myLB / backendset1                |
-| oci_objectstorage	| ObjectCount      | {tier} ^ {resourceDisplayName}               | NORMAL ^ myBucketName             |
-| oci_filestorage   | FileSystemUsage  | resourceId={resourceId}                      | resourceId=ocid1.filesystem....   |
+| Metric Namespace  | Example Metric   | Example Legend/Label Format                     | Example Resulting Metric Label    |
+| ----------------- | ---------------- | ----------------------------------------------- | --------------------------------- |
+| oci_computeagent  | CpuUtilization   | {{metric}} - {{resourceDisplayName}}            | CpuUtilization - InstanceName-123 |
+| oci_computeagent  | DiskBytesWritten | {{availabilityDomain} - {{resourceDisplayName}} | bwAI:PHX-AD-2 - InstanceName-456  |
+| oci_lbaas	        | BytesReceived    | {{lbName}} / {{backendSetName}}                 | myLB / backendset1                |
+| oci_objectstorage	| ObjectCount      | {{tier}} ^ {{resourceDisplayName}}              | NORMAL ^ myBucketName             |
+| oci_filestorage   | FileSystemUsage  | resourceId={{resourceId}}                       | resourceId=ocid1.filesystem....   |
 
 ## Custom Metrics and Namespaces
 
