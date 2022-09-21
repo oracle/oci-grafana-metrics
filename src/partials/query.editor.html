@@ -97,8 +97,19 @@
         >
         </metric-segment>
       </div>
-      <div class="gf-form gf-form--grow">
+    </div>
+    <div class="gf-form-inline">
+      <label class="gf-form-label query-keyword width-7">Legend Format</label>
+      <input class="gf-form-input width-30" 
+        type="text" 
+        ng-required="false"
+        ng-model="ctrl.target.legendFormat"
+        ng-blur="ctrl.onChangeInternal()">
+      </input>
+    </div>
+    <div class="gf-form gf-form--grow">
 		<div class="gf-form-label gf-form-label--grow"></div>
-	  </div>
-     </div>
+	</div>
+</div>
+
 </query-editor-row>

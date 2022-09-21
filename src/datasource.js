@@ -210,7 +210,7 @@ export default class OCIDatasource {
     });
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
-    queries = this.splitMultiValueDimensionsIntoQuieries(queries, options);
+    queries = this.splitMultiValueDimensionsIntoQueries(queries, options);
 
     const results = [];
     for (let t of queries) {
@@ -266,6 +266,7 @@ export default class OCIDatasource {
       const compartmentId = await this.getCompartmentId(
         this.getVariableValue(t.compartment, options.scopedVars)
       );
+
       const result = {
         resolution,
         environment: this.environment,
@@ -283,6 +284,7 @@ export default class OCIDatasource {
           options.scopedVars
         ),
         query: query,
+        legendFormat: t.legendFormat,
       };
       results.push(result);
     }
@@ -293,7 +295,7 @@ export default class OCIDatasource {
   }
 
   /**
-   * Splits queries with multi valued dimensions into several quiries.
+   * Splits queries with multi valued dimensions into several queries.
    * Example:
    * "DeliverySucceedEvents[1m]{resourceDisplayName = ["ResouceName_1","ResouceName_1"], eventType = ["Create","Delete"]}.mean()" ->
    *  [
@@ -303,7 +305,7 @@ export default class OCIDatasource {
    *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_2", eventType = "Delete"}.mean()",
    *  ]
    */
-  splitMultiValueDimensionsIntoQuieries(queries, options) {
+  splitMultiValueDimensionsIntoQueries(queries, options) {
     return queries.reduce((data, t) => {
       if (_.isEmpty(t.dimensions) || !_.isEmpty(t.target)) {
         // nothing to split or dimensions won't be used, query is set manually

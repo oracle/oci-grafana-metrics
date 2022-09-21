@@ -18,7 +18,7 @@ Click **Panel Title** and then **Edit** to add metrics to the dashboard.![Screen
 
 Choose the appropriate **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options.
 
-![Screen_Shot_2019-02-15_at_3.06.49_PM](images/Screen_Shot_2019-02-15_at_3.06.49_PM.png)
+![Metrics Query Editor](images/MetricsPlugin-QueryEditor-Screenshot.png)
 
 Click the save icon to save your graph.
 
@@ -53,6 +53,8 @@ Repeat the process for the following OCI variables:
 | metric          | `metrics($region,$compartment, $namespace, $resourcegroup)`                                |
 | dimensionKey    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup)`                     |
 | dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
+
+All of the metrics plugin template variables only support a singleton value with the exception of the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
 
 The final list of variables should look like this: 
 
@@ -101,6 +103,36 @@ Dimensions can be used to add specificity to your graphs. To use dimensions crea
 ![Screen Shot 2019-02-14 at 12.03.26 PM](images/Screen%20Shot%202019-02-14%20at%2012.03.26%20PM.png)
 
 
+### Metric Label Customization
+
+When the metric plugin performs a query defined in a data panel, the query results contain the queried metric name, the values of the metric in the specified time range, and the values of the dimensions associated with the resource to which the metric pertains. The plugin by default generates a label for each of the metrics returned in the query results of the form:
+
+    <Metric Name>[<Dimension 1 value> | <Dimension 2 value> | ... <Dimension N value>]
+
+where each of these placeholders is replaced by the relevant metric name and dimension values for a given metric. This label is what is shown in the panel legend to distinguish each metric. Metric dimensions that contain a resource OCID, either the ID of the resource with which the metric is associated or an OCI resource related to the resource with which the metric is associated, contain the full resource OCID.
+
+Many OCI metrics have quite a few dimensions, as a result the default label in a data panel legend for such metrics may be quite long. The metrics plugin provides a means for you to customize the presentation of metrics labels in a data panel legend via the **Legend Format** field in the metrics query editor as shown in the following image.
+
+![Explore Metrics Query Editor](images/MetricsPlugin-ExploreMetricsQueryEditor-Screenshot.png]
+
+The Legend Format field for a metrics query can contain any literal text sequences (printable characters only) along with any number of the following placeholders. 
+
+| Placeholder     | Value that will replace the placeholder       |
+| --------------- | --------------------------------------------- |
+| {metric}        | The name of metric	                          |
+| {dimension}     | The value of the specified metric dimension   |
+
+When the Legend Format field contains a defined format, the metrics plugin will generate a label for each metric that follows the defind format where each of the referenced placeholders is replaced by the relevant value for the metric. Any placeholders (or other text) in the legend format that do not line up with one of these placeholders will be unchanged. Note that placeholder labels are treated as case sensitive.
+
+Examples of custom legend formats that could be defined for metrics associated with OCI resources include:
+
+| Metric Namespace  | Example Metric   | Example Legend/Label Format                  | Example Resulting Metric Label    |
+| ----------------- | ---------------- | -------------------------------------------- | --------------------------------- |
+| oci_computeagent  | CpuUtilization   | {metric} - {resourceDisplayName}             | CpuUtilization - InstanceName-123 |
+| oci_computeagent  | DiskBytesWritten | {availabilityDomain} - {resourceDisplayName} |	bwAI:PHX-AD-2 - InstanceName-456  |
+| oci_lbaas	        | BytesReceived    | {lbName} / {backendSetName}                  | myLB / backendset1                |
+| oci_objectstorage	| ObjectCount      | {tier} ^ {resourceDisplayName}               | NORMAL ^ myBucketName             |
+| oci_filestorage   | FileSystemUsage  | resourceId={resourceId}                      | resourceId=ocid1.filesystem....   |
 
 ## Custom Metrics and Namespaces
 

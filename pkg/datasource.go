@@ -57,6 +57,7 @@ type GrafanaOCIRequest struct {
 	Resolution    string
 	Namespace     string
 	ResourceGroup string
+	LegendFormat  string
 }
 
 //GrafanaSearchRequest incoming request body for search requests
@@ -428,9 +429,10 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 }
 
 type responseAndQuery struct {
-	ociRes monitoring.SummarizeMetricsDataResponse
-	query  backend.DataQuery
-	err    error
+	ociRes       monitoring.SummarizeMetricsDataResponse
+	query        backend.DataQuery
+	err          error
+	legendFormat string
 }
 
 func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -472,10 +474,14 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint(spew.Sdump(query), spew.Sdump(request), spew.Sdump(res)))
 		}
+		// Include the legend format in the information about each query
+		// since the legend format may be different for different queries
+		// on the same data panel
 		results = append(results, responseAndQuery{
 			res,
 			query,
 			err,
+			ts.LegendFormat,
 		})
 	}
 	resp := backend.NewQueryDataResponse()
@@ -488,9 +494,16 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 		}
 
 		for _, item := range q.ociRes.Items {
-			name := *(item.Name)
+			metricName := *(item.Name)
 
-			item.Dimensions["resourceId"] = strings.ToLower(item.Dimensions["resourceId"])
+			// NOTE: There are a few OCI resources, e.g. SCH, for which no such
+			// dimension is defined!!!
+			if resourceIdValue, ok := item.Dimensions["resourceId"]; ok {
+				item.Dimensions["resourceId"] = strings.ToLower(resourceIdValue)
+			} else if resourceIdValue, ok := item.Dimensions["resourceID"]; ok {
+				item.Dimensions["resourceID"] = strings.ToLower(resourceIdValue)
+			}
+
 			dimensionKeys := make([]string, len(item.Dimensions))
 			i := 0
 
@@ -499,29 +512,30 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 				i++
 			}
 
-			sort.Strings(dimensionKeys)
+			var fullDisplayName string
+			// If the legend format field in the query editor is empty then the metric label will be:
+			//   <Metric name>[<dimension value 1> | <dimension value 2> | ... <dimension value N>]
+			if q.legendFormat == "" {
+				sort.Strings(dimensionKeys)
 
-			var dmValueListForMetricStream = ""
-			for _, dimensionKey := range dimensionKeys {
-				var dimValue = item.Dimensions[dimensionKey]
+				var dmValueListForMetricStream = ""
+				for _, dimensionKey := range dimensionKeys {
+					var dimValue = item.Dimensions[dimensionKey]
 
-				if strings.HasPrefix(dimValue, "ocid1.") {
-					ocidParts := strings.SplitAfter(dimValue, ".")
-					if len(ocidParts[len(ocidParts)-1]) > 5 {
-						var alphaOcidId = ocidParts[len(ocidParts)-1]
-						ocidParts[len(ocidParts)-1] = "XXXX" + alphaOcidId[len(alphaOcidId)-6:]
+					if dmValueListForMetricStream == "" {
+						dmValueListForMetricStream = "[" + dimValue
+					} else {
+						dmValueListForMetricStream = dmValueListForMetricStream + " | " + dimValue
 					}
-					dimValue = strings.Join(ocidParts, "")
-				}
 
-				if dmValueListForMetricStream == "" {
-					dmValueListForMetricStream = "[" + dimValue
-				} else {
-					dmValueListForMetricStream = dmValueListForMetricStream + "," + dimValue
 				}
+				dmValueListForMetricStream = dmValueListForMetricStream + "]"
+				fullDisplayName = metricName + dmValueListForMetricStream
+				// If user has provided a value for the legend format then use the format to
+				// generate the display name for the metric
+			} else {
+				fullDisplayName = o.generateCustomMetricLabel(q.legendFormat, metricName, item.Dimensions)
 			}
-			dmValueListForMetricStream = dmValueListForMetricStream + "]"
-			fullDisplayName := name + dmValueListForMetricStream
 
 			//dimeString, _ := json.Marshal(item.Dimensions)
 			var fieldConfig = data.FieldConfig{}
@@ -542,8 +556,6 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 			if _, okUnitName := item.Metadata["unit"]; okUnitName {
 				fieldConfig.Unit = item.Metadata["unit"]
 			}
-
-			o.logger.Info("item.Metadata " + fmt.Sprint(item.Metadata))
 
 			fieldConfig.DisplayNameFromDS = fullDisplayName
 
@@ -587,4 +599,59 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		resp.Responses[query.RefID] = respD
 	}
 	return resp, nil
+}
+
+/*
+ Function generates a custom metric label for the identified metric based on the
+ legend format provided by the user where any known placeholders within the format
+ will be replaced with the appropriate value.
+
+ The currently supported legend format placeholders are:
+   * {metric} - Will be replaced by the metric name
+   * {dimension} - Will be replaced by the value of the specified dimension
+
+ Any placeholders (or other text) in the legend format that do not line up with one
+ of these placeholders will be unchanged. Note that placeholder labels are treated
+ as case sensitive.
+*/
+func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
+	mDimensions map[string]string) string {
+
+	metricLabel := legendFormat
+	// Define a pattern where we are looking for a left curly brace followed by one or
+	// more characters that are not the right curly brace (or whitespace) followed
+	// finally by a right curly brace. The inclusion of the <label> portion of the
+	// pattern is to allow the logic to extract the label text from the placeholder.
+	rePlaceholderLabel, err := regexp.Compile(`\{\s*(?P<label>[^} ]+)\s*\}`)
+
+	if err != nil {
+		o.logger.Error("Compilation of legend format placeholders regex failed")
+		return metricLabel
+	}
+
+	for _, placeholderStr := range rePlaceholderLabel.FindAllString(metricLabel, -1) {
+		if rePlaceholderLabel.Match([]byte(placeholderStr)) == true {
+			matches := rePlaceholderLabel.FindStringSubmatch(placeholderStr)
+			labelIndex := rePlaceholderLabel.SubexpIndex("label")
+
+			placeholderLabel := matches[labelIndex]
+			re := regexp.MustCompile(placeholderStr)
+
+			// If this placeholder is the {metric} placeholder then replace the
+			// placeholder string with the metric name
+			if placeholderLabel == "metric" {
+				metricLabel = re.ReplaceAllString(metricLabel, metricName)
+			} else {
+				// Check whether there is a dimension name for the metric that matches
+				// the placeholder label. If there is then replace the placeholder with
+				// the value of the dimension
+				if dimensionValue, ok := mDimensions[placeholderLabel]; ok {
+					metricLabel = re.ReplaceAllString(metricLabel, dimensionValue)
+				}
+			}
+		}
+	}
+	o.logger.Debug("Generated metric label", "legendFormat", legendFormat,
+		"metricName", metricName, "metricLabel", metricLabel)
+	return metricLabel
 }
