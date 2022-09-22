@@ -10,6 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
+  tenancyconfigQueryRegex,
   compartmentsQueryRegex,
   dimensionKeysQueryRegex,
   dimensionValuesQueryRegex,
@@ -21,6 +22,7 @@ export const SELECT_PLACEHOLDERS = {
   DIMENSION_VALUE: 'select value',
   COMPARTMENT: 'select compartment',
   REGION: 'select region',
+  TENANCYCONFIG: 'select tenancy config',
   NAMESPACE: 'select namespace',
   RESOURCEGROUP: 'select resource group',
   METRIC: 'select metric',
@@ -35,6 +37,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.uiSegmentSrv = uiSegmentSrv;
 
     this.target.region = this.target.region || SELECT_PLACEHOLDERS.REGION;
+    this.target.tenancyconfig = this.target.tenancyconfig || SELECT_PLACEHOLDERS.TENANCYCONFIG;
     this.target.compartment = this.target.compartment || SELECT_PLACEHOLDERS.COMPARTMENT;
     this.target.namespace = this.target.namespace || SELECT_PLACEHOLDERS.NAMESPACE;
     this.target.resourcegroup = this.target.resourcegroup || SELECT_PLACEHOLDERS.RESOURCEGROUP;
@@ -70,6 +73,12 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   getRegions() {
     return this.datasource.getRegions().then(regions => {
       return this.appendVariables([ ...regions], regionsQueryRegex);
+    });
+  }
+
+  getTenancyConfig() {
+    return this.datasource.getTenancyConfig().then(tenancyconfig => {
+      return this.appendVariables([ ...tenancyconfig], tenancyconfigQueryRegex);
     });
   }
 

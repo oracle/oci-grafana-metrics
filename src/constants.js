@@ -14,11 +14,12 @@ export const namespaces = ['oci_computeagent', 'oci_blockstore', 'oci_lbaas', 'o
 export const aggregations = ['count()', 'max()', 'mean()', 'min()', 'rate()', 'sum()', 'percentile(.90)', 'percentile(.95)', 'percentile(.99)', 'last()']
 export const windows = [AUTO, '1m', '5m', '1h']
 export const resolutions = [AUTO, '1m', '5m', '1h']
-export const environments = ['local', 'OCI Instance']
+export const environments = ['local', 'OCI Instance', 'multitenancy']
 
 
 export const compartmentsQueryRegex = /^compartments\(\)\s*/;
 export const regionsQueryRegex = /^regions\(\)\s*/;
+export const tenancyconfigQueryRegex = /^tenancyconfig\(\)\s*/;
 export const namespacesQueryRegex = /^namespaces\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
 export const resourcegroupsQueryRegex = /^resourcegroups\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
 export const metricsQueryRegex = /^metrics\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
