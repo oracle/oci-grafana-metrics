@@ -39,7 +39,7 @@ export default class OCIDatasource {
 
     this.compartmentsCache = [];
     this.regionsCache = [];
-    
+
     this.getTenancyConfig();
 
     this.getRegions();
@@ -282,6 +282,7 @@ export default class OCIDatasource {
         type: t.type || "timeserie",
         region: _.isEmpty(region) ? this.defaultRegion : region,
         compartment: compartmentId,
+        tenancyconfig: t.tenancyconfig,
         namespace: this.getVariableValue(t.namespace, options.scopedVars),
         resourcegroup: this.getVariableValue(
           t.resourcegroup,
