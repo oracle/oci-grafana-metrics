@@ -10,6 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
+  tenancyconfigsQueryRegex,
   compartmentsQueryRegex,
   dimensionValuesQueryRegex,
   removeQuotes,
@@ -38,6 +39,8 @@ export default class OCIDatasource {
 
     this.compartmentsCache = [];
     this.regionsCache = [];
+    
+    this.getTenancyConfig();
 
     this.getRegions();
     this.getCompartments();
@@ -155,6 +158,7 @@ export default class OCIDatasource {
           compartment: compartmentId,
           namespace: namespace,
           resourcegroup: resourcegroup,
+          tenancyconfig: tenancyconfig,
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -392,6 +396,13 @@ export default class OCIDatasource {
       });
     }
 
+    let tenancyconfigQuery = varString.match(tenancyconfigsQueryRegex);
+    if (tenancyconfigQuery) {
+      return this.getTenancyConfig().catch((err) => {
+        throw new Error("Unable to get tenancyconfigs: " + err);
+      });
+    }    
+
     let compartmentQuery = varString.match(compartmentsQueryRegex);
     if (compartmentQuery) {
       return this.getCompartments()
@@ -497,6 +508,26 @@ export default class OCIDatasource {
     }).then((items) => {
       this.regionsCache = this.mapToTextValue(items, "regions");
       return this.regionsCache;
+    });
+  }
+
+  getTenancyConfig() {
+    if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
+      return this.q.when(this.tenancyconfigCache);
+    }
+
+    return this.doRequest({
+      targets: [
+        {
+          environment: this.environment,
+          datasourceId: this.id,
+          queryType: "tenancyconfig",
+        },
+      ],
+      range: this.timeSrv.timeRange(),
+    }).then((items) => {
+      this.tenancyconfigCache = this.mapToTextValue(items, "tenancyconfig");
+      return this.tenancyconfigCache;
     });
   }
 
@@ -766,6 +797,7 @@ export default class OCIDatasource {
           value: result.data[0].fields[1].values.toArray()[i],
         }));
       case "regions":
+      case "tenancyconfig":
       case "namespaces":
       case "resourcegroups":
       case "search":
