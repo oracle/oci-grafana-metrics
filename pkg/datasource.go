@@ -73,12 +73,11 @@ type GrafanaSearchRequest struct {
 
 // GrafanaCommonRequest - captures the common parts of the search and metricsRequests
 type GrafanaCommonRequest struct {
-	Compartment   string
-	Environment   string
-	QueryType     string
-	Region        string
-	TenancyConfig string
-	TenancyOCID   string `json:"tenancyOCID"`
+	Compartment string
+	Environment string
+	QueryType   string
+	Region      string
+	TenancyOCID string `json:"tenancyOCID"`
 }
 
 // Query - Determine what kind of query we're making
