@@ -43,6 +43,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.target.window = this.target.window || AUTO;
     this.target.aggregation = this.target.aggregation || 'mean()'
     this.target.dimensions = this.target.dimensions || [];
+    this.target.legendFormat = this.target.legendFormat || ''
 
     this.dimensionSegments = [];
     this.removeDimensionSegment = uiSegmentSrv.newSegment({ fake: true, value: '-- remove dimension --' });
