@@ -663,3 +663,31 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 	}
 	return resp, nil
 }
+
+func (o *OCIDatasource) multiTenancyConfigResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+
+	resp := backend.NewQueryDataResponse()
+
+	for _, query := range req.Queries {
+		var ts GrafanaOCIRequest
+		configProvider := common.CustomProfileConfigProvider("", ts.TenancyConfig)
+		if err := json.Unmarshal(query.JSON, &ts); err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
+		res, err := configProvider.TenancyOCID()
+		if err != nil {
+			return nil, errors.Wrap(err, "error fetching regions")
+		}
+
+		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
+
+		log.DefaultLogger.Debug(ts.TenancyConfig)
+		log.DefaultLogger.Debug(res)
+		frame.AppendRow(res)
+
+		respD := resp.Responses[query.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[query.RefID] = respD
+	}
+	return resp, nil
+}
