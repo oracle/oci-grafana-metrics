@@ -723,7 +723,6 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 				log.DefaultLogger.Debug(output)
 				log.DefaultLogger.Debug(res)
 				value := output + "/" + res
-				// ts.TenancyConfig = append(ts.TenancyConfig, output)
 				frame.AppendRow(*(common.String(value)))
 			}
 		}
@@ -737,15 +736,4 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 		resp.Responses[query.RefID] = respD
 	}
 	return resp, nil
-}
-
-func alphasort(str []rune, depth int) {
-	for x := range str {
-		y := x + 1
-		for y = range str {
-			if str[x] < str[y] {
-				str[x], str[y] = str[y], str[x]
-			}
-		}
-	}
 }
