@@ -293,7 +293,7 @@ export default class OCIDatasource {
         type: t.type || "timeserie",
         region: _.isEmpty(region) ? this.defaultRegion : region,
         compartment: compartmentId,
-        tenancyconfig: this.tenancyconfig,
+        tenancyconfig: this.getVariableValue(t.tenancyconfig, options.scopedVars),
         namespace: this.getVariableValue(t.namespace, options.scopedVars),
         resourcegroup: this.getVariableValue(
           t.resourcegroup,
@@ -417,7 +417,10 @@ export default class OCIDatasource {
 
     let compartmentQuery = varString.match(compartmentsQueryRegex);
     if (compartmentQuery) {
-      return this.getCompartments()
+      let target = {
+        tenancyconfig: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+      };      
+      return this.getCompartments(target)
         .then((compartments) => {
           return compartments.map((c) => ({ text: c.text, value: c.text }));
         })
@@ -544,8 +547,12 @@ export default class OCIDatasource {
     });
   }
 
-  getCompartments() {
-    const tenancyconfig = this.getTenancyConfig();    
+  async getCompartments(target) {
+    const tenancyconfig =
+      target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
+        ? ""
+        : this.getVariableValue(target.tenancyconfig);  
+
     if (this.compartmentsCache && this.compartmentsCache.length > 0) {
       return this.q.when(this.compartmentsCache);
     }
@@ -811,11 +818,7 @@ export default class OCIDatasource {
           value: result.data[0].fields[1].values.toArray()[i],
         }));
       case "regions":
-      case "tenancyconfig":
-        return result.data[0].fields[0].values.toArray().map((name) => ({
-          text: name,
-          value: name,
-        }));
+      case "tenancyconfig":       
       case "namespaces":
       case "resourcegroups":
       case "search":
