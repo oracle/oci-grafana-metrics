@@ -29,6 +29,8 @@ export const SELECT_PLACEHOLDERS = {
   WINDOW: 'select window'
 }
 
+var var_per
+
 export class OCIDatasourceQueryCtrl extends QueryCtrl {
   constructor($scope, $injector, $q, uiSegmentSrv) {
     super($scope, $injector)
@@ -208,7 +210,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   }
 
   onChangeTenancyConfig() {
-    var var_per = this.datasource.getVariableValue(this.target.tenancyconfig);
+    var_per = this.datasource.getVariableValue(this.target.tenancyconfig);
     console.log(var_per);
 
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
