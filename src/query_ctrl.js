@@ -207,6 +207,20 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
   }
 
+  onChangeTenancyConfig() {
+    var var_per = $(this).val();
+    // var select = document.getElementById('TenancyConfig');
+    console.log(var_per);
+    // var option = select.options[select.selectedIndex];
+
+    // document.getElementById('value').value = option.value;
+    // document.getElementById('text').value = option.text;
+    // console.log(option.text);
+    // console.log(option.value);
+
+    this.panelCtrl.refresh(); // Asks the panel to refresh data.
+  }
+
   /**
    * On dimension segment change callback
    * @param segment 
