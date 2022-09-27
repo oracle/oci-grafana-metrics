@@ -589,9 +589,17 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		}
 
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
+		var alpha []string
 
+		/* Generate list of regions */
 		for _, item := range res.Items {
-			frame.AppendRow(*(item.Name))
+			alpha = append(alpha, *(item.Name))
+		}
+
+		/* Sort regions list */
+		sort.Strings(alpha)
+		for _, value := range alpha {
+			frame.AppendRow(*(common.String(value)))
 		}
 
 		respD := resp.Responses[query.RefID]
