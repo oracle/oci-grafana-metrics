@@ -29,8 +29,6 @@ export const SELECT_PLACEHOLDERS = {
   WINDOW: 'select window'
 }
 
-var var_per
-
 export class OCIDatasourceQueryCtrl extends QueryCtrl {
   constructor($scope, $injector, $q, uiSegmentSrv) {
     super($scope, $injector)
@@ -74,7 +72,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   // ****************************** Options **********************************
 
   getRegions() {
-    return this.datasource.getRegions().then(regions => {
+    return this.datasource.getRegions(this.target).then(regions => {
       return this.appendVariables([ ...regions], regionsQueryRegex);
     });
   }
@@ -209,12 +207,6 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
   }
 
-  onChangeTenancyConfig() {
-    var_per = this.datasource.getVariableValue(this.target.tenancyconfig);
-    console.log(var_per);
-
-    this.panelCtrl.refresh(); // Asks the panel to refresh data.
-  }
 
   /**
    * On dimension segment change callback

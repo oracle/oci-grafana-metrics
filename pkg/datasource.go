@@ -93,9 +93,6 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	queryType := ts.QueryType
 	if o.config == nil {
 		configProvider, err := getConfigProvider(ts.Environment)
-		log.DefaultLogger.Debug(ts.QueryType)
-		log.DefaultLogger.Debug(ts.Region)
-		log.DefaultLogger.Debug(ts.Environment)
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
 		}
@@ -203,6 +200,10 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.Quer
 		var ts GrafanaSearchRequest
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
+		}
+
+		if ts.TenancyConfig != "" {
+			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 		}
 
 		reqDetails := monitoring.ListMetricsDetails{}
@@ -348,20 +349,8 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(ts.Environment)
 	log.DefaultLogger.Debug(ts.TenancyConfig)
 
-	if o.config == nil {
-		configProvider := common.CustomProfileConfigProvider("", ts.TenancyConfig)
-		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			return nil, errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-		}
-		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			o.logger.Error("error with client")
-			panic(err)
-		}
-		o.identityClient = identityClient
-		o.metricsClient = metricsClient
-		o.config = configProvider
+	if ts.TenancyConfig != "" {
+		ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 	}
 
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
@@ -617,6 +606,9 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
+		if ts.TenancyConfig != "" {
+			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
+		}
 		res, err := o.identityClient.ListRegions(ctx)
 		if err != nil {
 			return nil, errors.Wrap(err, "error fetching regions")
@@ -720,8 +712,6 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 					return nil, errors.Wrap(err, "error fetching regions")
 				}
 
-				log.DefaultLogger.Debug(output)
-				log.DefaultLogger.Debug(res)
 				value := output + "/" + res
 				frame.AppendRow(*(common.String(value)))
 			}
@@ -736,4 +726,35 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 		resp.Responses[query.RefID] = respD
 	}
 	return resp, nil
+}
+
+func (o *OCIDatasource) tenancySetup(tenancyconfig string) (string, error) {
+	var configProvider common.ConfigurationProvider
+	log.DefaultLogger.Debug(tenancyconfig)
+
+	res := strings.Split(tenancyconfig, "/")
+
+	configname := res[0]
+	tenancyocid := res[1]
+
+	if configname == "DEFAULT" {
+		configProvider = common.DefaultConfigProvider()
+	} else {
+		configProvider = common.CustomProfileConfigProvider("", configname)
+
+	}
+	metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+	if err != nil {
+		return "", errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+	}
+	identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+	if err != nil {
+		o.logger.Error("error with client")
+		panic(err)
+	}
+	o.identityClient = identityClient
+	o.metricsClient = metricsClient
+	o.config = configProvider
+
+	return tenancyocid, nil
 }
