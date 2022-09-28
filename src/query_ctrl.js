@@ -85,7 +85,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   }
 
   getCompartments() {
-    return this.datasource.getCompartments().then(compartments => {
+    return this.datasource.getCompartments(this.target).then(compartments => {
       return this.appendVariables([...compartments], compartmentsQueryRegex);
     });
   }
