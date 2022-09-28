@@ -277,9 +277,12 @@ export default class OCIDatasource {
           options.scopedVars
         )}[${window}]${dimension}.${t.aggregation}`;
       }
-
+      let target = {
+        tenancyconfig: this.getVariableValue(t.tenancyconfig, options.scopedVars),
+        region: _.isEmpty(region) ? this.defaultRegion : region,
+      }; 
       const compartmentId = await this.getCompartmentId(
-        this.getVariableValue(t.compartment, options.scopedVars), ""
+        this.getVariableValue(t.compartment, options.scopedVars), target
       );
 
       const result = {
@@ -516,12 +519,10 @@ export default class OCIDatasource {
         ? ""
         : this.getVariableValue(target.tenancyconfig);
           
-    // if (target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG) {
-    //   tenancyocid=this.tenancyOCID
-    // } else {
-    //   const myArray = tenancyconfig.split("/");
-    //   let tenancyocid = myArray[1];   
-    // }           
+    if (target.tenancyconfig != SELECT_PLACEHOLDERS.TENANCYCONFIG) {
+      const myArray = tenancyconfig.split("/");
+      this.tenancyOCID = myArray[1];   
+    }           
     if (this.regionsCache && this.regionsCache.length > 0) {
       return this.q.when(this.regionsCache);
     }
@@ -576,6 +577,10 @@ export default class OCIDatasource {
     // if (this.compartmentsCache && this.compartmentsCache.length > 0) {
     //   return this.q.when(this.compartmentsCache);
     // }
+    console.log(target.region)
+    console.log(target.tenancyconfig)
+    console.log(target)
+
     return this.doRequest({
       targets: [
         {
@@ -594,7 +599,7 @@ export default class OCIDatasource {
     });
   }
 
-  getCompartmentId(compartment, target) {
+  getCompartmentId(compartment, target) {   
     return this.getCompartments(target).then((compartments) => {
       const compartmentFound = compartments.find(
         (c) => c.text === compartment || c.value === compartment
