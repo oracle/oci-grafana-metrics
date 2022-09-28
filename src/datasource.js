@@ -41,9 +41,9 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenancyconfigCache = [];
 
-    this.getTenancyConfig();
+    // this.getTenancyConfig();
 
-    this.getRegions();
+    // this.getRegions();
     // this.getCompartments();
   }
 
@@ -151,7 +151,7 @@ export default class OCIDatasource {
       return this.q.when([]);
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = await this.getCompartmentId(compartment, target);
     return this.doRequest({
       targets: [
         {
@@ -279,7 +279,7 @@ export default class OCIDatasource {
       }
 
       const compartmentId = await this.getCompartmentId(
-        this.getVariableValue(t.compartment, options.scopedVars)
+        this.getVariableValue(t.compartment, options.scopedVars), target
       );
       const result = {
         resolution,
@@ -401,7 +401,10 @@ export default class OCIDatasource {
   templateMetricQuery(varString) {
     let regionQuery = varString.match(regionsQueryRegex);
     if (regionQuery) {
-      return this.getRegions().catch((err) => {
+      let target = {
+        tenancyconfig: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+      };        
+      return this.getRegions(target).catch((err) => {
         throw new Error("Unable to get regions: " + err);
       });
     }
@@ -417,6 +420,7 @@ export default class OCIDatasource {
     if (compartmentQuery) {
       let target = {
         tenancyconfig: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+        region: removeQuotes(this.getVariableValue(namespaceQuery[2])),
       };      
       return this.getCompartments(target)
         .then((compartments) => {
@@ -432,6 +436,7 @@ export default class OCIDatasource {
       let target = {
         region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
         compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
+        tenancyconfig: removeQuotes(this.getVariableValue(namespaceQuery[3])),
       };
       return this.getNamespaces(target).catch((err) => {
         throw new Error("Unable to get namespaces: " + err);
@@ -503,7 +508,11 @@ export default class OCIDatasource {
     throw new Error("Unable to parse templating string");
   }
 
-  getRegions() {
+  async getRegions(target) {
+    const tenancyconfig =
+      target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
+        ? ""
+        : this.getVariableValue(target.tenancyconfig);       
     if (this.regionsCache && this.regionsCache.length > 0) {
       return this.q.when(this.regionsCache);
     }
@@ -514,6 +523,7 @@ export default class OCIDatasource {
           environment: this.environment,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
+          tenancyconfig: tenancyconfig,
           queryType: "regions",
         },
       ],
@@ -525,10 +535,9 @@ export default class OCIDatasource {
   }
 
   getTenancyConfig() {
-    console.log("start getTenancyConfig")
-    if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
-      return this.q.when(this.tenancyconfigCache);
-    }
+    // if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
+    //   return this.q.when(this.tenancyconfigCache);
+    // }
 
     return this.doRequest({
       targets: [
@@ -546,14 +555,14 @@ export default class OCIDatasource {
   }
 
   async getCompartments(target) {
-    // const tenancyconfig = this.datasource.getVariableValue(this.target.tenancyconfig);
-    // var var_per = this.datasource.getVariableValue(this.target.tenancyconfig);
-    // const var_per = await this.getCompartmentId(tenancyconfig);
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
         ? ""
         : this.getVariableValue(target.tenancyconfig);    
-
+    const region =
+      target.region === SELECT_PLACEHOLDERS.REGION
+        ? ""
+        : this.getVariableValue(target.region);
     if (this.compartmentsCache && this.compartmentsCache.length > 0) {
       return this.q.when(this.compartmentsCache);
     }
@@ -565,7 +574,7 @@ export default class OCIDatasource {
           tenancyOCID: this.tenancyOCID,
           tenancyconfig: tenancyconfig,
           queryType: "compartments",
-          region: this.defaultRegion, // compartments are registered for the all regions, so no difference which region to use here
+          region: _.isEmpty(region) ? this.defaultRegion : region,
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -575,8 +584,8 @@ export default class OCIDatasource {
     });
   }
 
-  getCompartmentId(compartment) {
-    return this.getCompartments().then((compartments) => {
+  getCompartmentId(compartment, target) {
+    return this.getCompartments(target).then((compartments) => {
       const compartmentFound = compartments.find(
         (c) => c.text === compartment || c.value === compartment
       );
@@ -593,11 +602,15 @@ export default class OCIDatasource {
       target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT
         ? ""
         : this.getVariableValue(target.compartment);
+    const tenancyconfig =
+      target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
+        ? ""
+        : this.getVariableValue(target.tenancyconfig);         
     if (_.isEmpty(compartment)) {
       return this.q.when([]);
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = await this.getCompartmentId(compartment, target);
     return this.doRequest({
       targets: [
         {
@@ -607,6 +620,7 @@ export default class OCIDatasource {
           queryType: "namespaces",
           region: _.isEmpty(region) ? this.defaultRegion : region,
           compartment: compartmentId,
+          tenancyconfig: tenancyconfig,
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -632,7 +646,7 @@ export default class OCIDatasource {
       return this.q.when([]);
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = await this.getCompartmentId(compartment, target);
     return this.doRequest({
       targets: [
         {
@@ -688,7 +702,7 @@ export default class OCIDatasource {
       }
       dimensionsMap[m] = null;
 
-      const compartmentId = await this.getCompartmentId(compartment);
+      const compartmentId = await this.getCompartmentId(compartment, target);
       await this.doRequest({
         targets: [
           {
