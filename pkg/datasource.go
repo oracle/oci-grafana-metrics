@@ -110,7 +110,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 			o.metricsClient = metricsClient
 			o.config = configProvider
 		} else {
-			if ts.TenancyConfig != "" {
+			if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 				ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 			}
 		}
@@ -206,7 +206,7 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.Quer
 			return &backend.QueryDataResponse{}, err
 		}
 
-		if ts.TenancyConfig != "" {
+		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 		}
 
@@ -281,7 +281,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDa
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		if ts.TenancyConfig != "" {
+		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 		}
 		reqDetails := monitoring.ListMetricsDetails{}
@@ -356,7 +356,7 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(ts.Environment)
 	log.DefaultLogger.Debug(ts.TenancyConfig)
 
-	if ts.TenancyConfig != "" {
+	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 		ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 	}
 
@@ -472,7 +472,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		if ts.TenancyConfig != "" {
+		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 		}
 
@@ -605,7 +605,7 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		if ts.TenancyConfig != "" {
+		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 		}
 		res, err := o.identityClient.ListRegions(ctx)
