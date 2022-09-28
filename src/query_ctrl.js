@@ -54,6 +54,10 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.getSelectDimensionValueSegment = () => uiSegmentSrv.newSegment({ value: SELECT_PLACEHOLDERS.DIMENSION_VALUE, type: 'value' });
 
     this.dimensionsCache = {};
+    console.log(this.datasource.environment)
+    if (this.datasource.environment === "multitenancy") {
+      this.target.MultiTenancy = true;
+    }
 
     // rebuild dimensionSegments on query editor load
     for (let i = 0; i < this.target.dimensions.length; i++) {

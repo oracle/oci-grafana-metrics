@@ -553,7 +553,7 @@ export default class OCIDatasource {
     });
   }
 
-  getTenancyConfig() {
+  async getTenancyConfig() {
     // if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
     //   return this.q.when(this.tenancyconfigCache);
     // }
