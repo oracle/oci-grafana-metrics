@@ -44,7 +44,7 @@ export default class OCIDatasource {
     this.getTenancyConfig();
 
     this.getRegions();
-    this.getCompartments();
+    // this.getCompartments();
   }
 
   /**
@@ -547,14 +547,14 @@ export default class OCIDatasource {
     });
   }
 
-  async getCompartments() {
+  async getCompartments(target) {
     // const tenancyconfig = this.datasource.getVariableValue(this.target.tenancyconfig);
     // var var_per = this.datasource.getVariableValue(this.target.tenancyconfig);
     // const var_per = await this.getCompartmentId(tenancyconfig);
     const tenancyconfig =
-      target.var_per === SELECT_PLACEHOLDERS.TENANCYCONFIG
+      target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
         ? ""
-        : this.getVariableValue(target.var_per);    
+        : this.getVariableValue(target.tenancyconfig);    
 
     if (this.compartmentsCache && this.compartmentsCache.length > 0) {
       return this.q.when(this.compartmentsCache);
