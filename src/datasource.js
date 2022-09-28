@@ -514,7 +514,14 @@ export default class OCIDatasource {
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
         ? ""
-        : this.getVariableValue(target.tenancyconfig);       
+        : this.getVariableValue(target.tenancyconfig);
+          
+    // if (target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG) {
+    //   tenancyocid=this.tenancyOCID
+    // } else {
+    //   const myArray = tenancyconfig.split("/");
+    //   let tenancyocid = myArray[1];   
+    // }           
     if (this.regionsCache && this.regionsCache.length > 0) {
       return this.q.when(this.regionsCache);
     }
@@ -525,6 +532,7 @@ export default class OCIDatasource {
           environment: this.environment,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
+          // tenancyOCID: tenancyocid,
           tenancyconfig: tenancyconfig,
           queryType: "regions",
         },
@@ -537,9 +545,9 @@ export default class OCIDatasource {
   }
 
   getTenancyConfig() {
-    // if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
-    //   return this.q.when(this.tenancyconfigCache);
-    // }
+    if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
+      return this.q.when(this.tenancyconfigCache);
+    }
 
     return this.doRequest({
       targets: [
@@ -565,9 +573,9 @@ export default class OCIDatasource {
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
         : this.getVariableValue(target.region);
-    if (this.compartmentsCache && this.compartmentsCache.length > 0) {
-      return this.q.when(this.compartmentsCache);
-    }
+    // if (this.compartmentsCache && this.compartmentsCache.length > 0) {
+    //   return this.q.when(this.compartmentsCache);
+    // }
     return this.doRequest({
       targets: [
         {

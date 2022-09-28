@@ -74,11 +74,12 @@ type GrafanaSearchRequest struct {
 
 // GrafanaCommonRequest - captures the common parts of the search and metricsRequests
 type GrafanaCommonRequest struct {
-	Compartment string
-	Environment string
-	QueryType   string
-	Region      string
-	TenancyOCID string `json:"tenancyOCID"`
+	Compartment   string
+	Environment   string
+	QueryType     string
+	Region        string
+	TenancyConfig string
+	TenancyOCID   string `json:"tenancyOCID"`
 }
 
 // Query - Determine what kind of query we're making
@@ -109,6 +110,10 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 			o.identityClient = identityClient
 			o.metricsClient = metricsClient
 			o.config = configProvider
+		} else {
+			if ts.TenancyConfig != "" {
+				ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
+			}
 		}
 	}
 
@@ -276,6 +281,9 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDa
 		var ts GrafanaSearchRequest
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
+		}
+		if ts.TenancyConfig != "" {
+			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 		}
 		reqDetails := monitoring.ListMetricsDetails{}
 		// Group by is needed to get all  metrics without missing any as it is limited by the max pages
@@ -465,6 +473,9 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 		var ts GrafanaOCIRequest
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
+		}
+		if ts.TenancyConfig != "" {
+			ts.TenancyOCID, _ = o.tenancySetup(ts.TenancyConfig)
 		}
 
 		fromMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
