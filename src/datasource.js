@@ -277,13 +277,21 @@ export default class OCIDatasource {
           options.scopedVars
         )}[${window}]${dimension}.${t.aggregation}`;
       }
+      console.log("checkpoint 1")
+
+      const tenancyconfig =
+      this.getVariableValue(t.tenancyconfig, options.scopedVars) === SELECT_PLACEHOLDERS.TENANCYCONFIG
+        ? ""
+        : this.getVariableValue(t.tenancyconfig, options.scopedVars);        
       let target = {
-        tenancyconfig: this.getVariableValue(t.tenancyconfig, options.scopedVars),
+        tenancyconfig: tenancyconfig,
         region: _.isEmpty(region) ? this.defaultRegion : region,
       }; 
       const compartmentId = await this.getCompartmentId(
         this.getVariableValue(t.compartment, options.scopedVars), target
       );
+      console.log("checkpoint 2")
+
       const result = {
         resolution,
         environment: this.environment,
@@ -295,14 +303,16 @@ export default class OCIDatasource {
         type: t.type || "timeserie",
         region: _.isEmpty(region) ? this.defaultRegion : region,
         compartment: compartmentId,
-        tenancyconfig: this.getVariableValue(t.tenancyconfig, options.scopedVars),
+        tenancyconfig: tenancyconfig,
         namespace: this.getVariableValue(t.namespace, options.scopedVars),
         resourcegroup: this.getVariableValue(
           t.resourcegroup,
           options.scopedVars
         ),
         query: query,
-      };   
+      };
+      console.log(target)
+      console.log(result)
       results.push(result);
     }
 
@@ -517,7 +527,7 @@ export default class OCIDatasource {
         ? ""
         : this.getVariableValue(target.tenancyconfig);
           
-    if (target.tenancyconfig != SELECT_PLACEHOLDERS.TENANCYCONFIG) {
+    if (target.tenancyconfig !== SELECT_PLACEHOLDERS.TENANCYCONFIG) {
       const myArray = tenancyconfig.split("/");
       this.tenancyOCID = myArray[1];   
     }           
@@ -544,9 +554,9 @@ export default class OCIDatasource {
   }
 
   getTenancyConfig() {
-    if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
-      return this.q.when(this.tenancyconfigCache);
-    }
+    // if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
+    //   return this.q.when(this.tenancyconfigCache);
+    // }
 
     return this.doRequest({
       targets: [
