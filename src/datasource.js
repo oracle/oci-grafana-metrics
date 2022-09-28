@@ -22,6 +22,8 @@ import { resolveAutoWinRes } from "./util/utilFunctions";
 import { toDataQueryResponse } from "@grafana/runtime";
 
 const DEFAULT_RESOURCE_GROUP = "NoResourceGroup";
+const DEFAULT_TENANCYCONFIG = "NoTenancyConfig";
+
 
 export default class OCIDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
@@ -132,7 +134,7 @@ export default class OCIDatasource {
         : this.getVariableValue(target.region);
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
-        ? ""
+        ? DEFAULT_TENANCYCONFIG
         : this.getVariableValue(target.tenancyconfig);        
     const compartment =
       target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT
@@ -176,6 +178,7 @@ export default class OCIDatasource {
    * Build and validate query parameters.
    */
   async buildQueryParameters(options) {
+    console.log("checkpoint 0")
     let queries = options.targets
       .filter((t) => !t.hide)
       .filter(
@@ -186,9 +189,7 @@ export default class OCIDatasource {
       )
       .filter(
         (t) =>
-          !_.isEmpty(
-            this.getVariableValue(t.tenancyconfig, options.scopedVars)
-          ) && t.tenancyconfig !== SELECT_PLACEHOLDERS.TENANCYCONFIG
+          !_.isEmpty(this.getVariableValue(t.tenancyconfig, options.scopedVars))
       )      
       .filter(
         (t) =>
@@ -217,12 +218,18 @@ export default class OCIDatasource {
             !_.isEmpty(dim.value) &&
             dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE
         );
+        
+      t.tenancyconfig =
+        t.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
+          ? DEFAULT_TENANCYCONFIG
+          : t.tenancyconfig;
 
       t.resourcegroup =
         t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP
           ? DEFAULT_RESOURCE_GROUP
-          : t.resourcegroup;
+          : t.resourcegroup;          
     });
+    console.log("checkpoint 1.5")
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
     queries = this.splitMultiValueDimensionsIntoQueries(queries, options);
@@ -281,7 +288,7 @@ export default class OCIDatasource {
 
       const tenancyconfig =
       this.getVariableValue(t.tenancyconfig, options.scopedVars) === SELECT_PLACEHOLDERS.TENANCYCONFIG
-        ? ""
+        ? DEFAULT_TENANCYCONFIG
         : this.getVariableValue(t.tenancyconfig, options.scopedVars);        
       let target = {
         tenancyconfig: tenancyconfig,
@@ -521,15 +528,17 @@ export default class OCIDatasource {
   }
 
   async getRegions(target) {
+    console.log(target.tenancyconfig)
+    // if (target.tenancyconfig !== SELECT_PLACEHOLDERS.TENANCYCONFIG && target.tenancyconfig !== SELECT_PLACEHOLDERS.TENANCYCONFIG) {
+    //   const myArray = tenancyconfig.split("/");
+    //   this.tenancyOCID = myArray[1];   
+    // } 
+
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
-        ? ""
+        ? DEFAULT_TENANCYCONFIG
         : this.getVariableValue(target.tenancyconfig);
           
-    if (target.tenancyconfig !== SELECT_PLACEHOLDERS.TENANCYCONFIG) {
-      const myArray = tenancyconfig.split("/");
-      this.tenancyOCID = myArray[1];   
-    }           
     if (this.regionsCache && this.regionsCache.length > 0) {
       return this.q.when(this.regionsCache);
     }
@@ -540,7 +549,6 @@ export default class OCIDatasource {
           environment: this.environment,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
-          // tenancyOCID: tenancyocid,
           tenancyconfig: tenancyconfig,
           queryType: "regions",
         },
@@ -575,7 +583,7 @@ export default class OCIDatasource {
   async getCompartments(target) {
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
-        ? ""
+        ? DEFAULT_TENANCYCONFIG
         : this.getVariableValue(target.tenancyconfig);    
     const region =
       target.region === SELECT_PLACEHOLDERS.REGION
@@ -626,7 +634,7 @@ export default class OCIDatasource {
         : this.getVariableValue(target.compartment);
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
-        ? ""
+        ? DEFAULT_TENANCYCONFIG
         : this.getVariableValue(target.tenancyconfig);         
     if (_.isEmpty(compartment)) {
       return this.q.when([]);
