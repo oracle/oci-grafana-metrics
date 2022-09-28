@@ -279,7 +279,7 @@ export default class OCIDatasource {
       }
 
       const compartmentId = await this.getCompartmentId(
-        this.getVariableValue(t.compartment, options.scopedVars), target
+        this.getVariableValue(t.compartment, options.scopedVars), ""
       );
       const result = {
         resolution,
