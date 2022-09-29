@@ -10,23 +10,16 @@ export class OCIConfigCtrl {
     this.backendSrv = backendSrv
     this.tenancyOCID = this.current.jsonData.tenancyOCID
     this.defaultRegion = this.current.jsonData.defaultRegion
-    this.environment = this.current.jsonData.environment
+    this.environment = this.current.jsonData.environment      
   }
 
   getRegions () {
     return regions
   }
 
-  getEnvironments () {
+  getEnvironments () { 
     return environments
-  }
-
-  onChangeInternal() {
-    if (this.environment === "multitenancy") {
-      this.target.MultiTenancy = true;
-    }    
-    this.panelCtrl.refresh(); // Asks the panel to refresh data.
-  }
+  } 
 
 }
 
