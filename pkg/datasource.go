@@ -147,6 +147,52 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		return &backend.QueryDataResponse{}, err
 	}
 
+	/* skip test if multitenancy for now */
+	if ts.Environment == "multitenancy" {
+		file, err := os.Open("/home/grafana/.oci/config")
+		if err != nil {
+			return nil, errors.Wrap(err, "error opening file")
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+
+		r, err := regexp.Compile(`\[.*\]`)   // this can also be a regex
+		r2, err := regexp.Compile(`region=`) // this can also be a regex
+
+		if err != nil {
+			return nil, errors.Wrap(err, "error in compiling regex")
+		}
+
+		var configs []string
+		var regioni []string
+		for scanner.Scan() {
+			if r.MatchString(scanner.Text()) {
+				replacer := strings.NewReplacer("[", "", "]", "")
+				output := replacer.Replace(scanner.Text())
+				configProvider := common.CustomProfileConfigProvider("", output)
+				res, err := configProvider.TenancyOCID()
+				if err != nil {
+					return nil, errors.Wrap(err, "error fetching regions")
+				}
+
+				value := output + "/" + res
+				configs = append(configs, *(common.String(value)))
+			}
+			if r2.MatchString(scanner.Text()) {
+				rreplacer := strings.NewReplacer("region=", "")
+				routput := rreplacer.Replace(scanner.Text())
+				regioni = append(regioni, routput)
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			return nil, errors.Wrap(err, "error in compiling regex")
+		}
+		ts.Region = regioni[0]
+		ts.TenancyOCID, _ = o.tenancySetup(configs[0])
+	}
+
 	listMetrics := monitoring.ListMetricsRequest{
 		CompartmentId: common.String(ts.TenancyOCID),
 	}
@@ -705,6 +751,9 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 		defer file.Close()
 
 		scanner := bufio.NewScanner(file)
+		if err := scanner.Err(); err != nil {
+			return nil, errors.Wrap(err, "error in compiling regex")
+		}
 		r, err := regexp.Compile(`\[.*\]`) // this can also be a regex
 
 		if err != nil {
@@ -726,10 +775,6 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 				value := output + "/" + res
 				frame.AppendRow(*(common.String(value)))
 			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			return nil, errors.Wrap(err, "error in compiling regex")
 		}
 
 		respD := resp.Responses[query.RefID]

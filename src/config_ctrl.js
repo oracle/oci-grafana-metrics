@@ -20,6 +20,14 @@ export class OCIConfigCtrl {
   getEnvironments () {
     return environments
   }
+
+  onChangeInternal() {
+    if (this.environment === "multitenancy") {
+      this.target.MultiTenancy = true;
+    }    
+    this.panelCtrl.refresh(); // Asks the panel to refresh data.
+  }
+
 }
 
 OCIConfigCtrl.templateUrl = 'partials/config.html'

@@ -528,7 +528,6 @@ export default class OCIDatasource {
   }
 
   async getRegions(target) {
-    console.log(target.tenancyconfig)
     // if (target.tenancyconfig !== SELECT_PLACEHOLDERS.TENANCYCONFIG && target.tenancyconfig !== SELECT_PLACEHOLDERS.TENANCYCONFIG) {
     //   const myArray = tenancyconfig.split("/");
     //   this.tenancyOCID = myArray[1];   
@@ -589,12 +588,6 @@ export default class OCIDatasource {
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
         : this.getVariableValue(target.region);
-    // if (this.compartmentsCache && this.compartmentsCache.length > 0) {
-    //   return this.q.when(this.compartmentsCache);
-    // }
-    console.log(target.region)
-    console.log(target.tenancyconfig)
-    console.log(target)
 
     return this.doRequest({
       targets: [
