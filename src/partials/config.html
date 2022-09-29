@@ -1,31 +1,30 @@
 <h3 class="page-heading">OCI settings</h3>
 
 <div class="gf-form-group">
-<div class="gf-form max-width-30">
   <div class="gf-form max-width-30">
     <label class="gf-form-label width-10">Environment</label>
     <select
       class="gf-form-input"
       ng-model="ctrl.current.jsonData.environment"
 	    ng-required="true"
-      on-change="ctrl.onChangeInternal()"
       ng-options="o as o for o in ctrl.getEnvironments()" >
-    </select>
-  </div>  
-  <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.environment !== multitenancy">Tenancy OCID</label>
+    </select>   
+  </div>
+  <div class="gf-form max-width-30">
+  <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.environment!=='multitenancy'">Tenancy OCID</label>
     <input class="gf-form-input " 
 		type="text" 
 		ng-required="true"
-    ng-model="ctrl.current.jsonData.tenancyOCID" ng-if="ctrl.target.MultiTenancy">
+    ng-model="ctrl.current.jsonData.tenancyOCID" ng-if="ctrl.current.jsonData.environment!=='multitenancy'">
   </input>
   </div>
   <div class="gf-form max-width-30">
-    <label class="gf-form-label width-10" ng-if="ctrl.target.MultiTenancy">Default Region</label>
+    <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.environment!=='multitenancy'">Default Region</label>
     <select
       class="gf-form-input"
       ng-model="ctrl.current.jsonData.defaultRegion"
 	  ng-required="true"
-      ng-options="o as o for o in ctrl.getRegions()" ng-if="ctrl.target.MultiTenancy">
+      ng-options="o as o for o in ctrl.getRegions()" ng-if="ctrl.current.jsonData.environment!=='multitenancy'">
     </select>
   </div>
 </div>
