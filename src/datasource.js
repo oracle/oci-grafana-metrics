@@ -319,6 +319,8 @@ export default class OCIDatasource {
         query: query,
         legendFormat: t.legendFormat,
       };
+      console.log(target)
+      console.log(result)
       results.push(result);
     }
 
