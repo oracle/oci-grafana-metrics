@@ -319,8 +319,6 @@ export default class OCIDatasource {
         query: query,
         legendFormat: t.legendFormat,
       };
-      console.log(target)
-      console.log(result)
       results.push(result);
     }
 
@@ -423,7 +421,7 @@ export default class OCIDatasource {
     let regionQuery = varString.match(regionsQueryRegex);
     if (regionQuery) {
       let target = {
-        tenancyconfig: removeQuotes(this.getVariableValue(regionQuery[1])),
+        tenancyconfig: removeQuotes(this.getVariableValue(regionsQuery[1])),
       };        
       return this.getRegions(target).catch((err) => {
         throw new Error("Unable to get regions: " + err);
