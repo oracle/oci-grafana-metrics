@@ -32,7 +32,7 @@ var (
 	re               = regexp.MustCompile(`(?m)\w+Name`)
 )
 
-//OCIDatasource - pulls in data from telemtry/various oci apis
+// OCIDatasource - pulls in data from telemtry/various oci apis
 type OCIDatasource struct {
 	metricsClient    monitoring.MonitoringClient
 	identityClient   identity.IdentityClient
@@ -42,7 +42,7 @@ type OCIDatasource struct {
 	timeCacheUpdated time.Time
 }
 
-//NewOCIDatasource - constructor
+// NewOCIDatasource - constructor
 func NewOCIDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &OCIDatasource{
 		logger:     log.DefaultLogger,
@@ -60,7 +60,7 @@ type GrafanaOCIRequest struct {
 	LegendFormat  string
 }
 
-//GrafanaSearchRequest incoming request body for search requests
+// GrafanaSearchRequest incoming request body for search requests
 type GrafanaSearchRequest struct {
 	GrafanaCommonRequest
 	Metric        string `json:"metric,omitempty"`
@@ -589,17 +589,17 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		}
 
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
-		var rawRegionsList []string
+		var regionName []string
 
 		/* Generate list of regions */
 		for _, item := range res.Items {
-			rawRegionsList = append(rawRegionsList, *(item.Name))
+			regionName = append(regionName, *(item.Name))
 		}
 
 		/* Sort regions list */
-		sort.Strings(rawRegionsList)
-		for _, sortedRegions := range rawRegionsList {
-			frame.AppendRow(*(common.String(sortedRegions)))
+		sort.Strings(regionName)
+		for _, sortedRegions := range regionName {
+			frame.AppendRow(sortedRegions)
 		}
 
 		respD := resp.Responses[query.RefID]
@@ -610,17 +610,17 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 }
 
 /*
- Function generates a custom metric label for the identified metric based on the
- legend format provided by the user where any known placeholders within the format
- will be replaced with the appropriate value.
+Function generates a custom metric label for the identified metric based on the
+legend format provided by the user where any known placeholders within the format
+will be replaced with the appropriate value.
 
- The currently supported legend format placeholders are:
-   * {metric} - Will be replaced by the metric name
-   * {dimension} - Will be replaced by the value of the specified dimension
+The currently supported legend format placeholders are:
+  - {metric} - Will be replaced by the metric name
+  - {dimension} - Will be replaced by the value of the specified dimension
 
- Any placeholders (or other text) in the legend format that do not line up with one
- of these placeholders will be unchanged. Note that placeholder labels are treated
- as case sensitive.
+Any placeholders (or other text) in the legend format that do not line up with one
+of these placeholders will be unchanged. Note that placeholder labels are treated
+as case sensitive.
 */
 func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
 	mDimensions map[string]string) string {
