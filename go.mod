@@ -4,15 +4,26 @@ go 1.16
 
 require (
 	github.com/davecgh/go-spew v1.1.1
-	github.com/fatih/color v1.10.0 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.105.0
-	github.com/hashicorp/go-hclog v0.15.0 // indirect
-	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
+	github.com/google/flatbuffers v22.9.29+incompatible // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.140.0
+	github.com/hashicorp/go-hclog v1.3.1 // indirect
+	github.com/hashicorp/go-plugin v1.4.5 // indirect
+	github.com/hashicorp/yamux v0.1.1 // indirect
+	github.com/klauspost/compress v1.15.11 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oracle/oci-go-sdk v24.3.0+incompatible
+	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/errors v0.9.1
-	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect
-	golang.org/x/text v0.3.4 // indirect
-	google.golang.org/genproto v0.0.0-20201209185603-f92720507ed4 // indirect
+	github.com/prometheus/client_golang v1.13.0 // indirect
+	github.com/rivo/uniseg v0.4.2 // indirect
+	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
+	golang.org/x/sys v0.0.0-20221006211917-84dc82d7e875 // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91 // indirect
+	google.golang.org/grpc v1.50.0 // indirect
 )
