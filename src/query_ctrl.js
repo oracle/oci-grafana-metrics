@@ -196,6 +196,19 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
   onChangeInternal() {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
+    console.log("refreshed")
+    console.log(this.target.namespace)
+    const namespc=(this.datasource.getNamespaces(this.target))
+    var size = Object.keys(namespc).length;
+    console.log(namespc)
+    console.log(size)
+    namespc.then((value) => {
+      console.log(value);
+      console.log(value.length);
+      if (value.length === 0){
+        this.target.namespace=""
+      }       
+    });     
   }
 
   /**
