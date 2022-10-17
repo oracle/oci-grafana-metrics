@@ -579,6 +579,7 @@ export default class OCIDatasource {
     }
 
     const compartmentId = await this.getCompartmentId(compartment);
+
     return this.doRequest({
       targets: [
         {
