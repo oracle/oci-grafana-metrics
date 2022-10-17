@@ -196,14 +196,9 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
   onChangeInternal() {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
-    console.log(this.target.namespace)
     const namespc=(this.datasource.getNamespaces(this.target))
-    console.log(namespc)
     namespc.then((value) => {
-      console.log(value);
-      console.log(value.length);
       if (value.length === 0){
-        console.log("length is zero !")
         this.target.namespace = SELECT_PLACEHOLDERS.NAMESPACE;
         this.panelCtrl.refresh(); // Asks the panel to refresh data.
       }       
