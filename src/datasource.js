@@ -579,9 +579,6 @@ export default class OCIDatasource {
     }
 
     const compartmentId = await this.getCompartmentId(compartment);
-    if (_.isEmpty(compartmentId)) {
-      return this.q.when([]); 
-    }   
     return this.doRequest({
       targets: [
         {
