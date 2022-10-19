@@ -196,6 +196,13 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
   onChangeInternal() {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
+    const namespc=(this.datasource.getNamespaces(this.target))
+    namespc.then((value) => {
+      if (value.length === 0){
+        this.target.namespace = SELECT_PLACEHOLDERS.NAMESPACE;
+        this.panelCtrl.refresh(); // Asks the panel to refresh data.
+      }       
+    });
   }
 
   /**
