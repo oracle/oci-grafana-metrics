@@ -20,10 +20,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/common/auth"
-	"github.com/oracle/oci-go-sdk/identity"
-	"github.com/oracle/oci-go-sdk/monitoring"
+	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/common/auth"
+	"github.com/oracle/oci-go-sdk/v65/identity"
+	"github.com/oracle/oci-go-sdk/v65/monitoring"
 	"github.com/pkg/errors"
 )
 
