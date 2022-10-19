@@ -1,7 +1,7 @@
 {
   "name": "oci-metrics-datasource",
   "private": true,
-  "version": "3.0.5",
+  "version": "3.0.6",
   "description": "Oracle Cloud Infrastructure Metrics Data Source for Grafana",
   "main": "index.js",
   "scripts": {
