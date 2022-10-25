@@ -10,6 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
+  tenancyconfigQueryRegex,
   compartmentsQueryRegex,
   dimensionKeysQueryRegex,
   dimensionValuesQueryRegex,
@@ -21,6 +22,7 @@ export const SELECT_PLACEHOLDERS = {
   DIMENSION_VALUE: 'select value',
   COMPARTMENT: 'select compartment',
   REGION: 'select region',
+  TENANCYCONFIG: 'select tenancy config',
   NAMESPACE: 'select namespace',
   RESOURCEGROUP: 'select resource group',
   METRIC: 'select metric',
@@ -35,6 +37,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.uiSegmentSrv = uiSegmentSrv;
 
     this.target.region = this.target.region || SELECT_PLACEHOLDERS.REGION;
+    this.target.tenancyconfig = this.target.tenancyconfig || SELECT_PLACEHOLDERS.TENANCYCONFIG;
     this.target.compartment = this.target.compartment || SELECT_PLACEHOLDERS.COMPARTMENT;
     this.target.namespace = this.target.namespace || SELECT_PLACEHOLDERS.NAMESPACE;
     this.target.resourcegroup = this.target.resourcegroup || SELECT_PLACEHOLDERS.RESOURCEGROUP;
@@ -52,6 +55,9 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.getSelectDimensionValueSegment = () => uiSegmentSrv.newSegment({ value: SELECT_PLACEHOLDERS.DIMENSION_VALUE, type: 'value' });
 
     this.dimensionsCache = {};
+    if (this.datasource.environment === "multitenancy") {
+      this.target.MultiTenancy = true;
+    }
 
     // rebuild dimensionSegments on query editor load
     for (let i = 0; i < this.target.dimensions.length; i++) {
@@ -69,13 +75,19 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   // ****************************** Options **********************************
 
   getRegions() {
-    return this.datasource.getRegions().then(regions => {
+    return this.datasource.getRegions(this.target).then(regions => {
       return this.appendVariables([ ...regions], regionsQueryRegex);
     });
   }
 
+  getTenancyConfig() {
+    return this.datasource.getTenancyConfig().then(tenancyconfig => {
+      return this.appendVariables([ ...tenancyconfig], tenancyconfigQueryRegex);
+    });
+  }
+
   getCompartments() {
-    return this.datasource.getCompartments().then(compartments => {
+    return this.datasource.getCompartments(this.target).then(compartments => {
       return this.appendVariables([...compartments], compartmentsQueryRegex);
     });
   }
@@ -204,6 +216,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
       }       
     });
   }
+
 
   /**
    * On dimension segment change callback
