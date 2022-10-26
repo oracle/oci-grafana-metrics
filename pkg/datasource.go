@@ -147,7 +147,6 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		return &backend.QueryDataResponse{}, err
 	}
 
-	/* skip test if multitenancy for now */
 	if ts.Environment == "multitenancy" {
 		file, err := os.Open("/home/grafana/.oci/config")
 		if err != nil {
