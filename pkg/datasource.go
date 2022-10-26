@@ -152,7 +152,13 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	}
 
 	if ts.Environment == "multitenancy" {
-		file, err := os.Open("/home/grafana/.oci/config")
+		var oci_config_file string
+		if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
+			oci_config_file = os.Getenv("OCI_CONFIG_FILE")
+		} else {
+			oci_config_file = "/home/grafana/.oci/config"
+		}
+		file, err := os.Open(oci_config_file)
 		if err != nil {
 			return nil, errors.Wrap(err, "error opening file")
 		}
