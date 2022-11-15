@@ -18,7 +18,9 @@ export const environments = ['local', 'OCI Instance', 'multitenancy']
 
 
 export const compartmentsQueryRegex = /^compartments\(\)\s*/;
-export const regionsQueryRegex = /^regions\(\)\s*/;
+// export const regionsQueryRegex = /^regions\(\)\s*/;
+export const regionsQueryRegex = /^regions\(.*\)\s*/;
+// export const regionsMultiQueryRegex = /^regions\(\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
 export const tenancyconfigsQueryRegex = /^tenancyconfig\(\)\s*/;
 export const namespacesQueryRegex = /^namespaces\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
 export const resourcegroupsQueryRegex = /^resourcegroups\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;

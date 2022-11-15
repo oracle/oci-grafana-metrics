@@ -229,7 +229,6 @@ export default class OCIDatasource {
           ? DEFAULT_RESOURCE_GROUP
           : t.resourcegroup;          
     });
-    console.log("checkpoint 1.5")
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
     queries = this.splitMultiValueDimensionsIntoQueries(queries, options);
@@ -421,7 +420,7 @@ export default class OCIDatasource {
     let regionQuery = varString.match(regionsQueryRegex);
     if (regionQuery) {
       let target = {
-        tenancyconfig: removeQuotes(this.getVariableValue(regionsQuery[1])),
+        tenancyconfig: removeQuotes(this.getVariableValue(regionQuery[1])),
       };        
       return this.getRegions(target).catch((err) => {
         throw new Error("Unable to get regions: " + err);
@@ -548,7 +547,7 @@ export default class OCIDatasource {
           environment: this.environment,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
-          tenancyconfig: tenancyconfig,
+          tenancyconfig: _.isEmpty(tenancyconfig) ? "" : tenancyconfig,
           queryType: "regions",
         },
       ],
