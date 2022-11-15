@@ -17,10 +17,10 @@ export const resolutions = [AUTO, '1m', '5m', '1h']
 export const environments = ['local', 'OCI Instance', 'multitenancy']
 
 
-export const compartmentsQueryRegex = /^compartments\(\)\s*/;
+// export const compartmentsQueryRegex = /^compartments\(\)\s*/;
+export const compartmentsQueryRegex = /^compartments\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)|^compartments\(\)\s*/;
 // export const regionsQueryRegex = /^regions\(\)\s*/;
-export const regionsQueryRegex = /^regions\(.*\)\s*/;
-// export const regionsMultiQueryRegex = /^regions\(\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
+export const regionsQueryRegex = /^regions\(\s*(\".+\"|\'.+\'|\$\w+)\s*\)|^regions\(\)\s*/;
 export const tenancyconfigsQueryRegex = /^tenancyconfig\(\)\s*/;
 export const namespacesQueryRegex = /^namespaces\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;
 export const resourcegroupsQueryRegex = /^resourcegroups\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*\)/;

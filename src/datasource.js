@@ -594,7 +594,7 @@ export default class OCIDatasource {
           environment: this.environment,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
-          tenancyconfig: tenancyconfig,
+          tenancyconfig: _.isEmpty(tenancyconfig) ? "" : tenancyconfig,
           queryType: "compartments",
           region: _.isEmpty(region) ? this.defaultRegion : region,
         },
