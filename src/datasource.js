@@ -502,6 +502,7 @@ export default class OCIDatasource {
         namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
         metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
         resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
+        tenancyconfig: removeQuotes(this.getVariableValue(dimensionsQuery[6])),
       };
       return this.getDimensionKeys(target).catch((err) => {
         throw new Error("Unable to get dimensions: " + err);
@@ -522,6 +523,7 @@ export default class OCIDatasource {
         resourcegroup: removeQuotes(
           this.getVariableValue(dimensionOptionsQuery[6])
         ),
+        tenancyconfig: removeQuotes(this.getVariableValue(dimensionOptionsQuery[7])),
       };
       const dimensionKey = removeQuotes(
         this.getVariableValue(dimensionOptionsQuery[5])
