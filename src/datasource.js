@@ -437,9 +437,12 @@ export default class OCIDatasource {
     let compartmentQuery = varString.match(compartmentsQueryRegex);
     if (compartmentQuery) {
       let target = {
-        tenancyconfig: removeQuotes(this.getVariableValue(compartmentQuery[1])),
-        region: removeQuotes(this.getVariableValue(compartmentQuery[2])),
-      };      
+        region: removeQuotes(this.getVariableValue(compartmentQuery[1])),
+        tenancyconfig: removeQuotes(this.getVariableValue(compartmentQuery[2])),
+      };    
+      console.log("compartmentQuery")
+      console.log(target)      
+      console.log("end compartmentQuery")        
       return this.getCompartments(target)
         .then((compartments) => {
           return compartments.map((c) => ({ text: c.text, value: c.text }));
@@ -457,9 +460,7 @@ export default class OCIDatasource {
         tenancyconfig: removeQuotes(this.getVariableValue(namespaceQuery[3])),
       };
       console.log("namespaceQuery")
-
       console.log(target)      
-
       console.log("end namespaceQuery")
 
       return this.getNamespaces(target).catch((err) => {
@@ -557,7 +558,7 @@ export default class OCIDatasource {
           environment: this.environment,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
-          tenancyconfig: _.isEmpty(tenancyconfig) ? "" : tenancyconfig,
+          tenancyconfig: tenancyconfig,
           queryType: "regions",
         },
       ],
