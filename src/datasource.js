@@ -46,7 +46,7 @@ export default class OCIDatasource {
     // this.getTenancyConfig();
 
     this.getRegions();
-    this.getCompartments();
+    // this.getCompartments();
   }
 
   /**
@@ -456,6 +456,12 @@ export default class OCIDatasource {
         compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
         tenancyconfig: removeQuotes(this.getVariableValue(namespaceQuery[3])),
       };
+      console.log("namespaceQuery")
+
+      console.log(target)      
+
+      console.log("end namespaceQuery")
+
       return this.getNamespaces(target).catch((err) => {
         throw new Error("Unable to get namespaces: " + err);
       });
@@ -594,7 +600,7 @@ export default class OCIDatasource {
           environment: this.environment,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
-          tenancyconfig: _.isEmpty(tenancyconfig) ? "" : tenancyconfig,
+          tenancyconfig: tenancyconfig,
           queryType: "compartments",
           region: _.isEmpty(region) ? this.defaultRegion : region,
         },
