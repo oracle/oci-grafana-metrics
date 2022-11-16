@@ -45,8 +45,8 @@ export default class OCIDatasource {
 
     // this.getTenancyConfig();
 
-    // this.getRegions();
-    // this.getCompartments();
+    this.getRegions();
+    this.getCompartments();
   }
 
   /**
