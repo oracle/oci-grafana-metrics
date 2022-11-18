@@ -14,7 +14,8 @@ export const namespaces = ['oci_computeagent', 'oci_blockstore', 'oci_lbaas', 'o
 export const aggregations = ['count()', 'max()', 'mean()', 'min()', 'rate()', 'sum()', 'percentile(.90)', 'percentile(.95)', 'percentile(.99)', 'last()']
 export const windows = [AUTO, '1m', '5m', '1h']
 export const resolutions = [AUTO, '1m', '5m', '1h']
-export const environments = ['local', 'OCI Instance', 'multitenancy']
+export const environments = ['local', 'OCI Instance']
+export const tenancymodes = ['single', 'multitenancy']
 
 
 // export const compartmentsQueryRegex = /^compartments\(\)\s*/;

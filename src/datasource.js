@@ -34,6 +34,7 @@ export default class OCIDatasource {
     this.tenancyOCID = instanceSettings.jsonData.tenancyOCID;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.environment = instanceSettings.jsonData.environment;
+    this.tenancymode = instanceSettings.jsonData.tenancymode;
     this.q = $q;
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
@@ -43,9 +44,9 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenancyconfigCache = [];
 
-    this.getTenancyConfig();
+    // this.getTenancyConfig();
 
-    this.getRegions();
+    // this.getRegions();
     // this.getCompartments();
   }
 
@@ -96,6 +97,7 @@ export default class OCIDatasource {
           tenancyOCID: this.tenancyOCID,
           compartment: "",
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
         },
       ],
@@ -429,6 +431,7 @@ export default class OCIDatasource {
 
     let tenancyconfigQuery = varString.match(tenancyconfigsQueryRegex);
     if (tenancyconfigQuery) {
+      // this.target.compartment = SELECT_PLACEHOLDERS.COMPARTMENT;
       return this.getTenancyConfig().catch((err) => {
         throw new Error("Unable to get tenancyconfigs: " + err);
       });    

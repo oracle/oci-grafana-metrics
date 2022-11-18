@@ -55,7 +55,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.getSelectDimensionValueSegment = () => uiSegmentSrv.newSegment({ value: SELECT_PLACEHOLDERS.DIMENSION_VALUE, type: 'value' });
 
     this.dimensionsCache = {};
-    if (this.datasource.environment === "multitenancy") {
+    if (this.datasource.tenancymode === "multitenancy") {
       this.target.MultiTenancy = true;
     }
 
@@ -215,6 +215,15 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
         this.panelCtrl.refresh(); // Asks the panel to refresh data.
       }       
     });
+
+    const compartname=(this.datasource.getCompartments(this.target))
+    compartname.then((value) => {
+      if (value.length === 0){
+        this.target.compartment = SELECT_PLACEHOLDERS.COMPARTMENT;
+        this.panelCtrl.refresh(); // Asks the panel to refresh data.
+      }       
+    });
+
   }
 
 
