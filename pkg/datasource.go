@@ -171,7 +171,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		var oarray OCIConfigArray
 		log.DefaultLogger.Debug("in test function")
 
-		for _, oset := range (&oarray).OCIConfigSets {
+		for _, oset := range oarray.OCIConfigSets {
 			log.DefaultLogger.Debug(oset.TenancyConfigName)
 		}
 		log.DefaultLogger.Debug("out test function")
@@ -353,9 +353,14 @@ func getConfigProvider(environment string, tenancymode string) (common.Configura
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
-			var oarray OCIConfigArray
-			OCIConfigSets, _ := setTenancyContext()
-			(&oarray).OCIConfigSets = OCIConfigSets
+			oarray := new(OCIConfigArray)
+			oarray.setTenancyContext()
+			log.DefaultLogger.Debug("in getConfigProvider function")
+			for _, oset := range oarray.OCIConfigSets {
+				log.DefaultLogger.Debug(oset.TenancyConfigName)
+			}
+			log.DefaultLogger.Debug("out getConfigProvider function")
+
 			return nil, nil
 		} else {
 			return common.DefaultConfigProvider(), nil
@@ -900,30 +905,28 @@ func OCIConfigParser() ([]string, error) {
 
 }
 
-func setTenancyContext() ([]OCIConfigSet, error) {
+func (oarray *OCIConfigArray) setTenancyContext() error {
 	ociconfigs, _ := OCIConfigParser()
 	var o OCIConfigSet
-	var basket []OCIConfigSet
 	for _, ociconfig := range ociconfigs {
-		log.DefaultLogger.Debug(ociconfig)
 		var configProvider common.ConfigurationProvider
 		configProvider = common.CustomProfileConfigProvider("", ociconfig)
 		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
-			return nil, errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
 		}
 		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 		if err != nil {
 			o.logger.Error("Error creating identity client", "error", err)
-			return nil, errors.Wrap(err, "Error creating identity client")
+			return errors.Wrap(err, "Error creating identity client")
 		}
 		o.identityClient = identityClient
 		o.metricsClient = metricsClient
 		o.config = configProvider
 		o.TenancyConfigName = ociconfig
 
-		basket = append(basket, o)
+		oarray.OCIConfigSets = append(oarray.OCIConfigSets, o)
 	}
 
-	return basket, nil
+	return nil
 }
