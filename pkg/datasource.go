@@ -52,6 +52,21 @@ func NewOCIDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instan
 	}, nil
 }
 
+// OCIConfigSet
+type OCIConfigSet struct {
+	metricsClient     monitoring.MonitoringClient
+	identityClient    identity.IdentityClient
+	config            common.ConfigurationProvider
+	logger            log.Logger
+	nameToOCID        map[string]string
+	TenancyConfigName string
+}
+
+type OCIConfigArray struct {
+	OCIConfigSets []OCIConfigSet
+	logger        log.Logger
+}
+
 // GrafanaOCIRequest - Query Request comning in from the front end
 type GrafanaOCIRequest struct {
 	GrafanaCommonRequest
@@ -153,6 +168,14 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	}
 
 	if ts.TenancyMode == "multitenancy" {
+		var oarray OCIConfigArray
+		log.DefaultLogger.Debug("in test function")
+
+		for _, oset := range (&oarray).OCIConfigSets {
+			log.DefaultLogger.Debug(oset.TenancyConfigName)
+		}
+		log.DefaultLogger.Debug("out test function")
+
 		var oci_config_file string
 		if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
 			oci_config_file = os.Getenv("OCI_CONFIG_FILE")
@@ -330,6 +353,9 @@ func getConfigProvider(environment string, tenancymode string) (common.Configura
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
+			var oarray OCIConfigArray
+			OCIConfigSets, _ := setTenancyContext()
+			(&oarray).OCIConfigSets = OCIConfigSets
 			return nil, nil
 		} else {
 			return common.DefaultConfigProvider(), nil
@@ -786,47 +812,18 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	var oci_config_file string
+	ociconfigs, _ := OCIConfigParser()
 
 	for _, query := range req.Queries {
-
-		if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
-			oci_config_file = os.Getenv("OCI_CONFIG_FILE")
-		} else {
-			oci_config_file = "/home/grafana/.oci/config"
-		}
-
-		file, err := os.Open(oci_config_file)
-		if err != nil {
-			return nil, errors.Wrap(err, "error opening file")
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		if err := scanner.Err(); err != nil {
-			return nil, errors.Wrap(err, "buffer error")
-		}
-		r, err := regexp.Compile(`\[.*\]`) // this can also be a regex
-
-		if err != nil {
-			return nil, errors.Wrap(err, "error in compiling regex")
-		}
-
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
-
-		for scanner.Scan() {
-			if r.MatchString(scanner.Text()) {
-				replacer := strings.NewReplacer("[", "", "]", "")
-				output := replacer.Replace(scanner.Text())
-				configProvider := common.CustomProfileConfigProvider("", output)
-				res, err := configProvider.TenancyOCID()
-				if err != nil {
-					return nil, errors.Wrap(err, "error configuring TenancyOCID")
-				}
-
-				value := output + "/" + res
-				frame.AppendRow(*(common.String(value)))
+		for _, ociconfig := range ociconfigs {
+			configProvider := common.CustomProfileConfigProvider("", ociconfig)
+			res, err := configProvider.TenancyOCID()
+			if err != nil {
+				return nil, errors.Wrap(err, "error configuring TenancyOCID")
 			}
+			value := ociconfig + "/" + res
+			frame.AppendRow(*(common.String(value)))
 		}
 
 		respD := resp.Responses[query.RefID]
@@ -862,4 +859,71 @@ func (o *OCIDatasource) tenancySetup(tenancyconfig string) (string, error) {
 	o.config = configProvider
 
 	return tenancyocid, nil
+}
+
+func OCIConfigParser() ([]string, error) {
+	var oci_config_file string
+	var ociconfigs []string
+
+	if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
+		oci_config_file = os.Getenv("OCI_CONFIG_FILE")
+	} else {
+		oci_config_file = "/home/grafana/.oci/config"
+	}
+
+	file, err := os.Open(oci_config_file)
+	if err != nil {
+		return nil, errors.Wrap(err, "error opening file")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	if err := scanner.Err(); err != nil {
+		return nil, errors.Wrap(err, "buffer error")
+	}
+
+	r, err := regexp.Compile(`\[.*\]`) // this can also be a regex
+
+	if err != nil {
+		return nil, errors.Wrap(err, "error in compiling regex")
+	}
+
+	for scanner.Scan() {
+		if r.MatchString(scanner.Text()) {
+			replacer := strings.NewReplacer("[", "", "]", "")
+			output := replacer.Replace(scanner.Text())
+			ociconfigs = append(ociconfigs, output)
+		}
+	}
+
+	return ociconfigs, nil
+
+}
+
+func setTenancyContext() ([]OCIConfigSet, error) {
+	ociconfigs, _ := OCIConfigParser()
+	var o OCIConfigSet
+	var basket []OCIConfigSet
+	for _, ociconfig := range ociconfigs {
+		log.DefaultLogger.Debug(ociconfig)
+		var configProvider common.ConfigurationProvider
+		configProvider = common.CustomProfileConfigProvider("", ociconfig)
+		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			return nil, errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+		}
+		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			o.logger.Error("Error creating identity client", "error", err)
+			return nil, errors.Wrap(err, "Error creating identity client")
+		}
+		o.identityClient = identityClient
+		o.metricsClient = metricsClient
+		o.config = configProvider
+		o.TenancyConfigName = ociconfig
+
+		basket = append(basket, o)
+	}
+
+	return basket, nil
 }
