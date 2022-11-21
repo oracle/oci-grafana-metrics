@@ -121,12 +121,6 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	}
 	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 		takey = ts.TenancyConfig
-		res := strings.Split(takey, "/")
-		// configname := res[0]
-		tenancyocid := res[1]
-		o.logger.Debug(takey)
-		ts.TenancyOCID = tenancyocid
-
 	} else {
 		takey = "DEFAULT/"
 	}
@@ -241,14 +235,6 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.Quer
 		var ts GrafanaSearchRequest
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
-		}
-
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
 		}
 
 		reqDetails := monitoring.ListMetricsDetails{}
@@ -383,13 +369,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDa
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
-		}
+
 		reqDetails := monitoring.ListMetricsDetails{}
 		// Group by is needed to get all  metrics without missing any as it is limited by the max pages
 		reqDetails.GroupBy = []string{"name"}
@@ -501,16 +481,8 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 
 	tenancyOcid := rootCompartment
 
-	log.DefaultLogger.Debug(tenancyOcid)
-	log.DefaultLogger.Debug(takey)
-
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
 	// Send the request using the service client
-	for key, _ := range o.tenancyAccess {
-		o.logger.Debug(string(key))
-	}
-	log.DefaultLogger.Debug("pippo " + string(len(o.tenancyAccess)))
-
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("This is what we were trying to get %s", " : fetching tenancy name"))
@@ -590,13 +562,6 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 		var ts GrafanaOCIRequest
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
-		}
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
 		}
 
 		fromMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
@@ -841,16 +806,6 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 		resp.Responses[query.RefID] = respD
 	}
 	return resp, nil
-}
-
-func (o *OCIDatasource) tenancySetup(tenancyconfig string) (string, error) {
-	// var metricsClient monitoring.MonitoringClient
-	// var identityClient identity.IdentityClient
-	// var config common.ConfigurationProvider
-	res := strings.Split(tenancyconfig, "/")
-	// configname := res[0]
-	tenancyocid := res[1]
-	return tenancyocid, nil
 }
 
 func OCIConfigParser() ([]string, error) {

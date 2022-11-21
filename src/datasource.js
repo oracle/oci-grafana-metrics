@@ -44,7 +44,7 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenancyconfigCache = [];
 
-    this.getTenancyConfig();
+    // this.getTenancyConfig();
 
     // this.getRegions();
     // this.getCompartments();
