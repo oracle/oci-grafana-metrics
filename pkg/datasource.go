@@ -54,8 +54,9 @@ type OCIDatasource struct {
 // NewOCIDatasource - constructor
 func NewOCIDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &OCIDatasource{
-		logger:     log.DefaultLogger,
-		nameToOCID: make(map[string]string),
+		tenancyAccess: make(map[string]*TenancyAccess),
+		logger:        log.DefaultLogger,
+		nameToOCID:    make(map[string]string),
 	}, nil
 }
 
@@ -109,39 +110,24 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	queryType := ts.QueryType
 
 	if len(o.tenancyAccess) == 0 {
-		configProvider, err := getConfigProvider(ts.Environment, ts.TenancyMode)
+		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
 		}
-		if configProvider != nil {
-			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-			if err != nil {
-				return nil, errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-			}
-			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-			if err != nil {
-				o.logger.Error("error with client")
-				panic(err)
-			}
-			o.tenancyAccess["DEFAULT/"].identityClient = identityClient
-			o.tenancyAccess["DEFAULT/"].metricsClient = metricsClient
-			o.tenancyAccess["DEFAULT/"].config = configProvider
-		} else {
-			if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-				var tenancyErr error
-				ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-				if tenancyErr != nil {
-					return nil, tenancyErr
-				}
-			}
-		}
 	}
-
-	if ts.TenancyConfig != "" {
+	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 		takey = ts.TenancyConfig
+		res := strings.Split(takey, "/")
+		// configname := res[0]
+		tenancyocid := res[1]
+		o.logger.Debug(takey)
+		ts.TenancyOCID = tenancyocid
+
 	} else {
 		takey = "DEFAULT/"
 	}
+
+	o.logger.Debug(takey)
 
 	switch queryType {
 	case "compartments":
@@ -159,14 +145,16 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	case "search":
 		return o.searchResponse(ctx, req, takey)
 	case "test":
-		return o.testResponse(ctx, req, takey)
+		return o.testResponse(ctx, req)
 	default:
 		return o.queryResponse(ctx, req, takey)
 	}
 }
 
-func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
+	var tenancyocid string
+	var tenancyErr error
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
@@ -179,17 +167,17 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 
 	for key, _ := range o.tenancyAccess { // Order not specified
 		if ts.TenancyMode == "multitenancy" {
-			var tenancyErr error
-			ts.TenancyOCID, _ = o.tenancySetup(key)
+			tenancyocid, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
 			if tenancyErr != nil {
-				o.logger.Error("Error during Tenancy Config", "error", tenancyErr)
-				return &backend.QueryDataResponse{}, tenancyErr
+				return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 			}
 			reg = common.StringToRegion(regions[rr])
 			rr++
+		} else {
+			tenancyocid = ts.TenancyOCID
 		}
 		listMetrics := monitoring.ListMetricsRequest{
-			CompartmentId: common.String(ts.TenancyOCID),
+			CompartmentId: common.String(tenancyocid),
 		}
 		o.tenancyAccess[key].metricsClient.SetRegion(string(reg))
 		res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
@@ -199,7 +187,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		status := res.RawResponse.StatusCode
 		if status >= 200 && status < 300 {
 			// return &backend.QueryDataResponse{}, nil
-			o.logger.Error("OK", "OK", status)
+			o.logger.Error(key, "OK", status)
 		} else {
 			return nil, errors.Wrap(err, fmt.Sprintf("list metrircs failed %s %d", spew.Sdump(res), status))
 		}
@@ -309,21 +297,69 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func getConfigProvider(environment string, tenancymode string) (common.ConfigurationProvider, error) {
+func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string) error {
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
-			var o OCIDatasource
-			o.setTenancyContext()
+			ociconfigs, _ := OCIConfigParser()
+			for _, ociconfig := range ociconfigs {
+				var configProvider common.ConfigurationProvider
+				configProvider = common.CustomProfileConfigProvider("", ociconfig)
+				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+				if err != nil {
+					return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+				}
+				identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+				if err != nil {
+					o.logger.Error("Error creating identity client", "error", err)
+					return errors.Wrap(err, "Error creating identity client")
+				}
+				o.tenancyAccess[ociconfig] = &TenancyAccess{metricsClient, identityClient, configProvider}
 
-			return nil, nil
+				// o.tenancyAccess[ociconfig].identityClient = identityClient
+				// o.tenancyAccess[ociconfig].metricsClient = metricsClient
+				// o.tenancyAccess[ociconfig].config = configProvider
+
+			}
+			for key, _ := range o.tenancyAccess {
+				o.logger.Debug(string(key))
+			}
+			return nil
 		} else {
-			return common.DefaultConfigProvider(), nil
+			var configProvider common.ConfigurationProvider
+			configProvider = common.DefaultConfigProvider()
+			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+			if err != nil {
+				return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+			}
+			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+			if err != nil {
+				o.logger.Error("Error creating identity client", "error", err)
+				return errors.Wrap(err, "Error creating identity client")
+			}
+			o.tenancyAccess["DEFAULT/"] = &TenancyAccess{metricsClient, identityClient, configProvider}
+			return nil
 		}
 	case "OCI Instance":
-		return auth.InstancePrincipalConfigurationProvider()
+		var configProvider common.ConfigurationProvider
+		configProvider, err := auth.InstancePrincipalConfigurationProvider()
+		if err != nil {
+			return errors.New(fmt.Sprint("error with instance principals", spew.Sdump(configProvider), err.Error()))
+		}
+		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+		}
+		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			o.logger.Error("Error creating identity client", "error", err)
+			return errors.Wrap(err, "Error creating identity client")
+		}
+		o.tenancyAccess["DEFAULT/"] = &TenancyAccess{metricsClient, identityClient, configProvider}
+		return nil
+
 	default:
-		return nil, errors.New("unknown environment type")
+		return errors.New("unknown environment type")
 	}
 }
 
@@ -840,30 +876,6 @@ func OCIConfigParser() ([]string, error) {
 
 	return ociconfigs, nil
 
-}
-
-func (o *OCIDatasource) setTenancyContext() error {
-	ociconfigs, _ := OCIConfigParser()
-	for _, ociconfig := range ociconfigs {
-		var configProvider common.ConfigurationProvider
-		configProvider = common.CustomProfileConfigProvider("", ociconfig)
-		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-		}
-		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			o.logger.Error("Error creating identity client", "error", err)
-			return errors.Wrap(err, "Error creating identity client")
-		}
-
-		o.tenancyAccess[ociconfig].identityClient = identityClient
-		o.tenancyAccess[ociconfig].metricsClient = metricsClient
-		o.tenancyAccess[ociconfig].config = configProvider
-
-	}
-
-	return nil
 }
 
 func getRegionsFromConfig() ([]string, error) {
