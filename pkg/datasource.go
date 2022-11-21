@@ -109,6 +109,10 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 
 	queryType := ts.QueryType
 
+	o.logger.Debug("QueryData")
+	o.logger.Debug(ts.Environment)
+	o.logger.Debug(ts.TenancyMode)
+
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
 		if err != nil {
@@ -298,6 +302,10 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend
 }
 
 func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string) error {
+
+	o.logger.Debug("getConfigProvider")
+	o.logger.Debug(environment)
+	o.logger.Debug(tenancymode)
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
@@ -314,7 +322,11 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 					o.logger.Error("Error creating identity client", "error", err)
 					return errors.Wrap(err, "Error creating identity client")
 				}
-				o.tenancyAccess[ociconfig] = &TenancyAccess{metricsClient, identityClient, configProvider}
+				tenancyocid, err := configProvider.TenancyOCID()
+				if err != nil {
+					return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
+				}
+				o.tenancyAccess[ociconfig+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
 
 				// o.tenancyAccess[ociconfig].identityClient = identityClient
 				// o.tenancyAccess[ociconfig].metricsClient = metricsClient
@@ -447,19 +459,19 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 
 	log.DefaultLogger.Debug(ts.QueryType)
 	log.DefaultLogger.Debug(ts.Region)
-	log.DefaultLogger.Debug(ts.Environment)
+	log.DefaultLogger.Debug(ts.TenancyMode)
 	log.DefaultLogger.Debug(ts.TenancyConfig)
 
+	var tenancyocid string
 	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-		var tenancyErr error
-		ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-		if tenancyErr != nil {
-			return nil, tenancyErr
-		}
+		res := strings.Split(takey, "/")
+		tenancyocid = res[1]
+	} else {
+		tenancyocid = ts.TenancyOCID
 	}
 
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-		m, err := o.getCompartments(ctx, ts.Region, ts.TenancyOCID, takey)
+		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
 		if err != nil {
 			o.logger.Error("Unable to refresh cache")
 			return nil, err
@@ -489,8 +501,16 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 
 	tenancyOcid := rootCompartment
 
+	log.DefaultLogger.Debug(tenancyOcid)
+	log.DefaultLogger.Debug(takey)
+
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
 	// Send the request using the service client
+	for key, _ := range o.tenancyAccess {
+		o.logger.Debug(string(key))
+	}
+	log.DefaultLogger.Debug("pippo " + string(len(o.tenancyAccess)))
+
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("This is what we were trying to get %s", " : fetching tenancy name"))
@@ -718,13 +738,7 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
-		}
+
 		res, err := o.tenancyAccess[takey].identityClient.ListRegions(ctx)
 		if err != nil {
 			return nil, errors.Wrap(err, "error fetching regions")

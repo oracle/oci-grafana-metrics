@@ -44,7 +44,7 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenancyconfigCache = [];
 
-    // this.getTenancyConfig();
+    this.getTenancyConfig();
 
     // this.getRegions();
     // this.getCompartments();
@@ -160,6 +160,7 @@ export default class OCIDatasource {
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           queryType: "search",
@@ -303,6 +304,7 @@ export default class OCIDatasource {
       const result = {
         resolution,
         environment: this.environment,
+        tenancymode: this.tenancymode,
         datasourceId: this.id,
         tenancyOCID: this.tenancyOCID,
         queryType: "query",
@@ -559,6 +561,7 @@ export default class OCIDatasource {
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           tenancyconfig: tenancyconfig,
@@ -581,6 +584,7 @@ export default class OCIDatasource {
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           queryType: "tenancyconfig",
         },
@@ -606,6 +610,7 @@ export default class OCIDatasource {
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           tenancyconfig: tenancyconfig,
@@ -651,6 +656,7 @@ export default class OCIDatasource {
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           queryType: "namespaces",
@@ -691,6 +697,7 @@ export default class OCIDatasource {
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           queryType: "resourcegroups",
@@ -752,6 +759,7 @@ export default class OCIDatasource {
         targets: [
           {
             environment: this.environment,
+            tenancymode: this.tenancymode,
             datasourceId: this.id,
             tenancyOCID: this.tenancyOCID,
             queryType: "dimensions",
