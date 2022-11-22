@@ -47,6 +47,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.target.aggregation = this.target.aggregation || 'mean()'
     this.target.dimensions = this.target.dimensions || [];
     this.target.legendFormat = this.target.legendFormat || ''
+    this.target.tenancymode = this.datasource.tenancymode || ''
 
     this.dimensionSegments = [];
     this.removeDimensionSegment = uiSegmentSrv.newSegment({ fake: true, value: '-- remove dimension --' });
@@ -215,15 +216,6 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
         this.panelCtrl.refresh(); // Asks the panel to refresh data.
       }       
     });
-
-    const compartname=(this.datasource.getCompartments(this.target))
-    compartname.then((value) => {
-      if (value.length === 0){
-        this.target.compartment = SELECT_PLACEHOLDERS.COMPARTMENT;
-        this.panelCtrl.refresh(); // Asks the panel to refresh data.
-      }       
-    });
-
   }
 
 

@@ -28,6 +28,7 @@ import (
 )
 
 const MaxPagesToFetch = 20
+const SingleTenancyKey = "DEFAULT/"
 
 var (
 	cacheRefreshTime = time.Minute // how often to refresh our compartmentID cache
@@ -35,10 +36,17 @@ var (
 )
 
 // OCIDatasource - pulls in data from telemtry/various oci apis
+// type OCIDatasource struct {
+// 	metricsClient    monitoring.MonitoringClient
+// 	identityClient   identity.IdentityClient
+// 	config           common.ConfigurationProvider
+// 	logger           log.Logger
+// 	nameToOCID       map[string]string
+// 	timeCacheUpdated time.Time
+// }
+
 type OCIDatasource struct {
-	metricsClient    monitoring.MonitoringClient
-	identityClient   identity.IdentityClient
-	config           common.ConfigurationProvider
+	tenancyAccess    map[string]*TenancyAccess
 	logger           log.Logger
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
@@ -47,24 +55,16 @@ type OCIDatasource struct {
 // NewOCIDatasource - constructor
 func NewOCIDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &OCIDatasource{
-		logger:     log.DefaultLogger,
-		nameToOCID: make(map[string]string),
+		tenancyAccess: make(map[string]*TenancyAccess),
+		logger:        log.DefaultLogger,
+		nameToOCID:    make(map[string]string),
 	}, nil
 }
 
-// OCIConfigSet
-type OCIConfigSet struct {
-	metricsClient     monitoring.MonitoringClient
-	identityClient    identity.IdentityClient
-	config            common.ConfigurationProvider
-	logger            log.Logger
-	nameToOCID        map[string]string
-	TenancyConfigName string
-}
-
-type OCIConfigArray struct {
-	OCIConfigSets []OCIConfigSet
-	logger        log.Logger
+type TenancyAccess struct {
+	metricsClient  monitoring.MonitoringClient
+	identityClient identity.IdentityClient
+	config         common.ConfigurationProvider
 }
 
 // GrafanaOCIRequest - Query Request comning in from the front end
@@ -73,7 +73,7 @@ type GrafanaOCIRequest struct {
 	Query         string
 	Resolution    string
 	Namespace     string
-	TenancyConfig string
+	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	ResourceGroup string
 	LegendFormat  string
 }
@@ -83,7 +83,7 @@ type GrafanaSearchRequest struct {
 	GrafanaCommonRequest
 	Metric        string `json:"metric,omitempty"`
 	Namespace     string
-	TenancyConfig string
+	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	ResourceGroup string
 }
 
@@ -94,13 +94,14 @@ type GrafanaCommonRequest struct {
 	TenancyMode   string
 	QueryType     string
 	Region        string
-	TenancyConfig string
+	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	TenancyOCID   string `json:"tenancyOCID"`
 }
 
 // Query - Determine what kind of query we're making
 func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
+	var takey string
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
@@ -108,50 +109,44 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	}
 
 	queryType := ts.QueryType
-	if o.config == nil {
-		configProvider, err := getConfigProvider(ts.Environment, ts.TenancyMode)
+
+	o.logger.Debug("QueryData")
+	o.logger.Debug(ts.Environment)
+	o.logger.Debug(ts.TenancyMode)
+	o.logger.Debug(ts.Region)
+	o.logger.Debug(ts.TenancyConfig)
+
+	if len(o.tenancyAccess) == 0 {
+		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
 		}
-		if configProvider != nil {
-			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-			if err != nil {
-				return nil, errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-			}
-			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-			if err != nil {
-				o.logger.Error("error with client")
-				panic(err)
-			}
-			o.identityClient = identityClient
-			o.metricsClient = metricsClient
-			o.config = configProvider
-		} else {
-			if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-				var tenancyErr error
-				ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-				if tenancyErr != nil {
-					return nil, tenancyErr
-				}
-			}
-		}
 	}
+	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+		takey = ts.TenancyConfig
+	} else {
+		takey = SingleTenancyKey
+	}
+
+	o.logger.Debug(takey)
+	o.logger.Debug(queryType)
+	o.logger.Debug("/QueryData")
 
 	switch queryType {
 	case "compartments":
-		return o.compartmentsResponse(ctx, req)
+		return o.compartmentsResponse(ctx, req, takey)
 	case "dimensions":
-		return o.dimensionResponse(ctx, req)
+		return o.dimensionResponse(ctx, req, takey)
 	case "namespaces":
-		return o.namespaceResponse(ctx, req)
+		return o.namespaceResponse(ctx, req, takey)
 	case "resourcegroups":
-		return o.resourcegroupsResponse(ctx, req)
+		return o.resourcegroupsResponse(ctx, req, takey)
 	case "regions":
-		return o.regionsResponse(ctx, req)
+		return o.regionsResponse(ctx, req, takey)
 	case "tenancyconfig":
 		return o.tenancyConfigResponse(ctx, req)
 	case "search":
-		return o.searchResponse(ctx, req)
+		return o.searchResponse(ctx, req, takey)
 	case "test":
 		return o.testResponse(ctx, req)
 	default:
@@ -161,93 +156,49 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
+	var tenancyocid string
+	var tenancyErr error
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	if ts.TenancyMode == "multitenancy" {
-		var oarray OCIConfigArray
-		log.DefaultLogger.Debug("in test function")
-
-		for _, oset := range oarray.OCIConfigSets {
-			log.DefaultLogger.Debug(oset.TenancyConfigName)
-		}
-		log.DefaultLogger.Debug("out test function")
-
-		var oci_config_file string
-		if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
-			oci_config_file = os.Getenv("OCI_CONFIG_FILE")
-		} else {
-			oci_config_file = "/home/grafana/.oci/config"
-		}
-		file, err := os.Open(oci_config_file)
-		if err != nil {
-			return nil, errors.Wrap(err, "error opening file")
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-
-		r, err := regexp.Compile(`\[.*\]`)   // this can also be a regex
-		r2, err := regexp.Compile(`region=`) // this can also be a regex
-
-		if err != nil {
-			return nil, errors.Wrap(err, "error in compiling regex")
-		}
-
-		var configs []string
-		var regioni []string
-		for scanner.Scan() {
-			if r.MatchString(scanner.Text()) {
-				replacer := strings.NewReplacer("[", "", "]", "")
-				output := replacer.Replace(scanner.Text())
-				configProvider := common.CustomProfileConfigProvider("", output)
-				res, err := configProvider.TenancyOCID()
-				if err != nil {
-					return nil, errors.Wrap(err, "error fetching regions")
-				}
-
-				value := output + "/" + res
-				configs = append(configs, *(common.String(value)))
-			}
-			if r2.MatchString(scanner.Text()) {
-				rreplacer := strings.NewReplacer("region=", "")
-				routput := rreplacer.Replace(scanner.Text())
-				regioni = append(regioni, routput)
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			return nil, errors.Wrap(err, "error in compiling regex")
-		}
-		ts.Region = regioni[0]
-		var tenancyErr error
-		ts.TenancyOCID, _ = o.tenancySetup(configs[0])
-		if tenancyErr != nil {
-			o.logger.Error("Error during Tenancy Config", "error", tenancyErr)
-			return &backend.QueryDataResponse{}, tenancyErr
-		}
-	}
-
-	listMetrics := monitoring.ListMetricsRequest{
-		CompartmentId: common.String(ts.TenancyOCID),
-	}
+	regions, _ := OCIConfigParser("regions")
+	rr := 0
 	reg := common.StringToRegion(ts.Region)
-	o.metricsClient.SetRegion(string(reg))
-	res, err := o.metricsClient.ListMetrics(ctx, listMetrics)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
+
+	for key, _ := range o.tenancyAccess { // Order not specified
+		if ts.TenancyMode == "multitenancy" {
+			tenancyocid, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
+			if tenancyErr != nil {
+				return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+			}
+			reg = common.StringToRegion(regions[rr])
+			rr++
+		} else {
+			tenancyocid = ts.TenancyOCID
+		}
+		listMetrics := monitoring.ListMetricsRequest{
+			CompartmentId: common.String(tenancyocid),
+		}
+		o.tenancyAccess[key].metricsClient.SetRegion(string(reg))
+		res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
+		if err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
+		status := res.RawResponse.StatusCode
+		if status >= 200 && status < 300 {
+			// return &backend.QueryDataResponse{}, nil
+			o.logger.Error(key, "OK", status)
+		} else {
+			return nil, errors.Wrap(err, fmt.Sprintf("list metrircs failed %s %d", spew.Sdump(res), status))
+		}
 	}
-	status := res.RawResponse.StatusCode
-	if status >= 200 && status < 300 {
-		return &backend.QueryDataResponse{}, nil
-	}
-	return nil, errors.Wrap(err, fmt.Sprintf("list metrircs failed %s %d", spew.Sdump(res), status))
+	return &backend.QueryDataResponse{}, nil
 }
 
-func (o *OCIDatasource) dimensionResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) dimensionResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -262,7 +213,7 @@ func (o *OCIDatasource) dimensionResponse(ctx context.Context, req *backend.Quer
 			reqDetails.ResourceGroup = common.String(ts.ResourceGroup)
 		}
 		reqDetails.Name = common.String(ts.Metric)
-		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
+		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
@@ -282,7 +233,7 @@ func (o *OCIDatasource) dimensionResponse(ctx context.Context, req *backend.Quer
 	return resp, nil
 }
 
-func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -291,17 +242,9 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.Quer
 			return &backend.QueryDataResponse{}, err
 		}
 
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
-		}
-
 		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.GroupBy = []string{"namespace"}
-		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
+		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
@@ -318,7 +261,7 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.Quer
 	return resp, nil
 }
 
-func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -330,7 +273,7 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend
 		reqDetails := monitoring.ListMetricsDetails{}
 		reqDetails.Namespace = common.String(ts.Namespace)
 		reqDetails.GroupBy = []string{"resourceGroup"}
-		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
+		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
@@ -349,44 +292,90 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func getConfigProvider(environment string, tenancymode string) (common.ConfigurationProvider, error) {
+func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string) error {
+
+	o.logger.Debug("getConfigProvider")
+	o.logger.Debug(environment)
+	o.logger.Debug(tenancymode)
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
-			oarray := new(OCIConfigArray)
-			oarray.setTenancyContext()
-			log.DefaultLogger.Debug("in getConfigProvider function")
-			for _, oset := range oarray.OCIConfigSets {
-				log.DefaultLogger.Debug(oset.TenancyConfigName)
-			}
-			log.DefaultLogger.Debug("out getConfigProvider function")
+			ociconfigs, _ := OCIConfigParser("ociconfigs")
+			for _, ociconfig := range ociconfigs {
+				var configProvider common.ConfigurationProvider
+				configProvider = common.CustomProfileConfigProvider("", ociconfig)
+				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+				if err != nil {
+					return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+				}
+				identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+				if err != nil {
+					o.logger.Error("Error creating identity client", "error", err)
+					return errors.Wrap(err, "Error creating identity client")
+				}
+				tenancyocid, err := configProvider.TenancyOCID()
+				if err != nil {
+					return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
+				}
+				o.tenancyAccess[ociconfig+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
 
-			return nil, nil
+				// o.tenancyAccess[ociconfig].identityClient = identityClient
+				// o.tenancyAccess[ociconfig].metricsClient = metricsClient
+				// o.tenancyAccess[ociconfig].config = configProvider
+
+			}
+			for key, _ := range o.tenancyAccess {
+				o.logger.Debug(string(key))
+			}
+			return nil
 		} else {
-			return common.DefaultConfigProvider(), nil
+			var configProvider common.ConfigurationProvider
+			configProvider = common.DefaultConfigProvider()
+			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+			if err != nil {
+				return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+			}
+			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+			if err != nil {
+				o.logger.Error("Error creating identity client", "error", err)
+				return errors.Wrap(err, "Error creating identity client")
+			}
+			o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+			return nil
 		}
 	case "OCI Instance":
-		return auth.InstancePrincipalConfigurationProvider()
+		var configProvider common.ConfigurationProvider
+		configProvider, err := auth.InstancePrincipalConfigurationProvider()
+		if err != nil {
+			return errors.New(fmt.Sprint("error with instance principals", spew.Sdump(configProvider), err.Error()))
+		}
+		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+		}
+		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			o.logger.Error("Error creating identity client", "error", err)
+			return errors.Wrap(err, "Error creating identity client")
+		}
+		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+		return nil
+
 	default:
-		return nil, errors.New("unknown environment type")
+		return errors.New("unknown environment type")
 	}
 }
 
-func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
 		var ts GrafanaSearchRequest
+
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
-		}
+
 		reqDetails := monitoring.ListMetricsDetails{}
 		// Group by is needed to get all  metrics without missing any as it is limited by the max pages
 		reqDetails.GroupBy = []string{"name"}
@@ -395,7 +384,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDa
 			reqDetails.ResourceGroup = common.String(ts.ResourceGroup)
 		}
 
-		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails)
+		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
 		}
@@ -417,15 +406,15 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDa
 	return resp, nil
 }
 
-func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails) ([]monitoring.Metric, error) {
+func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails, takey string) ([]monitoring.Metric, error) {
 	var items []monitoring.Metric
 	var page *string
 
 	pageNumber := 0
 	for {
 		reg := common.StringToRegion(region)
-		o.metricsClient.SetRegion(string(reg))
-		res, err := o.metricsClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
+		o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
+		res, err := o.tenancyAccess[takey].metricsClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
 			CompartmentId:      common.String(compartment),
 			ListMetricsDetails: metricDetails,
 			Page:               page,
@@ -446,7 +435,7 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 	return items, nil
 }
 
-func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
 	var ts GrafanaSearchRequest
 
 	query := req.Queries[0]
@@ -454,21 +443,35 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		return &backend.QueryDataResponse{}, err
 	}
 
+	log.DefaultLogger.Debug("compartmentsResponse")
 	log.DefaultLogger.Debug(ts.QueryType)
 	log.DefaultLogger.Debug(ts.Region)
-	log.DefaultLogger.Debug(ts.Environment)
+	log.DefaultLogger.Debug(ts.TenancyMode)
 	log.DefaultLogger.Debug(ts.TenancyConfig)
+	log.DefaultLogger.Debug(takey)
+	log.DefaultLogger.Debug("/compartmentsResponse")
 
+	var tenancyocid string
 	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-		var tenancyErr error
-		ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-		if tenancyErr != nil {
-			return nil, tenancyErr
-		}
+		res := strings.Split(takey, "/")
+		tenancyocid = res[1]
+	} else {
+		tenancyocid = ts.TenancyOCID
 	}
 
+	// // compute takey at every cycle of  queryResponse to guarantee correct var interpolation
+	// if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+	// 	takey = ts.TenancyConfig
+	// 	res := strings.Split(takey, "/")
+	// 	tenancyocid = res[1]
+	// } else {
+	// 	takey = SingleTenancyKey
+	// 	tenancyocid = ts.TenancyOCID
+
+	// }
+
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-		m, err := o.getCompartments(ctx, ts.Region, ts.TenancyOCID)
+		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
 		if err != nil {
 			o.logger.Error("Unable to refresh cache")
 			return nil, err
@@ -493,14 +496,14 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	}, nil
 }
 
-func (o *OCIDatasource) getCompartments(ctx context.Context, region string, rootCompartment string) (map[string]string, error) {
+func (o *OCIDatasource) getCompartments(ctx context.Context, region string, rootCompartment string, takey string) (map[string]string, error) {
 	m := make(map[string]string)
 
 	tenancyOcid := rootCompartment
 
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
 	// Send the request using the service client
-	resp, err := o.identityClient.GetTenancy(context.Background(), req)
+	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("This is what we were trying to get %s", " : fetching tenancy name"))
 	}
@@ -513,9 +516,9 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 
 	var page *string
 	reg := common.StringToRegion(region)
-	o.identityClient.SetRegion(string(reg))
+	o.tenancyAccess[takey].identityClient.SetRegion(string(reg))
 	for {
-		res, err := o.identityClient.ListCompartments(ctx,
+		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
 			identity.ListCompartmentsRequest{
 				CompartmentId:          &rootCompartment,
 				Page:                   page,
@@ -574,18 +577,12 @@ type responseAndQuery struct {
 
 func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	results := make([]responseAndQuery, 0, len(req.Queries))
+	var takey string
 
 	for _, query := range req.Queries {
 		var ts GrafanaOCIRequest
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
-		}
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
 		}
 
 		fromMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
@@ -606,18 +603,35 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 			req.ResourceGroup = common.String(ts.ResourceGroup)
 		}
 
+		// compute takey at every cycle of  queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
+		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+			takey = ts.TenancyConfig
+		} else {
+			takey = SingleTenancyKey
+		}
+
 		reg := common.StringToRegion(ts.Region)
-		o.metricsClient.SetRegion(string(reg))
+		o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
 
 		request := monitoring.SummarizeMetricsDataRequest{
 			CompartmentId:               common.String(ts.Compartment),
 			SummarizeMetricsDataDetails: req,
 		}
+		log.DefaultLogger.Debug("checkpoint 10")
+		log.DefaultLogger.Debug(ts.Region)
+		log.DefaultLogger.Debug(ts.Compartment)
+		log.DefaultLogger.Debug(ts.QueryType)
+		log.DefaultLogger.Debug(takey)
+		log.DefaultLogger.Debug(ts.TenancyMode)
+		log.DefaultLogger.Debug(ts.TenancyConfig)
 
-		res, err := o.metricsClient.SummarizeMetricsData(ctx, request)
+		res, err := o.tenancyAccess[takey].metricsClient.SummarizeMetricsData(ctx, request)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint(spew.Sdump(query), spew.Sdump(request), spew.Sdump(res)))
 		}
+
+		log.DefaultLogger.Debug("checkpoint 20")
+
 		// Include the legend format in the information about each query
 		// since the legend format may be different for different queries
 		// on the same data panel
@@ -719,7 +733,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 	return resp, nil
 }
 
-func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -727,14 +741,8 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-			var tenancyErr error
-			ts.TenancyOCID, tenancyErr = o.tenancySetup(ts.TenancyConfig)
-			if tenancyErr != nil {
-				return nil, tenancyErr
-			}
-		}
-		res, err := o.identityClient.ListRegions(ctx)
+
+		res, err := o.tenancyAccess[takey].identityClient.ListRegions(ctx)
 		if err != nil {
 			return nil, errors.Wrap(err, "error fetching regions")
 		}
@@ -817,7 +825,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	ociconfigs, _ := OCIConfigParser()
+	ociconfigs, _ := OCIConfigParser("ociconfigs")
 
 	for _, query := range req.Queries {
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
@@ -825,7 +833,7 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 			configProvider := common.CustomProfileConfigProvider("", ociconfig)
 			res, err := configProvider.TenancyOCID()
 			if err != nil {
-				return nil, errors.Wrap(err, "error configuring TenancyOCID")
+				return nil, errors.Wrap(err, "error configuring TenancyOCID: "+ociconfig+"/"+res)
 			}
 			value := ociconfig + "/" + res
 			frame.AppendRow(*(common.String(value)))
@@ -838,47 +846,25 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 	return resp, nil
 }
 
-func (o *OCIDatasource) tenancySetup(tenancyconfig string) (string, error) {
-	var configProvider common.ConfigurationProvider
-	res := strings.Split(tenancyconfig, "/")
-	configname := res[0]
-	tenancyocid := res[1]
-
-	if configname == "DEFAULT" {
-		configProvider = common.DefaultConfigProvider()
-	} else {
-		configProvider = common.CustomProfileConfigProvider("", configname)
-
-	}
-	metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-	if err != nil {
-		return "", errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-	}
-	identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-	if err != nil {
-		o.logger.Error("Error creating identity client", "error", err)
-		return "", errors.Wrap(err, "Error creating identity client")
-	}
-	o.identityClient = identityClient
-	o.metricsClient = metricsClient
-	o.config = configProvider
-
-	return tenancyocid, nil
-}
-
-func OCIConfigParser() ([]string, error) {
+func OCIConfigParser(scope string) ([]string, error) {
 	var oci_config_file string
 	var ociconfigs []string
+	var regions []string
 
-	if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
-		oci_config_file = os.Getenv("OCI_CONFIG_FILE")
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		log.DefaultLogger.Error("could not get home directory")
+	}
+
+	if _, ok := os.LookupEnv("OCI_CLI_CONFIG_FILE"); ok {
+		oci_config_file = os.Getenv("OCI_CLI_CONFIG_FILE")
 	} else {
-		oci_config_file = "/home/grafana/.oci/config"
+		oci_config_file = homedir + "/.oci/config"
 	}
 
 	file, err := os.Open(oci_config_file)
 	if err != nil {
-		return nil, errors.Wrap(err, "error opening file")
+		return nil, errors.Wrap(err, "error opening file:"+oci_config_file)
 	}
 	defer file.Close()
 
@@ -888,45 +874,35 @@ func OCIConfigParser() ([]string, error) {
 	}
 
 	r, err := regexp.Compile(`\[.*\]`) // this can also be a regex
-
+	if err != nil {
+		return nil, errors.Wrap(err, "error in compiling regex")
+	}
+	r2, err := regexp.Compile(`region=`) // this can also be a regex
 	if err != nil {
 		return nil, errors.Wrap(err, "error in compiling regex")
 	}
 
-	for scanner.Scan() {
-		if r.MatchString(scanner.Text()) {
-			replacer := strings.NewReplacer("[", "", "]", "")
-			output := replacer.Replace(scanner.Text())
-			ociconfigs = append(ociconfigs, output)
+	if scope == "ociconfigs" {
+		for scanner.Scan() {
+			if r.MatchString(scanner.Text()) {
+				replacer := strings.NewReplacer("[", "", "]", "")
+				output := replacer.Replace(scanner.Text())
+				ociconfigs = append(ociconfigs, output)
+			}
 		}
+		return ociconfigs, nil
 	}
 
-	return ociconfigs, nil
+	if scope == "regions" {
+		for scanner.Scan() {
+			if r2.MatchString(scanner.Text()) {
+				replacer := strings.NewReplacer("region=", "")
+				output := replacer.Replace(scanner.Text())
+				regions = append(regions, output)
 
-}
-
-func (oarray *OCIConfigArray) setTenancyContext() error {
-	ociconfigs, _ := OCIConfigParser()
-	var o OCIConfigSet
-	for _, ociconfig := range ociconfigs {
-		var configProvider common.ConfigurationProvider
-		configProvider = common.CustomProfileConfigProvider("", ociconfig)
-		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+			}
 		}
-		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			o.logger.Error("Error creating identity client", "error", err)
-			return errors.Wrap(err, "Error creating identity client")
-		}
-		o.identityClient = identityClient
-		o.metricsClient = metricsClient
-		o.config = configProvider
-		o.TenancyConfigName = ociconfig
-
-		oarray.OCIConfigSets = append(oarray.OCIConfigSets, o)
+		return regions, nil
 	}
-
-	return nil
+	return nil, nil
 }
