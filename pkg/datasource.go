@@ -73,7 +73,7 @@ type GrafanaOCIRequest struct {
 	Query         string
 	Resolution    string
 	Namespace     string
-	TenancyConfig string
+	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	ResourceGroup string
 	LegendFormat  string
 }
@@ -83,7 +83,7 @@ type GrafanaSearchRequest struct {
 	GrafanaCommonRequest
 	Metric        string `json:"metric,omitempty"`
 	Namespace     string
-	TenancyConfig string
+	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	ResourceGroup string
 }
 
@@ -94,7 +94,7 @@ type GrafanaCommonRequest struct {
 	TenancyMode   string
 	QueryType     string
 	Region        string
-	TenancyConfig string
+	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	TenancyOCID   string `json:"tenancyOCID"`
 }
 
@@ -114,6 +114,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	o.logger.Debug(ts.Environment)
 	o.logger.Debug(ts.TenancyMode)
 	o.logger.Debug(ts.Region)
+	o.logger.Debug(ts.TenancyConfig)
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
@@ -447,6 +448,7 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(ts.Region)
 	log.DefaultLogger.Debug(ts.TenancyMode)
 	log.DefaultLogger.Debug(ts.TenancyConfig)
+	log.DefaultLogger.Debug(takey)
 	log.DefaultLogger.Debug("/compartmentsResponse")
 
 	var tenancyocid string
@@ -456,6 +458,17 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	} else {
 		tenancyocid = ts.TenancyOCID
 	}
+
+	// // compute takey at every cycle of  queryResponse to guarantee correct var interpolation
+	// if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+	// 	takey = ts.TenancyConfig
+	// 	res := strings.Split(takey, "/")
+	// 	tenancyocid = res[1]
+	// } else {
+	// 	takey = SingleTenancyKey
+	// 	tenancyocid = ts.TenancyOCID
+
+	// }
 
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
 		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
@@ -590,7 +603,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 			req.ResourceGroup = common.String(ts.ResourceGroup)
 		}
 
-		// cumpute takey at every cycle of  queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
+		// compute takey at every cycle of  queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
 		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 			takey = ts.TenancyConfig
 		} else {
@@ -820,7 +833,7 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 			configProvider := common.CustomProfileConfigProvider("", ociconfig)
 			res, err := configProvider.TenancyOCID()
 			if err != nil {
-				return nil, errors.Wrap(err, "error configuring TenancyOCID")
+				return nil, errors.Wrap(err, "error configuring TenancyOCID: "+ociconfig+"/"+res)
 			}
 			value := ociconfig + "/" + res
 			frame.AppendRow(*(common.String(value)))
