@@ -28,6 +28,7 @@ import (
 )
 
 const MaxPagesToFetch = 20
+const SingleTenancyKey = "DEFAULT/"
 
 var (
 	cacheRefreshTime = time.Minute // how often to refresh our compartmentID cache
@@ -112,6 +113,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	o.logger.Debug("QueryData")
 	o.logger.Debug(ts.Environment)
 	o.logger.Debug(ts.TenancyMode)
+	o.logger.Debug(ts.Region)
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
@@ -122,10 +124,12 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 		takey = ts.TenancyConfig
 	} else {
-		takey = "DEFAULT/"
+		takey = SingleTenancyKey
 	}
 
 	o.logger.Debug(takey)
+	o.logger.Debug(queryType)
+	o.logger.Debug("/QueryData")
 
 	switch queryType {
 	case "compartments":
@@ -145,7 +149,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	case "test":
 		return o.testResponse(ctx, req)
 	default:
-		return o.queryResponse(ctx, req, takey)
+		return o.queryResponse(ctx, req)
 	}
 }
 
@@ -335,7 +339,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				o.logger.Error("Error creating identity client", "error", err)
 				return errors.Wrap(err, "Error creating identity client")
 			}
-			o.tenancyAccess["DEFAULT/"] = &TenancyAccess{metricsClient, identityClient, configProvider}
+			o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
 			return nil
 		}
 	case "OCI Instance":
@@ -353,7 +357,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			o.logger.Error("Error creating identity client", "error", err)
 			return errors.Wrap(err, "Error creating identity client")
 		}
-		o.tenancyAccess["DEFAULT/"] = &TenancyAccess{metricsClient, identityClient, configProvider}
+		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
 		return nil
 
 	default:
@@ -366,6 +370,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDa
 
 	for _, query := range req.Queries {
 		var ts GrafanaSearchRequest
+
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
@@ -437,10 +442,12 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		return &backend.QueryDataResponse{}, err
 	}
 
+	log.DefaultLogger.Debug("compartmentsResponse")
 	log.DefaultLogger.Debug(ts.QueryType)
 	log.DefaultLogger.Debug(ts.Region)
 	log.DefaultLogger.Debug(ts.TenancyMode)
 	log.DefaultLogger.Debug(ts.TenancyConfig)
+	log.DefaultLogger.Debug("/compartmentsResponse")
 
 	var tenancyocid string
 	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
@@ -555,8 +562,9 @@ type responseAndQuery struct {
 	legendFormat string
 }
 
-func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	results := make([]responseAndQuery, 0, len(req.Queries))
+	var takey string
 
 	for _, query := range req.Queries {
 		var ts GrafanaOCIRequest
@@ -582,6 +590,13 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 			req.ResourceGroup = common.String(ts.ResourceGroup)
 		}
 
+		// cumpute takey at every cycle of  queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
+		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+			takey = ts.TenancyConfig
+		} else {
+			takey = SingleTenancyKey
+		}
+
 		reg := common.StringToRegion(ts.Region)
 		o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
 
@@ -589,11 +604,21 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 			CompartmentId:               common.String(ts.Compartment),
 			SummarizeMetricsDataDetails: req,
 		}
+		log.DefaultLogger.Debug("checkpoint 10")
+		log.DefaultLogger.Debug(ts.Region)
+		log.DefaultLogger.Debug(ts.Compartment)
+		log.DefaultLogger.Debug(ts.QueryType)
+		log.DefaultLogger.Debug(takey)
+		log.DefaultLogger.Debug(ts.TenancyMode)
+		log.DefaultLogger.Debug(ts.TenancyConfig)
 
 		res, err := o.tenancyAccess[takey].metricsClient.SummarizeMetricsData(ctx, request)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint(spew.Sdump(query), spew.Sdump(request), spew.Sdump(res)))
 		}
+
+		log.DefaultLogger.Debug("checkpoint 20")
+
 		// Include the legend format in the information about each query
 		// since the legend format may be different for different queries
 		// on the same data panel
