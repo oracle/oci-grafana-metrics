@@ -459,17 +459,6 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		tenancyocid = ts.TenancyOCID
 	}
 
-	// // compute takey at every cycle of  queryResponse to guarantee correct var interpolation
-	// if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
-	// 	takey = ts.TenancyConfig
-	// 	res := strings.Split(takey, "/")
-	// 	tenancyocid = res[1]
-	// } else {
-	// 	takey = SingleTenancyKey
-	// 	tenancyocid = ts.TenancyOCID
-
-	// }
-
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
 		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
 		if err != nil {
@@ -823,6 +812,13 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 	return metricLabel
 }
 
+/*
+Function generates an array  containing OCI configuration (.oci/config) in the following format:
+
+<section label/TenancyOCID>
+
+*/
+
 func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	ociconfigs, _ := OCIConfigParser("ociconfigs")
@@ -846,6 +842,14 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 	return resp, nil
 }
 
+/*
+Function parses the content of .oci/config file
+It accepts one parameter (scope) which can be "ociconfigs" or "regions"
+
+if ociconfigs, then the function returns an array of the OCI config sections labels
+if regions, then the function returns the list of the regions of every OCI config section entries
+
+*/
 func OCIConfigParser(scope string) ([]string, error) {
 	var oci_config_file string
 	var ociconfigs []string
