@@ -163,7 +163,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		return &backend.QueryDataResponse{}, err
 	}
 
-	regions, _ := getRegionsFromConfig()
+	regions, _ := OCIConfigParser("regions")
 	rr := 0
 	reg := common.StringToRegion(ts.Region)
 
@@ -299,7 +299,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
-			ociconfigs, _ := OCIConfigParser()
+			ociconfigs, _ := OCIConfigParser("ociconfigs")
 			for _, ociconfig := range ociconfigs {
 				var configProvider common.ConfigurationProvider
 				configProvider = common.CustomProfileConfigProvider("", ociconfig)
@@ -812,7 +812,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	ociconfigs, _ := OCIConfigParser()
+	ociconfigs, _ := OCIConfigParser("ociconfigs")
 
 	for _, query := range req.Queries {
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
@@ -833,19 +833,25 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 	return resp, nil
 }
 
-func OCIConfigParser() ([]string, error) {
+func OCIConfigParser(scope string) ([]string, error) {
 	var oci_config_file string
 	var ociconfigs []string
+	var regions []string
 
-	if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
-		oci_config_file = os.Getenv("OCI_CONFIG_FILE")
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		log.DefaultLogger.Error("could not get home directory")
+	}
+
+	if _, ok := os.LookupEnv("OCI_CLI_CONFIG_FILE"); ok {
+		oci_config_file = os.Getenv("OCI_CLI_CONFIG_FILE")
 	} else {
-		oci_config_file = "/home/grafana/.oci/config"
+		oci_config_file = homedir + "/.oci/config"
 	}
 
 	file, err := os.Open(oci_config_file)
 	if err != nil {
-		return nil, errors.Wrap(err, "error opening file")
+		return nil, errors.Wrap(err, "error opening file:"+oci_config_file)
 	}
 	defer file.Close()
 
@@ -855,54 +861,35 @@ func OCIConfigParser() ([]string, error) {
 	}
 
 	r, err := regexp.Compile(`\[.*\]`) // this can also be a regex
-
+	if err != nil {
+		return nil, errors.Wrap(err, "error in compiling regex")
+	}
+	r2, err := regexp.Compile(`region=`) // this can also be a regex
 	if err != nil {
 		return nil, errors.Wrap(err, "error in compiling regex")
 	}
 
-	for scanner.Scan() {
-		if r.MatchString(scanner.Text()) {
-			replacer := strings.NewReplacer("[", "", "]", "")
-			output := replacer.Replace(scanner.Text())
-			ociconfigs = append(ociconfigs, output)
+	if scope == "ociconfigs" {
+		for scanner.Scan() {
+			if r.MatchString(scanner.Text()) {
+				replacer := strings.NewReplacer("[", "", "]", "")
+				output := replacer.Replace(scanner.Text())
+				ociconfigs = append(ociconfigs, output)
+			}
 		}
+		return ociconfigs, nil
 	}
 
-	return ociconfigs, nil
+	if scope == "regions" {
+		for scanner.Scan() {
+			if r2.MatchString(scanner.Text()) {
+				replacer := strings.NewReplacer("region=", "")
+				output := replacer.Replace(scanner.Text())
+				regions = append(regions, output)
 
-}
-
-func getRegionsFromConfig() ([]string, error) {
-	var oci_config_file string
-	var regions []string
-	if _, ok := os.LookupEnv("OCI_CONFIG_FILE"); ok {
-		oci_config_file = os.Getenv("OCI_CONFIG_FILE")
-	} else {
-		oci_config_file = "/home/grafana/.oci/config"
-	}
-	file, err := os.Open(oci_config_file)
-	if err != nil {
-		return nil, errors.Wrap(err, "error opening file")
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	if err := scanner.Err(); err != nil {
-		return nil, errors.Wrap(err, "buffer error")
-	}
-
-	r, err := regexp.Compile(`region=`) // this can also be a regex
-
-	if err != nil {
-		return nil, errors.Wrap(err, "error in compiling regex")
-	}
-	for scanner.Scan() {
-		if r.MatchString(scanner.Text()) {
-			replacer := strings.NewReplacer("region=", "")
-			output := replacer.Replace(scanner.Text())
-			regions = append(regions, output)
-
+			}
 		}
+		return regions, nil
 	}
-	return regions, nil
-
+	return nil, nil
 }
