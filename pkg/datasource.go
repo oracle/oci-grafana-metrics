@@ -122,6 +122,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 			return nil, errors.Wrap(err, "broken environment")
 		}
 	}
+
 	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
 		takey = ts.TenancyConfig
 	} else {
@@ -449,7 +450,6 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(ts.TenancyMode)
 	log.DefaultLogger.Debug(ts.TenancyConfig)
 	log.DefaultLogger.Debug(takey)
-	log.DefaultLogger.Debug("/compartmentsResponse")
 
 	var tenancyocid string
 	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
@@ -459,14 +459,17 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		tenancyocid = ts.TenancyOCID
 	}
 
-	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
-		if err != nil {
-			o.logger.Error("Unable to refresh cache")
-			return nil, err
-		}
-		o.nameToOCID = m
+	log.DefaultLogger.Debug(tenancyocid)
+	log.DefaultLogger.Debug("/compartmentsResponse")
+
+	// if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
+	m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
+	if err != nil {
+		o.logger.Error("Unable to refresh cache")
+		return nil, err
 	}
+	o.nameToOCID = m
+	// }
 
 	frame := data.NewFrame(query.RefID,
 		data.NewField("name", nil, []string{}),
@@ -491,6 +494,8 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 	tenancyOcid := rootCompartment
 
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
+	log.DefaultLogger.Debug(*req.TenancyId)
+
 	// Send the request using the service client
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
 	if err != nil {
