@@ -44,7 +44,7 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenancyconfigCache = [];
 
-    this.getTenancyConfig();
+    // this.getTenancyConfig();
 
     // this.getRegions();
     // this.getCompartments();
@@ -192,7 +192,8 @@ export default class OCIDatasource {
       )
       .filter(
         (t) =>
-          !_.isEmpty(this.getVariableValue(t.tenancyconfig, options.scopedVars))
+          !_.isEmpty(this.getVariableValue(t.tenancyconfig, options.scopedVars)) &&
+          t.namespace !== SELECT_PLACEHOLDERS.TENANCYCONFIG
       )      
       .filter(
         (t) =>
@@ -421,15 +422,6 @@ export default class OCIDatasource {
    * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
    */
   templateMetricQuery(varString) {
-    let regionQuery = varString.match(regionsQueryRegex);
-    if (regionQuery) {
-      let target = {
-        tenancyconfig: removeQuotes(this.getVariableValue(regionQuery[1])),
-      };        
-      return this.getRegions(target).catch((err) => {
-        throw new Error("Unable to get regions: " + err);
-      });
-    }
 
     let tenancyconfigQuery = varString.match(tenancyconfigsQueryRegex);
     if (tenancyconfigQuery) {
@@ -438,6 +430,19 @@ export default class OCIDatasource {
         throw new Error("Unable to get tenancyconfigs: " + err);
       });    
     }    
+
+    let regionQuery = varString.match(regionsQueryRegex);
+    if (regionQuery) {
+      let target = {
+        tenancyconfig: removeQuotes(this.getVariableValue(regionQuery[1])),
+      };
+      console.log("regionQuery")
+      console.log(target)      
+      console.log("end regionQuery")
+      return this.getRegions(target).catch((err) => {
+        throw new Error("Unable to get regions: " + err);
+      });
+    }
 
     let compartmentQuery = varString.match(compartmentsQueryRegex);
     if (compartmentQuery) {
@@ -464,10 +469,6 @@ export default class OCIDatasource {
         compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
         tenancyconfig: removeQuotes(this.getVariableValue(namespaceQuery[3])),
       };
-      console.log("namespaceQuery")
-      console.log(target)      
-      console.log("end namespaceQuery")
-
       return this.getNamespaces(target).catch((err) => {
         throw new Error("Unable to get namespaces: " + err);
       });
@@ -549,9 +550,9 @@ export default class OCIDatasource {
         ? DEFAULT_TENANCYCONFIG
         : this.getVariableValue(target.tenancyconfig);
           
-    if (this.regionsCache && this.regionsCache.length > 0) {
-      return this.q.when(this.regionsCache);
-    }
+    // if (this.regionsCache && this.regionsCache.length > 0) {
+    //   return this.q.when(this.regionsCache);
+    // }
 
     return this.doRequest({
       targets: [
@@ -571,10 +572,10 @@ export default class OCIDatasource {
     });
   }
 
-  async getTenancyConfig() {
-    // if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
-    //   return this.q.when(this.tenancyconfigCache);
-    // }
+  getTenancyConfig() {
+    if (this.tenancyconfigCache && this.tenancyconfigCache.length > 0) {
+      return this.q.when(this.tenancyconfigCache);
+    }
 
     return this.doRequest({
       targets: [
@@ -593,6 +594,7 @@ export default class OCIDatasource {
   }
 
   async getCompartments(target) {
+
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
         ? DEFAULT_TENANCYCONFIG
@@ -617,6 +619,8 @@ export default class OCIDatasource {
       range: this.timeSrv.timeRange(),
     }).then((items) => {
       this.compartmentsCache = this.mapToTextValue(items, "compartments");
+      console.log("stampiamo il comparment");
+      console.log(this.compartmentsCache);      
       return this.compartmentsCache;
     });
   }
