@@ -546,7 +546,7 @@ export default class OCIDatasource {
   async getRegions(target) {
 
     if (this.tenancymode === "multitenancy"){
-      const tenancyconfig = await this.getTenancyConfig();
+      tenancyconfig = await this.getTenancyConfig();
     }
 
     const tenancyconfig =
@@ -626,6 +626,8 @@ export default class OCIDatasource {
       range: this.timeSrv.timeRange(),
     }).then((items) => {
       this.compartmentsCache = this.mapToTextValue(items, "compartments");
+      console.log("stampiamo il comparment");
+      console.log(this.compartmentsCache);      
       return this.compartmentsCache;
     });
   }
