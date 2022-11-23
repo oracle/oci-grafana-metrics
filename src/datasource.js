@@ -545,9 +545,9 @@ export default class OCIDatasource {
 
   async getRegions(target) {
 
-    if (this.tenancymode === "multitenancy"){
-      const tenancyconfig = await this.getTenancyConfig();
-    }
+    // if (this.tenancymode === "multitenancy"){
+    //   tenancyconfig = await this.getVariableValue(target.tenancyconfig);
+    // }
 
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
@@ -598,9 +598,9 @@ export default class OCIDatasource {
   }
 
   async getCompartments(target) {
-    if (this.tenancymode === "multitenancy"){
-      const tenancyconfig = await this.getTenancyConfig();
-    }
+    // if (this.tenancymode === "multitenancy"){
+    //   tenancyconfig = await this.getVariableValue(target.tenancyconfig);
+    // }
 
     const tenancyconfig =
       target.tenancyconfig === SELECT_PLACEHOLDERS.TENANCYCONFIG
