@@ -116,7 +116,11 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	o.logger.Debug(ts.Region)
 	o.logger.Debug(ts.TenancyConfig)
 
+	// uncomment to use the single OCI login method
 	if len(o.tenancyAccess) == 0 {
+		// uncomment to force OCI login at every query
+		// if true {
+
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
