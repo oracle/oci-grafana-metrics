@@ -857,7 +857,6 @@ It accepts one parameter (scope) which can be "ociconfigs" or "regions"
 
 if ociconfigs, then the function returns an array of the OCI config sections labels
 if regions, then the function returns the list of the regions of every OCI config section entries
-
 */
 func OCIConfigParser(scope string) ([]string, error) {
 	var oci_config_file string
