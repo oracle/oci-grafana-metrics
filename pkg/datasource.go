@@ -311,6 +311,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				configProvider = common.CustomProfileConfigProvider("", ociconfig)
 				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 				if err != nil {
+					o.logger.Error("Error with config:" + ociconfig)
 					return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
 				}
 				identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
@@ -338,6 +339,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			configProvider = common.DefaultConfigProvider()
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
+				o.logger.Error("Error with config:" + SingleTenancyKey)
 				return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
 			}
 			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
@@ -356,6 +358,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
+			o.logger.Error("Error with config:" + SingleTenancyKey)
 			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
 		}
 		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
