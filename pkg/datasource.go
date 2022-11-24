@@ -127,7 +127,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 		}
 	}
 
-	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+	if ts.TenancyMode == "multitenancy" {
 		takey = ts.TenancyConfig
 	} else {
 		takey = SingleTenancyKey
@@ -459,7 +459,7 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(takey)
 
 	var tenancyocid string
-	if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+	if ts.TenancyMode == "multitenancy" {
 		res := strings.Split(takey, "/")
 		tenancyocid = res[1]
 	} else {
@@ -605,7 +605,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 		}
 
 		// compute takey at every cycle of  queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
-		if ts.TenancyConfig != "NoTenancyConfig" && ts.TenancyConfig != "" {
+		if ts.TenancyMode == "multitenancy" {
 			takey = ts.TenancyConfig
 		} else {
 			takey = SingleTenancyKey
