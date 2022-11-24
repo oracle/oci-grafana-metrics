@@ -148,7 +148,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 		return o.resourcegroupsResponse(ctx, req, takey)
 	case "regions":
 		return o.regionsResponse(ctx, req, takey)
-	case "tenancyconfig":
+	case "tenancies":
 		return o.tenancyConfigResponse(ctx, req)
 	case "search":
 		return o.searchResponse(ctx, req, takey)
