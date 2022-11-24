@@ -10,7 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
-  tenancyconfigsQueryRegex,
+  tenanciesQueryRegex,
   compartmentsQueryRegex,
   dimensionValuesQueryRegex,
   removeQuotes,
@@ -423,11 +423,11 @@ export default class OCIDatasource {
    */
   templateMetricQuery(varString) {
 
-    let tenancyconfigQuery = varString.match(tenancyconfigsQueryRegex);
+    let tenancyconfigQuery = varString.match(tenanciesQueryRegex);
     if (tenancyconfigQuery) {
       // this.target.compartment = SELECT_PLACEHOLDERS.COMPARTMENT;
       return this.getTenancyConfig().catch((err) => {
-        throw new Error("Unable to get tenancyconfigs: " + err);
+        throw new Error("Unable to get tenancies: " + err);
       });    
     }    
 
