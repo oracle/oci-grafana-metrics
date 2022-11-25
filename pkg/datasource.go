@@ -61,6 +61,16 @@ func NewOCIDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instan
 	}, nil
 }
 
+type OCIConfigFileMeta struct {
+	ociconfigfile map[string]*OCIConfigFile
+}
+
+type OCIConfigFile struct {
+	tenancyocid string
+	region      string
+	user        string
+}
+
 type TenancyAccess struct {
 	metricsClient  monitoring.MonitoringClient
 	identityClient identity.IdentityClient
@@ -866,6 +876,8 @@ func OCIConfigParser(scope string) ([]string, error) {
 	var ociconfigs []string
 	var regions []string
 
+	ociconfigmeta := make(map[string]string)
+
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		log.DefaultLogger.Error("could not get home directory")
@@ -888,36 +900,82 @@ func OCIConfigParser(scope string) ([]string, error) {
 		return nil, errors.Wrap(err, "buffer error")
 	}
 
-	r, err := regexp.Compile(`\[.*\]`) // this can also be a regex
-	if err != nil {
-		return nil, errors.Wrap(err, "error in compiling regex")
+	for scanner.Scan() {
+		ociconfigmeta.parseConfigFile()
 	}
-	r2, err := regexp.Compile(`region=`) // this can also be a regex
-	if err != nil {
-		return nil, errors.Wrap(err, "error in compiling regex")
-	}
+	// if scope == "ociconfigs" {
+	// 	for scanner.Scan() {
+	// 		if r.MatchString(scanner.Text()) {
+	// 			replacer := strings.NewReplacer("[", "", "]", "")
+	// 			output := replacer.Replace(scanner.Text())
+	// 			ociconfigs = append(ociconfigs, output)
+	// 		}
+	// 	}
+	// 	return ociconfigs, nil
+	// }
 
-	if scope == "ociconfigs" {
-		for scanner.Scan() {
-			if r.MatchString(scanner.Text()) {
-				replacer := strings.NewReplacer("[", "", "]", "")
-				output := replacer.Replace(scanner.Text())
-				ociconfigs = append(ociconfigs, output)
-			}
-		}
-		return ociconfigs, nil
-	}
+	// if scope == "regions" {
+	// 	for scanner.Scan() {
+	// 		if r2.MatchString(scanner.Text()) {
+	// 			replacer := strings.NewReplacer("region=", "")
+	// 			output := replacer.Replace(scanner.Text())
+	// 			regions = append(regions, output)
 
-	if scope == "regions" {
-		for scanner.Scan() {
-			if r2.MatchString(scanner.Text()) {
-				replacer := strings.NewReplacer("region=", "")
-				output := replacer.Replace(scanner.Text())
-				regions = append(regions, output)
-
-			}
-		}
-		return regions, nil
-	}
+	// 		}
+	// 	}
+	// 	return regions, nil
+	// }
 	return nil, nil
+}
+
+var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
+
+func (p *OCIConfigFileMeta) parseConfigFile(data []byte, profile string) (err error) {
+
+	if len(data) == 0 {
+		return nil
+	}
+
+	content := string(data)
+	splitContent := strings.Split(content, "\n")
+
+	//Look for profile
+	for i, line := range splitContent {
+		if match := profileRegex.FindStringSubmatch(line); match != nil && len(match) > 1 && match[1] == profile {
+			start := i + 1
+			return p.parseConfigAtLine(start, splitContent)
+		}
+	}
+
+	return nil
+}
+
+func (p *OCIConfigFileMeta) parseConfigAtLine(start int, content []string) (err error) {
+	var ociconfig string
+	for i := start; i < len(content); i++ {
+		line := content[i]
+		if profileRegex.MatchString(line) {
+			replacer := strings.NewReplacer("[", "", "]", "")
+			ociconfig = replacer.Replace(content[i])
+		}
+
+		if !strings.Contains(line, "=") {
+			continue
+		}
+
+		// o.tenancyAccess[ociconfig].identityClient = identityClient
+		// o.tenancyAccess[ociconfig].metricsClient = metricsClient
+		// o.tenancyAccess[ociconfig].config = configProvider
+		splits := strings.Split(line, "=")
+		switch key, value := strings.TrimSpace(splits[0]), strings.TrimSpace(splits[1]); strings.ToLower(key) {
+		case "user":
+			p.ociconfigfile[ociconfig].user = value
+		case "tenancy":
+			p.ociconfigfile[ociconfig].tenancyocid = value
+		case "region":
+			p.ociconfigfile[ociconfig].region = value
+		}
+	}
+	return
+
 }
