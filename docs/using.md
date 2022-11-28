@@ -34,7 +34,11 @@ In order to configure templating, click on the gear icon in the upper right corn
 
 ![Screen Shot 2019-01-11 at 3.10.49 PM](images/Screen%20Shot%202019-01-11%20at%203.10.49%20PM.png)
 
-Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions()`. 
+In case plugin is configured to operate with multitenancy support, add the **tenancy** variable to this page. Give the variable the name `tenancy`, choose **OCI** from the list of data sources, and for **Query** enter `tenancies()`.
+
+![Screen Shot 2019-01-11 at 3.10.49 PM](images/Screenshot_20221128_110557.png)
+
+Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions()` (or `regions($tenancy)` in case pluging is configure in multitenancy mode). 
 
 ![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
 
@@ -54,11 +58,29 @@ Repeat the process for the following OCI variables:
 | dimensionKey    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup)`                     |
 | dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
 
+In case plugin is configured to operate with multitenancy support, use the following OCI variables:
+
+| Name            | Query                                                                     |
+| --------------- | ------------------------------------------------------------------------- |
+| tenancy          | `tenancies()`                                                               |
+| region          | `regions($tenancy)`                                                               |
+| compartment     | `compartments($region,$tenancy)`                                                          |
+| namespace       | `namespaces($region,$compartment,$tenancy)`                                        |
+| resourcegroup   | `resourcegroups($region, $compartment, $namespace,$tenancy)`                                        |
+| metric          | `metrics($region,$compartment, $namespace, $resourcegroup,$tenancy)`                                |
+| dimensionKey    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup,$tenancy)`                     |
+| dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup,$tenancy)` |
+
+
 All of the metrics plugin template variables only support a singleton value with the exception of the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
 
 The final list of variables should look like this: 
 
 ![Metrics dashboard variables screenshot](images/metrics-dashboard-variables-screenshot.png)
+
+In case of multitenancy support, the final list of variables should look like the following:
+
+![Metrics dashboard variables screenshot](images/Screenshot_20221128_105807.png)
 
 In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
 
@@ -92,6 +114,8 @@ You can select the value for the variables from here  and use them in
 the dropdowns window and resolution  below the panel
 
 ![Custom variable window dropdown](images/WithCustomDropDown.png)
+
+In case plugin is configured to operate with multitenancy support, please make sure you are selecting **region** before **tenancy** and all the other dropdowns
  
 
 ### Dimensions
