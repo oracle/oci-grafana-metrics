@@ -115,7 +115,7 @@ the dropdowns window and resolution  below the panel
 
 ![Custom variable window dropdown](images/WithCustomDropDown.png)
 
-In case plugin is configured to operate with multitenancy support, please make sure you are selecting **region** before **tenancy** and all the other dropdowns
+In case plugin is configured to operate with multitenancy support, please make sure you are selecting **region** before **tenancy** and all the other dropdowns.
  
 
 ### Dimensions
