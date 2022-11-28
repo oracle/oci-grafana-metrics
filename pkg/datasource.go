@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -883,6 +884,10 @@ if regions, then the function returns the list of the regions of every OCI confi
 func OCIConfigParser() (*OCIConfigFileMeta, error) {
 	var oci_config_file string
 	var p *OCIConfigFileMeta
+
+	if err := datasource.Manage("myorgid-simple-backend-datasource", NewOCIConfigFileMeta, datasource.ManageOpts{}); err != nil {
+		log.DefaultLogger.Error(err.Error())
+	}
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		log.DefaultLogger.Error("could not get home directory")
@@ -901,10 +906,6 @@ func OCIConfigParser() (*OCIConfigFileMeta, error) {
 	}
 
 	p.logger.Debug(string(data))
-
-	p = &OCIConfigFileMeta{
-		ociconfigfile: make(map[string]*OCIConfigFile),
-	}
 
 	err = p.parseConfigFile(data)
 
@@ -939,6 +940,14 @@ func OCIConfigParser() (*OCIConfigFileMeta, error) {
 	// 	return regions, nil
 	// }
 	return p, nil
+}
+
+// NewOCIDatasource - constructor
+func NewOCIConfigFileMeta(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return &OCIConfigFileMeta{
+		ociconfigfile: make(map[string]*OCIConfigFile),
+		logger:        log.DefaultLogger,
+	}, nil
 }
 
 var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
