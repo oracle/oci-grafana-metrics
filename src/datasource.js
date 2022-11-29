@@ -583,7 +583,7 @@ export default class OCIDatasource {
           environment: this.environment,
           tenancymode: this.tenancymode,
           datasourceId: this.id,
-          queryType: "tenancyconfig",
+          queryType: "tenancies",
         },
       ],
       range: this.timeSrv.timeRange(),

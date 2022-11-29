@@ -83,7 +83,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
 
   getTenancyConfig() {
     return this.datasource.getTenancyConfig().then(tenancyconfig => {
-      return this.appendVariables([ ...tenancyconfig], tenancyconfigQueryRegex);
+      return this.appendVariables([ ...tenancies], tenancyconfigQueryRegex);
     });
   }
 
