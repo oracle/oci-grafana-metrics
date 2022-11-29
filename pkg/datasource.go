@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -37,16 +36,6 @@ var (
 	re               = regexp.MustCompile(`(?m)\w+Name`)
 )
 
-// OCIDatasource - pulls in data from telemtry/various oci apis
-// type OCIDatasource struct {
-// 	metricsClient    monitoring.MonitoringClient
-// 	identityClient   identity.IdentityClient
-// 	config           common.ConfigurationProvider
-// 	logger           log.Logger
-// 	nameToOCID       map[string]string
-// 	timeCacheUpdated time.Time
-// }
-
 type OCIDatasource struct {
 	tenancyAccess    map[string]*TenancyAccess
 	logger           log.Logger
@@ -63,15 +52,11 @@ func NewOCIDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instan
 	}, nil
 }
 
-type OCIConfigFileMeta struct {
-	ociconfigfile map[string]*OCIConfigFile
-	logger        log.Logger
-}
-
 type OCIConfigFile struct {
-	tenancyocid string
-	region      string
-	user        string
+	tenancyocid map[string]string
+	region      map[string]string
+	user        map[string]string
+	logger      log.Logger
 }
 
 type TenancyAccess struct {
@@ -176,7 +161,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	var ts GrafanaCommonRequest
 	var tenancyocid string
 	var tenancyErr error
-	var p *OCIConfigFileMeta
+	var p *OCIConfigFile
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
@@ -194,7 +179,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 			if tenancyErr != nil {
 				return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 			}
-			reg = common.StringToRegion(p.ociconfigfile[res[0]].region)
+			reg = common.StringToRegion(p.region[res[0]])
 			rr++
 		} else {
 			tenancyocid = ts.TenancyOCID
@@ -317,14 +302,14 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	o.logger.Debug("getConfigProvider")
 	o.logger.Debug(environment)
 	o.logger.Debug(tenancymode)
-	var p *OCIConfigFileMeta
+	var p *OCIConfigFile
 
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
 			p, _ = OCIConfigParser()
 			// for _, ociconfig := range ociconfigs {
-			for key, _ := range p.ociconfigfile {
+			for key, _ := range p.tenancyocid {
 				var configProvider common.ConfigurationProvider
 				configProvider = common.CustomProfileConfigProvider("", key)
 				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
@@ -851,13 +836,13 @@ Function generates an array  containing OCI configuration (.oci/config) in the f
 
 func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	var p *OCIConfigFileMeta
+	var p *OCIConfigFile
 	p, _ = OCIConfigParser()
 	// Order not specified
 	for _, query := range req.Queries {
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 		// for _, ociconfig := range ociconfigs {
-		for key, _ := range p.ociconfigfile {
+		for key, _ := range p.tenancyocid {
 			configProvider := common.CustomProfileConfigProvider("", key)
 			res, err := configProvider.TenancyOCID()
 			if err != nil {
@@ -881,13 +866,11 @@ It accepts one parameter (scope) which can be "ociconfigs" or "regions"
 if ociconfigs, then the function returns an array of the OCI config sections labels
 if regions, then the function returns the list of the regions of every OCI config section entries
 */
-func OCIConfigParser() (*OCIConfigFileMeta, error) {
+func OCIConfigParser() (*OCIConfigFile, error) {
 	var oci_config_file string
-	var p *OCIConfigFileMeta
 
-	if err := datasource.Manage("myorgid-simple-backend-datasource", NewOCIConfigFileMeta, datasource.ManageOpts{}); err != nil {
-		log.DefaultLogger.Error(err.Error())
-	}
+	p := NewOCIConfigFile()
+
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		log.DefaultLogger.Error("could not get home directory")
@@ -897,7 +880,6 @@ func OCIConfigParser() (*OCIConfigFileMeta, error) {
 	} else {
 		oci_config_file = homedir + "/.oci/config"
 	}
-	p.logger.Debug(oci_config_file)
 
 	data, err := ioutil.ReadFile(oci_config_file)
 	if err != nil {
@@ -905,54 +887,23 @@ func OCIConfigParser() (*OCIConfigFileMeta, error) {
 		return nil, nil
 	}
 
-	p.logger.Debug(string(data))
-
 	err = p.parseConfigFile(data)
 
-	// scanner := bufio.NewScanner(file)
-	// if err := scanner.Err(); err != nil {
-	// 	return nil, errors.Wrap(err, "buffer error")
-	// }
-
-	// for scanner.Scan() {
-	// 	ociconfigmeta.parseConfigFile()
-	// }
-	// if scope == "ociconfigs" {
-	// 	for scanner.Scan() {
-	// 		if r.MatchString(scanner.Text()) {
-	// 			replacer := strings.NewReplacer("[", "", "]", "")
-	// 			output := replacer.Replace(scanner.Text())
-	// 			ociconfigs = append(ociconfigs, output)
-	// 		}
-	// 	}
-	// 	return ociconfigs, nil
-	// }
-
-	// if scope == "regions" {
-	// 	for scanner.Scan() {
-	// 		if r2.MatchString(scanner.Text()) {
-	// 			replacer := strings.NewReplacer("region=", "")
-	// 			output := replacer.Replace(scanner.Text())
-	// 			regions = append(regions, output)
-
-	// 		}
-	// 	}
-	// 	return regions, nil
-	// }
 	return p, nil
 }
 
-// NewOCIDatasource - constructor
-func NewOCIConfigFileMeta(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &OCIConfigFileMeta{
-		ociconfigfile: make(map[string]*OCIConfigFile),
-		logger:        log.DefaultLogger,
-	}, nil
+func NewOCIConfigFile() *OCIConfigFile {
+	return &OCIConfigFile{
+		tenancyocid: make(map[string]string),
+		region:      make(map[string]string),
+		user:        make(map[string]string),
+		logger:      log.DefaultLogger,
+	}
 }
 
 var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
 
-func (p *OCIConfigFileMeta) parseConfigFile(data []byte) (err error) {
+func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
 
 	if len(data) == 0 {
 		return nil
@@ -960,31 +911,27 @@ func (p *OCIConfigFileMeta) parseConfigFile(data []byte) (err error) {
 
 	content := string(data)
 	p.logger.Debug(content)
-
 	splitContent := strings.Split(content, "\n")
 
 	//Look for profile
 	for i, line := range splitContent {
 		if match := profileRegex.FindStringSubmatch(line); match != nil && len(match) > 1 {
 			start := i + 1
-			p.logger.Debug(match[1])
-
-			return p.parseConfigAtLine(start, match[1], splitContent)
+			p.parseConfigAtLine(start, match[1], splitContent)
 		}
 	}
-
 	return nil
 }
 
-func (p *OCIConfigFileMeta) parseConfigAtLine(start int, profile string, content []string) (err error) {
+func (p *OCIConfigFile) parseConfigAtLine(start int, profile string, content []string) (err error) {
 	// var ociconfig string
 	p.logger.Debug(profile)
 
 	for i := start; i < len(content); i++ {
 		line := content[i]
-		// if profileRegex.MatchString(line) {
-		// 	break
-		// }
+		if profileRegex.MatchString(line) {
+			break
+		}
 
 		if !strings.Contains(line, "=") {
 			continue
@@ -992,11 +939,13 @@ func (p *OCIConfigFileMeta) parseConfigAtLine(start int, profile string, content
 		splits := strings.Split(line, "=")
 		switch key, value := strings.TrimSpace(splits[0]), strings.TrimSpace(splits[1]); strings.ToLower(key) {
 		case "user":
-			p.ociconfigfile[profile].user = value
+			p.logger.Debug(key)
+			p.logger.Debug(value)
+			p.user[profile] = value
 		case "tenancy":
-			p.ociconfigfile[profile].tenancyocid = value
+			p.tenancyocid[profile] = value
 		case "region":
-			p.ociconfigfile[profile].region = value
+			p.region[profile] = value
 		}
 	}
 	return
@@ -1027,6 +976,5 @@ func openConfigFile(configFilePath string) (data []byte, err error) {
 	if err != nil {
 		err = fmt.Errorf("can not read config file: %s due to: %s", configFilePath, err.Error())
 	}
-
 	return data, err
 }
