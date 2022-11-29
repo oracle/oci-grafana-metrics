@@ -11,10 +11,10 @@
     </select>   
   </div>
   <div class="gf-form max-width-30">
-    <label class="gf-form-label width-10">Tenancy mode</label>
+    <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.environment!=='OCI Instance'">Tenancy mode</label>
     <select
       class="gf-form-input"
-      ng-model="ctrl.current.jsonData.tenancymode"
+      ng-model="ctrl.current.jsonData.tenancymode" ng-if="ctrl.current.jsonData.environment!=='OCI Instance'"
 	    ng-required="true"
       ng-options="o as o for o in ctrl.getTenancyModes()" >
     </select>   

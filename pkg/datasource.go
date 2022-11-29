@@ -158,7 +158,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	case "regions":
 		return o.regionsResponse(ctx, req, takey)
 	case "tenancies":
-		return o.tenanciesResponse(ctx, req)
+		return o.tenanciesResponse(ctx, req, ts.Environment)
 	case "search":
 		return o.searchResponse(ctx, req, takey)
 	case "test":
@@ -844,9 +844,10 @@ Function generates an array  containing OCI configuration (.oci/config) in the f
 
 */
 
-func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest, env string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	var p *OCIConfigFile
+	var res string
 	p, err := OCIConfigParser()
 	if err != nil {
 		log.DefaultLogger.Error("could not parse config file")
@@ -856,12 +857,15 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 		// for _, ociconfig := range ociconfigs {
 		for key, _ := range p.tenancyocid {
-			// configProvider := common.CustomProfileConfigProvider("", key)
-			// res, err := configProvider.TenancyOCID()
-			// if err != nil {
-			// 	return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
-			// }
-			res := p.tenancyocid[key]
+			if env == "local" {
+				res = p.tenancyocid[key]
+			} else {
+				configProvider := common.CustomProfileConfigProvider("", key)
+				res, err := configProvider.TenancyOCID()
+				if err != nil {
+					return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
+				}
+			}
 			value := key + "/" + res
 			frame.AppendRow(*(common.String(value)))
 		}
