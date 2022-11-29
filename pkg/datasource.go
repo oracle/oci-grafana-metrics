@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"regexp"
 	"sort"
 	"strconv"
@@ -169,7 +168,6 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	}
 
 	p, _ = OCIConfigParser()
-	rr := 0
 	reg := common.StringToRegion(ts.Region)
 
 	for key, _ := range o.tenancyAccess { // Order not specified
@@ -180,7 +178,6 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 				return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 			}
 			reg = common.StringToRegion(p.region[res[0]])
-			rr++
 		} else {
 			tenancyocid = ts.TenancyOCID
 		}
@@ -195,8 +192,9 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		status := res.RawResponse.StatusCode
 		if status >= 200 && status < 300 {
 			// return &backend.QueryDataResponse{}, nil
-			o.logger.Error(key, "OK", status)
+			o.logger.Debug(key, "OK", status)
 		} else {
+			o.logger.Debug(key, "FAILED", status)
 			return nil, errors.Wrap(err, fmt.Sprintf("list metrircs failed %s %d", spew.Sdump(res), status))
 		}
 	}
@@ -843,11 +841,12 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 		// for _, ociconfig := range ociconfigs {
 		for key, _ := range p.tenancyocid {
-			configProvider := common.CustomProfileConfigProvider("", key)
-			res, err := configProvider.TenancyOCID()
-			if err != nil {
-				return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
-			}
+			// configProvider := common.CustomProfileConfigProvider("", key)
+			// res, err := configProvider.TenancyOCID()
+			// if err != nil {
+			// 	return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
+			// }
+			res := p.tenancyocid[key]
 			value := key + "/" + res
 			frame.AppendRow(*(common.String(value)))
 		}
@@ -910,7 +909,6 @@ func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
 	}
 
 	content := string(data)
-	p.logger.Debug(content)
 	splitContent := strings.Split(content, "\n")
 
 	//Look for profile
@@ -932,15 +930,12 @@ func (p *OCIConfigFile) parseConfigAtLine(start int, profile string, content []s
 		if profileRegex.MatchString(line) {
 			break
 		}
-
 		if !strings.Contains(line, "=") {
 			continue
 		}
 		splits := strings.Split(line, "=")
 		switch key, value := strings.TrimSpace(splits[0]), strings.TrimSpace(splits[1]); strings.ToLower(key) {
 		case "user":
-			p.logger.Debug(key)
-			p.logger.Debug(value)
 			p.user[profile] = value
 		case "tenancy":
 			p.tenancyocid[profile] = value
@@ -949,32 +944,4 @@ func (p *OCIConfigFile) parseConfigAtLine(start int, profile string, content []s
 		}
 	}
 	return
-
-}
-
-// cleans and expands the path if it contains a tilde , returns the expanded path or the input path as is if not expansion
-// was performed
-func expandPath(filepath string) (expandedPath string) {
-	cleanedPath := path.Clean(filepath)
-	expandedPath = cleanedPath
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		log.DefaultLogger.Error("could not get home directory")
-	}
-
-	if strings.HasPrefix(cleanedPath, "~") {
-		rest := cleanedPath[2:]
-		expandedPath = path.Join(homedir, rest)
-	}
-	return
-}
-
-func openConfigFile(configFilePath string) (data []byte, err error) {
-	// expandedPath := expandPath(configFilePath)
-	// data, err = ioutil.ReadFile(expandedPath)
-	data, err = ioutil.ReadFile(configFilePath)
-	if err != nil {
-		err = fmt.Errorf("can not read config file: %s due to: %s", configFilePath, err.Error())
-	}
-	return data, err
 }
