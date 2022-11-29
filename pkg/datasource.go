@@ -82,7 +82,6 @@ type GrafanaOCIRequest struct {
 	Query         string
 	Resolution    string
 	Namespace     string
-	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	ResourceGroup string
 	LegendFormat  string
 }
@@ -92,19 +91,18 @@ type GrafanaSearchRequest struct {
 	GrafanaCommonRequest
 	Metric        string `json:"metric,omitempty"`
 	Namespace     string
-	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
 	ResourceGroup string
 }
 
 // GrafanaCommonRequest - captures the common parts of the search and metricsRequests
 type GrafanaCommonRequest struct {
-	Compartment   string
-	Environment   string
-	TenancyMode   string
-	QueryType     string
-	Region        string
-	TenancyConfig string // the actual tenancy with the format <configfile entry name/tenancyOCID>
-	TenancyOCID   string `json:"tenancyOCID"`
+	Compartment string
+	Environment string
+	TenancyMode string
+	QueryType   string
+	Region      string
+	Tenancy     string // the actual tenancy with the format <configfile entry name/tenancyOCID>
+	TenancyOCID string `json:"tenancyOCID"`
 }
 
 // Query - Determine what kind of query we're making
@@ -123,7 +121,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	o.logger.Debug(ts.Environment)
 	o.logger.Debug(ts.TenancyMode)
 	o.logger.Debug(ts.Region)
-	o.logger.Debug(ts.TenancyConfig)
+	o.logger.Debug(ts.Tenancy)
 
 	// uncomment to use the single OCI login method
 	// if len(o.tenancyAccess) == 0 {
@@ -137,7 +135,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	}
 
 	if ts.TenancyMode == "multitenancy" {
-		takey = ts.TenancyConfig
+		takey = ts.Tenancy
 	} else {
 		takey = SingleTenancyKey
 	}
@@ -468,7 +466,7 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(ts.QueryType)
 	log.DefaultLogger.Debug(ts.Region)
 	log.DefaultLogger.Debug(ts.TenancyMode)
-	log.DefaultLogger.Debug(ts.TenancyConfig)
+	log.DefaultLogger.Debug(ts.Tenancy)
 	log.DefaultLogger.Debug(takey)
 
 	var tenancyocid string
@@ -619,7 +617,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 
 		// compute takey at every cycle of  queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
 		if ts.TenancyMode == "multitenancy" {
-			takey = ts.TenancyConfig
+			takey = ts.Tenancy
 		} else {
 			takey = SingleTenancyKey
 		}
@@ -637,7 +635,7 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 		log.DefaultLogger.Debug(ts.QueryType)
 		log.DefaultLogger.Debug(takey)
 		log.DefaultLogger.Debug(ts.TenancyMode)
-		log.DefaultLogger.Debug(ts.TenancyConfig)
+		log.DefaultLogger.Debug(ts.Tenancy)
 
 		res, err := o.tenancyAccess[takey].metricsClient.SummarizeMetricsData(ctx, request)
 		if err != nil {
