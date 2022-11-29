@@ -10,7 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
-  tenancyQueryRegex,
+  tenanciesQueryRegex,
   compartmentsQueryRegex,
   dimensionKeysQueryRegex,
   dimensionValuesQueryRegex,
@@ -82,8 +82,8 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   }
 
   getTenancies() {
-    return this.datasource.getTenancies().then(tenancy => {
-      return this.appendVariables([ ...tenancies], tenancyQueryRegex);
+    return this.datasource.getTenancies().then(tenancies => {
+      return this.appendVariables([ ...tenancies], tenanciesQueryRegex);
     });
   }
 

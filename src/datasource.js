@@ -423,7 +423,6 @@ export default class OCIDatasource {
 
     let tenancyQuery = varString.match(tenanciesQueryRegex);
     if (tenancyQuery) {
-      // this.target.compartment = SELECT_PLACEHOLDERS.COMPARTMENT;
       return this.getTenancies().catch((err) => {
         throw new Error("Unable to get tenancies: " + err);
       });    
@@ -883,7 +882,7 @@ export default class OCIDatasource {
           value: result.data[0].fields[1].values.toArray()[i],
         }));
       case "regions":
-      case "tenancy":       
+      case "tenancies":       
       case "namespaces":
       case "resourcegroups":
       case "search":
