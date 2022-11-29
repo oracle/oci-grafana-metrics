@@ -847,8 +847,11 @@ Function generates an array  containing OCI configuration (.oci/config) in the f
 func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	var p *OCIConfigFile
-	p, _ = OCIConfigParser()
-	// Order not specified
+	p, err := OCIConfigParser()
+	if err != nil {
+		log.DefaultLogger.Error("could not parse config file")
+		return nil, err
+	}
 	for _, query := range req.Queries {
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 		// for _, ociconfig := range ociconfigs {
@@ -892,7 +895,7 @@ func OCIConfigParser() (*OCIConfigFile, error) {
 	data, err := ioutil.ReadFile(oci_config_file)
 	if err != nil {
 		err = fmt.Errorf("can not read config file: %s due to: %s", oci_config_file, err.Error())
-		return nil, nil
+		return nil, err
 	}
 
 	err = p.parseConfigFile(data)
