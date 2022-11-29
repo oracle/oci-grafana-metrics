@@ -30,6 +30,8 @@ import (
 const MaxPagesToFetch = 20
 const SingleTenancyKey = "DEFAULT/"
 
+var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
+
 var (
 	cacheRefreshTime = time.Minute // how often to refresh our compartmentID cache
 	re               = regexp.MustCompile(`(?m)\w+Name`)
@@ -40,6 +42,16 @@ type OCIDatasource struct {
 	logger           log.Logger
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
+}
+
+// NewOCIConfigFile - constructor
+func NewOCIConfigFile() *OCIConfigFile {
+	return &OCIConfigFile{
+		tenancyocid: make(map[string]string),
+		region:      make(map[string]string),
+		user:        make(map[string]string),
+		logger:      log.DefaultLogger,
+	}
 }
 
 // NewOCIDatasource - constructor
@@ -146,7 +158,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	case "regions":
 		return o.regionsResponse(ctx, req, takey)
 	case "tenancies":
-		return o.tenancyConfigResponse(ctx, req)
+		return o.tenanciesResponse(ctx, req)
 	case "search":
 		return o.searchResponse(ctx, req, takey)
 	case "test":
@@ -832,7 +844,7 @@ Function generates an array  containing OCI configuration (.oci/config) in the f
 
 */
 
-func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	var p *OCIConfigFile
 	p, _ = OCIConfigParser()
@@ -859,11 +871,8 @@ func (o *OCIDatasource) tenancyConfigResponse(ctx context.Context, req *backend.
 }
 
 /*
-Function parses the content of .oci/config file
-It accepts one parameter (scope) which can be "ociconfigs" or "regions"
-
-if ociconfigs, then the function returns an array of the OCI config sections labels
-if regions, then the function returns the list of the regions of every OCI config section entries
+Function parses the content of .oci/config file and returns raw file content.
+It then pass over to parseConfigFile in search for each config entry.
 */
 func OCIConfigParser() (*OCIConfigFile, error) {
 	var oci_config_file string
@@ -891,19 +900,11 @@ func OCIConfigParser() (*OCIConfigFile, error) {
 	return p, nil
 }
 
-func NewOCIConfigFile() *OCIConfigFile {
-	return &OCIConfigFile{
-		tenancyocid: make(map[string]string),
-		region:      make(map[string]string),
-		user:        make(map[string]string),
-		logger:      log.DefaultLogger,
-	}
-}
-
-var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
-
+/*
+Function parses the content of .oci/config file
+It looks for each profile entry and pass over to the parseConfigAtLine function
+*/
 func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
-
 	if len(data) == 0 {
 		return nil
 	}
@@ -921,10 +922,11 @@ func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
 	return nil
 }
 
+/*
+Function parses the output of parseConfigFile function looking for specific entries.
+user, tenancy and region are retrieved and stored in the OCIConfigFile maps.
+*/
 func (p *OCIConfigFile) parseConfigAtLine(start int, profile string, content []string) (err error) {
-	// var ociconfig string
-	p.logger.Debug(profile)
-
 	for i := start; i < len(content); i++ {
 		line := content[i]
 		if profileRegex.MatchString(line) {
