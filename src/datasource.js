@@ -42,7 +42,7 @@ export default class OCIDatasource {
 
     this.compartmentsCache = [];
     this.regionsCache = [];
-    this.tenancyCache = [];
+    this.tenanciesCache = [];
 
     // this.getRegions();
     // this.getCompartments();
@@ -570,8 +570,8 @@ export default class OCIDatasource {
   }
 
   getTenancies() {
-    if (this.tenancyCache && this.tenancyCache.length > 0) {
-      return this.q.when(this.tenancyCache);
+    if (this.tenanciesCache && this.tenanciesCache.length > 0) {
+      return this.q.when(this.tenanciesCache);
     }
 
     return this.doRequest({
@@ -585,8 +585,8 @@ export default class OCIDatasource {
       ],
       range: this.timeSrv.timeRange(),
     }).then((items) => {
-      this.tenancyCache = this.mapToTextValue(items, "tenancies");
-      return this.tenancyCache;
+      this.tenanciesCache = this.mapToTextValue(items, "tenancies");
+      return this.tenanciesCache;
     });
   }
 
