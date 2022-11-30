@@ -189,16 +189,16 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     })
   }
 
-  appendVariables(options, varQeueryRegex) {
-    const vars = this.datasource.getVariables(varQeueryRegex) || [];
+  appendVariables(options, varQueryRegex) {
+    const vars = this.datasource.getVariables(varQueryRegex) || [];
     vars.forEach(value => {
       options.unshift({ value, text: value });
     });
     return options;
   }
 
-  appendWindowsAndResolutionVariables (options, varQeueryRegex) {
-    const vars = this.datasource.getVariables(varQeueryRegex) || []
+  appendWindowsAndResolutionVariables (options, varQueryRegex) {
+    const vars = this.datasource.getVariables(varQueryRegex) || []
     return [...options, ...vars].map(value => ({ value, text: value }))
   }
   // ****************************** Callbacks **********************************

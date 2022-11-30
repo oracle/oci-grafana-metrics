@@ -585,7 +585,7 @@ export default class OCIDatasource {
       ],
       range: this.timeSrv.timeRange(),
     }).then((items) => {
-      this.tenancyCache = this.mapToTextValue(items, "tenancy");
+      this.tenancyCache = this.mapToTextValue(items, "tenancies");
       return this.tenancyCache;
     });
   }
