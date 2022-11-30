@@ -1,5 +1,5 @@
 /*
-** Copyright © 2019 Oracle and/or its affiliates. All rights reserved.
+** Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import { QueryCtrl } from 'app/plugins/sdk'
@@ -10,7 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
-  tenancyconfigQueryRegex,
+  tenanciesQueryRegex,
   compartmentsQueryRegex,
   dimensionKeysQueryRegex,
   dimensionValuesQueryRegex,
@@ -22,7 +22,7 @@ export const SELECT_PLACEHOLDERS = {
   DIMENSION_VALUE: 'select value',
   COMPARTMENT: 'select compartment',
   REGION: 'select region',
-  TENANCYCONFIG: 'select tenancy config',
+  TENANCY: 'select tenancy config',
   NAMESPACE: 'select namespace',
   RESOURCEGROUP: 'select resource group',
   METRIC: 'select metric',
@@ -37,7 +37,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.uiSegmentSrv = uiSegmentSrv;
 
     this.target.region = this.target.region || SELECT_PLACEHOLDERS.REGION;
-    this.target.tenancyconfig = this.target.tenancyconfig || SELECT_PLACEHOLDERS.TENANCYCONFIG;
+    this.target.tenancy = this.target.tenancy || SELECT_PLACEHOLDERS.TENANCY;
     this.target.compartment = this.target.compartment || SELECT_PLACEHOLDERS.COMPARTMENT;
     this.target.namespace = this.target.namespace || SELECT_PLACEHOLDERS.NAMESPACE;
     this.target.resourcegroup = this.target.resourcegroup || SELECT_PLACEHOLDERS.RESOURCEGROUP;
@@ -81,9 +81,9 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     });
   }
 
-  getTenancyConfig() {
-    return this.datasource.getTenancyConfig().then(tenancyconfig => {
-      return this.appendVariables([ ...tenancies], tenancyconfigQueryRegex);
+  getTenancies() {
+    return this.datasource.getTenancies().then(tenancies => {
+      return this.appendVariables([ ...tenancies], tenanciesQueryRegex);
     });
   }
 
@@ -189,16 +189,16 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     })
   }
 
-  appendVariables(options, varQeueryRegex) {
-    const vars = this.datasource.getVariables(varQeueryRegex) || [];
+  appendVariables(options, varQueryRegex) {
+    const vars = this.datasource.getVariables(varQueryRegex) || [];
     vars.forEach(value => {
       options.unshift({ value, text: value });
     });
     return options;
   }
 
-  appendWindowsAndResolutionVariables (options, varQeueryRegex) {
-    const vars = this.datasource.getVariables(varQeueryRegex) || []
+  appendWindowsAndResolutionVariables (options, varQueryRegex) {
+    const vars = this.datasource.getVariables(varQueryRegex) || []
     return [...options, ...vars].map(value => ({ value, text: value }))
   }
   // ****************************** Callbacks **********************************

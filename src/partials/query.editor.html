@@ -9,8 +9,8 @@
           <label class="gf-form-label query-keyword" ng-if="ctrl.target.MultiTenancy">Tenancy</label>
           <div class="gf-form-select-wrapper width-40" ng-if="ctrl.target.MultiTenancy">
             <gf-form-dropdown
-              model="ctrl.target.tenancyconfig"
-              get-options="ctrl.getTenancyConfig()"
+              model="ctrl.target.tenancy"
+              get-options="ctrl.getTenancies()"
               on-change="ctrl.onChangeInternal()">
             </gf-form-dropdown>
           </div>
