@@ -169,19 +169,27 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
 	var tenancyocid string
-	var tenancyErr error
-	var p *OCIConfigFile
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	p, _ = OCIConfigParser()
 	reg := common.StringToRegion(ts.Region)
 
-	for key, _ := range o.tenancyAccess { // Order not specified
+	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
+			var p *OCIConfigFile
+			var ociparser error
+			var tenancyErr error
+			if ts.Environment == "local" {
+				p, ociparser = OCIConfigParser()
+				if ociparser != nil {
+					return &backend.QueryDataResponse{}, errors.Wrap(ociparser, fmt.Sprintf("OCI Config Parser failed"))
+				}
+			} else {
+				return &backend.QueryDataResponse{}, errors.Wrap(ociparser, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
+			}
 			res := strings.Split(key, "/")
 			tenancyocid, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
 			if tenancyErr != nil {
@@ -201,11 +209,10 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		}
 		status := res.RawResponse.StatusCode
 		if status >= 200 && status < 300 {
-			// return &backend.QueryDataResponse{}, nil
 			o.logger.Debug(key, "OK", status)
 		} else {
 			o.logger.Debug(key, "FAILED", status)
-			return nil, errors.Wrap(err, fmt.Sprintf("list metrircs failed %s %d", spew.Sdump(res), status))
+			return nil, errors.Wrap(err, fmt.Sprintf("list metrics failed %s %d", spew.Sdump(res), status))
 		}
 	}
 	return &backend.QueryDataResponse{}, nil
