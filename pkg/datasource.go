@@ -124,7 +124,9 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	o.logger.Debug(ts.Tenancy)
 
 	// uncomment to use the single OCI login method
+	// if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
 	// if len(o.tenancyAccess) == 0 {
+
 	// uncomment to force OCI login at every query
 	if true {
 
