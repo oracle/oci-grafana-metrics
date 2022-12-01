@@ -180,15 +180,15 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
 			var p *OCIConfigFile
-			var ociparser error
+			var ociparsErr error
 			var tenancyErr error
 			if ts.Environment == "local" {
-				p, ociparser = OCIConfigParser()
-				if ociparser != nil {
-					return &backend.QueryDataResponse{}, errors.Wrap(ociparser, fmt.Sprintf("OCI Config Parser failed"))
+				p, ociparsErr = OCIConfigParser()
+				if ociparsErr != nil {
+					return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
 				}
 			} else {
-				return &backend.QueryDataResponse{}, errors.Wrap(ociparser, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
+				return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
 			}
 			res := strings.Split(key, "/")
 			tenancyocid, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
@@ -318,11 +318,15 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	o.logger.Debug(environment)
 	o.logger.Debug(tenancymode)
 	var p *OCIConfigFile
+	var ociparsErr error
 
 	switch environment {
 	case "local":
 		if tenancymode == "multitenancy" {
-			p, _ = OCIConfigParser()
+			p, ociparsErr = OCIConfigParser()
+			if ociparsErr != nil {
+				return errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
+			}
 			// for _, ociconfig := range ociconfigs {
 			for key, _ := range p.tenancyocid {
 				var configProvider common.ConfigurationProvider
@@ -907,8 +911,15 @@ func OCIConfigParser() (*OCIConfigFile, error) {
 		return nil, err
 	}
 
+	if len(data) == 0 {
+		err = fmt.Errorf("config file %s is empty.", oci_config_file)
+		return nil, err
+	}
 	err = p.parseConfigFile(data)
-
+	if err != nil {
+		log.DefaultLogger.Error("config file " + oci_config_file + " is not valid.")
+		return nil, err
+	}
 	return p, nil
 }
 
@@ -917,12 +928,13 @@ Function parses the content of .oci/config file
 It looks for each profile entry and pass over to the parseConfigAtLine function
 */
 func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
-	if len(data) == 0 {
-		return nil
-	}
 
 	content := string(data)
 	splitContent := strings.Split(content, "\n")
+	if len(splitContent) == 0 {
+		err = fmt.Errorf("config file is corrupted.")
+		return err
+	}
 
 	//Look for profile
 	for i, line := range splitContent {
@@ -930,6 +942,10 @@ func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
 			start := i + 1
 			p.parseConfigAtLine(start, match[1], splitContent)
 		}
+	}
+	if len(p.tenancyocid) == 0 {
+		err = fmt.Errorf("config file is not valid.")
+		return err
 	}
 	return nil
 }
