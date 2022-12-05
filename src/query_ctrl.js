@@ -22,7 +22,7 @@ export const SELECT_PLACEHOLDERS = {
   DIMENSION_VALUE: 'select value',
   COMPARTMENT: 'select compartment',
   REGION: 'select region',
-  TENANCY: 'select tenancy config',
+  TENANCY: 'select tenancy',
   NAMESPACE: 'select namespace',
   RESOURCEGROUP: 'select resource group',
   METRIC: 'select metric',

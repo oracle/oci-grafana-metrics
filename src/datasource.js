@@ -44,8 +44,8 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenanciesCache = [];
 
-    this.getTenancies();
-    this.getRegions();
+    // this.getTenancies();
+    // this.getRegions();
     // this.getCompartments();
   }
 
@@ -189,11 +189,11 @@ export default class OCIDatasource {
             this.getVariableValue(t.compartment, options.scopedVars)
           ) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT
       )
-      .filter(
-        (t) =>
-          !_.isEmpty(this.getVariableValue(t.tenancy, options.scopedVars)) &&
-          t.tenancy !== SELECT_PLACEHOLDERS.TENANCY
-      )      
+      // .filter(
+      //   (t) =>
+      //     !_.isEmpty(this.getVariableValue(t.tenancy, options.scopedVars)) &&
+      //     t.tenancy !== SELECT_PLACEHOLDERS.TENANCY
+      // )      
       .filter(
         (t) =>
           !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) &&
@@ -222,11 +222,6 @@ export default class OCIDatasource {
             dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE
         );
         
-      // t.tenancy =
-      //   t.tenancy === SELECT_PLACEHOLDERS.TENANCY
-      //     ? DEFAULT_TENANCY
-      //     : t.tenancy;
-
       t.resourcegroup =
         t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP
           ? DEFAULT_RESOURCE_GROUP
@@ -547,13 +542,10 @@ export default class OCIDatasource {
   }
 
   async getRegions(target) {
-    var tenancy = ""
-    if (this.tenancymode === "multitenancy") {
-      var tenancy =
+    const tenancy =
         target.tenancy === SELECT_PLACEHOLDERS.TENANCY
           ? DEFAULT_TENANCY
           : this.getVariableValue(target.tenancy);
-      }
     // if (this.regionsCache && this.regionsCache.length > 0) {
     //   return this.q.when(this.regionsCache);
     // }
@@ -598,13 +590,10 @@ export default class OCIDatasource {
   }
 
   async getCompartments(target) {
-    var tenancy = ""
-    if (this.tenancymode === "multitenancy") {
-      var tenancy =
+    const tenancy =
         target.tenancy === SELECT_PLACEHOLDERS.TENANCY
           ? DEFAULT_TENANCY
           : this.getVariableValue(target.tenancy);
-      }
     const region =
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
