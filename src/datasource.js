@@ -220,15 +220,12 @@ export default class OCIDatasource {
             !_.isEmpty(dim.value) &&
             dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE
         );
-        
-      t.resourcegroup =
+
+        t.resourcegroup =
         t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP
           ? DEFAULT_RESOURCE_GROUP
           : t.resourcegroup;          
     });
-    console.log(queries)
-
-    console.log("checkpoint 0.5")
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
     queries = this.splitMultiValueDimensionsIntoQueries(queries, options);
