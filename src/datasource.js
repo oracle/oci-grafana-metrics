@@ -44,7 +44,8 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenanciesCache = [];
 
-    // this.getRegions();
+    this.getTenancies();
+    this.getRegions();
     // this.getCompartments();
   }
 
@@ -191,7 +192,7 @@ export default class OCIDatasource {
       .filter(
         (t) =>
           !_.isEmpty(this.getVariableValue(t.tenancy, options.scopedVars)) &&
-          t.namespace !== SELECT_PLACEHOLDERS.TENANCY
+          t.tenancy !== SELECT_PLACEHOLDERS.TENANCY
       )      
       .filter(
         (t) =>
@@ -221,19 +222,23 @@ export default class OCIDatasource {
             dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE
         );
         
-      t.tenancy =
-        t.tenancy === SELECT_PLACEHOLDERS.TENANCY
-          ? DEFAULT_TENANCY
-          : t.tenancy;
+      // t.tenancy =
+      //   t.tenancy === SELECT_PLACEHOLDERS.TENANCY
+      //     ? DEFAULT_TENANCY
+      //     : t.tenancy;
 
       t.resourcegroup =
         t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP
           ? DEFAULT_RESOURCE_GROUP
           : t.resourcegroup;          
     });
+    console.log(queries)
+
+    console.log("checkpoint 0.5")
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
     queries = this.splitMultiValueDimensionsIntoQueries(queries, options);
+    console.log(queries)
 
     const results = [];
     for (let t of queries) {
@@ -242,6 +247,7 @@ export default class OCIDatasource {
           ? ""
           : this.getVariableValue(t.region, options.scopedVars);
       let query = this.getVariableValue(t.target, options.scopedVars);
+      console.log("checkpoint 0.7")
       const numberOfDaysDiff = this.timeSrv
         .timeRange()
         .to.diff(this.timeSrv.timeRange().from, "days");
@@ -541,12 +547,13 @@ export default class OCIDatasource {
   }
 
   async getRegions(target) {
-
-    const tenancy =
-      target.tenancy === SELECT_PLACEHOLDERS.TENANCY
-        ? DEFAULT_TENANCY
-        : this.getVariableValue(target.tenancy);
-          
+    var tenancy = ""
+    if (this.tenancymode === "multitenancy") {
+      var tenancy =
+        target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+          ? DEFAULT_TENANCY
+          : this.getVariableValue(target.tenancy);
+      }
     // if (this.regionsCache && this.regionsCache.length > 0) {
     //   return this.q.when(this.regionsCache);
     // }
@@ -558,7 +565,7 @@ export default class OCIDatasource {
           tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
-          tenancy: tenancy,
+          tenancy: _.isEmpty(tenancy) ? "" : tenancy,
           queryType: "regions",
         },
       ],
@@ -591,11 +598,13 @@ export default class OCIDatasource {
   }
 
   async getCompartments(target) {
-
-    const tenancy =
-      target.tenancy === SELECT_PLACEHOLDERS.TENANCY
-        ? DEFAULT_TENANCY
-        : this.getVariableValue(target.tenancy);    
+    var tenancy = ""
+    if (this.tenancymode === "multitenancy") {
+      var tenancy =
+        target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+          ? DEFAULT_TENANCY
+          : this.getVariableValue(target.tenancy);
+      }
     const region =
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
@@ -608,7 +617,7 @@ export default class OCIDatasource {
           tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
-          tenancy: tenancy,
+          tenancy: _.isEmpty(tenancy) ? "" : tenancy,
           queryType: "compartments",
           region: _.isEmpty(region) ? this.defaultRegion : region,
         },
