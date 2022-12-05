@@ -188,11 +188,11 @@ export default class OCIDatasource {
             this.getVariableValue(t.compartment, options.scopedVars)
           ) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT
       )
-      .filter(
-        (t) =>
-          !_.isEmpty(this.getVariableValue(t.tenancy, options.scopedVars)) &&
-          t.tenancy !== SELECT_PLACEHOLDERS.TENANCY
-      )      
+      // .filter(
+      //   (t) =>
+      //     !_.isEmpty(this.getVariableValue(t.tenancy, options.scopedVars)) &&
+      //     t.tenancy !== SELECT_PLACEHOLDERS.TENANCY
+      // )      
       .filter(
         (t) =>
           !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) &&
