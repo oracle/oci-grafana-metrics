@@ -44,7 +44,6 @@ export default class OCIDatasource {
     this.regionsCache = [];
     this.tenanciesCache = [];
 
-    // this.getTenancies();
     // this.getRegions();
     // this.getCompartments();
   }
