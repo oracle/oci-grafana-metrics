@@ -191,7 +191,7 @@ export default class OCIDatasource {
       .filter(
         (t) =>
           !_.isEmpty(this.getVariableValue(t.tenancy, options.scopedVars)) &&
-          t.namespace !== SELECT_PLACEHOLDERS.TENANCY
+          t.tenancy !== SELECT_PLACEHOLDERS.TENANCY
       )      
       .filter(
         (t) =>
@@ -220,11 +220,6 @@ export default class OCIDatasource {
             !_.isEmpty(dim.value) &&
             dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE
         );
-        
-      t.tenancy =
-        t.tenancy === SELECT_PLACEHOLDERS.TENANCY
-          ? DEFAULT_TENANCY
-          : t.tenancy;
 
       t.resourcegroup =
         t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP
