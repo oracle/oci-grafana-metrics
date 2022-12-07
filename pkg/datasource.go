@@ -326,13 +326,14 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	case "local":
 		if tenancymode == "multitenancy" {
 			p, ociparsErr = OCIConfigParser()
+			oci_config_file := OCIConfigPath()
 			if ociparsErr != nil {
 				return errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
 			}
 			// for _, ociconfig := range ociconfigs {
 			for key, _ := range p.tenancyocid {
 				var configProvider common.ConfigurationProvider
-				configProvider = common.CustomProfileConfigProvider("", key)
+				configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
 				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 				if err != nil {
 					o.logger.Error("Error with config:" + key)
@@ -860,6 +861,8 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 	var p *OCIConfigFile
 	var res string
 	p, err := OCIConfigParser()
+	oci_config_file := OCIConfigPath()
+
 	if err != nil {
 		log.DefaultLogger.Error("could not parse config file")
 		return nil, err
@@ -871,7 +874,7 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 			if env == "local" {
 				res = p.tenancyocid[key]
 			} else {
-				configProvider := common.CustomProfileConfigProvider("", key)
+				configProvider := common.CustomProfileConfigProvider(oci_config_file, key)
 				res, err := configProvider.TenancyOCID()
 				if err != nil {
 					return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
@@ -893,19 +896,10 @@ Function parses the content of .oci/config file and returns raw file content.
 It then pass over to parseConfigFile in search for each config entry.
 */
 func OCIConfigParser() (*OCIConfigFile, error) {
-	var oci_config_file string
 
 	p := NewOCIConfigFile()
 
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		log.DefaultLogger.Error("could not get home directory")
-	}
-	if _, ok := os.LookupEnv("OCI_CLI_CONFIG_FILE"); ok {
-		oci_config_file = os.Getenv("OCI_CLI_CONFIG_FILE")
-	} else {
-		oci_config_file = homedir + "/.oci/config"
-	}
+	oci_config_file := OCIConfigPath()
 
 	data, err := ioutil.ReadFile(oci_config_file)
 	if err != nil {
@@ -976,4 +970,20 @@ func (p *OCIConfigFile) parseConfigAtLine(start int, profile string, content []s
 		}
 	}
 	return
+}
+
+/*
+Function returns the path for the .oci/config file
+*/
+func OCIConfigPath() string {
+	var oci_config_file string
+
+	homedir := "/usr/share/grafana"
+	if _, ok := os.LookupEnv("OCI_CLI_CONFIG_FILE"); ok {
+		oci_config_file = os.Getenv("OCI_CLI_CONFIG_FILE")
+	} else {
+		oci_config_file = homedir + "/.oci/config"
+	}
+
+	return oci_config_file
 }
