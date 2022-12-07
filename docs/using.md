@@ -16,9 +16,14 @@ Choose **Graph** from the list of available dashboard types.
 
 Click **Panel Title** and then **Edit** to add metrics to the dashboard.![Screen Shot 2018-12-17 at 3.26.26 PM](images/Screen%20Shot%202018-12-17%20at%203.26.26%20PM.png)
 
-Choose the appropriate **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options.
+If you are using a Data Source configured in **single** mode then choose the appropriate **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options.
 
-![Metrics Query Editor](images/MetricsPlugin-QueryEditor-Screenshot.png)
+![Metrics Query Editor - single mode](images/MetricsPlugin-QueryEditor-Screenshot.png)
+
+If you are using a Data Source configured in **multitenancy** mode then choose the appropriate **Tenancy**, **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options. In **multitenancy** mode you can also combine two queries retrieving data from different datasources as in the following example:
+
+![Metrics Query Editor - multitenancy mode](images/Screenshot_20221206_134237.png)
+
 
 Click the save icon to save your graph.
 
