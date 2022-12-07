@@ -185,7 +185,8 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 			var ociparsErr error
 			var tenancyErr error
 			if ts.Environment == "local" {
-				p, ociparsErr = OCIConfigParser()
+				oci_config_file := OCIConfigPath()
+				p, ociparsErr = OCIConfigParser(oci_config_file)
 				if ociparsErr != nil {
 					return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
 				}
@@ -324,9 +325,9 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 	switch environment {
 	case "local":
+		oci_config_file := OCIConfigPath()
 		if tenancymode == "multitenancy" {
-			p, ociparsErr = OCIConfigParser()
-			oci_config_file := OCIConfigPath()
+			p, ociparsErr = OCIConfigParser(oci_config_file)
 			if ociparsErr != nil {
 				return errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
 			}
@@ -361,7 +362,8 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			return nil
 		} else {
 			var configProvider common.ConfigurationProvider
-			configProvider = common.DefaultConfigProvider()
+			// configProvider = common.DefaultConfigProvider()
+			configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				o.logger.Error("Error with config:" + SingleTenancyKey)
@@ -851,18 +853,14 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 /*
 Function generates an array  containing OCI configuration (.oci/config) in the following format:
-
 <section label/TenancyOCID>
-
 */
-
 func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest, env string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	var p *OCIConfigFile
 	var res string
-	p, err := OCIConfigParser()
 	oci_config_file := OCIConfigPath()
-
+	p, err := OCIConfigParser(oci_config_file)
 	if err != nil {
 		log.DefaultLogger.Error("could not parse config file")
 		return nil, err
@@ -895,18 +893,13 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 Function parses the content of .oci/config file and returns raw file content.
 It then pass over to parseConfigFile in search for each config entry.
 */
-func OCIConfigParser() (*OCIConfigFile, error) {
-
+func OCIConfigParser(oci_config_file string) (*OCIConfigFile, error) {
 	p := NewOCIConfigFile()
-
-	oci_config_file := OCIConfigPath()
-
 	data, err := ioutil.ReadFile(oci_config_file)
 	if err != nil {
 		err = fmt.Errorf("can not read config file: %s due to: %s", oci_config_file, err.Error())
 		return nil, err
 	}
-
 	if len(data) == 0 {
 		err = fmt.Errorf("config file %s is empty.", oci_config_file)
 		return nil, err
@@ -924,14 +917,12 @@ Function parses the content of .oci/config file
 It looks for each profile entry and pass over to the parseConfigAtLine function
 */
 func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
-
 	content := string(data)
 	splitContent := strings.Split(content, "\n")
 	if len(splitContent) == 0 {
 		err = fmt.Errorf("config file is corrupted.")
 		return err
 	}
-
 	//Look for profile
 	for i, line := range splitContent {
 		if match := profileRegex.FindStringSubmatch(line); match != nil && len(match) > 1 {
@@ -977,13 +968,11 @@ Function returns the path for the .oci/config file
 */
 func OCIConfigPath() string {
 	var oci_config_file string
-
 	homedir := "/usr/share/grafana"
 	if _, ok := os.LookupEnv("OCI_CLI_CONFIG_FILE"); ok {
 		oci_config_file = os.Getenv("OCI_CLI_CONFIG_FILE")
 	} else {
 		oci_config_file = homedir + "/.oci/config"
 	}
-
 	return oci_config_file
 }
