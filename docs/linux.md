@@ -98,7 +98,6 @@ If you selected **multitenancy** as **Tenancy mode** then fill in your **Default
 
 Click **Save & Test** to return to the home dashboard.
 
-
 ## Next Steps
 
 Check out how to use the newly installed and configured plugin in our [Using Grafana with Oracle Cloud Infrastructure Data Source](using.md) walkthrough.
