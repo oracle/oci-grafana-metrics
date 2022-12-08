@@ -124,11 +124,13 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	o.logger.Debug(ts.Tenancy)
 
 	// uncomment to use the single OCI login method
-	// if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
 	// if len(o.tenancyAccess) == 0 {
 
-	// uncomment to force OCI login at every query
-	if true {
+	// uncomment to force OCI login at every query when in multitenancy mode
+	if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
+
+		// uncomment to force OCI login at every query
+		// if true {
 
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
 		if err != nil {
@@ -496,14 +498,14 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(tenancyocid)
 	log.DefaultLogger.Debug("/compartmentsResponse")
 
-	// if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-	m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
-	if err != nil {
-		o.logger.Error("Unable to refresh cache")
-		return nil, err
+	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
+		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
+		if err != nil {
+			o.logger.Error("Unable to refresh cache")
+			return nil, err
+		}
+		o.nameToOCID = m
 	}
-	o.nameToOCID = m
-	// }
 
 	frame := data.NewFrame(query.RefID,
 		data.NewField("name", nil, []string{}),
