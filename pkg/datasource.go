@@ -498,14 +498,14 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	log.DefaultLogger.Debug(tenancyocid)
 	log.DefaultLogger.Debug("/compartmentsResponse")
 
-	// if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-	m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
-	if err != nil {
-		o.logger.Error("Unable to refresh cache")
-		return nil, err
+	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
+		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
+		if err != nil {
+			o.logger.Error("Unable to refresh cache")
+			return nil, err
+		}
+		o.nameToOCID = m
 	}
-	o.nameToOCID = m
-	// }
 
 	frame := data.NewFrame(query.RefID,
 		data.NewField("name", nil, []string{}),
