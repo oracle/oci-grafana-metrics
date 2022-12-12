@@ -1,5 +1,11 @@
 # Local Installation (Linux) with multitenancy support - Oracle Cloud Infrastructure Data Source for Grafana
 
+
+
+
+
+
+
 ## Background
 
 Grafana is a popular technology that makes it easy to visualize metrics. The Oracle Cloud Infrastructure Data Source for Grafana is used to extend Grafana by adding OCI as a data source. The plugin enables you to visualize metrics related to a number of OCI resources: Compute, Networking, Storage, and custom metrics.
@@ -11,8 +17,19 @@ Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.
 ## Multitenancy support
 
 This version of the OCI plugin includes the multitenancy support. That means that the plugin is able to query different tenancies as they are configured in the .oci/config file. Instance pcrincipals is not yet supported to operate in multitenancy mode.
-For existing grafana plugin installation retrocompatibility is supported under the following shcema:
+For existing grafana dashboards created with the legacy single tenancy plugin datasource configuration, retrocompatibility is supported under the following schema:
 
+
+|                                                   | Dashboard created with plugin configured with .oci/config file | Dashboard created with plugin configured with instance principals |
+| --------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------- |
+| New Plugin release with existing Datasource configuration | Dashboard should load with no action required                  | Dashboard should load with no action requiredNo action required   |
+| New Plugin release with single tenancy Datasource | Dashboard should load with no action required                  | Dashboard should load with no action requiredNo action required   |
+| New Plugin release with multitenancy Datasource   | Dashboard should be modified selecting the tenancy             | Dashboard should be modified selecting the tenancy                |
+
+
+In general Dashboard does not require to be modified if the dashboard will continue to use the datasource with which it was created and in case it will use a datasource configured in single tenancy mode. If the legacy dashboard will be imported into a multitenancy configured datasource, then the dashboard needs to be modified, including the tenancy to be used, and then saved, as in the following example:
+
+![Tenancy selector](images/Screenshot_20221212_130543.png)
 
 ## Install the Oracle Cloud Infrastructure CLI
 
