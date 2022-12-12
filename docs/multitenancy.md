@@ -8,6 +8,12 @@ This walkthrough is intended for use by people who would like to deploy Grafana 
 
 Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.com/iaas/Content/Monitoring/Concepts/monitoringoverview.htm) and that [metrics have been enabled](https://docs.cloud.oracle.com/iaas/Content/Compute/Tasks/enablingmonitoring.htm) for the resources you are trying to monitor.
 
+## Multitenancy support
+
+This version of the OCI plugin includes the multitenancy support. That means that the plugin is able to query different tenancies as they are configured in the .oci/config file. Instance pcrincipals is not yet supported to operate in multitenancy mode.
+For existing grafana plugin installation retrocompatibility is supported under the following shcema:
+
+
 ## Install the Oracle Cloud Infrastructure CLI
 
 The [Oracle Cloud Infrastructure CLI](https://docs.cloud.oracle.com/iaas/Content/API/Concepts/cliconcepts.htm) provides you with a way to perform tasks in OCI from your command line rather than the OCI Console. It does so by making REST calls to the [OCI APIs](https://docs.cloud.oracle.com/iaas/Content/API/Concepts/usingapi.htm). We will be using the CLI to authenticate between our local environment hosting Grafana and OCI in order to pull in metrics. The CLI is built on Python (version 2.7.5 or 3.5 or later), running on Mac, Windows, or Linux.
@@ -154,15 +160,11 @@ All of the metrics plugin template variables only support a singleton value with
 
 The final list of variables should look like this:
 
-![Metrics dashboard variables screenshot](images/metrics-dashboard-variables-screenshot.png)
-
-In case of multitenancy support, the final list of variables should look like the following:
-
 ![Metrics dashboard variables screenshot](images/Screenshot_20221128_105807.png)
 
-In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below.
+In order for these variables be available to be dynamically changed in your query with the multitenancy support, it is important to choose the **region** before the **tenancy** and then proceed with the other variables, **compartment**, **namespace**, and **metric** as seen in the image below.
 
-![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screen%20Shot%202019-01-11%20at%203.19.51%20PM.png)
+![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screenshot_20221212_115734.png)
 
 For windows and resolution,
 
