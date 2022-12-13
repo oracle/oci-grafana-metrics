@@ -464,7 +464,7 @@ export default class OCIDatasource {
           });
       } else {
           let target = {
-            region: removeQuotes(this.getVariableValue(compartmentQuery[1])),
+            tenancy: DEFAULT_TENANCY,
           };
           console.log("compartmentQuery")
           console.log(target)      
@@ -493,6 +493,7 @@ export default class OCIDatasource {
         });
       } else {
         let target = {
+          tenancy: DEFAULT_TENANCY,
           region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
           compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
         };
@@ -516,6 +517,7 @@ export default class OCIDatasource {
         });
       } else {
         let target = {
+          tenancy: DEFAULT_TENANCY,
           region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
           compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
           namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
@@ -541,6 +543,7 @@ export default class OCIDatasource {
         });
       } else {
         let target = {
+          tenancy: DEFAULT_TENANCY,
           region: removeQuotes(this.getVariableValue(metricQuery[1])),
           compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
           namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
@@ -568,6 +571,7 @@ export default class OCIDatasource {
         });
       } else {
         let target = {
+          tenancy: DEFAULT_TENANCY,
           region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
           compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
           namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
@@ -597,6 +601,7 @@ export default class OCIDatasource {
         });
       } else {
         let target = {
+          tenancy: DEFAULT_TENANCY,
           region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
           compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
           namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
