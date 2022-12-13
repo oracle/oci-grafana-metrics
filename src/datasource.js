@@ -427,15 +427,18 @@ export default class OCIDatasource {
 
     let regionQuery = varString.match(regionsQueryRegex);
     if (regionQuery) {
-      let target = {
-        tenancy: removeQuotes(this.getVariableValue(regionQuery[1])),
-      };
-      console.log("regionQuery")
-      console.log(target)      
-      console.log("end regionQuery")
-      return this.getRegions(target).catch((err) => {
-        throw new Error("Unable to get regions: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(regionQuery[1])),
+        };
+        return this.getRegions(target).catch((err) => {
+          throw new Error("Unable to get regions: " + err);
+        });
+      } else {
+        return this.getRegions(target).catch((err) => {
+          throw new Error("Unable to get regions: " + err);
+        });        
+      }
     }
 
     let compartmentQuery = varString.match(compartmentsQueryRegex);
@@ -583,11 +586,9 @@ export default class OCIDatasource {
           compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
           namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
           metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
-          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[7])),
         };
-        const dimensionKey = removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[5])
-        );
+        const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]));
         return this.getDimensionValues(target, dimensionKey).catch((err) => {
           throw new Error("Unable to get dimension options: " + err);
         });
@@ -597,11 +598,9 @@ export default class OCIDatasource {
           compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
           namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
           metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
-          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6])),
         };
-        const dimensionKey = removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[5])
-        );
+        const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));        
         return this.getDimensionValues(target, dimensionKey).catch((err) => {
           throw new Error("Unable to get dimension options: " + err);
         });        
