@@ -435,6 +435,9 @@ export default class OCIDatasource {
           throw new Error("Unable to get regions: " + err);
         });
       } else {
+        let target = {
+          tenancy: DEFAULT_TENANCY,
+        };        
         return this.getRegions(target).catch((err) => {
           throw new Error("Unable to get regions: " + err);
         });        
@@ -588,7 +591,7 @@ export default class OCIDatasource {
           metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
           resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[7])),
         };
-        const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]));
+        let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]));
         return this.getDimensionValues(target, dimensionKey).catch((err) => {
           throw new Error("Unable to get dimension options: " + err);
         });
@@ -600,7 +603,7 @@ export default class OCIDatasource {
           metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
           resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6])),
         };
-        const dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));        
+        let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));        
         return this.getDimensionValues(target, dimensionKey).catch((err) => {
           throw new Error("Unable to get dimension options: " + err);
         });        
