@@ -65,17 +65,18 @@ Repeat the process for the following OCI variables:
 
 In case plugin is configured to operate with multitenancy support, use the following OCI variables:
 
-| Name            | Query                                                                     |
-| --------------- | ------------------------------------------------------------------------- |
-| tenancy          | `tenancies()`                                                               |
-| region          | `regions($tenancy)`                                                               |
-| compartment     | `compartments($region,$tenancy)`                                                          |
-| namespace       | `namespaces($region,$compartment,$tenancy)`                                        |
-| resourcegroup   | `resourcegroups($region, $compartment, $namespace,$tenancy)`                                        |
-| metric          | `metrics($region,$compartment, $namespace, $resourcegroup,$tenancy)`                                |
-| dimensionKey    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup,$tenancy)`                     |
-| dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup,$tenancy)` |
+| Name           | Query                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| tenancy        | `tenancies()`                                                                                     |
+| region         | `regions($tenancy)`                                                                               |
+| compartment    | `compartments($tenancy,$region)`                                                                  |
+| namespace      | `namespaces($tenancy,$region,$compartment)`                                                       |
+| resourcegroup  | `resourcegroups($tenancy,$region, $compartment, $namespace)`                                      |
+| metric         | `metrics($tenancy,$region,$compartment, $namespace, $resourcegroup)`                              |
+| dimensionKey   | `dimensions($tenancy,$region, $compartment, $namespace, $metric, $resourcegroup)`                 |
+| dimensionValue | `dimensionOptions($tenancy,$region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
 
+In Multitenancy mode, it is recommended to click the 'save template variable state' radio button when saving a dashboard using template variables.
 
 All of the metrics plugin template variables only support a singleton value with the exception of the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
 
@@ -85,7 +86,7 @@ The final list of variables should look like this:
 
 In case of multitenancy support, the final list of variables should look like the following:
 
-![Metrics dashboard variables screenshot](images/Screenshot_20221128_105807.png)
+![Metrics dashboard variables screenshot](images/MultiTenancyVarSetup.png)
 
 In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
 
