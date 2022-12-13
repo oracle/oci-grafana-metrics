@@ -42,6 +42,9 @@ We also have documentation for how to use the newly installed and configured plu
 
 If you're using a version of Grafana that's older than 6.0, you will need to download the zip file for plugin versions <=2.2.4 and install this plugin manually, or chmod the binary that is downloaded to make it executable. 
 
+## Note 2
+
+The OCI Metrics plugin does not support the integration with Grafana Cloud at the moment. 
 
 ### Debugging
 
