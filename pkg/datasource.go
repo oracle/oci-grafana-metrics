@@ -532,6 +532,9 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
 	log.DefaultLogger.Debug(*req.TenancyId)
 
+	reg := common.StringToRegion(region)
+	o.tenancyAccess[takey].identityClient.SetRegion(string(reg))
+
 	// Send the request using the service client
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
 	if err != nil {
@@ -545,8 +548,6 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 	mapFromIdToParentCmptId[tenancyOcid] = "" //since root cmpt does not have a parent
 
 	var page *string
-	reg := common.StringToRegion(region)
-	o.tenancyAccess[takey].identityClient.SetRegion(string(reg))
 	for {
 		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
 			identity.ListCompartmentsRequest{
