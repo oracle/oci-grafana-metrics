@@ -439,99 +439,173 @@ export default class OCIDatasource {
     }
 
     let compartmentQuery = varString.match(compartmentsQueryRegex);
-    if (compartmentQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(compartmentQuery[1])),
-        tenancy: removeQuotes(this.getVariableValue(compartmentQuery[2])),
-      };    
-      console.log("compartmentQuery")
-      console.log(target)      
-      console.log("end compartmentQuery")        
-      return this.getCompartments(target)
-        .then((compartments) => {
-          return compartments.map((c) => ({ text: c.text, value: c.text }));
-        })
-        .catch((err) => {
-          throw new Error("Unable to get compartments: " + err);
-        });
+    if (compartmentQuery){
+      console.log(this.tenancymode)
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(compartmentQuery[1])),
+          region: removeQuotes(this.getVariableValue(compartmentQuery[2])),
+        };
+        console.log("compartmentQuery")
+        console.log(target)      
+        console.log("end compartmentQuery")        
+        return this.getCompartments(target)
+          .then((compartments) => {
+            return compartments.map((c) => ({ text: c.text, value: c.text }));
+          })
+          .catch((err) => {
+            throw new Error("Unable to get compartments: " + err);
+          });
+      } else {
+          let target = {
+            region: removeQuotes(this.getVariableValue(compartmentQuery[1])),
+          };
+          console.log("compartmentQuery")
+          console.log(target)      
+          console.log("end compartmentQuery")        
+          return this.getCompartments(target)
+            .then((compartments) => {
+              return compartments.map((c) => ({ text: c.text, value: c.text }));
+            })
+            .catch((err) => {
+              throw new Error("Unable to get compartments: " + err);
+            });  
+      }   
     }
+
 
     let namespaceQuery = varString.match(namespacesQueryRegex);
     if (namespaceQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
-        tenancy: removeQuotes(this.getVariableValue(namespaceQuery[3])),
-      };
-      return this.getNamespaces(target).catch((err) => {
-        throw new Error("Unable to get namespaces: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+          region: removeQuotes(this.getVariableValue(namespaceQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(namespaceQuery[3])),
+        };
+        return this.getNamespaces(target).catch((err) => {
+          throw new Error("Unable to get namespaces: " + err);
+        });
+      } else {
+        let target = {
+          region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
+        };
+        return this.getNamespaces(target).catch((err) => {
+          throw new Error("Unable to get namespaces: " + err);
+        });        
+      }
     }
 
     let resourcegroupQuery = varString.match(resourcegroupsQueryRegex);
     if (resourcegroupQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
-        namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
-        tenancy: removeQuotes(this.getVariableValue(resourcegroupQuery[4])),
-      };
-      return this.getResourceGroups(target).catch((err) => {
-        throw new Error("Unable to get resourcegroups: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
+          region: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[4])),
+        };
+        return this.getResourceGroups(target).catch((err) => {
+          throw new Error("Unable to get resourcegroups: " + err);
+        });
+      } else {
+        let target = {
+          region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
+        };
+        return this.getResourceGroups(target).catch((err) => {
+          throw new Error("Unable to get resourcegroups: " + err);
+        });        
+      }
     }
 
     let metricQuery = varString.match(metricsQueryRegex);
     if (metricQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(metricQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
-        namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
-        resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
-        tenancy: removeQuotes(this.getVariableValue(metricQuery[5])),
-      };
-      return this.metricFindQuery(target).catch((err) => {
-        throw new Error("Unable to get metrics: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(metricQuery[1])),
+          region: removeQuotes(this.getVariableValue(metricQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(metricQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(metricQuery[4])),
+          resourcegroup: removeQuotes(this.getVariableValue(metricQuery[5])),
+        };
+        return this.metricFindQuery(target).catch((err) => {
+          throw new Error("Unable to get metrics: " + err);
+        });
+      } else {
+        let target = {
+          region: removeQuotes(this.getVariableValue(metricQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
+          resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
+        };
+        return this.metricFindQuery(target).catch((err) => {
+          throw new Error("Unable to get metrics: " + err);
+        });        
+      }  
     }
 
     let dimensionsQuery = varString.match(dimensionKeysQueryRegex);
     if (dimensionsQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
-        namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
-        metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
-        resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
-        tenancy: removeQuotes(this.getVariableValue(dimensionsQuery[6])),
-      };
-      return this.getDimensionKeys(target).catch((err) => {
-        throw new Error("Unable to get dimensions: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
+          region: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
+          metric: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[6])),
+        };
+        return this.getDimensionKeys(target).catch((err) => {
+          throw new Error("Unable to get dimensions: " + err);
+        });
+      } else {
+        let target = {
+          region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
+          metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
+        };
+        return this.getDimensionKeys(target).catch((err) => {
+          throw new Error("Unable to get dimensions: " + err);
+        });        
+      }      
     }
 
     let dimensionOptionsQuery = varString.match(dimensionValuesQueryRegex);
     if (dimensionOptionsQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
-        compartment: removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[2])
-        ),
-        namespace: removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[3])
-        ),
-        metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
-        resourcegroup: removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[6])
-        ),
-        tenancy: removeQuotes(this.getVariableValue(dimensionOptionsQuery[7])),
-      };
-      const dimensionKey = removeQuotes(
-        this.getVariableValue(dimensionOptionsQuery[5])
-      );
-      return this.getDimensionValues(target, dimensionKey).catch((err) => {
-        throw new Error("Unable to get dimension options: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
+          region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
+          metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6])),
+        };
+        const dimensionKey = removeQuotes(
+          this.getVariableValue(dimensionOptionsQuery[5])
+        );
+        return this.getDimensionValues(target, dimensionKey).catch((err) => {
+          throw new Error("Unable to get dimension options: " + err);
+        });
+      } else {
+        let target = {
+          region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
+          metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
+        };
+        const dimensionKey = removeQuotes(
+          this.getVariableValue(dimensionOptionsQuery[5])
+        );
+        return this.getDimensionValues(target, dimensionKey).catch((err) => {
+          throw new Error("Unable to get dimension options: " + err);
+        });        
+      }
     }
 
     throw new Error("Unable to parse templating string");

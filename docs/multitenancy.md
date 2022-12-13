@@ -166,18 +166,20 @@ Repeat the process for the following OCI variables:
 | ---------------- | --------------------------------------------------------------------------------------------------- |
 | tenancy        | `tenancies()`                                                                                     |
 | region         | `regions($tenancy)`                                                                               |
-| compartment    | `compartments($region,$tenancy)`                                                                  |
-| namespace      | `namespaces($region,$compartment,$tenancy)`                                                       |
-| resourcegroup  | `resourcegroups($region, $compartment, $namespace,$tenancy)`                                      |
-| metric         | `metrics($region,$compartment, $namespace, $resourcegroup,$tenancy)`                              |
-| dimensionKey   | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup,$tenancy)`                 |
-| dimensionValue | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup,$tenancy)` |
+| compartment    | `compartments($tenancy,$region)`                                                                  |
+| namespace      | `namespaces($tenancy,$region,$compartment)`                                                       |
+| resourcegroup  | `resourcegroups($tenancy,$region, $compartment, $namespace)`                                      |
+| metric         | `metrics($tenancy,$region,$compartment, $namespace, $resourcegroup)`                              |
+| dimensionKey   | `dimensions($tenancy,$region, $compartment, $namespace, $metric, $resourcegroup)`                 |
+| dimensionValue | `dimensionOptions($tenancy,$region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
+
+In Multitenancy mode, it is recommended to click the 'save template variable state' radio button when saving a dashboard using template variables.
 
 All of the metrics plugin template variables only support a singleton value except the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
 
 The final list of variables should look like this:
 
-![Metrics dashboard variables screenshot](images/Screenshot_20221128_105807.png)
+![Metrics dashboard variables screenshot](images/MultiTenancyVarSetup.png)
 
 For these variables to be available dynamically changed in your query with the multitenancy support, it is important to choose the **region** before the **tenancy** and then proceed with the other variables, **compartment**, **namespace**, and **metric** as seen in the image below.
 
