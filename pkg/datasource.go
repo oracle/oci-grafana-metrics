@@ -29,6 +29,7 @@ import (
 
 const MaxPagesToFetch = 20
 const SingleTenancyKey = "DEFAULT/"
+const NoTenancy = "NoTenancy"
 
 var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
 
@@ -489,6 +490,11 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 
 	var tenancyocid string
 	if ts.TenancyMode == "multitenancy" {
+		if len(takey) <= 0 || takey == NoTenancy {
+			o.logger.Error("Unable to get Multi-tenancy OCID")
+			err := fmt.Errorf("Tenancy OCID %s is not valid.", takey)
+			return nil, err
+		}
 		res := strings.Split(takey, "/")
 		tenancyocid = res[1]
 	} else {
