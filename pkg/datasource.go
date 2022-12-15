@@ -640,9 +640,14 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 			req.ResourceGroup = common.String(ts.ResourceGroup)
 		}
 
-		// compute takey at every cycle of  queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
+		// compute takey at every cycle of queryResponse to guarantee mixed mode dashboards (single-multi or multi with different tenancies)
 		if ts.TenancyMode == "multitenancy" {
 			takey = ts.Tenancy
+			if len(takey) <= 0 || takey == NoTenancy {
+				o.logger.Error("Unable to get Multi-tenancy OCID")
+				err := fmt.Errorf("Tenancy OCID %s is not valid.", takey)
+				return nil, err
+			}
 		} else {
 			takey = SingleTenancyKey
 		}
