@@ -1,5 +1,5 @@
 /*
-** Copyright © 2019 Oracle and/or its affiliates. All rights reserved.
+** Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import { QueryCtrl } from 'app/plugins/sdk'
@@ -10,6 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
+  tenanciesQueryRegex,
   compartmentsQueryRegex,
   dimensionKeysQueryRegex,
   dimensionValuesQueryRegex,
@@ -21,6 +22,7 @@ export const SELECT_PLACEHOLDERS = {
   DIMENSION_VALUE: 'select value',
   COMPARTMENT: 'select compartment',
   REGION: 'select region',
+  TENANCY: 'select tenancy',
   NAMESPACE: 'select namespace',
   RESOURCEGROUP: 'select resource group',
   METRIC: 'select metric',
@@ -35,6 +37,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.uiSegmentSrv = uiSegmentSrv;
 
     this.target.region = this.target.region || SELECT_PLACEHOLDERS.REGION;
+    this.target.tenancy = this.target.tenancy || SELECT_PLACEHOLDERS.TENANCY;
     this.target.compartment = this.target.compartment || SELECT_PLACEHOLDERS.COMPARTMENT;
     this.target.namespace = this.target.namespace || SELECT_PLACEHOLDERS.NAMESPACE;
     this.target.resourcegroup = this.target.resourcegroup || SELECT_PLACEHOLDERS.RESOURCEGROUP;
@@ -44,6 +47,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.target.aggregation = this.target.aggregation || 'mean()'
     this.target.dimensions = this.target.dimensions || [];
     this.target.legendFormat = this.target.legendFormat || ''
+    this.target.tenancymode = this.datasource.tenancymode || ''
 
     this.dimensionSegments = [];
     this.removeDimensionSegment = uiSegmentSrv.newSegment({ fake: true, value: '-- remove dimension --' });
@@ -52,6 +56,9 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     this.getSelectDimensionValueSegment = () => uiSegmentSrv.newSegment({ value: SELECT_PLACEHOLDERS.DIMENSION_VALUE, type: 'value' });
 
     this.dimensionsCache = {};
+    if (this.datasource.tenancymode === "multitenancy") {
+      this.target.MultiTenancy = true;
+    }
 
     // rebuild dimensionSegments on query editor load
     for (let i = 0; i < this.target.dimensions.length; i++) {
@@ -69,13 +76,19 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
   // ****************************** Options **********************************
 
   getRegions() {
-    return this.datasource.getRegions().then(regions => {
+    return this.datasource.getRegions(this.target).then(regions => {
       return this.appendVariables([ ...regions], regionsQueryRegex);
     });
   }
 
+  getTenancies() {
+    return this.datasource.getTenancies().then(tenancies => {
+      return this.appendVariables([ ...tenancies], tenanciesQueryRegex);
+    });
+  }
+
   getCompartments() {
-    return this.datasource.getCompartments().then(compartments => {
+    return this.datasource.getCompartments(this.target).then(compartments => {
       return this.appendVariables([...compartments], compartmentsQueryRegex);
     });
   }
@@ -176,16 +189,16 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
     })
   }
 
-  appendVariables(options, varQeueryRegex) {
-    const vars = this.datasource.getVariables(varQeueryRegex) || [];
+  appendVariables(options, varQueryRegex) {
+    const vars = this.datasource.getVariables(varQueryRegex) || [];
     vars.forEach(value => {
       options.unshift({ value, text: value });
     });
     return options;
   }
 
-  appendWindowsAndResolutionVariables (options, varQeueryRegex) {
-    const vars = this.datasource.getVariables(varQeueryRegex) || []
+  appendWindowsAndResolutionVariables (options, varQueryRegex) {
+    const vars = this.datasource.getVariables(varQueryRegex) || []
     return [...options, ...vars].map(value => ({ value, text: value }))
   }
   // ****************************** Callbacks **********************************
@@ -204,6 +217,7 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
       }       
     });
   }
+
 
   /**
    * On dimension segment change callback

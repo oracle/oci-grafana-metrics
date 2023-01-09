@@ -1,5 +1,5 @@
 /*
- ** Copyright © 2019 Oracle and/or its affiliates. All rights reserved.
+ ** Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
  ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
  */
 import _ from "lodash";
@@ -10,6 +10,7 @@ import {
   resourcegroupsQueryRegex,
   metricsQueryRegex,
   regionsQueryRegex,
+  tenanciesQueryRegex,
   compartmentsQueryRegex,
   dimensionValuesQueryRegex,
   removeQuotes,
@@ -21,6 +22,8 @@ import { resolveAutoWinRes } from "./util/utilFunctions";
 import { toDataQueryResponse } from "@grafana/runtime";
 
 const DEFAULT_RESOURCE_GROUP = "NoResourceGroup";
+const DEFAULT_TENANCY = "NoTenancy";
+
 
 export default class OCIDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
@@ -31,6 +34,7 @@ export default class OCIDatasource {
     this.tenancyOCID = instanceSettings.jsonData.tenancyOCID;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.environment = instanceSettings.jsonData.environment;
+    this.tenancymode = instanceSettings.jsonData.tenancymode;
     this.q = $q;
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
@@ -38,9 +42,10 @@ export default class OCIDatasource {
 
     this.compartmentsCache = [];
     this.regionsCache = [];
+    this.tenanciesCache = [];
 
-    this.getRegions();
-    this.getCompartments();
+    // this.getRegions();
+    // this.getCompartments();
   }
 
   /**
@@ -90,6 +95,7 @@ export default class OCIDatasource {
           tenancyOCID: this.tenancyOCID,
           compartment: "",
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
         },
       ],
@@ -126,6 +132,10 @@ export default class OCIDatasource {
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
         : this.getVariableValue(target.region);
+    const tenancy =
+      target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+        ? DEFAULT_TENANCY
+        : this.getVariableValue(target.tenancy);        
     const compartment =
       target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT
         ? ""
@@ -143,11 +153,12 @@ export default class OCIDatasource {
       return this.q.when([]);
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
+    const compartmentId = await this.getCompartmentId(compartment, target);
     return this.doRequest({
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           queryType: "search",
@@ -155,6 +166,7 @@ export default class OCIDatasource {
           compartment: compartmentId,
           namespace: namespace,
           resourcegroup: resourcegroup,
+          tenancy: tenancy,
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -174,7 +186,7 @@ export default class OCIDatasource {
           !_.isEmpty(
             this.getVariableValue(t.compartment, options.scopedVars)
           ) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT
-      )
+      )    
       .filter(
         (t) =>
           !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) &&
@@ -203,10 +215,10 @@ export default class OCIDatasource {
             dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE
         );
 
-      t.resourcegroup =
+        t.resourcegroup =
         t.resourcegroup === SELECT_PLACEHOLDERS.RESOURCEGROUP
           ? DEFAULT_RESOURCE_GROUP
-          : t.resourcegroup;
+          : t.resourcegroup;          
     });
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
@@ -263,13 +275,22 @@ export default class OCIDatasource {
         )}[${window}]${dimension}.${t.aggregation}`;
       }
 
+      const tenancy =
+      this.getVariableValue(t.tenancy, options.scopedVars) === SELECT_PLACEHOLDERS.TENANCY
+        ? DEFAULT_TENANCY
+        : this.getVariableValue(t.tenancy, options.scopedVars);        
+      let target = {
+        tenancy: tenancy,
+        region: _.isEmpty(region) ? this.defaultRegion : region,
+      }; 
       const compartmentId = await this.getCompartmentId(
-        this.getVariableValue(t.compartment, options.scopedVars)
+        this.getVariableValue(t.compartment, options.scopedVars), target
       );
 
       const result = {
         resolution,
         environment: this.environment,
+        tenancymode: this.tenancymode,
         datasourceId: this.id,
         tenancyOCID: this.tenancyOCID,
         queryType: "query",
@@ -278,6 +299,7 @@ export default class OCIDatasource {
         type: t.type || "timeserie",
         region: _.isEmpty(region) ? this.defaultRegion : region,
         compartment: compartmentId,
+        tenancy: tenancy,
         namespace: this.getVariableValue(t.namespace, options.scopedVars),
         resourcegroup: this.getVariableValue(
           t.resourcegroup,
@@ -385,111 +407,214 @@ export default class OCIDatasource {
    * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
    */
   templateMetricQuery(varString) {
+
+    let tenancyQuery = varString.match(tenanciesQueryRegex);
+    if (tenancyQuery) {
+      return this.getTenancies().catch((err) => {
+        throw new Error("Unable to get tenancies: " + err);
+      });    
+    }    
+
     let regionQuery = varString.match(regionsQueryRegex);
     if (regionQuery) {
-      return this.getRegions().catch((err) => {
-        throw new Error("Unable to get regions: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(regionQuery[1])),
+        };
+        return this.getRegions(target).catch((err) => {
+          throw new Error("Unable to get regions: " + err);
+        });
+      } else {
+        let target = {
+          tenancy: DEFAULT_TENANCY,
+        };        
+        return this.getRegions(target).catch((err) => {
+          throw new Error("Unable to get regions: " + err);
+        });        
+      }
     }
 
     let compartmentQuery = varString.match(compartmentsQueryRegex);
-    if (compartmentQuery) {
-      return this.getCompartments()
-        .then((compartments) => {
-          return compartments.map((c) => ({ text: c.text, value: c.text }));
-        })
-        .catch((err) => {
-          throw new Error("Unable to get compartments: " + err);
-        });
+    if (compartmentQuery){
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(compartmentQuery[1])),
+          region: removeQuotes(this.getVariableValue(compartmentQuery[2])),
+        };       
+        return this.getCompartments(target)
+          .then((compartments) => {
+            return compartments.map((c) => ({ text: c.text, value: c.text }));
+          })
+          .catch((err) => {
+            throw new Error("Unable to get compartments: " + err);
+          });
+      } else {
+          let target = {
+            tenancy: DEFAULT_TENANCY,
+          };        
+          return this.getCompartments(target)
+            .then((compartments) => {
+              return compartments.map((c) => ({ text: c.text, value: c.text }));
+            })
+            .catch((err) => {
+              throw new Error("Unable to get compartments: " + err);
+            });  
+      }   
     }
+
 
     let namespaceQuery = varString.match(namespacesQueryRegex);
     if (namespaceQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
-      };
-      return this.getNamespaces(target).catch((err) => {
-        throw new Error("Unable to get namespaces: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+          region: removeQuotes(this.getVariableValue(namespaceQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(namespaceQuery[3])),
+        };
+        return this.getNamespaces(target).catch((err) => {
+          throw new Error("Unable to get namespaces: " + err);
+        });
+      } else {
+        let target = {
+          tenancy: DEFAULT_TENANCY,
+          region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
+        };
+        return this.getNamespaces(target).catch((err) => {
+          throw new Error("Unable to get namespaces: " + err);
+        });        
+      }
     }
 
     let resourcegroupQuery = varString.match(resourcegroupsQueryRegex);
     if (resourcegroupQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
-        namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
-      };
-      return this.getResourceGroups(target).catch((err) => {
-        throw new Error("Unable to get resourcegroups: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
+          region: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[4])),
+        };
+        return this.getResourceGroups(target).catch((err) => {
+          throw new Error("Unable to get resourcegroups: " + err);
+        });
+      } else {
+        let target = {
+          tenancy: DEFAULT_TENANCY,
+          region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
+        };
+        return this.getResourceGroups(target).catch((err) => {
+          throw new Error("Unable to get resourcegroups: " + err);
+        });        
+      }
     }
 
     let metricQuery = varString.match(metricsQueryRegex);
     if (metricQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(metricQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
-        namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
-        resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
-      };
-      return this.metricFindQuery(target).catch((err) => {
-        throw new Error("Unable to get metrics: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(metricQuery[1])),
+          region: removeQuotes(this.getVariableValue(metricQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(metricQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(metricQuery[4])),
+          resourcegroup: removeQuotes(this.getVariableValue(metricQuery[5])),
+        };
+        return this.metricFindQuery(target).catch((err) => {
+          throw new Error("Unable to get metrics: " + err);
+        });
+      } else {
+        let target = {
+          tenancy: DEFAULT_TENANCY,
+          region: removeQuotes(this.getVariableValue(metricQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
+          resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
+        };
+        return this.metricFindQuery(target).catch((err) => {
+          throw new Error("Unable to get metrics: " + err);
+        });        
+      }  
     }
 
     let dimensionsQuery = varString.match(dimensionKeysQueryRegex);
     if (dimensionsQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
-        compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
-        namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
-        metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
-        resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
-      };
-      return this.getDimensionKeys(target).catch((err) => {
-        throw new Error("Unable to get dimensions: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
+          region: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
+          metric: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[6])),
+        };
+        return this.getDimensionKeys(target).catch((err) => {
+          throw new Error("Unable to get dimensions: " + err);
+        });
+      } else {
+        let target = {
+          tenancy: DEFAULT_TENANCY,
+          region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
+          metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
+        };
+        return this.getDimensionKeys(target).catch((err) => {
+          throw new Error("Unable to get dimensions: " + err);
+        });        
+      }      
     }
 
     let dimensionOptionsQuery = varString.match(dimensionValuesQueryRegex);
     if (dimensionOptionsQuery) {
-      let target = {
-        region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
-        compartment: removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[2])
-        ),
-        namespace: removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[3])
-        ),
-        metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
-        resourcegroup: removeQuotes(
-          this.getVariableValue(dimensionOptionsQuery[6])
-        ),
-      };
-      const dimensionKey = removeQuotes(
-        this.getVariableValue(dimensionOptionsQuery[5])
-      );
-      return this.getDimensionValues(target, dimensionKey).catch((err) => {
-        throw new Error("Unable to get dimension options: " + err);
-      });
+      if (this.tenancymode === "multitenancy") {
+        let target = {
+          tenancy: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
+          region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
+          compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
+          namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
+          metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[7])),
+        };
+        let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]));
+        return this.getDimensionValues(target, dimensionKey).catch((err) => {
+          throw new Error("Unable to get dimension options: " + err);
+        });
+      } else {
+        let target = {
+          tenancy: DEFAULT_TENANCY,
+          region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
+          compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
+          namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
+          metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
+          resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6])),
+        };
+        let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));        
+        return this.getDimensionValues(target, dimensionKey).catch((err) => {
+          throw new Error("Unable to get dimension options: " + err);
+        });        
+      }
     }
 
     throw new Error("Unable to parse templating string");
   }
 
-  getRegions() {
-    if (this.regionsCache && this.regionsCache.length > 0) {
-      return this.q.when(this.regionsCache);
-    }
+  async getRegions(target) {
+    const tenancy =
+        target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+          ? DEFAULT_TENANCY
+          : this.getVariableValue(target.tenancy);
 
     return this.doRequest({
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
+          tenancy: _.isEmpty(tenancy) ? "" : tenancy,
           queryType: "regions",
         },
       ],
@@ -500,30 +625,58 @@ export default class OCIDatasource {
     });
   }
 
-  getCompartments() {
-    if (this.compartmentsCache && this.compartmentsCache.length > 0) {
-      return this.q.when(this.compartmentsCache);
+  getTenancies() {
+    if (this.tenanciesCache && this.tenanciesCache.length > 0) {
+      return this.q.when(this.tenanciesCache);
     }
 
     return this.doRequest({
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
-          tenancyOCID: this.tenancyOCID,
-          queryType: "compartments",
-          region: this.defaultRegion, // compartments are registered for the all regions, so no difference which region to use here
+          queryType: "tenancies",
         },
       ],
       range: this.timeSrv.timeRange(),
     }).then((items) => {
-      this.compartmentsCache = this.mapToTextValue(items, "compartments");
+      this.tenanciesCache = this.mapToTextValue(items, "tenancies");
+      return this.tenanciesCache;
+    });
+  }
+
+  async getCompartments(target) {
+    const tenancy =
+        target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+          ? DEFAULT_TENANCY
+          : this.getVariableValue(target.tenancy);
+    const region =
+      target.region === SELECT_PLACEHOLDERS.REGION
+        ? ""
+        : this.getVariableValue(target.region);
+
+    return this.doRequest({
+      targets: [
+        {
+          environment: this.environment,
+          tenancymode: this.tenancymode,
+          datasourceId: this.id,
+          tenancyOCID: this.tenancyOCID,
+          tenancy: _.isEmpty(tenancy) ? "" : tenancy,
+          queryType: "compartments",
+          region: _.isEmpty(region) ? this.defaultRegion : region,
+        },
+      ],
+      range: this.timeSrv.timeRange(),
+    }).then((items) => {
+      this.compartmentsCache = this.mapToTextValue(items, "compartments");  
       return this.compartmentsCache;
     });
   }
 
-  getCompartmentId(compartment) {
-    return this.getCompartments().then((compartments) => {
+  getCompartmentId(compartment, target) {   
+    return this.getCompartments(target).then((compartments) => {
       const compartmentFound = compartments.find(
         (c) => c.text === compartment || c.value === compartment
       );
@@ -540,19 +693,26 @@ export default class OCIDatasource {
       target.compartment === SELECT_PLACEHOLDERS.COMPARTMENT
         ? ""
         : this.getVariableValue(target.compartment);
+    const tenancy =
+      target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+        ? DEFAULT_TENANCY
+        : this.getVariableValue(target.tenancy);         
     if (_.isEmpty(compartment)) {
       return this.q.when([]);
     }
-    const compartmentId = await this.getCompartmentId(compartment);
+
+    const compartmentId = await this.getCompartmentId(compartment, target);
     return this.doRequest({
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           queryType: "namespaces",
           region: _.isEmpty(region) ? this.defaultRegion : region,
           compartment: compartmentId,
+          tenancy: tenancy,
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -574,21 +734,26 @@ export default class OCIDatasource {
       target.namespace === SELECT_PLACEHOLDERS.NAMESPACE
         ? ""
         : this.getVariableValue(target.namespace);
+    const tenancy =
+      target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+        ? DEFAULT_TENANCY
+        : this.getVariableValue(target.tenancy);        
     if (_.isEmpty(compartment)) {
       return this.q.when([]);
     }
 
-    const compartmentId = await this.getCompartmentId(compartment);
-
+    const compartmentId = await this.getCompartmentId(compartment, target);
     return this.doRequest({
       targets: [
         {
           environment: this.environment,
+          tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancyOCID: this.tenancyOCID,
           queryType: "resourcegroups",
           region: _.isEmpty(region) ? this.defaultRegion : region,
           compartment: compartmentId,
+          tenancy: tenancy,
           namespace: namespace,
         },
       ],
@@ -619,6 +784,10 @@ export default class OCIDatasource {
       target.metric === SELECT_PLACEHOLDERS.METRIC
         ? ""
         : this.getVariableValue(target.metric);
+    const tenancy =
+      target.tenancy === SELECT_PLACEHOLDERS.TENANCY
+        ? DEFAULT_TENANCY
+        : this.getVariableValue(target.tenancy);         
     const metrics =
       metric.startsWith("{") && metric.endsWith("}")
         ? metric.slice(1, metric.length - 1).split(",")
@@ -635,11 +804,12 @@ export default class OCIDatasource {
       }
       dimensionsMap[m] = null;
 
-      const compartmentId = await this.getCompartmentId(compartment);
+      const compartmentId = await this.getCompartmentId(compartment, target);
       await this.doRequest({
         targets: [
           {
             environment: this.environment,
+            tenancymode: this.tenancymode,
             datasourceId: this.id,
             tenancyOCID: this.tenancyOCID,
             queryType: "dimensions",
@@ -647,6 +817,7 @@ export default class OCIDatasource {
             compartment: compartmentId,
             namespace: namespace,
             resourcegroup: resourcegroup,
+            tenancy: tenancy,
             metric: m,
           },
         ],
@@ -766,6 +937,7 @@ export default class OCIDatasource {
           value: result.data[0].fields[1].values.toArray()[i],
         }));
       case "regions":
+      case "tenancies":       
       case "namespaces":
       case "resourcegroups":
       case "search":
