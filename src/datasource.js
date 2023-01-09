@@ -179,7 +179,6 @@ export default class OCIDatasource {
    * Build and validate query parameters.
    */
   async buildQueryParameters(options) {
-    console.log("checkpoint 0")
     let queries = options.targets
       .filter((t) => !t.hide)
       .filter(
@@ -187,12 +186,7 @@ export default class OCIDatasource {
           !_.isEmpty(
             this.getVariableValue(t.compartment, options.scopedVars)
           ) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT
-      )
-      // .filter(
-      //   (t) =>
-      //     !_.isEmpty(this.getVariableValue(t.tenancy, options.scopedVars)) &&
-      //     t.tenancy !== SELECT_PLACEHOLDERS.TENANCY
-      // )      
+      )    
       .filter(
         (t) =>
           !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) &&
@@ -229,7 +223,6 @@ export default class OCIDatasource {
 
     // we support multiselect for dimension values, so we need to parse 1 query into multiple queries
     queries = this.splitMultiValueDimensionsIntoQueries(queries, options);
-    console.log(queries)
 
     const results = [];
     for (let t of queries) {
@@ -238,7 +231,6 @@ export default class OCIDatasource {
           ? ""
           : this.getVariableValue(t.region, options.scopedVars);
       let query = this.getVariableValue(t.target, options.scopedVars);
-      console.log("checkpoint 0.7")
       const numberOfDaysDiff = this.timeSrv
         .timeRange()
         .to.diff(this.timeSrv.timeRange().from, "days");
@@ -282,7 +274,6 @@ export default class OCIDatasource {
           options.scopedVars
         )}[${window}]${dimension}.${t.aggregation}`;
       }
-      console.log("checkpoint 1")
 
       const tenancy =
       this.getVariableValue(t.tenancy, options.scopedVars) === SELECT_PLACEHOLDERS.TENANCY
@@ -295,7 +286,6 @@ export default class OCIDatasource {
       const compartmentId = await this.getCompartmentId(
         this.getVariableValue(t.compartment, options.scopedVars), target
       );
-      console.log("checkpoint 2")
 
       const result = {
         resolution,
@@ -446,15 +436,11 @@ export default class OCIDatasource {
 
     let compartmentQuery = varString.match(compartmentsQueryRegex);
     if (compartmentQuery){
-      console.log(this.tenancymode)
       if (this.tenancymode === "multitenancy") {
         let target = {
           tenancy: removeQuotes(this.getVariableValue(compartmentQuery[1])),
           region: removeQuotes(this.getVariableValue(compartmentQuery[2])),
-        };
-        console.log("compartmentQuery")
-        console.log(target)      
-        console.log("end compartmentQuery")        
+        };       
         return this.getCompartments(target)
           .then((compartments) => {
             return compartments.map((c) => ({ text: c.text, value: c.text }));
@@ -465,10 +451,7 @@ export default class OCIDatasource {
       } else {
           let target = {
             tenancy: DEFAULT_TENANCY,
-          };
-          console.log("compartmentQuery")
-          console.log(target)      
-          console.log("end compartmentQuery")        
+          };        
           return this.getCompartments(target)
             .then((compartments) => {
               return compartments.map((c) => ({ text: c.text, value: c.text }));
@@ -623,9 +606,6 @@ export default class OCIDatasource {
         target.tenancy === SELECT_PLACEHOLDERS.TENANCY
           ? DEFAULT_TENANCY
           : this.getVariableValue(target.tenancy);
-    // if (this.regionsCache && this.regionsCache.length > 0) {
-    //   return this.q.when(this.regionsCache);
-    // }
 
     return this.doRequest({
       targets: [

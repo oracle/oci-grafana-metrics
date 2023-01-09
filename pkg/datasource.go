@@ -118,21 +118,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 
 	queryType := ts.QueryType
 
-	o.logger.Debug("QueryData")
-	o.logger.Debug(ts.Environment)
-	o.logger.Debug(ts.TenancyMode)
-	o.logger.Debug(ts.Region)
-	o.logger.Debug(ts.Tenancy)
-
-	// uncomment to use the single OCI login method
-	// if len(o.tenancyAccess) == 0 {
-
-	// uncomment to force OCI login at every query when in multitenancy mode
 	if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
-
-		// uncomment to force OCI login at every query
-		// if true {
-
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
@@ -144,10 +130,6 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	} else {
 		takey = SingleTenancyKey
 	}
-
-	o.logger.Debug(takey)
-	o.logger.Debug(queryType)
-	o.logger.Debug("/QueryData")
 
 	switch queryType {
 	case "compartments":
@@ -334,7 +316,6 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			if ociparsErr != nil {
 				return errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
 			}
-			// for _, ociconfig := range ociconfigs {
 			for key, _ := range p.tenancyocid {
 				var configProvider common.ConfigurationProvider
 				configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
@@ -353,19 +334,10 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 					return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
 				}
 				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
-
-				// o.tenancyAccess[ociconfig].identityClient = identityClient
-				// o.tenancyAccess[ociconfig].metricsClient = metricsClient
-				// o.tenancyAccess[ociconfig].config = configProvider
-
-			}
-			for key, _ := range o.tenancyAccess {
-				o.logger.Debug(string(key))
 			}
 			return nil
 		} else {
 			var configProvider common.ConfigurationProvider
-			// configProvider = common.DefaultConfigProvider()
 			configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
@@ -481,13 +453,6 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		return &backend.QueryDataResponse{}, err
 	}
 
-	log.DefaultLogger.Debug("compartmentsResponse")
-	log.DefaultLogger.Debug(ts.QueryType)
-	log.DefaultLogger.Debug(ts.Region)
-	log.DefaultLogger.Debug(ts.TenancyMode)
-	log.DefaultLogger.Debug(ts.Tenancy)
-	log.DefaultLogger.Debug(takey)
-
 	var tenancyocid string
 	if ts.TenancyMode == "multitenancy" {
 		if len(takey) <= 0 || takey == NoTenancy {
@@ -500,9 +465,6 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	} else {
 		tenancyocid = ts.TenancyOCID
 	}
-
-	log.DefaultLogger.Debug(tenancyocid)
-	log.DefaultLogger.Debug("/compartmentsResponse")
 
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
 		m, err := o.getCompartments(ctx, ts.Region, tenancyocid, takey)
@@ -536,7 +498,6 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 	tenancyOcid := rootCompartment
 
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
-	log.DefaultLogger.Debug(*req.TenancyId)
 
 	reg := common.StringToRegion(region)
 	o.tenancyAccess[takey].identityClient.SetRegion(string(reg))
@@ -659,20 +620,11 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 			CompartmentId:               common.String(ts.Compartment),
 			SummarizeMetricsDataDetails: req,
 		}
-		log.DefaultLogger.Debug("checkpoint 10")
-		log.DefaultLogger.Debug(ts.Region)
-		log.DefaultLogger.Debug(ts.Compartment)
-		log.DefaultLogger.Debug(ts.QueryType)
-		log.DefaultLogger.Debug(takey)
-		log.DefaultLogger.Debug(ts.TenancyMode)
-		log.DefaultLogger.Debug(ts.Tenancy)
 
 		res, err := o.tenancyAccess[takey].metricsClient.SummarizeMetricsData(ctx, request)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprint(spew.Sdump(query), spew.Sdump(request), spew.Sdump(res)))
 		}
-
-		log.DefaultLogger.Debug("checkpoint 20")
 
 		// Include the legend format in the information about each query
 		// since the legend format may be different for different queries
