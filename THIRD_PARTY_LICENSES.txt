@@ -1,9 +1,8 @@
 === Public License Template ===
 github.com/oracle/oci-grafana-metrics
 -------- Copyrights
+Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
 Copyright (c) 2021 Oracle and/or its affiliates.
-Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
-Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
 
 -------- License
 The Universal Permissive License (UPL), Version 1.0
@@ -90,8 +89,8 @@ Copyright (c) 2019, Jeroen Ooms
 Copyright (c) 2009-present, Homebrew contributors
 Copyright (C) 2004-2017 René Nyffenegger
 Copyright © 2005-2020 Rich Felker, et al.
-Copyright 2017 The Go Authors. All rights reserved.
 Copyright 2020 The Go Authors. All rights reserved.
+Copyright 2017 The Go Authors. All rights reserved.
 
 -------- Dependencies Summary
 github.com/apache/arrow/go/arrow
@@ -4441,18 +4440,18 @@ github.com/oklog/run
 -------- Dependency
 github.com/prometheus/client_golang
 -------- Copyrights
-Copyright 2022 The Prometheus Authors
+Copyright 2015 The Prometheus Authors
 Copyright 2018 The Prometheus Authors
 Copyright 2012-2015 The Prometheus Authors
 Copyright 2013-2015 Blake Mizerany, Björn Rabenstein
 Copyright 2010 The Go Authors
 Copyright 2013 Matt T. Proud
+Copyright 2019 The Prometheus Authors
+Copyright 2022 The Prometheus Authors
+Copyright 2017 The Prometheus Authors
 Copyright 2021 The Prometheus Authors
 Copyright 2014 The Prometheus Authors
-Copyright 2015 The Prometheus Authors
-Copyright 2019 The Prometheus Authors
 Copyright 2016 The Prometheus Authors
-Copyright 2017 The Prometheus Authors
 Copyright 2020 The Prometheus Authors
 Copyright (c) 2013, The Prometheus Authors
 -------- Notices
@@ -4497,16 +4496,16 @@ SoundCloud Ltd. (http://soundcloud.com/).
 -------- Dependency
 github.com/prometheus/common
 -------- Copyrights
+Copyright 2018 The Prometheus Authors
 Copyright 2015 The Prometheus Authors
-Copyright 2021 The Prometheus Authors
 Copyright 2016 The Prometheus Authors
+Copyright 2021 The Prometheus Authors
 Copyright 2020 The Prometheus-operator Authors
 Copyright 2022 The Prometheus Authors
-Copyright 2014 The Prometheus Authors
 Copyright 2020 The Prometheus Authors
+Copyright 2014 The Prometheus Authors
 Copyright (c) 2011, Open Knowledge Foundation Ltd.
 Copyright 2013 The Prometheus Authors
-Copyright 2018 The Prometheus Authors
 Copyright 2019 The Prometheus Authors
 Copyright 2017 The Prometheus Authors
 -------- Notices
@@ -4521,8 +4520,8 @@ SoundCloud Ltd. (http://soundcloud.com/).
 github.com/prometheus/procfs
 -------- Copyrights
 Copyright 2019 The Prometheus Authors
-Copyright 2014-2015 The Prometheus Authors
 Copyright 2018 The Prometheus Authors
+Copyright 2014-2015 The Prometheus Authors
 Copyright 2017 The Prometheus Authors
 Copyright 2020 The Prometheus Authors
 Copyright 2021 The Prometheus Authors
@@ -5164,7 +5163,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -------- Dependency
 github.com/klauspost/compress
 -------- Copyrights
-Copyright 2016 The Go Authors. All rights reserved.
 Copyright 2009 The Go Authors. All rights reserved.
 Copyright (c) 2015 Klaus Post
 Copyright (c) 2012 The Go Authors. All rights reserved.
@@ -5173,10 +5171,11 @@ Copyright 2016-2017 The New York Times Company
 Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
 Copyright 2016 The filepathx Authors
 Copyright 2011 The Snappy-Go Authors. All rights reserved.
+Copyright 2016 The Go Authors. All rights reserved.
 Copyright 2014 The Go Authors. All rights reserved.
+Copyright 2012 The Go Authors. All rights reserved.
 Copyright 2018 Klaus Post. All rights reserved.
 Copyright (c) 2013, Yann Collet, released under BSD License.
-Copyright 2012 The Go Authors. All rights reserved.
 Copyright (c) 2021 Klaus Post. All rights reserved.
 Copyright 2010 The Go Authors. All rights reserved.
 Copyright 2016 The Snappy-Go Authors. All rights reserved.
@@ -5184,8 +5183,8 @@ Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.\n"+
 Copyright (c) 2019+ Klaus Post. All rights reserved.\n\n")
 Copyright (c) 2015 Klaus Post, released under MIT License. See LICENSE file.
 Copyright (c) 2022+ Klaus Post. All rights reserved.
-Copyright 2021 The Go Authors. All rights reserved.
 Copyright 2019 The Go Authors. All rights reserved.
+Copyright 2021 The Go Authors. All rights reserved.
 Copyright 2011 The Go Authors. All rights reserved.
 Copyright 2019+ Klaus Post. All rights reserved.
 Copyright 2020+ Klaus Post. All rights reserved.
@@ -5609,9 +5608,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -------- Dependency
 github.com/gofrs/flock
 -------- Copyrights
-Copyright (c) 2015-2020, Tim Heckman
 Copyright 2015 Tim Heckman. All rights reserved.
 Copyright 2018 The Gofrs. All rights reserved.
+Copyright (c) 2015-2020, Tim Heckman
 Copyright 2019 Tim Heckman. All rights reserved. Use of this source code is
 Copyright 2018 The Go Authors. All rights reserved.
 
@@ -5955,8 +5954,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 github.com/davecgh/go-spew
 -------- Copyrights
 Copyright (c) 2015-2016 Dave Collins <dave@davec.name>
-Copyright (c) 2013-2016 Dave Collins <dave@davec.name>
 Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
+Copyright (c) 2013-2016 Dave Collins <dave@davec.name>
 Copyright (c) 2013 Dave Collins <dave@davec.name>
 
 -------- Dependencies Summary
@@ -6982,8 +6981,8 @@ ansi-styles@3.2.1
 -------- Dependency
 argparse@1.0.10
 -------- Copyrights
-Copyright (c) 2012 [Vitaly Puzrin](https://github.com/puzrin).
 Copyright (C) 2012 by Vitaly Puzrin
+Copyright (c) 2012 [Vitaly Puzrin](https://github.com/puzrin).
 
 -------- Dependency
 array-back@3.1.0
@@ -7172,9 +7171,9 @@ Copyright (c) 2014-2017 TJ Holowaychuk &lt;tj@vision-media.ca&gt;
 -------- Dependency
 debug@4.3.4
 -------- Copyrights
-Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
-Copyright (c) 2018-2021 Josh Junon
 Copyright (c) 2014-2017 TJ Holowaychuk &lt;tj@vision-media.ca&gt;
+Copyright (c) 2018-2021 Josh Junon
+Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
 
 -------- Dependency
 deep-extend@0.6.0
@@ -7275,10 +7274,16 @@ eslint-utils@1.4.3
 Copyright (c) 2018 Toru Nagashima
 
 -------- Dependency
+eslint@5.16.0
+-------- Copyrights
+Copyright (c) 2012 Nicholas Fisher
+Copyright 2013-2016 Dulin Marat and other contributors
+
+-------- Dependency
 external-editor@3.1.0
 -------- Copyrights
-Copyright (c) 2016 Kevin Gravier
 Copyright (c) 2016-2018 Kevin Gravier
+Copyright (c) 2016 Kevin Gravier
 
 -------- Dependency
 fast-deep-equal@3.1.3
@@ -7548,8 +7553,8 @@ Copyright (c) 2015 Jordan Harband
 is-extglob@2.1.1
 -------- Copyrights
 Copyright © 2016, [Jon Schlinkert](https://github.com/jonschlinkert).
-Copyright (c) 2014-2016, Jon Schlinkert.
 Copyright (c) 2014-2016, Jon Schlinkert
+Copyright (c) 2014-2016, Jon Schlinkert.
 
 -------- Dependency
 is-fullwidth-code-point@2.0.0
@@ -7559,7 +7564,7 @@ is-fullwidth-code-point@2.0.0
 -------- Dependency
 is-glob@4.0.3
 -------- Copyrights
-Copyright © 2022, [Jon Schlinkert](https://github.com/jonschlinkert).
+Copyright © 2019, [Jon Schlinkert](https://github.com/jonschlinkert).
 Copyright (c) 2014-2017, Jon Schlinkert.
 
 -------- Dependency
@@ -7606,8 +7611,8 @@ Copyright 2014, 2015, 2016, 2017 Simon Lydell
 -------- Dependency
 js-tokens@4.0.0
 -------- Copyrights
-Copyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell
 Copyright 2014, 2015, 2016, 2017, 2018 Simon Lydell
+Copyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell
 
 -------- Dependency
 js-yaml@3.14.1
@@ -7778,8 +7783,8 @@ p-try@2.2.0
 pad-left@2.1.0
 -------- Copyrights
 Copyright © 2016, [Jon Schlinkert](https://github.com/jonschlinkert).
-Copyright (c) 2014-2016, Jon Schlinkert.
 Copyright (c) 2014-2015, Jon Schlinkert.
+Copyright (c) 2014-2016, Jon Schlinkert.
 
 -------- Dependency
 parent-module@1.0.1
@@ -7837,6 +7842,11 @@ reduce-flatten@2.0.0
 Copyright (c) 2016-18 Lloyd Brookes <75pound@gmail.com>
 
 -------- Dependency
+regenerate-unicode-properties@10.1.0
+-------- Copyrights
+  (no copyright notices found)
+
+-------- Dependency
 regenerate@1.4.2
 -------- Copyrights
   (no copyright notices found)
@@ -7885,9 +7895,9 @@ Copyright 2014-2020 Benjamin Tan <https://ofcr.se/>
 -------- Dependency
 repeat-string@1.6.1
 -------- Copyrights
-Copyright © 2016, [Jon Schlinkert](http://github.com/jonschlinkert).
-Copyright (c) 2014-2016, Jon Schlinkert.
 Copyright (c) 2014-2015, Jon Schlinkert.
+Copyright (c) 2014-2016, Jon Schlinkert.
+Copyright © 2016, [Jon Schlinkert](http://github.com/jonschlinkert).
 
 -------- Dependency
 resolve-from@4.0.0
@@ -7907,8 +7917,8 @@ restore-cursor@2.0.0
 -------- Dependency
 run-async@2.4.1
 -------- Copyrights
-Copyright (c) 2014 Simon Boudrias
 Copyright (c) 2014 Simon Boudrias (twitter: @vaxilart)
+Copyright (c) 2014 Simon Boudrias
 
 -------- Dependency
 safe-regex-test@1.0.0
@@ -8089,9 +8099,9 @@ Copyright (c) 2019 Jordan Harband
 -------- Dependency
 word-wrap@1.2.3
 -------- Copyrights
+Copyright © 2017, [Jon Schlinkert](https://github.com/jonschlinkert).
 Copyright (c) 2014-2017, Jon Schlinkert
 Copyright (c) 2014-2017, Jon Schlinkert.
-Copyright © 2017, [Jon Schlinkert](https://github.com/jonschlinkert).
 
 -------- Dependency
 wordwrapjs@4.0.1
@@ -8282,6 +8292,7 @@ eslint-plugin-import@2.26.0
 eslint-plugin-node@8.0.1
 eslint-plugin-standard@4.1.0
 eslint-utils@1.4.3
+eslint@5.16.0
 external-editor@3.1.0
 fast-deep-equal@3.1.3
 fast-json-stable-stringify@2.1.0
@@ -8392,6 +8403,7 @@ private@0.1.8
 progress@2.0.3
 punycode@2.1.1
 reduce-flatten@2.0.0
+regenerate-unicode-properties@10.1.0
 regenerate@1.4.2
 regenerator-runtime@0.13.10
 regenerator-transform@0.15.0
@@ -8533,14 +8545,14 @@ PERFORMANCE OF THIS SOFTWARE.
 github.com/golang/protobuf
 -------- Copyrights
 Copyright 2010 The Go Authors.  All rights reserved.
-Copyright 2019 The Go Authors. All rights reserved.
-Copyright 2020 The Go Authors. All rights reserved.
 Copyright 2016 The Go Authors. All rights reserved.
+Copyright 2020 The Go Authors. All rights reserved.
+Copyright 2019 The Go Authors. All rights reserved.
 Copyright 2018 The Go Authors. All rights reserved.
 Copyright 2015 The Go Authors. All rights reserved.
-Copyright 2014 The Go Authors. All rights reserved.
-Copyright 2017 The Go Authors. All rights reserved.
 Copyright 2010 The Go Authors. All rights reserved.
+Copyright 2017 The Go Authors. All rights reserved.
+Copyright 2014 The Go Authors. All rights reserved.
 Copyright 2011 The Go Authors. All rights reserved.
 Copyright 2015 The Go Authors.  All rights reserved.
 
@@ -8556,10 +8568,10 @@ Copyright 2020, The Go Authors. All rights reserved.
 -------- Dependency
 golang.org/x/xerrors
 -------- Copyrights
-Copyright 2019 The Go Authors. All rights reserved.
-Copyright 2011 The Go Authors. All rights reserved.
 Copyright 2018 The Go Authors. All rights reserved.
 Copyright (c) 2019 The Go Authors. All rights reserved.
+Copyright 2011 The Go Authors. All rights reserved.
+Copyright 2019 The Go Authors. All rights reserved.
 Copyright 2012 The Go Authors. All rights reserved.
 -------- Patents
 Additional IP Rights Grant (Patents)
@@ -8991,14 +9003,14 @@ the licensed code:
 
 ----------------------- Dependencies Grouped by License ------------
 -------- Dependency
-oci-metrics-datasource@3.0.6
+oci-metrics-datasource@3.1.0
 -------- Copyrights
 Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
 Copyright (c) 2021 Oracle and/or its affiliates.
 
 -------- Dependencies Summary
 github.com/oracle/oci-grafana-metrics
-oci-metrics-datasource@3.0.6
+oci-metrics-datasource@3.1.0
 
 -------- License used by Dependencies
 The Universal Permissive License (UPL), Version 1.0
