@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -31,6 +32,7 @@ import (
 const MaxPagesToFetch = 20
 const SingleTenancyKey = "DEFAULT/"
 const NoTenancy = "NoTenancy"
+const MaxTenancyProfile = 5
 
 var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
 
@@ -69,6 +71,10 @@ type OCIConfigFile struct {
 	tenancyocid map[string]string
 	region      map[string]string
 	user        map[string]string
+	profile     map[string]string
+	fingerprint map[string]string
+	privkey     map[string]string
+	privkeypass map[string]string
 	logger      log.Logger
 }
 
@@ -155,23 +161,54 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 type SecureJsonData struct {
-	BasicAuth string `json:"basicAuth"`
+	Profile_0 string `json:"profile0"`
+	Profile_1 string `json:"profile1"`
+	Profile_2 string `json:"profile2"`
+	Profile_3 string `json:"profile3"`
+	Profile_4 string `json:"profile4"`
+	Profile_5 string `json:"profile5"`
 
-	Tenancy0 string `json:"tenancy0"`
-	Tenancy1 string `json:"tenancy1"`
-	Tenancy2 string `json:"tenancy2"`
-	Tenancy3 string `json:"tenancy3"`
-	Tenancy4 string `json:"tenancy4"`
-	Tenancy5 string `json:"tenancy5"`
+	Tenancy_0 string `json:"tenancy0"`
+	Tenancy_1 string `json:"tenancy1"`
+	Tenancy_2 string `json:"tenancy2"`
+	Tenancy_3 string `json:"tenancy3"`
+	Tenancy_4 string `json:"tenancy4"`
+	Tenancy_5 string `json:"tenancy5"`
 
-	AccessKeyId      string   `json:"aliSmsAccessKeyId"`
-	AccessKeySecret  string   `json:"aliSmsAccessKeySecret"`
-	SignName         string   `json:"aliSmsSignName"`
-	TemplateCode     string   `json:"aliSmsTemplateCode"`
-	TemplateParam    string   `json:"aliSmsTemplateParam"`
-	PhoneNumbers     []string `json:"aliSmsPhoneNumbers"`
-	PhoneNumbersList string   `json:"aliSmsPhoneNumbersList"`
-	ListenAddr       string   `json:"aliSmsListenAddr"`
+	Region_0 string `json:"region0"`
+	Region_1 string `json:"region1"`
+	Region_2 string `json:"region2"`
+	Region_3 string `json:"region3"`
+	Region_4 string `json:"region4"`
+	Region_5 string `json:"region5"`
+
+	User_0 string `json:"user0"`
+	User_1 string `json:"user1"`
+	User_2 string `json:"user2"`
+	User_3 string `json:"user3"`
+	User_4 string `json:"user4"`
+	User_5 string `json:"user5"`
+
+	Fingerprint_0 string `json:"fingerprint0"`
+	Fingerprint_1 string `json:"fingerprint1"`
+	Fingerprint_2 string `json:"fingerprint2"`
+	Fingerprint_3 string `json:"fingerprint3"`
+	Fingerprint_4 string `json:"fingerprint4"`
+	Fingerprint_5 string `json:"fingerprint5"`
+
+	Privkey_0 string `json:"privkey0"`
+	Privkey_1 string `json:"privkey1"`
+	Privkey_2 string `json:"privkey2"`
+	Privkey_3 string `json:"privkey3"`
+	Privkey_4 string `json:"privkey4"`
+	Privkey_5 string `json:"privkey5"`
+
+	Privkeypass_0 string `json:"privkeypass0"`
+	Privkeypass_1 string `json:"privkeypass1"`
+	Privkeypass_2 string `json:"privkeypass2"`
+	Privkeypass_3 string `json:"privkeypass3"`
+	Privkeypass_4 string `json:"privkeypass4"`
+	Privkeypass_5 string `json:"privkeypass5"`
 }
 
 func transcode(in, out interface{}) {
@@ -195,7 +232,72 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
 
-	o.logger.Debug(dat.Tenancy0, "OK", dat.Tenancy0)
+	v := reflect.ValueOf(dat)
+	typeOfS := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		fmt.Printf("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
+		log.DefaultLogger.Error("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
+		if v.Field(i).Interface() != "" {
+			log.DefaultLogger.Error(typeOfS.Field(i).Name)
+		}
+		roger := "Region" + strconv.Itoa(i)
+		log.DefaultLogger.Error(roger)
+		if typeOfS.Field(i).Name == roger {
+			log.DefaultLogger.Error("ciaone")
+			log.DefaultLogger.Error(typeOfS.Field(i).Name)
+		}
+
+	}
+
+	log.DefaultLogger.Error(dat.Tenancy_0)
+	log.DefaultLogger.Error(dat.Tenancy_1)
+	log.DefaultLogger.Error(dat.Tenancy_2)
+	log.DefaultLogger.Error(dat.Tenancy_3)
+	log.DefaultLogger.Error(dat.Tenancy_4)
+	log.DefaultLogger.Error(dat.Tenancy_5)
+
+	log.DefaultLogger.Error(dat.Region_0)
+	log.DefaultLogger.Error(dat.Region_1)
+	log.DefaultLogger.Error(dat.Region_2)
+	log.DefaultLogger.Error(dat.Region_3)
+	log.DefaultLogger.Error(dat.Region_4)
+	log.DefaultLogger.Error(dat.Region_5)
+
+	log.DefaultLogger.Error(dat.User_0)
+	log.DefaultLogger.Error(dat.User_1)
+	log.DefaultLogger.Error(dat.User_2)
+	log.DefaultLogger.Error(dat.User_3)
+	log.DefaultLogger.Error(dat.User_4)
+	log.DefaultLogger.Error(dat.User_5)
+
+	log.DefaultLogger.Error(dat.Profile_0)
+	log.DefaultLogger.Error(dat.Profile_1)
+	log.DefaultLogger.Error(dat.Profile_2)
+	log.DefaultLogger.Error(dat.Profile_3)
+	log.DefaultLogger.Error(dat.Profile_4)
+	log.DefaultLogger.Error(dat.Profile_5)
+
+	log.DefaultLogger.Error(dat.Fingerprint_0)
+	log.DefaultLogger.Error(dat.Fingerprint_1)
+	log.DefaultLogger.Error(dat.Fingerprint_2)
+	log.DefaultLogger.Error(dat.Fingerprint_3)
+	log.DefaultLogger.Error(dat.Fingerprint_4)
+	log.DefaultLogger.Error(dat.Fingerprint_5)
+
+	log.DefaultLogger.Error(dat.Privkey_0)
+	log.DefaultLogger.Error(dat.Privkey_1)
+	log.DefaultLogger.Error(dat.Privkey_2)
+	log.DefaultLogger.Error(dat.Privkey_3)
+	log.DefaultLogger.Error(dat.Privkey_4)
+	log.DefaultLogger.Error(dat.Privkey_5)
+
+	log.DefaultLogger.Error(dat.Privkeypass_0)
+	log.DefaultLogger.Error(dat.Privkeypass_1)
+	log.DefaultLogger.Error(dat.Privkeypass_2)
+	log.DefaultLogger.Error(dat.Privkeypass_3)
+	log.DefaultLogger.Error(dat.Privkeypass_4)
+	log.DefaultLogger.Error(dat.Privkeypass_5)
 
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
@@ -910,6 +1012,33 @@ func OCIConfigParser(oci_config_file string) (*OCIConfigFile, error) {
 	}
 	return p, nil
 }
+
+// func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
+// 	p := NewOCIConfigFile()
+// 	i := 0
+// 	var dat SecureJsonData
+// 	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
+// 	transcode(decryptedJSONData, &dat)
+// 	for i <= MaxTenancyProfile {
+// 		if (dat.Profile0)
+// 		i++
+// 	}
+// 	data, err := ioutil.ReadFile(oci_config_file)
+// 	if err != nil {
+// 		err = fmt.Errorf("can not read config file: %s due to: %s", oci_config_file, err.Error())
+// 		return nil, err
+// 	}
+// 	if len(data) == 0 {
+// 		err = fmt.Errorf("config file %s is empty.", oci_config_file)
+// 		return nil, err
+// 	}
+// 	err = p.parseConfigFile(data)
+// 	if err != nil {
+// 		log.DefaultLogger.Error("config file " + oci_config_file + " is not valid.")
+// 		return nil, err
+// 	}
+// 	return p, nil
+// }
 
 /*
 Function parses the content of .oci/config file
