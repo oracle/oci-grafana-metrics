@@ -41,6 +41,45 @@
   
     <div class="gf-form-inline">
       <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Profile</span>
+        <input type="text" class="gf-form-input" name="profile0" value="DEFAULT" readonly
+          ng-model='ctrl.current.secureJsonData.profile0'
+          placeholder="{{ctrl.current.secureJsonFields.basicAuth ? 'configured' : ''}}"></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Region</span>
+          <select
+          class="gf-form-input"
+          ng-model="ctrl.current.secureJsonData.region0"
+          ng-required="true"
+          ng-options="o as o for o in ctrl.getRegions()">
+        </select>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">User OCID</span>
+      <input type="text" class="gf-form-input" name="user0" ng-model='ctrl.current.secureJsonData.user0'
+        placeholder="{{ctrl.current.secureJsonFields.user0 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Tenancy OCID</span>
+      <input type="text" class="gf-form-input" name="tenancy0" ng-model='ctrl.current.secureJsonData.tenancy0'
+        placeholder="{{ctrl.current.secureJsonFields.tenancy0 ? 'configured' : ''}}"></input>
+    </div>    
+  </div>
+
+  <div class="gf-form-group" ng-if="ctrl.current.jsonData.tenancymode==='multitenancy'">
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-10">Default Region</label>
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.current.jsonData.defaultRegion"
+        ng-required="true"
+        ng-options="o as o for o in ctrl.getRegions()">
+      </select>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">User</span>
         <input type="text" class="gf-form-input" name="user"
           ng-model='ctrl.current.secureJsonData.user'

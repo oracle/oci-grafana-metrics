@@ -154,9 +154,15 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	}
 }
 
-type JsonData struct {
+type SecureJsonData struct {
 	BasicAuth string `json:"basicAuth"`
-	Token     string `json:"token"`
+
+	Tenancy0 string `json:"tenancy0"`
+	Tenancy1 string `json:"tenancy1"`
+	Tenancy2 string `json:"tenancy2"`
+	Tenancy3 string `json:"tenancy3"`
+	Tenancy4 string `json:"tenancy4"`
+	Tenancy5 string `json:"tenancy5"`
 
 	AccessKeyId      string   `json:"aliSmsAccessKeyId"`
 	AccessKeySecret  string   `json:"aliSmsAccessKeySecret"`
@@ -177,7 +183,7 @@ func transcode(in, out interface{}) {
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
 	var tenancyocid string
-	var dat JsonData
+	var dat SecureJsonData
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
@@ -189,7 +195,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
 
-	o.logger.Debug(dat.Token, "OK", dat.Token)
+	o.logger.Debug(dat.Tenancy0, "OK", dat.Tenancy0)
 
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
