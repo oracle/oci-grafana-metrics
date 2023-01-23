@@ -27,13 +27,36 @@
     ng-model="ctrl.current.jsonData.tenancyOCID" ng-if="ctrl.current.jsonData.tenancymode!=='multitenancy'">
   </input>
   </div>
-  <div class="gf-form max-width-30">
-    <label class="gf-form-label width-10">Default Region</label>
-    <select
-      class="gf-form-input"
-      ng-model="ctrl.current.jsonData.defaultRegion"
-	  ng-required="true"
-      ng-options="o as o for o in ctrl.getRegions()">
-    </select>
+
+  <div class="gf-form-group">
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-10">Default Region</label>
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.current.jsonData.defaultRegion"
+        ng-required="true"
+        ng-options="o as o for o in ctrl.getRegions()">
+      </select>
+    </div>
+  
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">User</span>
+        <input type="text" class="gf-form-input" name="user"
+          ng-model='ctrl.current.secureJsonData.user'
+          placeholder="{{ctrl.current.secureJsonFields.basicAuth ? 'configured' : ''}}"></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Password</span>
+        <input type="password" class="gf-form-input" name="password" ng-model='ctrl.current.secureJsonData.password' ng-change="ctrl.onAuthChange()"
+          placeholder="{{ctrl.current.secureJsonFields.basicAuth ? 'configured' : ''}}"></input>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Cloud Token</span>
+      <input type="text" class="gf-form-input" name="token" ng-model='ctrl.current.secureJsonData.token'
+        placeholder="{{ctrl.current.secureJsonFields.token ? 'configured' : ''}}"></input>
+    </div>
   </div>
+
 </div>

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -153,9 +154,30 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	}
 }
 
+type JsonData struct {
+	BasicAuth string `json:"basicAuth"`
+	Token     string `json:"token"`
+
+	AccessKeyId      string   `json:"aliSmsAccessKeyId"`
+	AccessKeySecret  string   `json:"aliSmsAccessKeySecret"`
+	SignName         string   `json:"aliSmsSignName"`
+	TemplateCode     string   `json:"aliSmsTemplateCode"`
+	TemplateParam    string   `json:"aliSmsTemplateParam"`
+	PhoneNumbers     []string `json:"aliSmsPhoneNumbers"`
+	PhoneNumbersList string   `json:"aliSmsPhoneNumbersList"`
+	ListenAddr       string   `json:"aliSmsListenAddr"`
+}
+
+func transcode(in, out interface{}) {
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(in)
+	json.NewDecoder(buf).Decode(out)
+}
+
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
 	var tenancyocid string
+	var dat JsonData
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
@@ -163,6 +185,11 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	}
 
 	reg := common.StringToRegion(ts.Region)
+
+	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
+	transcode(decryptedJSONData, &dat)
+
+	o.logger.Debug(dat.Token, "OK", dat.Token)
 
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
