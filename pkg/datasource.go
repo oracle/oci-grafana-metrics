@@ -977,10 +977,6 @@ func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 	if err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &dat); err != nil {
 		return q, fmt.Errorf("can not read settings: %s", err.Error())
 	}
-	log.DefaultLogger.Error("samp")
-
-	log.DefaultLogger.Error(strings.TrimSpace(dat.Profile_0))
-	log.DefaultLogger.Error("/samp")
 
 	// password, ok := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["password"]
 	// if ok {

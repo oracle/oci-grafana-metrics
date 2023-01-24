@@ -8,8 +8,6 @@ export class OCIConfigCtrl {
   /** @ngInject */
   constructor ($scope, backendSrv) {
     this.backendSrv = backendSrv
-    this.tenancyOCID = this.current.jsonData.tenancyOCID
-    this.defaultRegion = this.current.jsonData.defaultRegion
     this.environment = this.current.jsonData.environment      
     this.tenancymode = this.current.jsonData.tenancymode
     this.region0 = this.current.jsonData.region0
@@ -26,6 +24,9 @@ export class OCIConfigCtrl {
     this.profile5 = this.current.jsonData.profile5
     this.addon1 = this.current.jsonData.addon1
     this.addon2 = this.current.jsonData.addon2
+    this.addon3 = this.current.jsonData.addon3
+    this.addon4 = this.current.jsonData.addon4
+
   }
 
   getRegions () {

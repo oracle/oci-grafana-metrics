@@ -19,23 +19,7 @@
       ng-options="o as o for o in ctrl.getTenancyModes()" >
     </select>   
   </div>  
-  <div class="gf-form max-width-30">
-  <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.tenancymode!=='multitenancy'">Tenancy OCID</label>
-    <input class="gf-form-input " 
-		type="text" 
-		ng-required="true"
-    ng-model="ctrl.current.jsonData.tenancyOCID" ng-if="ctrl.current.jsonData.tenancymode!=='multitenancy'">
-  </input>
-  </div>
-  <div class="gf-form max-width-30">
-    <label class="gf-form-label width-10">Default Region</label>
-    <select
-      class="gf-form-input"
-      ng-model="ctrl.current.jsonData.defaultRegion"
-      ng-required="true"
-      ng-options="o as o for o in ctrl.getRegions()">
-    </select>
-  </div>
+
   <br>
 
   <div class="gf-form-group">
