@@ -970,11 +970,17 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 // LoadSettings will read and validate Settings from the DataSourceConfig
 func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
-	if err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &q); err != nil {
-		return q, fmt.Errorf("can not read settings: %s", err.Error())
-	}
+
 	k := 0
 	var dat SecureJsonData
+
+	if err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &dat); err != nil {
+		return q, fmt.Errorf("can not read settings: %s", err.Error())
+	}
+	log.DefaultLogger.Error("samp")
+
+	log.DefaultLogger.Error(strings.TrimSpace(dat.Profile_0))
+	log.DefaultLogger.Error("/samp")
 
 	// password, ok := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["password"]
 	// if ok {
@@ -994,7 +1000,6 @@ func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 			if splits[0] == "Profile" {
 				if v.Field(i).Interface() != "" {
 					key = fmt.Sprintf("%v", v.Field(i).Interface())
-					log.DefaultLogger.Error(key)
 				} else {
 					return q, nil
 				}
