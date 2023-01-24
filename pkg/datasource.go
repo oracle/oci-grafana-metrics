@@ -30,7 +30,6 @@ import (
 const MaxPagesToFetch = 20
 const SingleTenancyKey = "DEFAULT/"
 const NoTenancy = "NoTenancy"
-const MaxTenancyProfile = 5
 
 var profileRegex = regexp.MustCompile(`^\[(.*)\]`)
 
@@ -845,8 +844,15 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 		if err := json.Unmarshal(query.JSON, &ts); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
+		tenancyocid, tenancyErr := o.tenancyAccess[takey].config.TenancyOCID()
+		if tenancyErr != nil {
+			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+		}
+		req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
 
-		res, err := o.tenancyAccess[takey].identityClient.ListRegions(ctx)
+		// Send the request using the service client
+		// res, err := o.tenancyAccess[takey].identityClient.ListRegions(ctx)
+		res, err := o.tenancyAccess[takey].identityClient.ListRegionSubscriptions(ctx, req)
 		if err != nil {
 			return nil, errors.Wrap(err, "error fetching regions")
 		}
@@ -856,7 +862,7 @@ func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryD
 
 		/* Generate list of regions */
 		for _, item := range res.Items {
-			regionName = append(regionName, *(item.Name))
+			regionName = append(regionName, *(item.RegionName))
 		}
 
 		/* Sort regions list */

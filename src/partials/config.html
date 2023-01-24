@@ -91,6 +91,7 @@
     </div>     
   </div>
 
+  
   <div class="gf-form-group" ng-if="ctrl.current.jsonData.tenancymode==='multitenancy'">
     <label class="gf-form-label width-40">Additional Tenancy #1</label>
     <div class="gf-form-inline">
@@ -143,9 +144,10 @@
     </div>
     <div class="gf-form max-width-30">
       <label class="gf-form-label width-15">Add another Tenancy ?</label>
-      <input type="checkbox" ng-init='ctrl.current.jsonData.addon1=false' ng-model='ctrl.current.jsonData.addon1'</input>
+      <input type="checkbox" ng-model='ctrl.current.jsonData.addon1'</input>
     </div>      
   </div>
+
 
   <div class="gf-form-group" ng-if='ctrl.current.jsonData.addon1'>
     <label class="gf-form-label width-40">Additional Tenancy #2</label>

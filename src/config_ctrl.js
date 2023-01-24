@@ -24,6 +24,8 @@ export class OCIConfigCtrl {
     this.profile3 = this.current.jsonData.profile3
     this.profile4 = this.current.jsonData.profile4
     this.profile5 = this.current.jsonData.profile5
+    this.addon1 = this.current.jsonData.addon1
+    this.addon2 = this.current.jsonData.addon2
   }
 
   getRegions () {
