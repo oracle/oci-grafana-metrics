@@ -161,53 +161,52 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 type SecureJsonData struct {
-	Profile_0 string `json:"profile0"`
-	Profile_1 string `json:"profile1"`
-	Profile_2 string `json:"profile2"`
-	Profile_3 string `json:"profile3"`
-	Profile_4 string `json:"profile4"`
-	Profile_5 string `json:"profile5"`
-
-	Tenancy_0 string `json:"tenancy0"`
-	Tenancy_1 string `json:"tenancy1"`
-	Tenancy_2 string `json:"tenancy2"`
-	Tenancy_3 string `json:"tenancy3"`
-	Tenancy_4 string `json:"tenancy4"`
-	Tenancy_5 string `json:"tenancy5"`
-
-	Region_0 string `json:"region0"`
-	Region_1 string `json:"region1"`
-	Region_2 string `json:"region2"`
-	Region_3 string `json:"region3"`
-	Region_4 string `json:"region4"`
-	Region_5 string `json:"region5"`
-
-	User_0 string `json:"user0"`
-	User_1 string `json:"user1"`
-	User_2 string `json:"user2"`
-	User_3 string `json:"user3"`
-	User_4 string `json:"user4"`
-	User_5 string `json:"user5"`
-
+	Profile_0     string `json:"profile0"`
+	Tenancy_0     string `json:"tenancy0"`
+	Region_0      string `json:"region0"`
+	User_0        string `json:"user0"`
+	Privkey_0     string `json:"privkey0"`
 	Fingerprint_0 string `json:"fingerprint0"`
-	Fingerprint_1 string `json:"fingerprint1"`
-	Fingerprint_2 string `json:"fingerprint2"`
-	Fingerprint_3 string `json:"fingerprint3"`
-	Fingerprint_4 string `json:"fingerprint4"`
-	Fingerprint_5 string `json:"fingerprint5"`
-
-	Privkey_0 string `json:"privkey0"`
-	Privkey_1 string `json:"privkey1"`
-	Privkey_2 string `json:"privkey2"`
-	Privkey_3 string `json:"privkey3"`
-	Privkey_4 string `json:"privkey4"`
-	Privkey_5 string `json:"privkey5"`
-
 	Privkeypass_0 string `json:"privkeypass0"`
+
+	Profile_1     string `json:"profile1"`
+	Tenancy_1     string `json:"tenancy1"`
+	Region_1      string `json:"region1"`
+	User_1        string `json:"user1"`
+	Fingerprint_1 string `json:"fingerprint1"`
+	Privkey_1     string `json:"privkey1"`
 	Privkeypass_1 string `json:"privkeypass1"`
+
+	Profile_2     string `json:"profile2"`
+	Tenancy_2     string `json:"tenancy2"`
+	Region_2      string `json:"region2"`
+	User_2        string `json:"user2"`
+	Fingerprint_2 string `json:"fingerprint2"`
+	Privkey_2     string `json:"privkey2"`
 	Privkeypass_2 string `json:"privkeypass2"`
+
+	Profile_3     string `json:"profile3"`
+	Tenancy_3     string `json:"tenancy3"`
+	Region_3      string `json:"region3"`
+	User_3        string `json:"user3"`
+	Fingerprint_3 string `json:"fingerprint3"`
+	Privkey_3     string `json:"privkey3"`
 	Privkeypass_3 string `json:"privkeypass3"`
+
+	Profile_4     string `json:"profile4"`
+	Tenancy_4     string `json:"tenancy4"`
+	Region_4      string `json:"region4"`
+	User_4        string `json:"user4"`
+	Fingerprint_4 string `json:"fingerprint4"`
+	Privkey_4     string `json:"privkey4"`
 	Privkeypass_4 string `json:"privkeypass4"`
+
+	Profile_5     string `json:"profile5"`
+	Tenancy_5     string `json:"tenancy5"`
+	Region_5      string `json:"region5"`
+	User_5        string `json:"user5"`
+	Fingerprint_5 string `json:"fingerprint5"`
+	Privkey_5     string `json:"privkey5"`
 	Privkeypass_5 string `json:"privkeypass5"`
 }
 
@@ -231,24 +230,6 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 
 	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
-
-	v := reflect.ValueOf(dat)
-	typeOfS := v.Type()
-
-	for i := 0; i < v.NumField(); i++ {
-		fmt.Printf("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
-		log.DefaultLogger.Error("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
-		if v.Field(i).Interface() != "" {
-			log.DefaultLogger.Error(typeOfS.Field(i).Name)
-		}
-		roger := "Region" + strconv.Itoa(i)
-		log.DefaultLogger.Error(roger)
-		if typeOfS.Field(i).Name == roger {
-			log.DefaultLogger.Error("ciaone")
-			log.DefaultLogger.Error(typeOfS.Field(i).Name)
-		}
-
-	}
 
 	log.DefaultLogger.Error(dat.Tenancy_0)
 	log.DefaultLogger.Error(dat.Tenancy_1)
@@ -1013,32 +994,52 @@ func OCIConfigParser(oci_config_file string) (*OCIConfigFile, error) {
 	return p, nil
 }
 
-// func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
-// 	p := NewOCIConfigFile()
-// 	i := 0
-// 	var dat SecureJsonData
-// 	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
-// 	transcode(decryptedJSONData, &dat)
-// 	for i <= MaxTenancyProfile {
-// 		if (dat.Profile0)
-// 		i++
-// 	}
-// 	data, err := ioutil.ReadFile(oci_config_file)
-// 	if err != nil {
-// 		err = fmt.Errorf("can not read config file: %s due to: %s", oci_config_file, err.Error())
-// 		return nil, err
-// 	}
-// 	if len(data) == 0 {
-// 		err = fmt.Errorf("config file %s is empty.", oci_config_file)
-// 		return nil, err
-// 	}
-// 	err = p.parseConfigFile(data)
-// 	if err != nil {
-// 		log.DefaultLogger.Error("config file " + oci_config_file + " is not valid.")
-// 		return nil, err
-// 	}
-// 	return p, nil
-// }
+func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
+	p := NewOCIConfigFile()
+	k := 0
+	var dat SecureJsonData
+	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
+	transcode(decryptedJSONData, &dat)
+
+	v := reflect.ValueOf(dat)
+	typeOfS := v.Type()
+	var key string
+
+	for i := 0; i < v.NumField(); i++ {
+		splits := strings.Split(typeOfS.Field(i).Name, "_")
+		intVar, _ := strconv.Atoi(splits[1])
+		if intVar == k {
+			if splits[0] == "Profile" {
+				if v.Field(i).Interface() != "" {
+					key = fmt.Sprintf("%v", v.Field(i).Interface())
+					log.DefaultLogger.Error(key)
+				} else {
+					return p, nil
+				}
+			} else {
+				switch value := v.Field(i).Interface(); strings.ToLower(splits[0]) {
+				case "tenancy":
+					p.tenancyocid[splits[0]] = fmt.Sprintf("%v", value)
+					log.DefaultLogger.Error(p.tenancyocid[splits[0]])
+				case "region":
+					p.region[splits[0]] = fmt.Sprintf("%v", value)
+				case "user":
+					p.user[key] = fmt.Sprintf("%v", value)
+				case "privkey":
+					p.privkey[splits[0]] = fmt.Sprintf("%v", value)
+				case "fingerprint":
+					p.fingerprint[splits[0]] = fmt.Sprintf("%v", value)
+				case "privkeypass":
+					p.privkeypass[splits[0]] = fmt.Sprintf("%v", value)
+				}
+			}
+		} else {
+			k++
+			i--
+		}
+	}
+	return p, nil
+}
 
 /*
 Function parses the content of .oci/config file

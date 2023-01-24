@@ -43,9 +43,9 @@
     <div class="gf-form-inline">
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Profile</span>
-        <input type="text" class="gf-form-input" name="profile0" value="DEFAULT" readonly
-          ng-model='ctrl.current.secureJsonData.profile0'
-          placeholder="{{ctrl.current.secureJsonFields.basicAuth ? 'configured' : ''}}"></input>
+        <input type="text" class="gf-form-input" name="profile0" ng-readonly value="DEFAULT" readonly
+          ng-model="ctrl.current.secureJsonData.profile0='DEFAULT'"
+          placeholder="{{ctrl.current.secureJsonFields.profile0 ? 'DEFAULT' : 'DEFAULT'}}"></input>
       </div>
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Region</span>
@@ -53,6 +53,7 @@
           class="gf-form-input"
           ng-model="ctrl.current.secureJsonData.region0"
           ng-required="true"
+          placeholder="{{ctrl.current.secureJsonFields.region0 ? 'configured' : ''}}"
           ng-options="o as o for o in ctrl.getRegions()">
         </select>
       </div>
@@ -98,7 +99,7 @@
         <span class="gf-form-label width-7">Profile</span>
         <input type="text" class="gf-form-input" name="profile1"
           ng-model='ctrl.current.secureJsonData.profile1'
-          placeholder="{{ctrl.current.secureJsonFields.basicAuth ? 'configured' : ''}}"></input>
+          placeholder="{{ctrl.current.secureJsonFields.profile1 ? 'configured' : ''}}"></input>
       </div>
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Region</span>
@@ -106,6 +107,7 @@
           class="gf-form-input"
           ng-model="ctrl.current.secureJsonData.region1"
           ng-required="true"
+          placeholder="{{ctrl.current.secureJsonFields.region1 ? 'configured' : ''}}"
           ng-options="o as o for o in ctrl.getRegions()">
         </select>
       </div>
@@ -144,18 +146,18 @@
     </div>
     <div class="gf-form max-width-30">
       <label class="gf-form-label width-15">Add another Tenancy ?</label>
-      <input type="checkbox" ng-init='checkaddon1=false' ng-model='checkaddon1'</input>
+      <input type="checkbox" ng-init='ctrl.current.jsonData.addon1=false' ng-model='ctrl.current.jsonData.addon1'</input>
     </div>      
   </div>
 
-  <div class="gf-form-group" ng-if='checkaddon1'>
+  <div class="gf-form-group" ng-if='ctrl.current.jsonData.addon1'>
     <label class="gf-form-label width-40">Additional Tenancy #2</label>
     <div class="gf-form-inline">
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Profile</span>
         <input type="text" class="gf-form-input" name="profile2"
           ng-model='ctrl.current.secureJsonData.profile2'
-          placeholder="{{ctrl.current.secureJsonFields.basicAuth ? 'configured' : ''}}"></input>
+          placeholder="{{ctrl.current.secureJsonFields.profile2 ? 'configured' : ''}}"></input>
       </div>
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Region</span>
@@ -163,6 +165,7 @@
           class="gf-form-input"
           ng-model="ctrl.current.secureJsonData.region2"
           ng-required="true"
+          placeholder="{{ctrl.current.secureJsonFields.region2 ? 'configured' : ''}}"
           ng-options="o as o for o in ctrl.getRegions()">
         </select>
       </div>
