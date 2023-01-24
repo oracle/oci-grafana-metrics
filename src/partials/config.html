@@ -44,16 +44,15 @@
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Profile</span>
         <input type="text" class="gf-form-input" name="profile0" ng-readonly value="DEFAULT" readonly
-          ng-model="ctrl.current.secureJsonData.profile0='DEFAULT'"
-          placeholder="{{ctrl.current.secureJsonFields.profile0 ? 'DEFAULT' : 'DEFAULT'}}"></input>
+          ng-model="ctrl.current.jsonData.profile0='DEFAULT'"
+          placeholder="{{ctrl.current.jsonData.profile0 ? 'DEFAULT' : 'DEFAULT'}}"></input>
       </div>
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Region</span>
           <select
           class="gf-form-input"
-          ng-model="ctrl.current.secureJsonData.region0"
+          ng-model="ctrl.current.jsonData.region0"
           ng-required="true"
-          placeholder="{{ctrl.current.secureJsonFields.region0 ? 'configured' : ''}}"
           ng-options="o as o for o in ctrl.getRegions()">
         </select>
       </div>
@@ -98,16 +97,14 @@
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Profile</span>
         <input type="text" class="gf-form-input" name="profile1"
-          ng-model='ctrl.current.secureJsonData.profile1'
-          placeholder="{{ctrl.current.secureJsonFields.profile1 ? 'configured' : ''}}"></input>
+          ng-model='ctrl.current.jsonData.profile1'></input>
       </div>
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Region</span>
           <select
           class="gf-form-input"
-          ng-model="ctrl.current.secureJsonData.region1"
+          ng-model="ctrl.current.jsonData.region1"
           ng-required="true"
-          placeholder="{{ctrl.current.secureJsonFields.region1 ? 'configured' : ''}}"
           ng-options="o as o for o in ctrl.getRegions()">
         </select>
       </div>
@@ -156,16 +153,14 @@
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Profile</span>
         <input type="text" class="gf-form-input" name="profile2"
-          ng-model='ctrl.current.secureJsonData.profile2'
-          placeholder="{{ctrl.current.secureJsonFields.profile2 ? 'configured' : ''}}"></input>
+          ng-model='ctrl.current.jsonData.profile2'>
       </div>
       <div class="gf-form max-width-15">
         <span class="gf-form-label width-7">Region</span>
           <select
           class="gf-form-input"
-          ng-model="ctrl.current.secureJsonData.region2"
+          ng-model="ctrl.current.jsonData.region2"
           ng-required="true"
-          placeholder="{{ctrl.current.secureJsonFields.region2 ? 'configured' : ''}}"
           ng-options="o as o for o in ctrl.getRegions()">
         </select>
       </div>

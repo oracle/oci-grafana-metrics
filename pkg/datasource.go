@@ -7,8 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"regexp"
 	"sort"
@@ -163,53 +161,53 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 type SecureJsonData struct {
-	Profile_0     string `json:"profile0"`
-	Tenancy_0     string `json:"tenancy0"`
-	Region_0      string `json:"region0"`
-	User_0        string `json:"user0"`
-	Privkey_0     string `json:"privkey0"`
-	Fingerprint_0 string `json:"fingerprint0"`
-	Privkeypass_0 string `json:"privkeypass0"`
+	Profile_0     string `json:"profile0,omitempty"`
+	Tenancy_0     string `json:"tenancy0,omitempty"`
+	Region_0      string `json:"region0,omitempty"`
+	User_0        string `json:"user0,omitempty"`
+	Privkey_0     string `json:"privkey0,omitempty"`
+	Fingerprint_0 string `json:"fingerprint0,omitempty"`
+	Privkeypass_0 string `json:"privkeypass0,omitempty"`
 
-	Profile_1     string `json:"profile1"`
-	Tenancy_1     string `json:"tenancy1"`
-	Region_1      string `json:"region1"`
-	User_1        string `json:"user1"`
-	Fingerprint_1 string `json:"fingerprint1"`
-	Privkey_1     string `json:"privkey1"`
-	Privkeypass_1 string `json:"privkeypass1"`
+	Profile_1     string `json:"profile1,omitempty"`
+	Tenancy_1     string `json:"tenancy1,omitempty"`
+	Region_1      string `json:"region1,omitempty"`
+	User_1        string `json:"user1,omitempty"`
+	Fingerprint_1 string `json:"fingerprint1,omitempty"`
+	Privkey_1     string `json:"privkey1,omitempty"`
+	Privkeypass_1 string `json:"privkeypass1,omitempty"`
 
-	Profile_2     string `json:"profile2"`
-	Tenancy_2     string `json:"tenancy2"`
-	Region_2      string `json:"region2"`
-	User_2        string `json:"user2"`
-	Fingerprint_2 string `json:"fingerprint2"`
-	Privkey_2     string `json:"privkey2"`
-	Privkeypass_2 string `json:"privkeypass2"`
+	Profile_2     string `json:"profile2,omitempty"`
+	Tenancy_2     string `json:"tenancy2,omitempty"`
+	Region_2      string `json:"region2,omitempty"`
+	User_2        string `json:"user2,omitempty"`
+	Fingerprint_2 string `json:"fingerprint2,omitempty"`
+	Privkey_2     string `json:"privkey2,omitempty"`
+	Privkeypass_2 string `json:"privkeypass2,omitempty"`
 
-	Profile_3     string `json:"profile3"`
-	Tenancy_3     string `json:"tenancy3"`
-	Region_3      string `json:"region3"`
-	User_3        string `json:"user3"`
-	Fingerprint_3 string `json:"fingerprint3"`
-	Privkey_3     string `json:"privkey3"`
-	Privkeypass_3 string `json:"privkeypass3"`
+	Profile_3     string `json:"profile3,omitempty"`
+	Tenancy_3     string `json:"tenancy3,omitempty"`
+	Region_3      string `json:"region3,omitempty"`
+	User_3        string `json:"user3,omitempty"`
+	Fingerprint_3 string `json:"fingerprint3,omitempty"`
+	Privkey_3     string `json:"privkey3,omitempty"`
+	Privkeypass_3 string `json:"privkeypass3,omitempty"`
 
-	Profile_4     string `json:"profile4"`
-	Tenancy_4     string `json:"tenancy4"`
-	Region_4      string `json:"region4"`
-	User_4        string `json:"user4"`
-	Fingerprint_4 string `json:"fingerprint4"`
-	Privkey_4     string `json:"privkey4"`
-	Privkeypass_4 string `json:"privkeypass4"`
+	Profile_4     string `json:"profile4,omitempty"`
+	Tenancy_4     string `json:"tenancy4,omitempty"`
+	Region_4      string `json:"region4,omitempty"`
+	User_4        string `json:"user4,omitempty"`
+	Fingerprint_4 string `json:"fingerprint4,omitempty"`
+	Privkey_4     string `json:"privkey4,omitempty"`
+	Privkeypass_4 string `json:"privkeypass4,omitempty"`
 
-	Profile_5     string `json:"profile5"`
-	Tenancy_5     string `json:"tenancy5"`
-	Region_5      string `json:"region5"`
-	User_5        string `json:"user5"`
-	Fingerprint_5 string `json:"fingerprint5"`
-	Privkey_5     string `json:"privkey5"`
-	Privkeypass_5 string `json:"privkeypass5"`
+	Profile_5     string `json:"profile5,omitempty"`
+	Tenancy_5     string `json:"tenancy5,omitempty"`
+	Region_5      string `json:"region5,omitempty"`
+	User_5        string `json:"user5,omitempty"`
+	Fingerprint_5 string `json:"fingerprint5,omitempty"`
+	Privkey_5     string `json:"privkey5,omitempty"`
+	Privkeypass_5 string `json:"privkeypass5,omitempty"`
 }
 
 func transcode(in, out interface{}) {
@@ -286,15 +284,10 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
-			var p *OCIConfigFile
 			var ociparsErr error
 			var tenancyErr error
 			if ts.Environment == "local" {
-				oci_config_file := OCIConfigPath()
-				p, ociparsErr = OCIConfigParser(oci_config_file)
-				if ociparsErr != nil {
-					return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
-				}
+				q, _ = OCIConfigAssembler(req)
 			} else {
 				return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
 			}
@@ -303,7 +296,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 			if tenancyErr != nil {
 				return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 			}
-			reg = common.StringToRegion(p.region[res[0]])
+			reg = common.StringToRegion(q.region[res[0]])
 		} else {
 			tenancyocid = q.tenancyocid["DEFAULT"]
 			reg = common.StringToRegion(q.region["DEFAULT"])
@@ -426,20 +419,15 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	o.logger.Debug("getConfigProvider")
 	o.logger.Debug(environment)
 	o.logger.Debug(tenancymode)
-	var p *OCIConfigFile
-	var ociparsErr error
 
 	switch environment {
 	case "local":
-		oci_config_file := OCIConfigPath()
+		q, _ := OCIConfigAssembler(req)
 		if tenancymode == "multitenancy" {
-			p, ociparsErr = OCIConfigParser(oci_config_file)
-			if ociparsErr != nil {
-				return errors.Wrap(ociparsErr, fmt.Sprintf("OCI Config Parser failed"))
-			}
-			for key, _ := range p.tenancyocid {
+			for key, _ := range q.tenancyocid {
 				var configProvider common.ConfigurationProvider
-				configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
+				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+				// configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
 				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 				if err != nil {
 					o.logger.Error("Error with config:" + key)
@@ -458,7 +446,6 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			return nil
 		} else {
-			q, _ := OCIConfigAssembler(req)
 			var configProvider common.ConfigurationProvider
 			// configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid["DEFAULT"], q.user["DEFAULT"], q.region["DEFAULT"], q.fingerprint["DEFAULT"], q.privkey["DEFAULT"], q.privkeypass["DEFAULT"])
@@ -946,22 +933,18 @@ Function generates an array  containing OCI configuration (.oci/config) in the f
 */
 func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest, env string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	var p *OCIConfigFile
 	var res string
-	oci_config_file := OCIConfigPath()
-	p, err := OCIConfigParser(oci_config_file)
-	if err != nil {
-		log.DefaultLogger.Error("could not parse config file")
-		return nil, err
-	}
+
+	q, _ := OCIConfigAssembler(req)
+
 	for _, query := range req.Queries {
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
 		// for _, ociconfig := range ociconfigs {
-		for key, _ := range p.tenancyocid {
+		for key, _ := range q.tenancyocid {
 			if env == "local" {
-				res = p.tenancyocid[key]
+				res = q.tenancyocid[key]
 			} else {
-				configProvider := common.CustomProfileConfigProvider(oci_config_file, key)
+				configProvider := common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 				res, err := configProvider.TenancyOCID()
 				if err != nil {
 					return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
@@ -978,33 +961,19 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 	return resp, nil
 }
 
-/*
-Function parses the content of .oci/config file and returns raw file content.
-It then pass over to parseConfigFile in search for each config entry.
-*/
-func OCIConfigParser(oci_config_file string) (*OCIConfigFile, error) {
-	p := NewOCIConfigFile()
-	data, err := ioutil.ReadFile(oci_config_file)
-	if err != nil {
-		err = fmt.Errorf("can not read config file: %s due to: %s", oci_config_file, err.Error())
-		return nil, err
-	}
-	if len(data) == 0 {
-		err = fmt.Errorf("config file %s is empty.", oci_config_file)
-		return nil, err
-	}
-	err = p.parseConfigFile(data)
-	if err != nil {
-		log.DefaultLogger.Error("config file " + oci_config_file + " is not valid.")
-		return nil, err
-	}
-	return p, nil
-}
-
+// LoadSettings will read and validate Settings from the DataSourceConfig
 func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
-	p := NewOCIConfigFile()
+	q := NewOCIConfigFile()
+	if err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &q); err != nil {
+		return q, fmt.Errorf("can not read settings: %s", err.Error())
+	}
 	k := 0
 	var dat SecureJsonData
+
+	// password, ok := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["password"]
+	// if ok {
+	// 	dat.Fingerprint_0 = password
+	// }
 	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
 
@@ -1021,7 +990,7 @@ func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 					key = fmt.Sprintf("%v", v.Field(i).Interface())
 					log.DefaultLogger.Error(key)
 				} else {
-					return p, nil
+					return q, nil
 				}
 			} else {
 				log.DefaultLogger.Error(key)
@@ -1029,19 +998,19 @@ func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 
 				switch value := v.Field(i).Interface(); strings.ToLower(splits[0]) {
 				case "tenancy":
-					p.tenancyocid[key] = fmt.Sprintf("%v", value)
-					log.DefaultLogger.Error(p.tenancyocid[key])
+					q.tenancyocid[key] = fmt.Sprintf("%v", value)
+					log.DefaultLogger.Error(q.tenancyocid[key])
 				case "region":
-					p.region[key] = fmt.Sprintf("%v", value)
+					q.region[key] = fmt.Sprintf("%v", value)
 				case "user":
-					p.user[key] = fmt.Sprintf("%v", value)
+					q.user[key] = fmt.Sprintf("%v", value)
 				case "privkey":
-					p.privkey[key] = fmt.Sprintf("%v", value)
+					q.privkey[key] = fmt.Sprintf("%v", value)
 				case "fingerprint":
-					p.fingerprint[key] = fmt.Sprintf("%v", value)
+					q.fingerprint[key] = fmt.Sprintf("%v", value)
 				case "privkeypass":
 					alfa := fmt.Sprintf("%v", value)
-					p.privkeypass[key] = &alfa
+					q.privkeypass[key] = &alfa
 				}
 			}
 		} else {
@@ -1049,70 +1018,5 @@ func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 			i--
 		}
 	}
-	return p, nil
-}
-
-/*
-Function parses the content of .oci/config file
-It looks for each profile entry and pass over to the parseConfigAtLine function
-*/
-func (p *OCIConfigFile) parseConfigFile(data []byte) (err error) {
-	content := string(data)
-	splitContent := strings.Split(content, "\n")
-	if len(splitContent) == 0 {
-		err = fmt.Errorf("config file is corrupted.")
-		return err
-	}
-	//Look for profile
-	for i, line := range splitContent {
-		if match := profileRegex.FindStringSubmatch(line); match != nil && len(match) > 1 {
-			start := i + 1
-			p.parseConfigAtLine(start, match[1], splitContent)
-		}
-	}
-	if len(p.tenancyocid) == 0 {
-		err = fmt.Errorf("config file is not valid.")
-		return err
-	}
-	return nil
-}
-
-/*
-Function parses the output of parseConfigFile function looking for specific entries.
-user, tenancy and region are retrieved and stored in the OCIConfigFile maps.
-*/
-func (p *OCIConfigFile) parseConfigAtLine(start int, profile string, content []string) (err error) {
-	for i := start; i < len(content); i++ {
-		line := content[i]
-		if profileRegex.MatchString(line) {
-			break
-		}
-		if !strings.Contains(line, "=") {
-			continue
-		}
-		splits := strings.Split(line, "=")
-		switch key, value := strings.TrimSpace(splits[0]), strings.TrimSpace(splits[1]); strings.ToLower(key) {
-		case "user":
-			p.user[profile] = value
-		case "tenancy":
-			p.tenancyocid[profile] = value
-		case "region":
-			p.region[profile] = value
-		}
-	}
-	return
-}
-
-/*
-Function returns the path for the .oci/config file
-*/
-func OCIConfigPath() string {
-	var oci_config_file string
-	homedir := "/usr/share/grafana"
-	if _, ok := os.LookupEnv("OCI_CLI_CONFIG_FILE"); ok {
-		oci_config_file = os.Getenv("OCI_CLI_CONFIG_FILE")
-	} else {
-		oci_config_file = homedir + "/.oci/config"
-	}
-	return oci_config_file
+	return q, nil
 }
