@@ -54,6 +54,9 @@ func NewOCIConfigFile() *OCIConfigFile {
 		tenancyocid: make(map[string]string),
 		region:      make(map[string]string),
 		user:        make(map[string]string),
+		fingerprint: make(map[string]string),
+		privkey:     make(map[string]string),
+		privkeypass: make(map[string]*string),
 		logger:      log.DefaultLogger,
 	}
 }
@@ -71,10 +74,9 @@ type OCIConfigFile struct {
 	tenancyocid map[string]string
 	region      map[string]string
 	user        map[string]string
-	profile     map[string]string
 	fingerprint map[string]string
 	privkey     map[string]string
-	privkeypass map[string]string
+	privkeypass map[string]*string
 	logger      log.Logger
 }
 
@@ -126,7 +128,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	queryType := ts.QueryType
 
 	if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
-		err := o.getConfigProvider(ts.Environment, ts.TenancyMode)
+		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
 		}
@@ -220,13 +222,15 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	var ts GrafanaCommonRequest
 	var tenancyocid string
 	var dat SecureJsonData
+	var reg common.Region
 
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	reg := common.StringToRegion(ts.Region)
+	q, _ := OCIConfigAssembler(req)
+	log.DefaultLogger.Error(q.region["DEFAULT"])
 
 	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
@@ -301,7 +305,8 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 			}
 			reg = common.StringToRegion(p.region[res[0]])
 		} else {
-			tenancyocid = ts.TenancyOCID
+			tenancyocid = q.tenancyocid["DEFAULT"]
+			reg = common.StringToRegion(q.region["DEFAULT"])
 		}
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: common.String(tenancyocid),
@@ -416,7 +421,7 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string) error {
+func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req *backend.QueryDataRequest) error {
 
 	o.logger.Debug("getConfigProvider")
 	o.logger.Debug(environment)
@@ -453,8 +458,10 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			return nil
 		} else {
+			q, _ := OCIConfigAssembler(req)
 			var configProvider common.ConfigurationProvider
-			configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
+			// configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
+			configProvider = common.NewRawConfigurationProvider(q.tenancyocid["DEFAULT"], q.user["DEFAULT"], q.region["DEFAULT"], q.fingerprint["DEFAULT"], q.privkey["DEFAULT"], q.privkeypass["DEFAULT"])
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				o.logger.Error("Error with config:" + SingleTenancyKey)
@@ -1017,20 +1024,24 @@ func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 					return p, nil
 				}
 			} else {
+				log.DefaultLogger.Error(key)
+				log.DefaultLogger.Error(splits[0])
+
 				switch value := v.Field(i).Interface(); strings.ToLower(splits[0]) {
 				case "tenancy":
-					p.tenancyocid[splits[0]] = fmt.Sprintf("%v", value)
-					log.DefaultLogger.Error(p.tenancyocid[splits[0]])
+					p.tenancyocid[key] = fmt.Sprintf("%v", value)
+					log.DefaultLogger.Error(p.tenancyocid[key])
 				case "region":
-					p.region[splits[0]] = fmt.Sprintf("%v", value)
+					p.region[key] = fmt.Sprintf("%v", value)
 				case "user":
 					p.user[key] = fmt.Sprintf("%v", value)
 				case "privkey":
-					p.privkey[splits[0]] = fmt.Sprintf("%v", value)
+					p.privkey[key] = fmt.Sprintf("%v", value)
 				case "fingerprint":
-					p.fingerprint[splits[0]] = fmt.Sprintf("%v", value)
+					p.fingerprint[key] = fmt.Sprintf("%v", value)
 				case "privkeypass":
-					p.privkeypass[splits[0]] = fmt.Sprintf("%v", value)
+					alfa := fmt.Sprintf("%v", value)
+					p.privkeypass[key] = &alfa
 				}
 			}
 		} else {
