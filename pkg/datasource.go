@@ -940,21 +940,32 @@ Function generates an array  containing OCI configuration (.oci/config) in the f
 func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest, env string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	var res string
+	var tenancyErr error
 
 	q, _ := OCIConfigAssembler(req)
-
+	if tenancyErr != nil {
+		return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+	}
 	for _, query := range req.Queries {
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
-		// for _, ociconfig := range ociconfigs {
+		// for key, _ := range o.tenancyAccess {
 		for key, _ := range q.tenancyocid {
 			if env == "local" {
 				res = q.tenancyocid[key]
+				// res, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
+				// if tenancyErr != nil {
+				// 	return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+				// }
 			} else {
 				configProvider := common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 				res, err := configProvider.TenancyOCID()
 				if err != nil {
 					return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
 				}
+				// res, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
+				// if tenancyErr != nil {
+				// 	return nil, errors.Wrap(tenancyErr, "error configuring TenancyOCID: "+key+"/"+res)
+				// }
 			}
 			value := key + "/" + res
 			frame.AppendRow(*(common.String(value)))
