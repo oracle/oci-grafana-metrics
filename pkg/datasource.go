@@ -568,6 +568,8 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	}
 
 	var tenancyocid string
+	var tenancyErr error
+
 	if ts.TenancyMode == "multitenancy" {
 		if len(takey) <= 0 || takey == NoTenancy {
 			o.logger.Error("Unable to get Multi-tenancy OCID")
@@ -577,7 +579,10 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		res := strings.Split(takey, "/")
 		tenancyocid = res[1]
 	} else {
-		tenancyocid = ts.TenancyOCID
+		tenancyocid, tenancyErr = o.tenancyAccess[takey].config.TenancyOCID()
+		if tenancyErr != nil {
+			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+		}
 	}
 
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
