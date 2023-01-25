@@ -584,15 +584,15 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		}
 	}
 
-	if ts.Region == "" && ts.TenancyMode != "multitenancy" {
-		var settings OCISecuredSettings
-		// region = req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["Region_0"]
-		json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &settings)
-		region = strings.TrimSpace(settings.Region_0)
+	// if ts.Region == "" && ts.TenancyMode != "multitenancy" {
+	// 	var settings OCISecuredSettings
+	// 	// region = req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["Region_0"]
+	// 	json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &settings)
+	// 	region = strings.TrimSpace(settings.Region_0)
 
-	} else {
-		region = ts.Region
-	}
+	// } else {
+	// 	region = ts.Region
+	// }
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
 		m, err := o.getCompartments(ctx, region, tenancyocid, takey)
 		if err != nil {
@@ -627,7 +627,7 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, region string, root
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
 
 	reg := common.StringToRegion(region)
-	o.tenancyAccess[takey].identityClient.SetRegion(string(reg))
+	// o.tenancyAccess[takey].identityClient.SetRegion(string(reg))
 
 	log.DefaultLogger.Error("getCompartments tenancyocid " + tenancyOcid)
 	log.DefaultLogger.Error("getCompartments reg " + string(reg))
