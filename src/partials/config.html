@@ -18,11 +18,21 @@
 	    ng-required="true"
       ng-options="o as o for o in ctrl.getTenancyModes()" >
     </select>   
+  </div>
+  <div class="gf-form max-width-30">
+    <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.environment==='OCI Instance'">Default Region</label>
+    <select
+      class="gf-form-input"
+      ng-model="ctrl.current.jsonData.defaultRegion"
+	    ng-required="true"
+      ng-if="ctrl.current.jsonData.environment==='OCI Instance'"    
+      ng-options="o as o for o in ctrl.getRegions()">
+    </select>
   </div>  
 
   <br>
 
-  <div class="gf-form-group">
+  <div class="gf-form-group" ng-if="ctrl.current.jsonData.environment!=='OCI Instance'">
     <label class="gf-form-label width-40">DEFAULT Tenancy</label>
     <div class="gf-form-inline">
       <div class="gf-form max-width-15">
@@ -76,7 +86,7 @@
   </div>
 
   
-  <div class="gf-form-group" ng-if="ctrl.current.jsonData.tenancymode==='multitenancy'">
+  <div class="gf-form-group" ng-if="ctrl.current.jsonData.tenancymode==='multitenancy' && ctrl.current.jsonData.environment!=='OCI Instance'">
     <label class="gf-form-label width-40">Additional Tenancy #1</label>
     <div class="gf-form-inline">
       <div class="gf-form max-width-15">
