@@ -112,7 +112,7 @@ type GrafanaCommonRequest struct {
 	TenancyOCID string `json:"tenancyOCID"`
 }
 
-type SecureJsonData struct {
+type OCISecuredSettings struct {
 	Profile_0     string `json:"profile0,omitempty"`
 	Tenancy_0     string `json:"tenancy0,omitempty"`
 	Region_0      string `json:"region0,omitempty"`
@@ -187,7 +187,8 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	o.logger.Debug(ts.Tenancy)
 	o.logger.Debug(ts.TenancyMode)
 
-	if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
+	// if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
+	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
 		if err != nil {
 			return nil, errors.Wrap(err, "broken environment")
@@ -227,7 +228,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req *backend.QueryDataRequest) error {
 	switch environment {
 	case "local":
-		q, _ := OCIConfigAssembler(req)
+		q, _ := OCILoadSettings(req)
 		if tenancymode == "multitenancy" {
 			for key, _ := range q.tenancyocid {
 				var configProvider common.ConfigurationProvider
@@ -294,7 +295,8 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
 	var tenancyocid string
-	var dat SecureJsonData
+	var q *OCIConfigFile
+	// var dat OCISecuredSettings
 	var reg common.Region
 
 	query := req.Queries[0]
@@ -302,68 +304,67 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		return &backend.QueryDataResponse{}, err
 	}
 
-	q, _ := OCIConfigAssembler(req)
-	log.DefaultLogger.Error(q.region["DEFAULT"])
+	// decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
+	// transcode(decryptedJSONData, &dat)
 
-	decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
-	transcode(decryptedJSONData, &dat)
+	// log.DefaultLogger.Error(dat.Tenancy_0)
+	// log.DefaultLogger.Error(dat.Tenancy_1)
+	// log.DefaultLogger.Error(dat.Tenancy_2)
+	// log.DefaultLogger.Error(dat.Tenancy_3)
+	// log.DefaultLogger.Error(dat.Tenancy_4)
+	// log.DefaultLogger.Error(dat.Tenancy_5)
 
-	log.DefaultLogger.Error(dat.Tenancy_0)
-	log.DefaultLogger.Error(dat.Tenancy_1)
-	log.DefaultLogger.Error(dat.Tenancy_2)
-	log.DefaultLogger.Error(dat.Tenancy_3)
-	log.DefaultLogger.Error(dat.Tenancy_4)
-	log.DefaultLogger.Error(dat.Tenancy_5)
+	// log.DefaultLogger.Error(dat.Region_0)
+	// log.DefaultLogger.Error(dat.Region_1)
+	// log.DefaultLogger.Error(dat.Region_2)
+	// log.DefaultLogger.Error(dat.Region_3)
+	// log.DefaultLogger.Error(dat.Region_4)
+	// log.DefaultLogger.Error(dat.Region_5)
 
-	log.DefaultLogger.Error(dat.Region_0)
-	log.DefaultLogger.Error(dat.Region_1)
-	log.DefaultLogger.Error(dat.Region_2)
-	log.DefaultLogger.Error(dat.Region_3)
-	log.DefaultLogger.Error(dat.Region_4)
-	log.DefaultLogger.Error(dat.Region_5)
+	// log.DefaultLogger.Error(dat.User_0)
+	// log.DefaultLogger.Error(dat.User_1)
+	// log.DefaultLogger.Error(dat.User_2)
+	// log.DefaultLogger.Error(dat.User_3)
+	// log.DefaultLogger.Error(dat.User_4)
+	// log.DefaultLogger.Error(dat.User_5)
 
-	log.DefaultLogger.Error(dat.User_0)
-	log.DefaultLogger.Error(dat.User_1)
-	log.DefaultLogger.Error(dat.User_2)
-	log.DefaultLogger.Error(dat.User_3)
-	log.DefaultLogger.Error(dat.User_4)
-	log.DefaultLogger.Error(dat.User_5)
+	// log.DefaultLogger.Error(dat.Profile_0)
+	// log.DefaultLogger.Error(dat.Profile_1)
+	// log.DefaultLogger.Error(dat.Profile_2)
+	// log.DefaultLogger.Error(dat.Profile_3)
+	// log.DefaultLogger.Error(dat.Profile_4)
+	// log.DefaultLogger.Error(dat.Profile_5)
 
-	log.DefaultLogger.Error(dat.Profile_0)
-	log.DefaultLogger.Error(dat.Profile_1)
-	log.DefaultLogger.Error(dat.Profile_2)
-	log.DefaultLogger.Error(dat.Profile_3)
-	log.DefaultLogger.Error(dat.Profile_4)
-	log.DefaultLogger.Error(dat.Profile_5)
+	// log.DefaultLogger.Error(dat.Fingerprint_0)
+	// log.DefaultLogger.Error(dat.Fingerprint_1)
+	// log.DefaultLogger.Error(dat.Fingerprint_2)
+	// log.DefaultLogger.Error(dat.Fingerprint_3)
+	// log.DefaultLogger.Error(dat.Fingerprint_4)
+	// log.DefaultLogger.Error(dat.Fingerprint_5)
 
-	log.DefaultLogger.Error(dat.Fingerprint_0)
-	log.DefaultLogger.Error(dat.Fingerprint_1)
-	log.DefaultLogger.Error(dat.Fingerprint_2)
-	log.DefaultLogger.Error(dat.Fingerprint_3)
-	log.DefaultLogger.Error(dat.Fingerprint_4)
-	log.DefaultLogger.Error(dat.Fingerprint_5)
+	// log.DefaultLogger.Error(dat.Privkey_0)
+	// log.DefaultLogger.Error(dat.Privkey_1)
+	// log.DefaultLogger.Error(dat.Privkey_2)
+	// log.DefaultLogger.Error(dat.Privkey_3)
+	// log.DefaultLogger.Error(dat.Privkey_4)
+	// log.DefaultLogger.Error(dat.Privkey_5)
 
-	log.DefaultLogger.Error(dat.Privkey_0)
-	log.DefaultLogger.Error(dat.Privkey_1)
-	log.DefaultLogger.Error(dat.Privkey_2)
-	log.DefaultLogger.Error(dat.Privkey_3)
-	log.DefaultLogger.Error(dat.Privkey_4)
-	log.DefaultLogger.Error(dat.Privkey_5)
+	// log.DefaultLogger.Error(dat.Privkeypass_0)
+	// log.DefaultLogger.Error(dat.Privkeypass_1)
+	// log.DefaultLogger.Error(dat.Privkeypass_2)
+	// log.DefaultLogger.Error(dat.Privkeypass_3)
+	// log.DefaultLogger.Error(dat.Privkeypass_4)
+	// log.DefaultLogger.Error(dat.Privkeypass_5)
 
-	log.DefaultLogger.Error(dat.Privkeypass_0)
-	log.DefaultLogger.Error(dat.Privkeypass_1)
-	log.DefaultLogger.Error(dat.Privkeypass_2)
-	log.DefaultLogger.Error(dat.Privkeypass_3)
-	log.DefaultLogger.Error(dat.Privkeypass_4)
-	log.DefaultLogger.Error(dat.Privkeypass_5)
+	if ts.Environment == "local" {
+		q, _ = OCILoadSettings(req)
+	}
 
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
 			var ociparsErr error
 			var tenancyErr error
-			if ts.Environment == "local" {
-				q, _ = OCIConfigAssembler(req)
-			} else {
+			if ts.Environment != "local" {
 				return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
 			}
 			res := strings.Split(key, "/")
@@ -954,12 +955,12 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 	return resp, nil
 }
 
-// LoadSettings will read and validate Settings from the DataSourceConfig
-func OCIConfigAssembler(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
+// OCILoadSettings will read and validate Settings from the DataSourceConfig
+func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
 
 	k := 0
-	var dat SecureJsonData
+	var dat OCISecuredSettings
 
 	if err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &dat); err != nil {
 		return q, fmt.Errorf("can not read settings: %s", err.Error())
