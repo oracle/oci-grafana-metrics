@@ -112,53 +112,6 @@ type GrafanaCommonRequest struct {
 	TenancyOCID string `json:"tenancyOCID"`
 }
 
-// Query - Determine what kind of query we're making
-func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	var ts GrafanaCommonRequest
-	var takey string
-
-	query := req.Queries[0]
-	if err := json.Unmarshal(query.JSON, &ts); err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
-
-	queryType := ts.QueryType
-
-	if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
-		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
-		if err != nil {
-			return nil, errors.Wrap(err, "broken environment")
-		}
-	}
-
-	if ts.TenancyMode == "multitenancy" {
-		takey = ts.Tenancy
-	} else {
-		takey = SingleTenancyKey
-	}
-
-	switch queryType {
-	case "compartments":
-		return o.compartmentsResponse(ctx, req, takey)
-	case "dimensions":
-		return o.dimensionResponse(ctx, req, takey)
-	case "namespaces":
-		return o.namespaceResponse(ctx, req, takey)
-	case "resourcegroups":
-		return o.resourcegroupsResponse(ctx, req, takey)
-	case "regions":
-		return o.regionsResponse(ctx, req, takey)
-	case "tenancies":
-		return o.tenanciesResponse(ctx, req, ts.Environment)
-	case "search":
-		return o.searchResponse(ctx, req, takey)
-	case "test":
-		return o.testResponse(ctx, req)
-	default:
-		return o.queryResponse(ctx, req)
-	}
-}
-
 type SecureJsonData struct {
 	Profile_0     string `json:"profile0,omitempty"`
 	Tenancy_0     string `json:"tenancy0,omitempty"`
@@ -209,10 +162,133 @@ type SecureJsonData struct {
 	Privkeypass_5 string `json:"privkeypass5,omitempty"`
 }
 
+// Prepare format to decode SecureJson
 func transcode(in, out interface{}) {
 	buf := new(bytes.Buffer)
 	json.NewEncoder(buf).Encode(in)
 	json.NewDecoder(buf).Decode(out)
+}
+
+// Query - Determine what kind of query we're making
+func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	var ts GrafanaCommonRequest
+	var takey string
+
+	query := req.Queries[0]
+	if err := json.Unmarshal(query.JSON, &ts); err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
+
+	queryType := ts.QueryType
+
+	o.logger.Debug("QueryType")
+	o.logger.Debug(ts.QueryType)
+	o.logger.Debug(ts.Environment)
+	o.logger.Debug(ts.Tenancy)
+	o.logger.Debug(ts.TenancyMode)
+
+	if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
+		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
+		if err != nil {
+			return nil, errors.Wrap(err, "broken environment")
+		}
+	}
+
+	if ts.TenancyMode == "multitenancy" {
+		takey = ts.Tenancy
+	} else {
+		takey = SingleTenancyKey
+	}
+	o.logger.Debug(takey)
+	o.logger.Debug("/QueryType")
+
+	switch queryType {
+	case "compartments":
+		return o.compartmentsResponse(ctx, req, takey)
+	case "dimensions":
+		return o.dimensionResponse(ctx, req, takey)
+	case "namespaces":
+		return o.namespaceResponse(ctx, req, takey)
+	case "resourcegroups":
+		return o.resourcegroupsResponse(ctx, req, takey)
+	case "regions":
+		return o.regionsResponse(ctx, req, takey)
+	case "tenancies":
+		return o.tenanciesResponse(ctx, req)
+	case "search":
+		return o.searchResponse(ctx, req, takey)
+	case "test":
+		return o.testResponse(ctx, req)
+	default:
+		return o.queryResponse(ctx, req)
+	}
+}
+
+func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req *backend.QueryDataRequest) error {
+	switch environment {
+	case "local":
+		q, _ := OCIConfigAssembler(req)
+		if tenancymode == "multitenancy" {
+			for key, _ := range q.tenancyocid {
+				var configProvider common.ConfigurationProvider
+				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+				// configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
+				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+				if err != nil {
+					o.logger.Error("Error with config:" + key)
+					return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+				}
+				identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+				if err != nil {
+					o.logger.Error("Error creating identity client", "error", err)
+					return errors.Wrap(err, "Error creating identity client")
+				}
+				tenancyocid, err := configProvider.TenancyOCID()
+				if err != nil {
+					return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
+				}
+				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
+			}
+			return nil
+		} else {
+			var configProvider common.ConfigurationProvider
+			// configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
+			configProvider = common.NewRawConfigurationProvider(q.tenancyocid["DEFAULT"], q.user["DEFAULT"], q.region["DEFAULT"], q.fingerprint["DEFAULT"], q.privkey["DEFAULT"], q.privkeypass["DEFAULT"])
+			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+			if err != nil {
+				o.logger.Error("Error with config:" + SingleTenancyKey)
+				return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+			}
+			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+			if err != nil {
+				o.logger.Error("Error creating identity client", "error", err)
+				return errors.Wrap(err, "Error creating identity client")
+			}
+			o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+			return nil
+		}
+	case "OCI Instance":
+		var configProvider common.ConfigurationProvider
+		configProvider, err := auth.InstancePrincipalConfigurationProvider()
+		if err != nil {
+			return errors.New(fmt.Sprint("error with instance principals", spew.Sdump(configProvider), err.Error()))
+		}
+		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			o.logger.Error("Error with config:" + SingleTenancyKey)
+			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+		}
+		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
+		if err != nil {
+			o.logger.Error("Error creating identity client", "error", err)
+			return errors.Wrap(err, "Error creating identity client")
+		}
+		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+		return nil
+
+	default:
+		return errors.New("unknown environment type")
+	}
 }
 
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -411,78 +487,6 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend
 		resp.Responses[query.RefID] = respD
 	}
 	return resp, nil
-}
-
-func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req *backend.QueryDataRequest) error {
-
-	o.logger.Debug("getConfigProvider")
-	o.logger.Debug(environment)
-	o.logger.Debug(tenancymode)
-
-	switch environment {
-	case "local":
-		q, _ := OCIConfigAssembler(req)
-		if tenancymode == "multitenancy" {
-			for key, _ := range q.tenancyocid {
-				var configProvider common.ConfigurationProvider
-				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
-				// configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
-				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-				if err != nil {
-					o.logger.Error("Error with config:" + key)
-					return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-				}
-				identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-				if err != nil {
-					o.logger.Error("Error creating identity client", "error", err)
-					return errors.Wrap(err, "Error creating identity client")
-				}
-				tenancyocid, err := configProvider.TenancyOCID()
-				if err != nil {
-					return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
-				}
-				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
-			}
-			return nil
-		} else {
-			var configProvider common.ConfigurationProvider
-			// configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
-			configProvider = common.NewRawConfigurationProvider(q.tenancyocid["DEFAULT"], q.user["DEFAULT"], q.region["DEFAULT"], q.fingerprint["DEFAULT"], q.privkey["DEFAULT"], q.privkeypass["DEFAULT"])
-			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-			if err != nil {
-				o.logger.Error("Error with config:" + SingleTenancyKey)
-				return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-			}
-			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-			if err != nil {
-				o.logger.Error("Error creating identity client", "error", err)
-				return errors.Wrap(err, "Error creating identity client")
-			}
-			o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
-			return nil
-		}
-	case "OCI Instance":
-		var configProvider common.ConfigurationProvider
-		configProvider, err := auth.InstancePrincipalConfigurationProvider()
-		if err != nil {
-			return errors.New(fmt.Sprint("error with instance principals", spew.Sdump(configProvider), err.Error()))
-		}
-		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			o.logger.Error("Error with config:" + SingleTenancyKey)
-			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-		}
-		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-		if err != nil {
-			o.logger.Error("Error creating identity client", "error", err)
-			return errors.Wrap(err, "Error creating identity client")
-		}
-		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
-		return nil
-
-	default:
-		return errors.New("unknown environment type")
-	}
 }
 
 func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
@@ -838,12 +842,9 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 
 func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
+	o.logger.Error("Compilation of legend" + takey)
 
 	for _, query := range req.Queries {
-		var ts GrafanaOCIRequest
-		if err := json.Unmarshal(query.JSON, &ts); err != nil {
-			return &backend.QueryDataResponse{}, err
-		}
 		tenancyocid, tenancyErr := o.tenancyAccess[takey].config.TenancyOCID()
 		if tenancyErr != nil {
 			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
@@ -937,38 +938,13 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 Function generates an array  containing OCI configuration (.oci/config) in the following format:
 <section label/TenancyOCID>
 */
-func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest, env string) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	var res string
-	var tenancyErr error
-
-	q, _ := OCIConfigAssembler(req)
-	if tenancyErr != nil {
-		return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
-	}
 	for _, query := range req.Queries {
+
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
-		// for key, _ := range o.tenancyAccess {
-		for key, _ := range q.tenancyocid {
-			if env == "local" {
-				res = q.tenancyocid[key]
-				// res, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
-				// if tenancyErr != nil {
-				// 	return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
-				// }
-			} else {
-				configProvider := common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
-				res, err := configProvider.TenancyOCID()
-				if err != nil {
-					return nil, errors.Wrap(err, "error configuring TenancyOCID: "+key+"/"+res)
-				}
-				// res, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
-				// if tenancyErr != nil {
-				// 	return nil, errors.Wrap(tenancyErr, "error configuring TenancyOCID: "+key+"/"+res)
-				// }
-			}
-			value := key + "/" + res
-			frame.AppendRow(*(common.String(value)))
+		for key, _ := range o.tenancyAccess {
+			frame.AppendRow(*(common.String(key)))
 		}
 
 		respD := resp.Responses[query.RefID]
