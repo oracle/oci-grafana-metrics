@@ -567,7 +567,6 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 
 	var tenancyocid string
 	var tenancyErr error
-	var region string
 
 	if ts.TenancyMode == "multitenancy" {
 		if len(takey) <= 0 || takey == NoTenancy {
@@ -584,17 +583,8 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		}
 	}
 
-	// if ts.Region == "" && ts.TenancyMode != "multitenancy" {
-	// 	var settings OCISecuredSettings
-	// 	// region = req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["Region_0"]
-	// 	json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &settings)
-	// 	region = strings.TrimSpace(settings.Region_0)
-
-	// } else {
-	// 	region = ts.Region
-	// }
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-		m, err := o.getCompartments(ctx, region, tenancyocid, takey)
+		m, err := o.getCompartments(ctx, tenancyocid, takey)
 		if err != nil {
 			o.logger.Error("Unable to refresh cache")
 			return nil, err
@@ -619,18 +609,14 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	}, nil
 }
 
-func (o *OCIDatasource) getCompartments(ctx context.Context, region string, rootCompartment string, takey string) (map[string]string, error) {
+func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment string, takey string) (map[string]string, error) {
 	m := make(map[string]string)
 
 	tenancyOcid := rootCompartment
 
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
 
-	reg := common.StringToRegion(region)
-	// o.tenancyAccess[takey].identityClient.SetRegion(string(reg))
-
 	log.DefaultLogger.Error("getCompartments tenancyocid " + tenancyOcid)
-	log.DefaultLogger.Error("getCompartments reg " + string(reg))
 
 	// Send the request using the service client
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
