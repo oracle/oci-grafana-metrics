@@ -86,11 +86,8 @@ You can then choose between two different modes as **Tenancy mode**:
 * **single**: to use a single specific Tenancy
 * **multitenancy**: to use all the tenancies found in the OCI config file.
 
-If you selected **single** as **Tenancy mode** then fill in your **Tenancy OCID** and **Default Region**.
-
 aaaa
-Calls to OCI using API Key authentication require that you provide the following credentials:
-
+If you selected **single** as **Tenancy mode** then fill in following credentials:
 *   `tenancy_ocid` - OCID of your tenancy. To get the value, see [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
 *   `user_ocid` - OCID of the user calling the API. To get the value, see [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
 *   `private_key` - The contents of the private key file. For details on how to create and configure keys see [How to Generate an API Signing Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#two) and [How to Upload the Public Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#three).
