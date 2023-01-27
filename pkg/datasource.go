@@ -31,6 +31,9 @@ const MaxPagesToFetch = 20
 const SingleTenancyKey = "DEFAULT/"
 const NoTenancy = "NoTenancy"
 
+var EmptyString string = ""
+var EmptyKeyPass *string = &EmptyString
+
 var (
 	cacheRefreshTime = time.Minute // how often to refresh our compartmentID cache
 	re               = regexp.MustCompile(`(?m)\w+Name`)
@@ -117,7 +120,6 @@ type OCISecuredSettings struct {
 	User_0        string `json:"user0,omitempty"`
 	Privkey_0     string `json:"privkey0,omitempty"`
 	Fingerprint_0 string `json:"fingerprint0,omitempty"`
-	Privkeypass_0 string `json:"privkeypass0,omitempty"`
 
 	Profile_1     string `json:"profile1,omitempty"`
 	Tenancy_1     string `json:"tenancy1,omitempty"`
@@ -125,7 +127,6 @@ type OCISecuredSettings struct {
 	User_1        string `json:"user1,omitempty"`
 	Fingerprint_1 string `json:"fingerprint1,omitempty"`
 	Privkey_1     string `json:"privkey1,omitempty"`
-	Privkeypass_1 string `json:"privkeypass1,omitempty"`
 
 	Profile_2     string `json:"profile2,omitempty"`
 	Tenancy_2     string `json:"tenancy2,omitempty"`
@@ -133,7 +134,6 @@ type OCISecuredSettings struct {
 	User_2        string `json:"user2,omitempty"`
 	Fingerprint_2 string `json:"fingerprint2,omitempty"`
 	Privkey_2     string `json:"privkey2,omitempty"`
-	Privkeypass_2 string `json:"privkeypass2,omitempty"`
 
 	Profile_3     string `json:"profile3,omitempty"`
 	Tenancy_3     string `json:"tenancy3,omitempty"`
@@ -141,7 +141,6 @@ type OCISecuredSettings struct {
 	User_3        string `json:"user3,omitempty"`
 	Fingerprint_3 string `json:"fingerprint3,omitempty"`
 	Privkey_3     string `json:"privkey3,omitempty"`
-	Privkeypass_3 string `json:"privkeypass3,omitempty"`
 
 	Profile_4     string `json:"profile4,omitempty"`
 	Tenancy_4     string `json:"tenancy4,omitempty"`
@@ -149,7 +148,6 @@ type OCISecuredSettings struct {
 	User_4        string `json:"user4,omitempty"`
 	Fingerprint_4 string `json:"fingerprint4,omitempty"`
 	Privkey_4     string `json:"privkey4,omitempty"`
-	Privkeypass_4 string `json:"privkeypass4,omitempty"`
 
 	Profile_5     string `json:"profile5,omitempty"`
 	Tenancy_5     string `json:"tenancy5,omitempty"`
@@ -157,7 +155,6 @@ type OCISecuredSettings struct {
 	User_5        string `json:"user5,omitempty"`
 	Fingerprint_5 string `json:"fingerprint5,omitempty"`
 	Privkey_5     string `json:"privkey5,omitempty"`
-	Privkeypass_5 string `json:"privkeypass5,omitempty"`
 }
 
 // Prepare format to decode SecureJson
@@ -346,13 +343,6 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	// log.DefaultLogger.Error(dat.Privkey_3)
 	// log.DefaultLogger.Error(dat.Privkey_4)
 	// log.DefaultLogger.Error(dat.Privkey_5)
-
-	// log.DefaultLogger.Error(dat.Privkeypass_0)
-	// log.DefaultLogger.Error(dat.Privkeypass_1)
-	// log.DefaultLogger.Error(dat.Privkeypass_2)
-	// log.DefaultLogger.Error(dat.Privkeypass_3)
-	// log.DefaultLogger.Error(dat.Privkeypass_4)
-	// log.DefaultLogger.Error(dat.Privkeypass_5)
 
 	if ts.Environment == "local" {
 		q, _ = OCILoadSettings(req)
@@ -1004,8 +994,7 @@ func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 				case "fingerprint":
 					q.fingerprint[key] = fmt.Sprintf("%v", value)
 				case "privkeypass":
-					alfa := fmt.Sprintf("%v", value)
-					q.privkeypass[key] = &alfa
+					q.privkeypass[key] = EmptyKeyPass
 				}
 			}
 		} else {

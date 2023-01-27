@@ -166,7 +166,7 @@ Repeat the process for the following OCI variables:
 | ---------------- | --------------------------------------------------------------------------------------------------- |
 | tenancy        | `tenancies()`                                                                                     |
 | region         | `regions($tenancy)`                                                                               |
-| compartment    | `compartments($tenancy,$region)`                                                                  |
+| compartment    | `compartments($tenancy)`                                                                  |
 | namespace      | `namespaces($tenancy,$region,$compartment)`                                                       |
 | resourcegroup  | `resourcegroups($tenancy,$region, $compartment, $namespace)`                                      |
 | metric         | `metrics($tenancy,$region,$compartment, $namespace, $resourcegroup)`                              |
