@@ -69,7 +69,7 @@ In case plugin is configured to operate with multitenancy support, use the follo
 | ---------------- | --------------------------------------------------------------------------------------------------- |
 | tenancy        | `tenancies()`                                                                                     |
 | region         | `regions($tenancy)`                                                                               |
-| compartment    | `compartments($tenancy,$region)`                                                                  |
+| compartment    | `compartments($tenancy)`                                                                  |
 | namespace      | `namespaces($tenancy,$region,$compartment)`                                                       |
 | resourcegroup  | `resourcegroups($tenancy,$region, $compartment, $namespace)`                                      |
 | metric         | `metrics($tenancy,$region,$compartment, $namespace, $resourcegroup)`                              |

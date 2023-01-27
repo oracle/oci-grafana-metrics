@@ -435,7 +435,6 @@ export default class OCIDatasource {
       if (this.tenancymode === "multitenancy") {
         let target = {
           tenancy: removeQuotes(this.getVariableValue(compartmentQuery[1])),
-          region: removeQuotes(this.getVariableValue(compartmentQuery[2])),
         };       
         return this.getCompartments(target)
           .then((compartments) => {
@@ -646,10 +645,6 @@ export default class OCIDatasource {
         target.tenancy === SELECT_PLACEHOLDERS.TENANCY
           ? DEFAULT_TENANCY
           : this.getVariableValue(target.tenancy);
-    const region =
-      target.region === SELECT_PLACEHOLDERS.REGION
-        ? ""
-        : this.getVariableValue(target.region);
 
     return this.doRequest({
       targets: [
@@ -659,7 +654,6 @@ export default class OCIDatasource {
           datasourceId: this.id,
           tenancy: _.isEmpty(tenancy) ? "" : tenancy,
           queryType: "compartments",
-          region: _.isEmpty(region) ? this.defaultRegion : region,
         },
       ],
       range: this.timeSrv.timeRange(),
