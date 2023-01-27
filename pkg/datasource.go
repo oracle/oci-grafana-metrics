@@ -350,16 +350,12 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" {
-			var ociparsErr error
-			var tenancyErr error
 			if ts.Environment != "local" {
+				var ociparsErr error
 				return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
 			}
 			res := strings.Split(key, "/")
-			tenancyocid, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
-			if tenancyErr != nil {
-				return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
-			}
+			tenancyocid = q.tenancyocid[res[0]]
 			reg = common.StringToRegion(q.region[res[0]])
 		} else {
 			tenancyocid = q.tenancyocid["DEFAULT"]
