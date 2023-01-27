@@ -289,82 +289,27 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
-	var tenancyocid string
-	var q *OCIConfigFile
-	// var dat OCISecuredSettings
 	var reg common.Region
-
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	// decryptedJSONData := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
-	// transcode(decryptedJSONData, &dat)
-
-	// log.DefaultLogger.Error(dat.Tenancy_0)
-	// log.DefaultLogger.Error(dat.Tenancy_1)
-	// log.DefaultLogger.Error(dat.Tenancy_2)
-	// log.DefaultLogger.Error(dat.Tenancy_3)
-	// log.DefaultLogger.Error(dat.Tenancy_4)
-	// log.DefaultLogger.Error(dat.Tenancy_5)
-
-	// log.DefaultLogger.Error(dat.Region_0)
-	// log.DefaultLogger.Error(dat.Region_1)
-	// log.DefaultLogger.Error(dat.Region_2)
-	// log.DefaultLogger.Error(dat.Region_3)
-	// log.DefaultLogger.Error(dat.Region_4)
-	// log.DefaultLogger.Error(dat.Region_5)
-
-	// log.DefaultLogger.Error(dat.User_0)
-	// log.DefaultLogger.Error(dat.User_1)
-	// log.DefaultLogger.Error(dat.User_2)
-	// log.DefaultLogger.Error(dat.User_3)
-	// log.DefaultLogger.Error(dat.User_4)
-	// log.DefaultLogger.Error(dat.User_5)
-
-	// log.DefaultLogger.Error(dat.Profile_0)
-	// log.DefaultLogger.Error(dat.Profile_1)
-	// log.DefaultLogger.Error(dat.Profile_2)
-	// log.DefaultLogger.Error(dat.Profile_3)
-	// log.DefaultLogger.Error(dat.Profile_4)
-	// log.DefaultLogger.Error(dat.Profile_5)
-
-	// log.DefaultLogger.Error(dat.Fingerprint_0)
-	// log.DefaultLogger.Error(dat.Fingerprint_1)
-	// log.DefaultLogger.Error(dat.Fingerprint_2)
-	// log.DefaultLogger.Error(dat.Fingerprint_3)
-	// log.DefaultLogger.Error(dat.Fingerprint_4)
-	// log.DefaultLogger.Error(dat.Fingerprint_5)
-
-	// log.DefaultLogger.Error(dat.Privkey_0)
-	// log.DefaultLogger.Error(dat.Privkey_1)
-	// log.DefaultLogger.Error(dat.Privkey_2)
-	// log.DefaultLogger.Error(dat.Privkey_3)
-	// log.DefaultLogger.Error(dat.Privkey_4)
-	// log.DefaultLogger.Error(dat.Privkey_5)
-
-	if ts.Environment == "local" {
-		q, _ = OCILoadSettings(req)
-	}
-
 	for key, _ := range o.tenancyAccess {
-		if ts.TenancyMode == "multitenancy" {
+		if ts.TenancyMode == "multitenancy" && ts.Environment != "local" {
 			var ociparsErr error
-			var tenancyErr error
-			if ts.Environment != "local" {
-				return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
-			}
-			res := strings.Split(key, "/")
-			tenancyocid, tenancyErr = o.tenancyAccess[key].config.TenancyOCID()
-			if tenancyErr != nil {
-				return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
-			}
-			reg = common.StringToRegion(q.region[res[0]])
-		} else {
-			tenancyocid = q.tenancyocid["DEFAULT"]
-			reg = common.StringToRegion(q.region["DEFAULT"])
+			return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
 		}
+		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
+		if tenancyErr != nil {
+			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+		}
+		regio, regErr := o.tenancyAccess[key].config.Region()
+		if regErr != nil {
+			return nil, errors.Wrap(regErr, "error fetching TenancyOCID")
+		}
+		reg = common.StringToRegion(regio)
+
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: common.String(tenancyocid),
 		}
@@ -575,7 +520,7 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	}
 
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-		m, err := o.getCompartments(ctx, tenancyocid, takey)
+		m, err := o.getCompartments(ctx, tenancyocid, ts.Region, takey)
 		if err != nil {
 			o.logger.Error("Unable to refresh cache")
 			return nil, err
@@ -600,10 +545,13 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 	}, nil
 }
 
-func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment string, takey string) (map[string]string, error) {
+func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment string, region string, takey string) (map[string]string, error) {
 	m := make(map[string]string)
 
 	tenancyOcid := rootCompartment
+
+	reg := common.StringToRegion(region)
+	o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
 
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
 
@@ -949,11 +897,11 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
 
-	k := 0
+	TenancySettingsBlock := 0
 	var dat OCISecuredSettings
 
 	if err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &dat); err != nil {
-		return q, fmt.Errorf("can not read settings: %s", err.Error())
+		return nil, fmt.Errorf("can not read settings: %s", err.Error())
 	}
 
 	// password, ok := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["password"]
@@ -967,13 +915,16 @@ func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 	typeOfS := v.Type()
 	var key string
 
-	for i := 0; i < v.NumField(); i++ {
-		splits := strings.Split(typeOfS.Field(i).Name, "_")
-		intVar, _ := strconv.Atoi(splits[1])
-		if intVar == k {
+	for FieldIndex := 0; FieldIndex < v.NumField(); FieldIndex++ {
+		splits := strings.Split(typeOfS.Field(FieldIndex).Name, "_")
+		SettingsBlockIndex, interr := strconv.Atoi(splits[1])
+		if interr != nil {
+			return nil, fmt.Errorf("can not read settings: %s", interr.Error())
+		}
+		if SettingsBlockIndex == TenancySettingsBlock {
 			if splits[0] == "Profile" {
-				if v.Field(i).Interface() != "" {
-					key = fmt.Sprintf("%v", v.Field(i).Interface())
+				if v.Field(FieldIndex).Interface() != "" {
+					key = fmt.Sprintf("%v", v.Field(FieldIndex).Interface())
 				} else {
 					return q, nil
 				}
@@ -981,7 +932,7 @@ func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 				log.DefaultLogger.Error(key)
 				log.DefaultLogger.Error(splits[0])
 
-				switch value := v.Field(i).Interface(); strings.ToLower(splits[0]) {
+				switch value := v.Field(FieldIndex).Interface(); strings.ToLower(splits[0]) {
 				case "tenancy":
 					q.tenancyocid[key] = fmt.Sprintf("%v", value)
 					log.DefaultLogger.Error(q.tenancyocid[key])
@@ -998,8 +949,8 @@ func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 				}
 			}
 		} else {
-			k++
-			i--
+			TenancySettingsBlock++
+			FieldIndex--
 		}
 	}
 	return q, nil
