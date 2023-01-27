@@ -945,11 +945,11 @@ func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.Quer
 func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
 
-	k := 0
+	TenancySettingsBlock := 0
 	var dat OCISecuredSettings
 
 	if err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &dat); err != nil {
-		return q, fmt.Errorf("can not read settings: %s", err.Error())
+		return nil, fmt.Errorf("can not read settings: %s", err.Error())
 	}
 
 	// password, ok := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["password"]
@@ -963,13 +963,16 @@ func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 	typeOfS := v.Type()
 	var key string
 
-	for i := 0; i < v.NumField(); i++ {
-		splits := strings.Split(typeOfS.Field(i).Name, "_")
-		intVar, _ := strconv.Atoi(splits[1])
-		if intVar == k {
+	for FieldIndex := 0; FieldIndex < v.NumField(); FieldIndex++ {
+		splits := strings.Split(typeOfS.Field(FieldIndex).Name, "_")
+		SettingsBlockIndex, interr := strconv.Atoi(splits[1])
+		if interr != nil {
+			return nil, fmt.Errorf("can not read settings: %s", interr.Error())
+		}
+		if SettingsBlockIndex == TenancySettingsBlock {
 			if splits[0] == "Profile" {
-				if v.Field(i).Interface() != "" {
-					key = fmt.Sprintf("%v", v.Field(i).Interface())
+				if v.Field(FieldIndex).Interface() != "" {
+					key = fmt.Sprintf("%v", v.Field(FieldIndex).Interface())
 				} else {
 					return q, nil
 				}
@@ -977,7 +980,7 @@ func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 				log.DefaultLogger.Error(key)
 				log.DefaultLogger.Error(splits[0])
 
-				switch value := v.Field(i).Interface(); strings.ToLower(splits[0]) {
+				switch value := v.Field(FieldIndex).Interface(); strings.ToLower(splits[0]) {
 				case "tenancy":
 					q.tenancyocid[key] = fmt.Sprintf("%v", value)
 					log.DefaultLogger.Error(q.tenancyocid[key])
@@ -994,8 +997,8 @@ func OCILoadSettings(req *backend.QueryDataRequest) (*OCIConfigFile, error) {
 				}
 			}
 		} else {
-			k++
-			i--
+			TenancySettingsBlock++
+			FieldIndex--
 		}
 	}
 	return q, nil
