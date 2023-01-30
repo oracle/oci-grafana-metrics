@@ -224,35 +224,13 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	switch environment {
 	case "local":
 		q, _ := OCILoadSettings(req)
-		if tenancymode == "multitenancy" {
-			for key, _ := range q.tenancyocid {
-				var configProvider common.ConfigurationProvider
-				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
-				// configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
-				metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
-				if err != nil {
-					o.logger.Error("Error with config:" + key)
-					return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
-				}
-				identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
-				if err != nil {
-					o.logger.Error("Error creating identity client", "error", err)
-					return errors.Wrap(err, "Error creating identity client")
-				}
-				tenancyocid, err := configProvider.TenancyOCID()
-				if err != nil {
-					return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
-				}
-				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
-			}
-			return nil
-		} else {
+		for key, _ := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
-			// configProvider = common.CustomProfileConfigProvider(oci_config_file, "DEFAULT")
-			configProvider = common.NewRawConfigurationProvider(q.tenancyocid["DEFAULT"], q.user["DEFAULT"], q.region["DEFAULT"], q.fingerprint["DEFAULT"], q.privkey["DEFAULT"], q.privkeypass["DEFAULT"])
+			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+			// configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
-				o.logger.Error("Error with config:" + SingleTenancyKey)
+				o.logger.Error("Error with config:" + key)
 				return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
 			}
 			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
@@ -260,9 +238,18 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				o.logger.Error("Error creating identity client", "error", err)
 				return errors.Wrap(err, "Error creating identity client")
 			}
-			o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
-			return nil
+			tenancyocid, err := configProvider.TenancyOCID()
+			if err != nil {
+				return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
+			}
+			if tenancymode == "multitenancy" {
+				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
+			} else {
+				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+			}
 		}
+		return nil
+
 	case "OCI Instance":
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
