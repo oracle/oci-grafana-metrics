@@ -181,10 +181,6 @@ The final list of variables should look like this:
 
 ![Metrics dashboard variables screenshot](images/MultiTenancyVarSetup.png)
 
-For these variables to be available dynamically changed in your query with the multitenancy support, it is important to choose the **region** before the **tenancy** and then proceed with the other variables, **compartment**, **namespace**, and **metric** as seen in the image below.
-
-![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screenshot_20221212_115734.png)
-
 For windows and resolution,
 
 You can use a custom or constant variable.

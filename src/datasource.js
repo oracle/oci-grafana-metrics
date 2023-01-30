@@ -653,7 +653,6 @@ export default class OCIDatasource {
           tenancymode: this.tenancymode,
           datasourceId: this.id,
           tenancy: _.isEmpty(tenancy) ? "" : tenancy,
-          region: _.isEmpty(region) ? this.defaultRegion : region,
           queryType: "compartments",
         },
       ],
