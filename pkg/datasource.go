@@ -223,7 +223,11 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req *backend.QueryDataRequest) error {
 	switch environment {
 	case "local":
-		q, _ := OCILoadSettings(req)
+		q, err := OCILoadSettings(req)
+		if err != nil {
+			o.logger.Error("Error Loading config settings", "error", err)
+			return errors.Wrap(err, "Error Loading config settings")
+		}
 		for key, _ := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
