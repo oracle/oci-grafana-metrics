@@ -519,8 +519,13 @@ func (o *OCIDatasource) compartmentsResponse(ctx context.Context, req *backend.Q
 		}
 	}
 
+	regio, regErr := o.tenancyAccess[takey].config.Region()
+	if regErr != nil {
+		return nil, errors.Wrap(regErr, "error fetching TenancyOCID")
+	}
+
 	if o.timeCacheUpdated.IsZero() || time.Now().Sub(o.timeCacheUpdated) > cacheRefreshTime {
-		m, err := o.getCompartments(ctx, tenancyocid, ts.Region, takey)
+		m, err := o.getCompartments(ctx, tenancyocid, regio, takey)
 		if err != nil {
 			o.logger.Error("Unable to refresh cache")
 			return nil, err
