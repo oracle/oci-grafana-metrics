@@ -13,6 +13,7 @@ func main() {
 	log.DefaultLogger.Debug("Running GRPC server")
 
 	if err := datasource.Manage("myorgid-simple-backend-datasource", NewOCIDatasource, datasource.ManageOpts{}); err != nil {
+		log.DefaultLogger.Error("Errore nel plugingo")
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

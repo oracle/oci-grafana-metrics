@@ -90,13 +90,17 @@ func NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Inst
 
 	o.logger.Debug(ts.Environment)
 	o.logger.Debug(ts.TenancyMode)
+	if len(o.tenancyAccess) == 0 {
+		o.logger.Debug("vuoto")
+	} else {
+		o.logger.Debug("Pieno")
+	}
 
 	// return &OCIDatasource{
 	// 	tenancyAccess: make(map[string]*TenancyAccess),
 	// 	logger:        log.DefaultLogger,
 	// 	nameToOCID:    make(map[string]string),
 	// }, nil
-
 	return &o, nil
 }
 
@@ -198,6 +202,7 @@ func transcode(in, out interface{}) {
 
 // Query - Determine what kind of query we're making
 func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	log.DefaultLogger.Error("QueryData Checkpoin 0")
 	var ts GrafanaCommonRequest
 	var takey string
 
@@ -284,6 +289,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
 			}
 		}
+		o.logger.Debug("checkpint 1 getConfigProvider " + environment)
 		return nil
 
 	case "OCI Instance":
