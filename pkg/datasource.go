@@ -101,7 +101,7 @@ func NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Inst
 	// 	logger:        log.DefaultLogger,
 	// 	nameToOCID:    make(map[string]string),
 	// }, nil
-	return &o, nil
+	return o, nil
 }
 
 type OCIConfigFile struct {
