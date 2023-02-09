@@ -17,4 +17,5 @@ func main() {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}
+	log.DefaultLogger.Error("plugingo OK")
 }
