@@ -59,13 +59,27 @@ func NewOCIConfigFile() *OCIConfigFile {
 	}
 }
 
-// NewOCIDatasource - constructor
-func (o *OCIDatasource) NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	var ts GrafanaCommonRequest
+// NewOCIDatasourceConstructor - constructor
+func NewOCIDatasourceConstructor() *OCIDatasource {
+	return &OCIDatasource{
+		tenancyAccess: make(map[string]*TenancyAccess),
+		logger:        log.DefaultLogger,
+		nameToOCID:    make(map[string]string),
+	}
+}
 
-	o.logger.Debug("NewOCIDatasource")
-	o.logger.Debug(ts.Environment)
-	o.logger.Debug(ts.TenancyMode)
+func NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	var ts GrafanaCommonRequest
+	log.DefaultLogger.Error("NewOCIDatasource")
+
+	o := NewOCIDatasourceConstructor()
+
+	if err := json.Unmarshal(req.JSONData, &ts); err != nil {
+		return nil, fmt.Errorf("can not read settings: %s", err.Error())
+	}
+
+	o.logger.Debug("check1 " + ts.Environment)
+	o.logger.Debug("check1 " + ts.TenancyMode)
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
@@ -73,11 +87,17 @@ func (o *OCIDatasource) NewOCIDatasource(req backend.DataSourceInstanceSettings)
 			return nil, errors.Wrap(err, "broken environment")
 		}
 	}
-	return &OCIDatasource{
-		tenancyAccess: make(map[string]*TenancyAccess),
-		logger:        log.DefaultLogger,
-		nameToOCID:    make(map[string]string),
-	}, nil
+
+	o.logger.Debug(ts.Environment)
+	o.logger.Debug(ts.TenancyMode)
+
+	// return &OCIDatasource{
+	// 	tenancyAccess: make(map[string]*TenancyAccess),
+	// 	logger:        log.DefaultLogger,
+	// 	nameToOCID:    make(map[string]string),
+	// }, nil
+
+	return &o, nil
 }
 
 type OCIConfigFile struct {
