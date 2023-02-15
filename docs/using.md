@@ -56,11 +56,11 @@ In order to configure templating, click on the gear icon in the upper right corn
 
 ![Screen Shot 2019-01-11 at 3.10.49 PM](images/Screen%20Shot%202019-01-11%20at%203.10.49%20PM.png)
 
-In case plugin is configured to operate with multitenancy support, add the **tenancy** variable to this page. Give the variable the name `tenancy`, choose **OCI** from the list of data sources, and for **Query** enter `tenancies()`.
+### Templating in Single Tenancy Mode
 
-![Screen Shot 2019-01-11 at 3.10.49 PM](images/Screenshot_20221128_110557.png)
+If the datasource is configured in **single** tenancy mode then use the following setup:
 
-Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions()` (or `regions($tenancy)` in case pluging is configure in multitenancy mode). 
+Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions()`. 
 
 ![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
 
@@ -80,7 +80,33 @@ Repeat the process for the following OCI variables:
 | dimensionKey    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup)`                     |
 | dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
 
-In case plugin is configured to operate with multitenancy support, use the following OCI variables:
+All of the metrics plugin template variables only support a singleton value with the exception of the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
+
+The final list of variables should look like this: 
+
+![Metrics dashboard variables screenshot](images/metrics-dashboard-variables-screenshot.png)
+
+In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
+
+![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screen%20Shot%202019-01-11%20at%203.19.51%20PM.png)
+
+
+### Templating in Multi Tenancy Mode
+
+With the plugin configured to operate with multitenancy support, add the **tenancy** variable to this page. Give the variable the name `tenancy`, choose **OCI** from the list of data sources, and for **Query** enter `tenancies()`.
+
+![Screen Shot 2019-01-11 at 3.10.49 PM](images/Screenshot_20221128_110557.png)
+
+Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions($tenancy)`.
+
+![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
+
+The page will load a preview of values available for that variable. Scroll down and click **Add** to create a template variable for regions.
+
+![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
+
+Repeat the process for the following OCI variables:
+
 
 | Name           | Query                                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------------------- |
@@ -95,37 +121,24 @@ In case plugin is configured to operate with multitenancy support, use the follo
 
 In Multitenancy mode, it is recommended to click the 'save template variable state' radio button when saving a dashboard using template variables.
 
-All of the metrics plugin template variables only support a singleton value with the exception of the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
+All of the metrics plugin template variables only support a singleton value except the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
 
-The final list of variables should look like this: 
-
-![Metrics dashboard variables screenshot](images/metrics-dashboard-variables-screenshot.png)
-
-In case of multitenancy support, the final list of variables should look like the following:
+The final list of variables should look like this:
 
 ![Metrics dashboard variables screenshot](images/MultiTenancyVarSetup.png)
 
-In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
+### Windows and Resolution
 
-![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screen%20Shot%202019-01-11%20at%203.19.51%20PM.png)
-
-
-
-For windows and resolution,
-
-You can use a custom or constant variable. 
-To create a custom, select the variable type as custom.
+For windows and resolution, you can use a custom or constant variable. To create a custom, select the variable type as custom. 
 Label(appears as the display name of the variable selected)
   
-Custom variables provide the convenience of selecting a value
-out of many values. Try replicating the data in 
-the following screenshots for window and resolution.
+Custom variables provide the convenience of selecting a value out of many values. Try replicating the data in the following screenshots for window and resolution.
 
 Custom window variable 
 ![Custom variable for window](images/customWIndowVariableCreation.png)
 
 
-Custom reoslution variable
+Custom resolution variable
 ![Custom variable for resolution](images/customResolution%20variable%20creation.png)
 
 Choose the save button to save your dashboard ! DO NOT FORGET 
