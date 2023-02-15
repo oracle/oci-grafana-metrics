@@ -28,8 +28,12 @@ Make note of the region as you'll need it later to configure your OCI Metrics Gr
 To get the tenancy OCID, follow these steps:
 
 1. Log in to the OCI console.
-2. From the OCI menu, select **Identity** > **Tenancy Details** .
-3. The tenancy OCID is listed in the **Tenancy Information** section.
+2. From the OCI menu, click on your profile icon on top right:
+![OCI Administration](images/oci_administration.png)
+3. Click on Tenancy
+4. The tenancy OCID is listed in the **Tenancy Information** section.
+
+![OCI Tenancy](images/oci_tenancy.png)
 
 For details and reference, see: [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five)
 Make note of the tenancy OCID as you'll need it later to configure your OCI Metrics Grafana Data Source.
@@ -42,6 +46,8 @@ To get the user OCID, follow these steps:
 2. From the OCI menu, select **Identity** > **Users** .
 3. Click on the user you want to use with OCI Metrics Grafana Data Source.
 4. The user OCID is listed in the **User Details** section.
+
+![OCI User](images/oci_user.png)
 
 For details and reference, see: [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
 Make note of the user OCID as you'll need it later to configure your OCI Metrics Grafana Data Source.
@@ -56,6 +62,8 @@ To get the API key fingerprint, follow these steps:
 4. Click on the **API Keys** tab.
 5. The API key fingerprint is listed in the **Fingerprint** column.
 
+![OCI Fingerprint](images/oci_fingerprint.png)
+
 For details and reference, see: [How to Get the Key's Fingerprint](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#four)
 Make note of the API key fingerprint as you'll need it later to configure your OCI Metrics Grafana Data Source.
 
@@ -69,6 +77,8 @@ To get the private key, follow these steps:
 4. Click on the **API Keys** tab.
 5. Click on the **Actions** dropdown and select **Download** .
 6. Save the private key to a secure location on your computer.
+
+![OCI API Key](images/oci_apikey.png)
 
 For details on how to create and configure keys see [How to Generate an API Signing Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#two) and [How to Upload the Public Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#three).
 Make note of the private key file location as you'll need it later to configure your OCI Metrics Grafana Data Source
