@@ -8,13 +8,70 @@ This walkthrough is intended for use by people who would like to deploy Grafana 
 
 Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.com/iaas/Content/Monitoring/Concepts/monitoringoverview.htm) and that [metrics have been enabled](https://docs.cloud.oracle.com/iaas/Content/Compute/Tasks/enablingmonitoring.htm) for the resources you are trying to monitor.
 
-## Install the Oracle Cloud Infrastructure CLI
+## Getting OCI Configuration values
 
-The [Oracle Cloud Infrastructure CLI](https://docs.cloud.oracle.com/iaas/Content/API/Concepts/cliconcepts.htm) provides you with a way to perform tasks in OCI from your command line rather than the OCI Console. It does so by making REST calls to the [OCI APIs](https://docs.cloud.oracle.com/iaas/Content/API/Concepts/usingapi.htm). We will be using the CLI to authenticate between our local environment hosting Grafana and OCI in order to pull in metrics. The CLI is built on Python (version 2.7.5 or 3.5 or later), running on Mac, Windows, or Linux.
+To configure Terraform for OCI, you'll need to create a Terraform configuration file that specifies the necessary provider and resource settings.
 
-Begin by [installing the Oracle Cloud Infrastructure CLI](https://docs.cloud.oracle.com/iaas/Content/API/SDKDocs/cliinstall.htm). Follow the installation prompts to install the CLI on your local environment. After the installation is complete, use the `oci setup config` command to have the CLI walk you through the first-time setup process. If you haven't already uploaded your public API signing key through the console, follow the instructions [here](https://docs.us-phoenix-1.oraclecloud.com/Content/API/Concepts/apisigningkey.htm#How2) to do so.
+### Getting the Region
 
-After the CLI has been configured, move the `~/.oci` folder to `/usr/share/grafana` and then change ownership of the `/usr/share/grafana/.oci folder` to the “grafana” user: `sudo chown -R grafana:grafana /usr/share/grafana/.oci`. Update the `key_file` location in `/usr/share/grafana/.oci/config` to the current folder `/usr/share/grafana/.oci/your_key.pem`.
+To get the region for your OCI cloud, follow these steps:
+
+1. Log in to the OCI console.
+2. From the OCI menu, select the **Region** dropdown in the top right corner of the page.
+3. The region is listed next to **Home** .
+
+For details and reference, see: [Regions and Availability Domains](https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm#top)
+Make note of the region as you'll need it later to configure your OCI Metrics Grafana Data Source.
+
+### Getting the Tenancy OCID
+
+To get the tenancy OCID, follow these steps:
+
+1. Log in to the OCI console.
+2. From the OCI menu, select **Identity** > **Tenancy Details** .
+3. The tenancy OCID is listed in the **Tenancy Information** section.
+
+For details and reference, see: [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five)
+Make note of the tenancy OCID as you'll need it later to configure your OCI Metrics Grafana Data Source.
+
+### Getting the User OCID
+
+To get the user OCID, follow these steps:
+
+1. Log in to the OCI console.
+2. From the OCI menu, select **Identity** > **Users** .
+3. Click on the user you want to use with Terraform.
+4. The user OCID is listed in the **User Details** section.
+
+For details and reference, see: [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
+Make note of the user OCID as you'll need it later to configure your OCI Metrics Grafana Data Source.
+
+### Getting the API Key Fingerprint
+
+To get the API key fingerprint, follow these steps:
+
+1. Log in to the OCI console.
+2. From the OCI menu, select **Identity** > **Users** .
+3. Click on the user you want to use with Terraform.
+4. Click on the **API Keys** tab.
+5. The API key fingerprint is listed in the **Fingerprint** column.
+
+For details and reference, see: [How to Get the Key's Fingerprint](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#four)
+Make note of the API key fingerprint as you'll need it later to configure your OCI Metrics Grafana Data Source.
+
+##### Getting the Private Key
+
+To get the private key, follow these steps:
+
+1. Log in to the OCI console.
+2. From the OCI menu, select **Identity** > **Users** .
+3. Click on the user you want to use with Terraform.
+4. Click on the **API Keys** tab.
+5. Click on the **Actions** dropdown and select **Download** .
+6. Save the private key to a secure location on your computer.
+
+For details on how to create and configure keys see [How to Generate an API Signing Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#two) and [How to Upload the Public Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#three).
+Make note of the private key file location as you'll need it later to configure your OCI Metrics Grafana Data Source
 
 ## Configure OCI Identity Policies
 
@@ -37,7 +94,7 @@ To [install OCI Metrics Plugin](https://grafana.com/grafana/plugins/oci-metrics-
 grafana-cli plugins install oci-metrics-datasource
 ```
 
-**NOTE** Today the latest version of the plugin 3.x.x is available only with Grafana CLI. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
+**NOTE** Today the latest version of the plugin 4.x.x is available only with Grafana CLI. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
 
 The plugin will be installed into your Grafana plugins directory, which by default is located at /var/lib/grafana/plugins. [Here is more information on the CLI tool](http://docs.grafana.org/plugins/installation/).
 
@@ -84,20 +141,16 @@ For **Environment** choose **local** and then choose between **single** or **mul
 You can then choose between two different modes as **Tenancy mode**:
 
 * **single**: to use a single specific Tenancy
-* **multitenancy**: to use all the tenancies found in the OCI config file.
+* **multitenancy**: to use multiple tenancies
 
-aaaa
 If you selected **single** as **Tenancy mode** then fill in following credentials:
-*   `tenancy_ocid` - OCID of your tenancy. To get the value, see [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
-*   `user_ocid` - OCID of the user calling the API. To get the value, see [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
-*   `private_key` - The contents of the private key file. For details on how to create and configure keys see [How to Generate an API Signing Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#two) and [How to Upload the Public Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#three).
-*   `fingerprint` - Fingerprint for the key pair being used. To get the value, see [How to Get the Key's Fingerprint](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#four).
-*   `region` - An OCI region. See [Regions and Availability Domains](https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm#top).
-aaaa
+![Datasource Empty](images/datasource_conf_empty.png)
 
-![Screen Shot 2018-12-17 at 3.25.33 PM](images/Screenshot_20221206_094120.png)
-
-
+* `tenancy_ocid` - OCID of your tenancy. To get the value, see [**Getting OCI Configuration values**](#getting-the-tenancy-OCID).
+* `user_ocid` - OCID of the user calling the API. To get the value, see **Getting OCI Configuration values**.
+* `private_key` - The contents of the private key file. To get the value, see **Getting OCI Configuration values**.
+* `fingerprint` - Fingerprint for the key pair being used. To get the value, see **Getting OCI Configuration values**.
+* `region` - An OCI region. To get the value, see **Getting OCI Configuration values**.
 
 If you selected **multitenancy** as **Tenancy mode** then fill in your **Default Region**.
 
