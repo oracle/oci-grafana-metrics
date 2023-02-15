@@ -10,7 +10,7 @@ Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.
 
 ## Getting OCI Configuration values
 
-To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In casse you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](./migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported), please refer to the [**Local Installation (Linux) with multitenancy support**](./multitenancy.md) for further information.
+To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In casse you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](./migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported).
 
 ### Getting the Region
 
@@ -162,6 +162,16 @@ Click **Save & Test** to return to the home dashboard.
 
 
 ### Configure Plugin in Multi Tenancy Mode
+If you selected **multi** as **Tenancy mode** then fill in following credentials for **each Tenancy you want to configure (up to 5 additional tenancies)**:
+
+* `Profile Name` - A user defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
+* `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
+* `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
+* `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
+* `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
+* `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
+
+Click **Save & Test** to return to the home dashboard.
 
 
 ## Next Steps
