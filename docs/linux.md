@@ -10,7 +10,7 @@ Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.
 
 ## Getting OCI Configuration values
 
-To configure Terraform for OCI, you'll need to create a Terraform configuration file that specifies the necessary provider and resource settings.
+To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In casse you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](./migration.md)
 
 ### Getting the Region
 
@@ -146,11 +146,11 @@ You can then choose between two different modes as **Tenancy mode**:
 If you selected **single** as **Tenancy mode** then fill in following credentials:
 ![Datasource Empty](images/datasource_conf_empty.png)
 
-* `tenancy_ocid` - OCID of your tenancy. To get the value, see [**Getting OCI Configuration values**](#getting-the-tenancy-OCID).
-* `user_ocid` - OCID of the user calling the API. To get the value, see **Getting OCI Configuration values**.
-* `private_key` - The contents of the private key file. To get the value, see **Getting OCI Configuration values**.
-* `fingerprint` - Fingerprint for the key pair being used. To get the value, see **Getting OCI Configuration values**.
-* `region` - An OCI region. To get the value, see **Getting OCI Configuration values**.
+* `tenancy_ocid` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
+* `user_ocid` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).
+* `private_key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
+* `fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
+* `region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
 
 If you selected **multitenancy** as **Tenancy mode** then fill in your **Default Region**.
 
