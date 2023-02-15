@@ -24,9 +24,14 @@ Before starting the migration process, please make sure you have the following:
 2. Locate the OCI Metrics data source where you want to update the settings and click on the "Edit" button. Configuration parameters will look like the following:
 ![Datasource Empty](images/datasource_conf_empty.png)
 3. Choose `local`as `Environment` and `single` as `Tenancy Mode`
-4. In the data source settings page, look for the fields corresponding to the variables that need to be updated (settings `User OCID`,`Tenancy OCID`, `Fingerprint`,`Region`) and update them with content of variables `user`,`tenancy`,`fingerprint`,`region` from the `.oci/config` file respectively. Please note, Region will be selected using drop down menu and `Profile Name` will be set automatically to DEFAULT (non editable field in single tenancy mode).
-5. Locate the field for the ID key and update it with the contents of the file stored at the path specified in the `key_file` variable.
-6. Save the changes to the data source settings. Configuration parameters will look then like the following:
+4. Fill in the following:
+   * `Profile Name` - A user defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
+   * `Region` - An OCI region. Update it with content of variables `region` from the `.oci/config` file.
+   * `User OCID` - OCID of the user calling the API. Update it with content of variables `user` from the `.oci/config` file.
+   * `Tenancy OCID` - OCID of your tenancy. Update it with content of variables `tenancy`from the `.oci/config` from the `.oci/config` file.
+   * `Fingerprint` - Fingerprint for the key pair being used. Update it with content of variables `fingerprint` from the `.oci/config` file.
+   * `Private Key` - The contents of the private key file. Update it with the contents of the file stored at the path specified in the `key_file` variable in `.oci/config` file.
+5. Save the changes to the data source settings. Configuration parameters will look then like the following:
 ![Datasource Filled](images/datasource_conf_filled.png)
 
 

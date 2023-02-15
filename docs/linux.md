@@ -29,7 +29,9 @@ To get the tenancy OCID, follow these steps:
 
 1. Log in to the OCI console.
 2. From the OCI menu, click on your profile icon on top right:
+
 ![OCI Administration](images/oci_administration.png)
+
 3. Click on Tenancy
 4. The tenancy OCID is listed in the **Tenancy Information** section.
 
@@ -174,9 +176,9 @@ Click **Save & Test** to return to the home dashboard.
 ### Configure Plugin in Multi Tenancy Mode
 If you selected **multi** as **Tenancy mode** then fill in following credentials for **each Tenancy you want to configure (up to 5 additional tenancies)**:
 
-* `Profile Name` - A user defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
+* `Profile Name` - A user defined name for this profile. The first Tenancy is automatically set to **DEFAULT** and cannot be modified. You need to specify a custom and unique Profile name for each of the additional tenancies.
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
-* `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
+* `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
