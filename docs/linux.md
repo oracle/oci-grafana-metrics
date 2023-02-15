@@ -10,7 +10,7 @@ Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.
 
 ## Getting OCI Configuration values
 
-To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In casse you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](./migration.md)
+To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In casse you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](./migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported), please refer to the [**Local Installation (Linux) with multitenancy support**](./multitenancy.md) for further information.
 
 ### Getting the Region
 
@@ -40,7 +40,7 @@ To get the user OCID, follow these steps:
 
 1. Log in to the OCI console.
 2. From the OCI menu, select **Identity** > **Users** .
-3. Click on the user you want to use with Terraform.
+3. Click on the user you want to use with OCI Metrics Grafana Data Source.
 4. The user OCID is listed in the **User Details** section.
 
 For details and reference, see: [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
@@ -52,20 +52,20 @@ To get the API key fingerprint, follow these steps:
 
 1. Log in to the OCI console.
 2. From the OCI menu, select **Identity** > **Users** .
-3. Click on the user you want to use with Terraform.
+3. Click on the user you want to use with OCI Metrics Grafana Data Source.
 4. Click on the **API Keys** tab.
 5. The API key fingerprint is listed in the **Fingerprint** column.
 
 For details and reference, see: [How to Get the Key's Fingerprint](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#four)
 Make note of the API key fingerprint as you'll need it later to configure your OCI Metrics Grafana Data Source.
 
-##### Getting the Private Key
+#### Getting the Private Key
 
 To get the private key, follow these steps:
 
 1. Log in to the OCI console.
 2. From the OCI menu, select **Identity** > **Users** .
-3. Click on the user you want to use with Terraform.
+3. Click on the user you want to use with OCI Metrics Grafana Data Source.
 4. Click on the **API Keys** tab.
 5. Click on the **Actions** dropdown and select **Download** .
 6. Save the private key to a secure location on your computer.
@@ -137,26 +137,32 @@ Choose **oracle-oci-datasource** as your data source type.
 
 ![Screen Shot 2018-12-17 at 3.24.24 PM](images/Screen%20Shot%202018-12-17%20at%203.24.17%20PM.png)
 
+This Configuration screen will appear:
+![Datasource Empty](images/datasource_conf_empty.png)
+
 For **Environment** choose **local** and then choose between **single** or **multitenancy** as **Tenancy mode**.
 You can then choose between two different modes as **Tenancy mode**:
 
 * **single**: to use a single specific Tenancy
 * **multitenancy**: to use multiple tenancies
 
+### Configure Plugin in Single Tenancy Mode
 If you selected **single** as **Tenancy mode** then fill in following credentials:
-![Datasource Empty](images/datasource_conf_empty.png)
 
-* `tenancy_ocid` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
-* `user_ocid` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).
-* `private_key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
-* `fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
-* `region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
-
-If you selected **multitenancy** as **Tenancy mode** then fill in your **Default Region**.
-
-![Screen Shot 2018-12-17 at 3.25.33 PM](images/Screenshot_20221206_094042.png)
+* `Profile Name` - A user defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
+* `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
+* `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
+* `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
+* `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
+* `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
 
 Click **Save & Test** to return to the home dashboard.
+
+![Datasource Filled](images/datasource_conf_filled.png)
+
+
+### Configure Plugin in Multi Tenancy Mode
+
 
 ## Next Steps
 
