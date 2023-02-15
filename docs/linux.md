@@ -150,6 +150,7 @@ Choose **oracle-oci-datasource** as your data source type.
 ![Screen Shot 2018-12-17 at 3.24.24 PM](images/Screen%20Shot%202018-12-17%20at%203.24.17%20PM.png)
 
 This Configuration screen will appear:
+
 ![Datasource Empty](images/datasource_conf_empty.png)
 
 For **Environment** choose **local** and then choose between **single** or **multitenancy** as **Tenancy mode**.
@@ -168,9 +169,11 @@ If you selected **single** as **Tenancy mode** then fill in following credential
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
 
-Click **Save & Test** to return to the home dashboard.
+Configured data source will look like the following:
 
 ![Datasource Filled](images/datasource_conf_filled.png)
+
+Click **Save & Test** to return to the home dashboard.
 
 
 ### Configure Plugin in Multi Tenancy Mode
@@ -182,6 +185,10 @@ If you selected **multi** as **Tenancy mode** then fill in following credentials
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
+
+Configured data source will look like the following:
+
+![Datasource Filled](images/multitenancy_configured.png)
 
 Click **Save & Test** to return to the home dashboard.
 
