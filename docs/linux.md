@@ -10,7 +10,7 @@ Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.
 
 ## Getting OCI Configuration values
 
-To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In casse you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](./migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported).
+To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In case you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported).
 
 ### Getting the Region
 
@@ -185,6 +185,8 @@ If you selected **multi** as **Tenancy mode** then fill in following credentials
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
+
+By default if you selected **multi** as **Tenancy mode** you can configure one DEFAULT tenancy and an additional one. You may add others tenancy **(up to 5 additional tenancies)** using the **Add another Tenancy** thick button.
 
 Configured data source will look like the following:
 
