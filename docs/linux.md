@@ -194,6 +194,11 @@ Configured data source will look like the following:
 
 Click **Save & Test** to return to the home dashboard.
 
+After the initial configuration, you can modify the datasource adding a new tenancy clicking on the **Add another Tenancy** thick button and filling the additional credentials. You can also disable a configured Tenancy leaving ampty the **Profile Name** as in this screenshot:
+
+![Tenancy Disabled](images/multi_disable.png)
+
+
 
 ## Next Steps
 
