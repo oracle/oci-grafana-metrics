@@ -10,7 +10,7 @@ Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.
 
 ## Getting OCI Configuration values
 
-To configure OCI Metrics Grafana Data Source, you'll need get the necessary provider and resource settings. In case you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported).
+To configure OCI Metrics Grafana Data Source, you'll need to get the necessary provider and resource settings. In case you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported).
 
 ### Getting the Region
 
@@ -18,7 +18,7 @@ To get the region for your OCI cloud, follow these steps:
 
 1. Log in to the OCI console.
 2. From the OCI menu, select the **Region** dropdown in the top right corner of the page.
-3. The region is listed next to **Home** .
+3. The region is listed next to **Home**.
 
 For details and reference, see: [Regions and Availability Domains](https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm#top)
 Make note of the region as you'll need it later to configure your OCI Metrics Grafana Data Source.
@@ -28,7 +28,7 @@ Make note of the region as you'll need it later to configure your OCI Metrics Gr
 To get the tenancy OCID, follow these steps:
 
 1. Log in to the OCI console.
-2. From the OCI menu, click on your profile icon on top right:
+2. From the OCI menu, click on your profile icon on the top right:
 
 ![OCI Administration](images/oci_administration.png)
 
@@ -45,7 +45,7 @@ Make note of the tenancy OCID as you'll need it later to configure your OCI Metr
 To get the user OCID, follow these steps:
 
 1. Log in to the OCI console.
-2. From the OCI menu, select **Identity** > **Users** .
+2. From the OCI menu, select **Identity** > **Users**.
 3. Click on the user you want to use with OCI Metrics Grafana Data Source.
 4. The user OCID is listed in the **User Details** section.
 
@@ -59,7 +59,7 @@ Make note of the user OCID as you'll need it later to configure your OCI Metrics
 To get the API key fingerprint, follow these steps:
 
 1. Log in to the OCI console.
-2. From the OCI menu, select **Identity** > **Users** .
+2. From the OCI menu, select **Identity** > **Users**.
 3. Click on the user you want to use with OCI Metrics Grafana Data Source.
 4. Click on the **API Keys** tab.
 5. The API key fingerprint is listed in the **Fingerprint** column.
@@ -74,7 +74,7 @@ Make note of the API key fingerprint as you'll need it later to configure your O
 To get the private key, follow these steps:
 
 1. Log in to the OCI console.
-2. From the OCI menu, select **Identity** > **Users** .
+2. From the OCI menu, select **Identity** > **Users**.
 3. Click on the user you want to use with OCI Metrics Grafana Data Source.
 4. Click on the **API Keys** tab.
 5. Click on the **Actions** dropdown and select **Download** .
@@ -106,7 +106,7 @@ To [install OCI Metrics Plugin](https://grafana.com/grafana/plugins/oci-metrics-
 grafana-cli plugins install oci-metrics-datasource
 ```
 
-**NOTE** Today the latest version of the plugin 4.x.x is available only with Grafana CLI. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
+**NOTE** Today the latest version of the plugin 4.x.x is available only with Grafana CLI. We will release its binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
 
 The plugin will be installed into your Grafana plugins directory, which by default is located at /var/lib/grafana/plugins. [Here is more information on the CLI tool](http://docs.grafana.org/plugins/installation/).
 
@@ -114,7 +114,7 @@ The plugin will be installed into your Grafana plugins directory, which by defau
 
 Alternatively, you can manually download the .tar file and unpack it into your /grafana/plugins directory. To do so, change to the Grafana plugins directory: `cd /usr/local/var/lib/grafana/plugins`. Download the OCI Grafana Plugin: wget `https://github.com/oracle/oci-grafana-plugin/releases/download/<v.version#>/plugin.tar`. Create a directory and install the plugin: `mkdir oci && tar -C oci -xvf plugin.tar` and then remove the tarball: `rm plugin.tar`.
 
-> **Additional step for Grafana 7**. Make sure plugin version is <= 2.2.4 . Open the grafana configuration  *grafana.ini* file and add the `allow_loading_unsigned_plugins = "oci-datasource"` in the *plugins* section.
+> **Additional step for Grafana 7**. Make sure the plugin version is <= 2.2.4. Open the grafana configuration  *grafana.ini* file and add the `allow_loading_unsigned_plugins = "oci-datasource"` in the *plugins* section.
 
 *Example*
 
@@ -160,41 +160,41 @@ You can then choose between two different modes as **Tenancy mode**:
 * **multitenancy**: to use multiple tenancies
 
 ### Configure Plugin in Single Tenancy Mode
-If you selected **single** as **Tenancy mode** then fill in following credentials:
+If you selected **single** as **Tenancy mode** then fill in the following credentials:
 
-* `Profile Name` - A user defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
+* `Profile Name` - A user-defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
 * `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
 
-Configured data source will look like the following:
+The configured data source will look like the following:
 
 ![Datasource Filled](images/datasource_conf_filled.png)
 
 Click **Save & Test** to return to the home dashboard.
 
 
-### Configure Plugin in Multi Tenancy Mode
-If you selected **multi** as **Tenancy mode** then fill in following credentials for **each Tenancy you want to configure (up to 5 additional tenancies)**:
+### Configure Plugin in Multi-Tenancy Mode
+If you selected **multi** as **Tenancy mode** then fill in the following credentials for **each Tenancy you want to configure (up to 5 additional tenancies)**:
 
-* `Profile Name` - A user defined name for this profile. The first Tenancy is automatically set to **DEFAULT** and cannot be modified. You need to specify a custom and unique Profile name for each of the additional tenancies.
+* `Profile Name` - A user-defined name for this profile. The first Tenancy is automatically set to **DEFAULT** and cannot be modified. You need to specify a custom and unique Profile name for each of the additional tenancies.
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
 * `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
 
-By default if you selected **multi** as **Tenancy mode** you can configure one DEFAULT tenancy and an additional one. You may add others tenancy **(up to 5 additional tenancies)** using the **Add another Tenancy** checkbox.
+By default, if you selected **multi** as **Tenancy mode** you can configure one DEFAULT tenancy and an additional one. You may add others tenancy **(up to 5 additional tenancies)** using the **Add another Tenancy** checkbox.
 
-Configured data source will look like the following:
+The configured data source will look like the following:
 
 ![Datasource Filled](images/multitenancy_configured.png)
 
 Click **Save & Test** to return to the home dashboard.
 
-After the initial configuration, you can modify the datasource adding a new tenancy clicking on the **Add another Tenancy** checkbox and filling the additional credentials. You can also disable a configured Tenancy leaving ampty the **Profile Name** as in this screenshot:
+After the initial configuration, you can modify the datasource by adding a new tenancy by clicking on the **Add another Tenancy** checkbox and filling in the additional credentials. You can also disable a configured Tenancy leaving ampty the **Profile Name** as in this screenshot:
 
 ![Tenancy Disabled](images/multi_disable.png)
 
