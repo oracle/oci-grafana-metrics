@@ -186,7 +186,7 @@ If you selected **multi** as **Tenancy mode** then fill in following credentials
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
 
-By default if you selected **multi** as **Tenancy mode** you can configure one DEFAULT tenancy and an additional one. You may add others tenancy **(up to 5 additional tenancies)** using the **Add another Tenancy** thick button.
+By default if you selected **multi** as **Tenancy mode** you can configure one DEFAULT tenancy and an additional one. You may add others tenancy **(up to 5 additional tenancies)** using the **Add another Tenancy** checkbox.
 
 Configured data source will look like the following:
 
@@ -194,7 +194,7 @@ Configured data source will look like the following:
 
 Click **Save & Test** to return to the home dashboard.
 
-After the initial configuration, you can modify the datasource adding a new tenancy clicking on the **Add another Tenancy** thick button and filling the additional credentials. You can also disable a configured Tenancy leaving ampty the **Profile Name** as in this screenshot:
+After the initial configuration, you can modify the datasource adding a new tenancy clicking on the **Add another Tenancy** checkbox and filling the additional credentials. You can also disable a configured Tenancy leaving ampty the **Profile Name** as in this screenshot:
 
 ![Tenancy Disabled](images/multi_disable.png)
 
