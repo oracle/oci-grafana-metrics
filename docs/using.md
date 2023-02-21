@@ -4,7 +4,7 @@ Here are a few tools for you to explore after installing and configuring the Ora
 
 ## Multitenancy support
 
-This version of the OCI plugin includes the multitenancy support. That means that the plugin is able to query different tenancies as they are configured in the .oci/config file. Instance principals are not yet supported to operate in multitenancy mode.
+This version of the OCI plugin includes multitenancy support. That means that the plugin is able to query different tenancies as they are configured in the .oci/config file. Instance principals are not yet supported to operate in multitenancy mode.
 For existing grafana dashboards created with the legacy single tenancy plugin datasource configuration, retro compatibility is supported under the following schema:
 
 
@@ -15,7 +15,7 @@ For existing grafana dashboards created with the legacy single tenancy plugin da
 | New Plugin release with multitenancy Datasource   | Dashboard should be modified selecting the tenancy             | Dashboard should be modified selecting the tenancy                |
 
 
-In general Dashboard does not require to be modified if the dashboard will continue to use the datasource with which it was created and in case it will use a datasource configured in single tenancy mode. If the legacy dashboard will be imported into a multitenancy configured datasource, then the dashboard needs to be modified, including the tenancy to be used, and then saved, as in the following example:
+In general, Dashboard does not require to be modified if the dashboard will continue to use the datasource with which it was created and in case it will use a datasource configured in single tenancy mode. If the legacy dashboard will be imported into a multitenancy configured datasource, then the dashboard needs to be modified, including the tenancy to be used, and then saved, as in the following example:
 
 ![Tenancy selector](images/Screenshot_20221212_130543.png)
 
@@ -44,7 +44,7 @@ If you are using a Data Source configured in **multitenancy** mode then choose t
 
 Click the save icon to save your graph.
 
-At this stage, if the **metrics** pull down menu is not properly populating with options, you may need to navigate back to the OCI console add an additional matching rule to your Dynamic Group stating: `matching_rule = “ANY {instance.compartment.id = ‘${var.compartment_ocid}’}”`. After doing so, restart the Grafana server as the **sudo** user run `systemctl restart grafana-server` and reload the Grafana console. 
+At this stage, if the **metrics** pull-down menu is not properly populating with options, you may need to navigate back to the OCI console and add an additional matching rule to your Dynamic Group stating: `matching_rule = “ANY {instance.compartment.id = ‘${var.compartment_ocid}’}”`. After doing so, restart the Grafana server as the **sudo** user run `systemctl restart grafana-server` and reload the Grafana console. 
 
 ## Templating 
 
@@ -64,7 +64,7 @@ Add the **region** variable to this page. Give the variable the name `region`, c
 
 ![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
 
-The page will load a preview of values  available for that variable. Scroll down and click **Add** to create a template variable for regions. 
+The page will load a preview of values available for that variable. Scroll down and click **Add** to create a template variable for regions. 
 
 ![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
 
@@ -86,12 +86,12 @@ The final list of variables should look like this:
 
 ![Metrics dashboard variables screenshot](images/metrics-dashboard-variables-screenshot.png)
 
-In order for these variables be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
+In order for these variables to be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
 
 ![Screen Shot 2019-01-11 at 3.19.51 PM](images/Screen%20Shot%202019-01-11%20at%203.19.51%20PM.png)
 
 
-### Templating in Multi Tenancy Mode
+### Templating in Multi-Tenancy Mode
 
 With the plugin configured to operate with multitenancy support, add the **tenancy** variable to this page. Give the variable the name `tenancy`, choose **OCI** from the list of data sources, and for **Query** enter `tenancies()`.
 
@@ -141,17 +141,17 @@ Custom window variable
 Custom resolution variable
 ![Custom variable for resolution](images/customResolution%20variable%20creation.png)
 
-Choose the save button to save your dashboard ! DO NOT FORGET 
+Choose the save button to save your dashboard! DO NOT FORGET 
 
 
 
-Now, on the top of panel, you would see windowLabel and resolutionLabel
+Now, on the top of the panel, you would see windowLabel and resolutionLabel
 You can select the value for the variables from here  and use them in
 the dropdowns window and resolution  below the panel
 
 ![Custom variable window dropdown](images/WithCustomDropDown.png)
 
-In case plugin is configured to operate with multitenancy support, please make sure you are selecting **region** before **tenancy** and all the other dropdowns.
+In case the plugin is configured to operate with multitenancy support, please make sure you are selecting **region** before **tenancy** and all the other dropdowns.
  
 
 ### Dimensions
@@ -171,7 +171,7 @@ When the metric plugin performs a query defined in a data panel, the query resul
 
 where each of these placeholders is replaced by the relevant metric name and dimension values for a given metric. This label is what is shown in the panel legend to distinguish each metric. Metric dimensions that contain a resource OCID, either the ID of the resource with which the metric is associated or an OCI resource related to the resource with which the metric is associated, contain the full resource OCID.
 
-Many OCI metrics have quite a few dimensions, as a result the default label in a data panel legend for such metrics may be quite long. The metrics plugin provides a means for you to customize the presentation of metrics labels in a data panel legend via the **Legend Format** field in the metrics query editor as shown in the following image.
+Many OCI metrics have quite a few dimensions, as a result, the default label in a data panel legend for such metrics may be quite long. The metrics plugin provides a means for you to customize the presentation of metrics labels in a data panel legend via the **Legend Format** field in the metrics query editor as shown in the following image.
 
 ![Explore Metrics Query Editor](images/MetricsPlugin-ExploreMetricsQueryEditor-Screenshot.png)
 
@@ -182,7 +182,7 @@ The Legend Format field for a metrics query can contain any literal text sequenc
 | {{metric}}        | The name of metric	                            |
 | {{dimensionName}} | The value of the specified metric dimension name  |
 
-When the Legend Format field contains a defined format, the metrics plugin will generate a label for each metric that follows the defind format where each of the referenced placeholders is replaced by the relevant value for the metric. Any placeholders (or other text) in the legend format that do not line up with one of these placeholders will be unchanged. Note that placeholder labels are treated as case sensitive.
+When the Legend Format field contains a defined format, the metrics plugin will generate a label for each metric that follows the defined format where each of the referenced placeholders is replaced by the relevant value for the metric. Any placeholders (or other text) in the legend format that do not line up with one of these placeholders will be unchanged. Note that placeholder labels are treated as case sensitive.
 
 Examples of custom legend formats that could be defined for metrics associated with OCI resources include:
 
@@ -219,14 +219,14 @@ For now, only the following fields can be updated in the query editor mode,
 2. Window
 3. Aggregation 
 
-All other fields must be selected using the drop downs.
+All other fields must be selected using the drop-downs.
 Use the pencil icon to toggle the editor mode.
 
 Example:
 Try pasting this ```AllRequests[1m].max()```
 
-[1m] represents the value of window. Similarly, the value can be set to 2m, 3m , 1h etc
-where the 1st part reprsents a number the second part represents the time denomination. 
+[1m] represents the value of the window. Similarly, the value can be set to 2m, 3m, 1h, etc
+where the 1st part represents a number and the second part represents the time denomination. 
 
 
 
@@ -236,7 +236,7 @@ where the 1st part reprsents a number the second part represents the time denomi
 | m          |  minute                                                           |
 | h          |  hour                                                           |
 
-Note : Only lower cases are allowed for the above
+Note: Only lower cases are allowed for the above
 
 
 
@@ -246,7 +246,7 @@ Variables can be used for window selection ```AllRequests[$window].max()```
 
 Query with 'auto'.
 
-Auto can be used to select the window automatically depending upon the time range ,
+Auto can be used to select the window automatically depending upon the time range,
 selected. ```AllRequests[auto].count()```
 
 
