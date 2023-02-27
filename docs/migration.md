@@ -37,4 +37,4 @@ Before starting the migration process, please make sure you have the following:
 
 ### Conclusion
 
-By following these steps, you should have successfully migrated the data from the `.oci/config` file to the Grafana OCI Metrics data source settings (User Principals and Single Tenancy mode only) for the specified variables and the ID key.
+By following these steps, you should have successfully migrated the data from the `.oci/config` file to the Grafana OCI Metrics data source settings (User Principals and Single Tenancy mode only) for the specified variables and the ID key. Please note that the process cannot be reverted, and rollback to previous configuration with the config file is not possible. Also, once migrated to version 4.x.x of the plugin, moving back to version 3.x.x is not possible.
