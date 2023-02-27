@@ -11,12 +11,12 @@ If you are running Grafana on a machine instance in Oracle Cloud, use the Instan
 If you are running Grafana anywhere else you'll need to get the necessary provider and resource settings, as described in this section [Getting OCI Configuration values](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md#getting-oci-configuration-values)
   
 
-Latest plugin version 3.X.X(available on [Grafana Marketplace](https://grafana.com/grafana/plugins/oci-metrics-datasource/)) is compatible with Grafana 8**. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
+Latest plugin version 4.X.X(available on [Grafana Marketplace](https://grafana.com/grafana/plugins/oci-metrics-datasource/)) is compatible with Grafana 8**. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
   
 Oracle Cloud Infrastructure Metrics plugin is *datasource with backend* type of plugin Grafana. Hereafter referred to as OCI Metrics plugin.  
 
 ## Installation
-*We highly recommend to use Grafana 8.x.x with plugin version 3.x.x .*
+*We highly recommend to use Grafana 8.x.x with plugin version 4.x.x .*
 In order to simplify the installation process, we created detailed guides for you to follow. 
 
 
