@@ -70,16 +70,11 @@ func NewOCIDatasourceConstructor() *OCIDatasource {
 
 func NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var ts GrafanaCommonRequest
-	log.DefaultLogger.Error("NewOCIDatasource")
-
 	o := NewOCIDatasourceConstructor()
 
 	if err := json.Unmarshal(req.JSONData, &ts); err != nil {
 		return nil, fmt.Errorf("can not read settings: %s", err.Error())
 	}
-
-	o.logger.Debug("check1 " + ts.Environment)
-	o.logger.Debug("check1 " + ts.TenancyMode)
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
@@ -88,11 +83,6 @@ func NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Inst
 		}
 	}
 
-	// return &OCIDatasource{
-	// 	tenancyAccess: make(map[string]*TenancyAccess),
-	// 	logger:        log.DefaultLogger,
-	// 	nameToOCID:    make(map[string]string),
-	// }, nil
 	return o, nil
 }
 
@@ -204,27 +194,11 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 
 	queryType := ts.QueryType
 
-	o.logger.Debug("QueryType")
-	o.logger.Debug(ts.QueryType)
-	o.logger.Debug(ts.Environment)
-	o.logger.Debug(ts.Tenancy)
-	o.logger.Debug(ts.TenancyMode)
-
-	// // if len(o.tenancyAccess) == 0 || ts.TenancyMode == "multitenancy" {
-	// if len(o.tenancyAccess) == 0 {
-	// 	err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
-	// 	if err != nil {
-	// 		return nil, errors.Wrap(err, "broken environment")
-	// 	}
-	// }
-
 	if ts.TenancyMode == "multitenancy" {
 		takey = ts.Tenancy
 	} else {
 		takey = SingleTenancyKey
 	}
-	o.logger.Debug(takey)
-	o.logger.Debug("/QueryType")
 
 	switch queryType {
 	case "compartments":
@@ -259,7 +233,6 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		for key, _ := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
-			// configProvider = common.CustomProfileConfigProvider(oci_config_file, key)
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				o.logger.Error("Error with config:" + key)
@@ -898,7 +871,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 }
 
 /*
-Function generates an array  containing OCI configuration (.oci/config) in the following format:
+Function generates an array  containing OCI tenancy list in the following format:
 <section label/TenancyOCID>
 */
 func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -928,10 +901,6 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 		return nil, fmt.Errorf("can not read settings: %s", err.Error())
 	}
 
-	// password, ok := req.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["password"]
-	// if ok {
-	// 	dat.Fingerprint_0 = password
-	// }
 	decryptedJSONData := req.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
 
@@ -953,13 +922,10 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 					return q, nil
 				}
 			} else {
-				log.DefaultLogger.Error(key)
-				log.DefaultLogger.Error(splits[0])
 
 				switch value := v.Field(FieldIndex).Interface(); strings.ToLower(splits[0]) {
 				case "tenancy":
 					q.tenancyocid[key] = fmt.Sprintf("%v", value)
-					log.DefaultLogger.Error(q.tenancyocid[key])
 				case "region":
 					q.region[key] = fmt.Sprintf("%v", value)
 				case "user":
