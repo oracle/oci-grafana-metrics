@@ -549,10 +549,7 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment str
 
 	reg := common.StringToRegion(region)
 	o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
-
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
-
-	log.DefaultLogger.Error("getCompartments tenancyocid " + tenancyOcid)
 
 	// Send the request using the service client
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
