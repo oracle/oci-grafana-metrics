@@ -872,7 +872,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 /*
 Function generates an array  containing OCI tenancy list in the following format:
-<section label/TenancyOCID>
+<Label/TenancyOCID>
 */
 func (o *OCIDatasource) tenanciesResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
