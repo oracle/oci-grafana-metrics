@@ -339,7 +339,7 @@ func (o *OCIDatasource) dimensionResponse(ctx context.Context, req *backend.Quer
 		reqDetails.Name = common.String(ts.Metric)
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
+			return nil, errors.Wrap(err, fmt.Sprint("list metrics failed", spew.Sdump(reqDetails)))
 		}
 
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
@@ -370,7 +370,7 @@ func (o *OCIDatasource) namespaceResponse(ctx context.Context, req *backend.Quer
 		reqDetails.GroupBy = []string{"namespace"}
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
+			return nil, errors.Wrap(err, fmt.Sprint("list metrics failed", spew.Sdump(reqDetails)))
 		}
 
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
@@ -399,7 +399,7 @@ func (o *OCIDatasource) resourcegroupsResponse(ctx context.Context, req *backend
 		reqDetails.GroupBy = []string{"resourceGroup"}
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
+			return nil, errors.Wrap(err, fmt.Sprint("list metrics failed", spew.Sdump(reqDetails)))
 		}
 
 		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
@@ -436,7 +436,7 @@ func (o *OCIDatasource) searchResponse(ctx context.Context, req *backend.QueryDa
 
 		items, err := o.searchHelper(ctx, ts.Region, ts.Compartment, reqDetails, takey)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprint("list metrircs failed", spew.Sdump(reqDetails)))
+			return nil, errors.Wrap(err, fmt.Sprint("list metrics failed", spew.Sdump(reqDetails)))
 		}
 
 		metricCache := make(map[string]bool)
@@ -471,7 +471,7 @@ func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment st
 		})
 
 		if err != nil {
-			return nil, errors.Wrap(err, "list metrircs failed")
+			return nil, errors.Wrap(err, "list metrics failed")
 		}
 		items = append(items, res.Items...)
 		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
