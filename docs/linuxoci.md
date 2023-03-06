@@ -31,7 +31,7 @@ To [install OCI Metrics Plugin](https://grafana.com/grafana/plugins/oci-metrics-
 grafana-cli plugins install oci-metrics-datasource
 ```
 
-**NOTE** Today the latest version of the plugin 3.x.x is available only with Grafana CLI. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
+**NOTE** Today the latest version of the plugin 4.x.x is available only with Grafana CLI. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
 
 The plugin will be installed into your Grafana plugins directory, which by default is located at /var/lib/grafana/plugins. [Here is more information on the CLI tool](http://docs.grafana.org/plugins/installation/).
 

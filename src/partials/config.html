@@ -18,22 +18,328 @@
 	    ng-required="true"
       ng-options="o as o for o in ctrl.getTenancyModes()" >
     </select>   
-  </div>  
-  <div class="gf-form max-width-30">
-  <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.tenancymode!=='multitenancy'">Tenancy OCID</label>
-    <input class="gf-form-input " 
-		type="text" 
-		ng-required="true"
-    ng-model="ctrl.current.jsonData.tenancyOCID" ng-if="ctrl.current.jsonData.tenancymode!=='multitenancy'">
-  </input>
   </div>
   <div class="gf-form max-width-30">
-    <label class="gf-form-label width-10">Default Region</label>
+    <label class="gf-form-label width-10" ng-if="ctrl.current.jsonData.environment==='OCI Instance'">Default Region</label>
     <select
       class="gf-form-input"
       ng-model="ctrl.current.jsonData.defaultRegion"
-	  ng-required="true"
+	    ng-required="true"
+      ng-if="ctrl.current.jsonData.environment==='OCI Instance'"    
       ng-options="o as o for o in ctrl.getRegions()">
     </select>
+  </div>  
+
+  <br>
+
+  <div class="gf-form-group" ng-if="ctrl.current.jsonData.environment!=='OCI Instance'">
+    <label class="gf-form-label width-40">DEFAULT Tenancy</label>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Profile Name</span>
+        <input type="text" class="gf-form-input" name="profile0" ng-readonly value="DEFAULT" readonly
+          ng-model="ctrl.current.jsonData.profile0='DEFAULT'"
+          placeholder="{{ctrl.current.jsonData.profile0 ? 'DEFAULT' : 'DEFAULT'}}"></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Region</span>
+          <select
+          class="gf-form-input"
+          ng-model="ctrl.current.jsonData.region0"
+          ng-required="true"
+          ng-options="o as o for o in ctrl.getRegions()">
+        </select>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">User OCID</span>
+      <input type="text" class="gf-form-input" name="user0" ng-model='ctrl.current.secureJsonData.user0'
+        placeholder="{{ctrl.current.secureJsonFields.user0 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Tenancy OCID</span>
+      <input type="text" class="gf-form-input" name="tenancy0" ng-model='ctrl.current.secureJsonData.tenancy0'
+        placeholder="{{ctrl.current.secureJsonFields.tenancy0 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Fingerprint</span>
+      <input type="text" class="gf-form-input" name="fingerprint0" ng-model='ctrl.current.secureJsonData.fingerprint0'
+        placeholder="{{ctrl.current.secureJsonFields.fingerprint0 ? 'configured' : ''}}"></input>
+    </div>    
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-7"> Private Key</label>
+        <textarea class="gf-form-input"
+                  type="text"
+                  cols="20" rows="4"
+                  maxlength="4096"
+        ng-required="true"
+        ng-model='ctrl.current.secureJsonData.privkey0'
+        placeholder="{{ctrl.current.secureJsonFields.privkey0 ? 'configured' : ''}}"
+        >
+      </textarea>
+    </div>    
   </div>
+
+  
+  <div class="gf-form-group" ng-if="ctrl.current.jsonData.tenancymode==='multitenancy' && ctrl.current.jsonData.environment!=='OCI Instance'">
+    <label class="gf-form-label width-40">Additional Tenancy #1</label>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Profile Name</span>
+        <input type="text" class="gf-form-input" name="profile1"
+          ng-model='ctrl.current.jsonData.profile1'></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Region</span>
+          <select
+          class="gf-form-input"
+          ng-model="ctrl.current.jsonData.region1"
+          ng-required="true"
+          ng-options="o as o for o in ctrl.getRegions()">
+        </select>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">User OCID</span>
+      <input type="text" class="gf-form-input" name="user1" ng-model='ctrl.current.secureJsonData.user1'
+        placeholder="{{ctrl.current.secureJsonFields.user1 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Tenancy OCID</span>
+      <input type="text" class="gf-form-input" name="tenancy1" ng-model='ctrl.current.secureJsonData.tenancy1'
+        placeholder="{{ctrl.current.secureJsonFields.tenancy1 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Fingerprint</span>
+      <input type="text" class="gf-form-input" name="fingerprint1" ng-model='ctrl.current.secureJsonData.fingerprint1'
+        placeholder="{{ctrl.current.secureJsonFields.fingerprint1 ? 'configured' : ''}}"></input>
+    </div>    
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-7"> Private Key</label>
+        <textarea class="gf-form-input"
+                  type="text"
+                  cols="20" rows="4"
+                  maxlength="4096"
+        ng-required="true"
+        ng-model='ctrl.current.secureJsonData.privkey1'
+        placeholder="{{ctrl.current.secureJsonFields.privkey1 ? 'configured' : ''}}"
+        >
+      </textarea>
+    </div>
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-15">Add another Tenancy ?</label>
+      <input type="checkbox" ng-model='ctrl.current.jsonData.addon1'</input>
+    </div>      
+  </div>
+
+
+  <div class="gf-form-group" ng-if='ctrl.current.jsonData.addon1'>
+    <label class="gf-form-label width-40">Additional Tenancy #2</label>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Profile Name</span>
+        <input type="text" class="gf-form-input" name="profile2"
+          ng-model='ctrl.current.jsonData.profile2'></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Region</span>
+          <select
+          class="gf-form-input"
+          ng-model="ctrl.current.jsonData.region2"
+          ng-required="true"
+          ng-options="o as o for o in ctrl.getRegions()">
+        </select>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">User OCID</span>
+      <input type="text" class="gf-form-input" name="user2" ng-model='ctrl.current.secureJsonData.user2'
+        placeholder="{{ctrl.current.secureJsonFields.user2 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Tenancy OCID</span>
+      <input type="text" class="gf-form-input" name="tenancy2" ng-model='ctrl.current.secureJsonData.tenancy2'
+        placeholder="{{ctrl.current.secureJsonFields.tenancy2 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Fingerprint</span>
+      <input type="text" class="gf-form-input" name="fingerprint2" ng-model='ctrl.current.secureJsonData.fingerprint2'
+        placeholder="{{ctrl.current.secureJsonFields.fingerprint2 ? 'configured' : ''}}"></input>
+    </div>    
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-7"> Private Key</label>
+        <textarea class="gf-form-input"
+                  type="text"
+                  cols="20" rows="4"
+                  maxlength="4096"
+        ng-required="true"
+        ng-model='ctrl.current.secureJsonData.privkey2'
+        placeholder="{{ctrl.current.secureJsonFields.privkey2 ? 'configured' : ''}}"
+        >
+      </textarea>
+    </div>
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-15">Add another Tenancy ?</label>
+      <input type="checkbox" id="myCheck" class="gf-form-input" ng-model='ctrl.current.jsonData.addon2'</input>
+    </div>      
+  </div>
+
+  <!-- TENANCY 3 -->
+  <div class="gf-form-group" ng-if='ctrl.current.jsonData.addon2'>
+    <label class="gf-form-label width-40">Additional Tenancy #3</label>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Profile Name</span>
+        <input type="text" class="gf-form-input" name="profile3"
+          ng-model='ctrl.current.jsonData.profile3'></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Region</span>
+          <select
+          class="gf-form-input"
+          ng-model="ctrl.current.jsonData.region3"
+          ng-required="true"
+          ng-options="o as o for o in ctrl.getRegions()">
+        </select>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">User OCID</span>
+      <input type="text" class="gf-form-input" name="user3" ng-model='ctrl.current.secureJsonData.user3'
+        placeholder="{{ctrl.current.secureJsonFields.user3 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Tenancy OCID</span>
+      <input type="text" class="gf-form-input" name="tenancy3" ng-model='ctrl.current.secureJsonData.tenancy3'
+        placeholder="{{ctrl.current.secureJsonFields.tenancy3 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Fingerprint</span>
+      <input type="text" class="gf-form-input" name="fingerprint3" ng-model='ctrl.current.secureJsonData.fingerprint3'
+        placeholder="{{ctrl.current.secureJsonFields.fingerprint3 ? 'configured' : ''}}"></input>
+    </div>    
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-7"> Private Key</label>
+        <textarea class="gf-form-input"
+                  type="text"
+                  cols="20" rows="4"
+                  maxlength="4096"
+        ng-required="true"
+        ng-model='ctrl.current.secureJsonData.privkey3'
+        placeholder="{{ctrl.current.secureJsonFields.privkey3 ? 'configured' : ''}}"
+        >
+      </textarea>
+    </div>
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-15">Add another Tenancy ?</label>
+      <input type="checkbox" id="myCheck" class="gf-form-input" ng-model='ctrl.current.jsonData.addon3'</input>
+    </div>      
+  </div>
+
+
+  <!-- TENANCY 4 -->
+  <div class="gf-form-group" ng-if='ctrl.current.jsonData.addon3'>
+    <label class="gf-form-label width-40">Additional Tenancy #4</label>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Profile Name</span>
+        <input type="text" class="gf-form-input" name="profile4"
+          ng-model='ctrl.current.jsonData.profile4'></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Region</span>
+          <select
+          class="gf-form-input"
+          ng-model="ctrl.current.jsonData.region4"
+          ng-required="true"
+          ng-options="o as o for o in ctrl.getRegions()">
+        </select>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">User OCID</span>
+      <input type="text" class="gf-form-input" name="user4" ng-model='ctrl.current.secureJsonData.user4'
+        placeholder="{{ctrl.current.secureJsonFields.user4 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Tenancy OCID</span>
+      <input type="text" class="gf-form-input" name="tenancy4" ng-model='ctrl.current.secureJsonData.tenancy4'
+        placeholder="{{ctrl.current.secureJsonFields.tenancy4 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Fingerprint</span>
+      <input type="text" class="gf-form-input" name="fingerprint4" ng-model='ctrl.current.secureJsonData.fingerprint4'
+        placeholder="{{ctrl.current.secureJsonFields.fingerprint4 ? 'configured' : ''}}"></input>
+    </div>    
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-7"> Private Key</label>
+        <textarea class="gf-form-input"
+                  type="text"
+                  cols="20" rows="4"
+                  maxlength="4096"
+        ng-required="true"
+        ng-model='ctrl.current.secureJsonData.privkey4'
+        placeholder="{{ctrl.current.secureJsonFields.privkey4 ? 'configured' : ''}}"
+        >
+      </textarea>
+    </div>
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-15">Add another Tenancy ?</label>
+      <input type="checkbox" id="myCheck" class="gf-form-input" ng-model='ctrl.current.jsonData.addon4'</input>
+    </div>      
+  </div>
+
+
+  <!-- TENANCY 5 -->
+  <div class="gf-form-group" ng-if='ctrl.current.jsonData.addon4'>
+    <label class="gf-form-label width-40">Additional Tenancy #5</label>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Profile Name</span>
+        <input type="text" class="gf-form-input" name="profile5"
+          ng-model='ctrl.current.jsonData.profile5'></input>
+      </div>
+      <div class="gf-form max-width-15">
+        <span class="gf-form-label width-7">Region</span>
+          <select
+          class="gf-form-input"
+          ng-model="ctrl.current.jsonData.region5"
+          ng-required="true"
+          ng-options="o as o for o in ctrl.getRegions()">
+        </select>
+      </div>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">User OCID</span>
+      <input type="text" class="gf-form-input" name="user5" ng-model='ctrl.current.secureJsonData.user5'
+        placeholder="{{ctrl.current.secureJsonFields.user5 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Tenancy OCID</span>
+      <input type="text" class="gf-form-input" name="tenancy5" ng-model='ctrl.current.secureJsonData.tenancy5'
+        placeholder="{{ctrl.current.secureJsonFields.tenancy5 ? 'configured' : ''}}"></input>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-7">Fingerprint</span>
+      <input type="text" class="gf-form-input" name="fingerprint5" ng-model='ctrl.current.secureJsonData.fingerprint5'
+        placeholder="{{ctrl.current.secureJsonFields.fingerprint5 ? 'configured' : ''}}"></input>
+    </div>    
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-7"> Private Key</label>
+        <textarea class="gf-form-input"
+                  type="text"
+                  cols="20" rows="4"
+                  maxlength="4096"
+        ng-required="true"
+        ng-model='ctrl.current.secureJsonData.privkey5'
+        placeholder="{{ctrl.current.secureJsonFields.privkey5 ? 'configured' : ''}}"
+        >
+      </textarea>
+    </div>
+    <div class="gf-form max-width-30">
+      <label class="gf-form-label width-15">Add another Tenancy ?</label>
+      <input type="checkbox" id="myCheck" class="gf-form-input" ng-model='ctrl.current.jsonData.addon5'</input>
+    </div>      
+  </div>  
+
 </div>

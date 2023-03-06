@@ -31,7 +31,6 @@ export default class OCIDatasource {
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
-    this.tenancyOCID = instanceSettings.jsonData.tenancyOCID;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.environment = instanceSettings.jsonData.environment;
     this.tenancymode = instanceSettings.jsonData.tenancymode;
@@ -92,7 +91,6 @@ export default class OCIDatasource {
         {
           queryType: "test",
           region: this.defaultRegion,
-          tenancyOCID: this.tenancyOCID,
           compartment: "",
           environment: this.environment,
           tenancymode: this.tenancymode,
@@ -160,7 +158,6 @@ export default class OCIDatasource {
           environment: this.environment,
           tenancymode: this.tenancymode,
           datasourceId: this.id,
-          tenancyOCID: this.tenancyOCID,
           queryType: "search",
           region: _.isEmpty(region) ? this.defaultRegion : region,
           compartment: compartmentId,
@@ -292,7 +289,6 @@ export default class OCIDatasource {
         environment: this.environment,
         tenancymode: this.tenancymode,
         datasourceId: this.id,
-        tenancyOCID: this.tenancyOCID,
         queryType: "query",
         refId: t.refId,
         hide: t.hide,
@@ -439,7 +435,6 @@ export default class OCIDatasource {
       if (this.tenancymode === "multitenancy") {
         let target = {
           tenancy: removeQuotes(this.getVariableValue(compartmentQuery[1])),
-          region: removeQuotes(this.getVariableValue(compartmentQuery[2])),
         };       
         return this.getCompartments(target)
           .then((compartments) => {
@@ -613,7 +608,6 @@ export default class OCIDatasource {
           environment: this.environment,
           tenancymode: this.tenancymode,
           datasourceId: this.id,
-          tenancyOCID: this.tenancyOCID,
           tenancy: _.isEmpty(tenancy) ? "" : tenancy,
           queryType: "regions",
         },
@@ -651,10 +645,6 @@ export default class OCIDatasource {
         target.tenancy === SELECT_PLACEHOLDERS.TENANCY
           ? DEFAULT_TENANCY
           : this.getVariableValue(target.tenancy);
-    const region =
-      target.region === SELECT_PLACEHOLDERS.REGION
-        ? ""
-        : this.getVariableValue(target.region);
 
     return this.doRequest({
       targets: [
@@ -662,10 +652,8 @@ export default class OCIDatasource {
           environment: this.environment,
           tenancymode: this.tenancymode,
           datasourceId: this.id,
-          tenancyOCID: this.tenancyOCID,
           tenancy: _.isEmpty(tenancy) ? "" : tenancy,
           queryType: "compartments",
-          region: _.isEmpty(region) ? this.defaultRegion : region,
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -708,7 +696,6 @@ export default class OCIDatasource {
           environment: this.environment,
           tenancymode: this.tenancymode,
           datasourceId: this.id,
-          tenancyOCID: this.tenancyOCID,
           queryType: "namespaces",
           region: _.isEmpty(region) ? this.defaultRegion : region,
           compartment: compartmentId,
@@ -749,7 +736,6 @@ export default class OCIDatasource {
           environment: this.environment,
           tenancymode: this.tenancymode,
           datasourceId: this.id,
-          tenancyOCID: this.tenancyOCID,
           queryType: "resourcegroups",
           region: _.isEmpty(region) ? this.defaultRegion : region,
           compartment: compartmentId,
@@ -811,7 +797,6 @@ export default class OCIDatasource {
             environment: this.environment,
             tenancymode: this.tenancymode,
             datasourceId: this.id,
-            tenancyOCID: this.tenancyOCID,
             queryType: "dimensions",
             region: _.isEmpty(region) ? this.defaultRegion : region,
             compartment: compartmentId,
