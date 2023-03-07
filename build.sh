@@ -15,6 +15,8 @@ rm ./plugin.tar
 
 mage --debug -v
 
+cp LICENSE.txt ./dist
+
 #grafana-toolkit plugin:sign
 
 mv ./dist ./oci-metrics-datasource
