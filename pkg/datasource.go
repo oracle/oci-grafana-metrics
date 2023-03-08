@@ -73,13 +73,13 @@ func NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Inst
 	o := NewOCIDatasourceConstructor()
 
 	if err := json.Unmarshal(req.JSONData, &ts); err != nil {
-		return nil, fmt.Errorf("can not read settings")
+		return nil, errors.New("can not read settings")
 	}
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
 		if err != nil {
-			return nil, fmt.Errorf("broken environment")
+			return nil, errors.New("broken environment")
 		}
 	}
 
