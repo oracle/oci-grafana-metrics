@@ -15,9 +15,17 @@ rm ./plugin.tar
 
 mage --debug -v
 
-cp LICENSE.txt ./dist
+cp LICENSE.txt ./dist/LICENSE
 
-#grafana-toolkit plugin:sign
+if [ -z $1 ]; then
+  echo "sign argument not specified, continuing without sign the plugin"
+else
+  if [ $1 = "sign" ]; then
+    npx @grafana/sign-plugin
+  else
+    echo "Usage: ./build.sh <sign>"
+  fi  
+fi
 
 mv ./dist ./oci-metrics-datasource
 tar cvf plugin.tar ./oci-metrics-datasource
