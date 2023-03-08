@@ -267,7 +267,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
-			return errors.New(fmt.Sprint("error with instance principals"))
+			return errors.New("error with instance principals")
 		}
 		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
