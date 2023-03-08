@@ -73,13 +73,13 @@ func NewOCIDatasource(req backend.DataSourceInstanceSettings) (instancemgmt.Inst
 	o := NewOCIDatasourceConstructor()
 
 	if err := json.Unmarshal(req.JSONData, &ts); err != nil {
-		return nil, fmt.Errorf("can not read settings: %s", err.Error())
+		return nil, fmt.Errorf("can not read settings")
 	}
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(ts.Environment, ts.TenancyMode, req)
 		if err != nil {
-			return nil, errors.Wrap(err, "broken environment")
+			return nil, fmt.Errorf("broken environment")
 		}
 	}
 
@@ -200,6 +200,16 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 		takey = SingleTenancyKey
 	}
 
+	if _, ok := o.tenancyAccess[takey]; !ok {
+		return &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: backend.DataResponse{
+					Error: fmt.Errorf("no such tenancy access key %q, make sure your datasources are migrated", takey),
+				},
+			},
+		}, nil
+	}
+
 	switch queryType {
 	case "compartments":
 		return o.compartmentsResponse(ctx, req, takey)
@@ -227,7 +237,6 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	case "local":
 		q, err := OCILoadSettings(req)
 		if err != nil {
-			o.logger.Error("Error Loading config settings", "error", err)
 			return errors.Wrap(err, "Error Loading config settings")
 		}
 		for key, _ := range q.tenancyocid {
@@ -236,7 +245,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				o.logger.Error("Error with config:" + key)
-				return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+				return errors.New(fmt.Sprint("error with client"))
 			}
 			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 			if err != nil {
@@ -245,7 +254,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
-				return errors.New(fmt.Sprint("error with TenancyOCID", spew.Sdump(configProvider), err.Error()))
+				return errors.New(fmt.Sprint("error with TenancyOCID"))
 			}
 			if tenancymode == "multitenancy" {
 				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
@@ -259,12 +268,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
-			return errors.New(fmt.Sprint("error with instance principals", spew.Sdump(configProvider), err.Error()))
+			return errors.New(fmt.Sprint("error with instance principals"))
 		}
 		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
 			o.logger.Error("Error with config:" + SingleTenancyKey)
-			return errors.New(fmt.Sprint("error with client", spew.Sdump(configProvider), err.Error()))
+			return errors.New(fmt.Sprint("error with client"))
 		}
 		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 		if err != nil {
@@ -289,8 +298,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 
 	for key, _ := range o.tenancyAccess {
 		if ts.TenancyMode == "multitenancy" && ts.Environment != "local" {
-			var ociparsErr error
-			return &backend.QueryDataResponse{}, errors.Wrap(ociparsErr, fmt.Sprintf("Multitenancy mode using instance principals is not implemented yet."))
+			return &backend.QueryDataResponse{}, errors.New("Multitenancy mode using instance principals is not implemented yet.")
 		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
 		if tenancyErr != nil {
