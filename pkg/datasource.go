@@ -200,7 +200,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 		takey = SingleTenancyKey
 	}
 
-	if _, ok := o.tenancyAccess[takey]; !ok {
+	if len(o.tenancyAccess) == 0 {
 		return &backend.QueryDataResponse{
 			Responses: backend.Responses{
 				query.RefID: backend.DataResponse{
