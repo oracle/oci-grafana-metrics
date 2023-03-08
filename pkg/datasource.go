@@ -237,7 +237,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	case "local":
 		q, err := OCILoadSettings(req)
 		if err != nil {
-			return errors.Wrap(err, "Error Loading config settings")
+			return errors.New("Error Loading config settings")
 		}
 		for key, _ := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
@@ -245,16 +245,15 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				o.logger.Error("Error with config:" + key)
-				return errors.New(fmt.Sprint("error with client"))
+				return errors.New("error with client")
 			}
 			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 			if err != nil {
-				o.logger.Error("Error creating identity client", "error", err)
-				return errors.Wrap(err, "Error creating identity client")
+				return errors.New("Error creating identity client")
 			}
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
-				return errors.New(fmt.Sprint("error with TenancyOCID"))
+				return errors.New("error with TenancyOCID")
 			}
 			if tenancymode == "multitenancy" {
 				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
@@ -273,12 +272,11 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
 			o.logger.Error("Error with config:" + SingleTenancyKey)
-			return errors.New(fmt.Sprint("error with client"))
+			return errors.New("error with client")
 		}
 		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 		if err != nil {
-			o.logger.Error("Error creating identity client", "error", err)
-			return errors.Wrap(err, "Error creating identity client")
+			return errors.New("Error creating identity client")
 		}
 		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
 		return nil
