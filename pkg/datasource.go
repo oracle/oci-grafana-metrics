@@ -200,7 +200,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 		takey = SingleTenancyKey
 	}
 
-	if _, ok := o.tenancyAccess[takey]; !ok {
+	if len(o.tenancyAccess) == 0 {
 		return &backend.QueryDataResponse{
 			Responses: backend.Responses{
 				query.RefID: backend.DataResponse{
@@ -291,6 +291,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	var reg common.Region
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
+		o.logger.Error("testResponse:" + spew.Sdump(err))
 		return &backend.QueryDataResponse{}, err
 	}
 
