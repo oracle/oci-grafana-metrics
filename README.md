@@ -44,7 +44,7 @@ If you're using a version of Grafana that's older than 6.0, you will need to dow
 
 ## Note 2
 
-The OCI Metrics plugin does not support the integration with Grafana Cloud at the moment. 
+The OCI Metrics plugin supports the integration with Grafana Cloud with Data Source **Environment** configured as **local**. See [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md) for additional information.
 
 ### Debugging
 
