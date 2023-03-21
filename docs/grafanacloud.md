@@ -4,13 +4,13 @@
 
 Grafana is a popular technology that makes it easy to visualize metrics. The Oracle Cloud Infrastructure Data Source for Grafana is used to extend Grafana by adding OCI as a data source. The plugin enables you to visualize metrics related to a number of OCI resources: Compute, Networking, Storage, and custom metrics.
 
-This walkthrough is intended for use by people who would like to deploy Grafana and the OCI Data Source for Grafana on a local server.
+This walkthrough is intended for use by people who would like to deploy Grafana and the OCI Data Source for Grafana in **Grafana Cloud**.
 
 Make sure you have access to the [Monitoring Service](https://docs.cloud.oracle.com/iaas/Content/Monitoring/Concepts/monitoringoverview.htm) and that [metrics have been enabled](https://docs.cloud.oracle.com/iaas/Content/Compute/Tasks/enablingmonitoring.htm) for the resources you are trying to monitor.
 
 ## Getting OCI Configuration values
 
-To configure OCI Metrics Grafana Data Source, you'll need to get the necessary provider and resource settings. Please note that Migrating from version 3.x.x to 4.x.x will require to migrate the existing data source configuration: using version 4.x.x of the plugin with the data source configuration of version 3.x.x is **not possible**. In case you are migrating from previous version 3.x.x of the OCI Metrics Grafana Plugin, you can refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](migration.md). If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported).
+To configure OCI Metrics Grafana Data Source, you'll need to get the necessary provider and resource settings. Please note that with **Grafana Cloud** only version 4.x.x and above are supported. If you are configuring the plugin to work in Multitenancy Mode, you will need to repeat the following steps for each of the Tenancies you want to configure with the plugin (up to 5 additional Tenancies are supported).
 
 ### Getting the Region
 

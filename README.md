@@ -22,6 +22,8 @@ In order to simplify the installation process, we created detailed guides for yo
 
 * Install Grafana and the OCI Metrics plugin on a Linux host using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md).
 
+* Install Grafana and the OCI Metrics plugin on Grafana Cloud using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/grafanacloud.md).
+
 * Install Grafana and the OCI Metrics plugin on a MacOS host using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/macos.md).
 
 * Install Grafana and the OCI Metrics plugin on a virtual machine in Oracle Cloud Infrastructure using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linuxoci.md).
@@ -44,7 +46,7 @@ If you're using a version of Grafana that's older than 6.0, you will need to dow
 
 ## Note 2
 
-The OCI Metrics plugin supports the integration with Grafana Cloud with Data Source **Environment** configured as **local**. See [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md) for additional information.
+The OCI Metrics plugin supports the integration with Grafana Cloud with Data Source **Environment** configured as **local**. See [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/grafanacloud.md) for additional information.
 
 ### Debugging
 
