@@ -118,29 +118,22 @@ You will be forwarded to the grafana.com website where you can proceed with the 
 
 ## Configure Grafana
 
-![Screen Shot 2018-12-17 at 3.23.46 PM](images/Screen%20Shot%202018-12-17%20at%203.23.46%20PM.png)
+Log in **Grafana Cloud** using your grafana cloud credentials:
+![Grafana Cloud Login](images/grafanacloud-login.png)
 
-Log in with the default username `admin` and the password `admin`. You will be prompted to change your password. Click **Skip** or **Save** to continue.
+On the Home Dashboard go to the **Administration** section:
+![Administration](images/grafanacloud-administration.png)
 
-![Screen Shot 2018-12-17 at 3.23.54 PM](images/Screen%20Shot%202018-12-17%20at%203.23.54%20PM.png)
+Select **Data sources** and search for **oracle**:
+![Plugins](images/grafanacloud-searchdatasource.png)
 
-On the Home Dashboard click the gear icon on the left side of the page.
-
-![Screen Shot 2018-12-17 at 3.24.02 PM](images/Screen%20Shot%202018-12-17%20at%203.24.02%20PM.png)
-
-Click **Add data source**.
-
-![Screen Shot 2018-12-17 at 3.24.13 PM](images/Screen%20Shot%202018-12-17%20at%203.24.13%20PM.png)
-
-Choose **oracle-oci-datasource** as your data source type.
-
-![Screen Shot 2018-12-17 at 3.24.24 PM](images/Screen%20Shot%202018-12-17%20at%203.24.17%20PM.png)
-
+Click on  **Oracle Cloud Infrastructure Metrics** as your data source type.
 This Configuration screen will appear:
 
 ![Datasource Empty](images/datasource_conf_empty.png)
 
-For **Environment** choose **local** and then choose between **single** or **multitenancy** as **Tenancy mode**.
+For **Environment** choose **local** and then choose between **single** or **multitenancy** as **Tenancy mode**. Please note that with **Grafana Cloud** the **OCI instance** **Environment** option is not supported. 
+
 You can then choose between two different modes as **Tenancy mode**:
 
 * **single**: to use a single specific Tenancy
