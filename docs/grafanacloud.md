@@ -2,7 +2,7 @@
 
 ## Background
 
-Grafana is a popular technology that makes it easy to visualize metrics. The Oracle Cloud Infrastructure Data Source for Grafana is used to extend Grafana by adding OCI as a data source. The plugin enables you to visualize metrics related to a number of OCI resources: Compute, Networking, Storage, and custom metrics.
+Grafana is a popular technology that makes it easy to visualize metrics. The Oracle Cloud Infrastructure Data Source for Grafana is used to extend Grafana by adding OCI as a data source. The plugin enables you to visualize metrics related to several OCI resources: Compute, Networking, Storage, and custom metrics.
 
 This walkthrough is intended for use by people who would like to deploy Grafana and the OCI Data Source for Grafana in **Grafana Cloud**.
 
@@ -102,7 +102,7 @@ Under the **Policy** tab click **Create Policy** and create a policy allowing th
 
 To [install OCI Metrics Plugin](https://grafana.com/grafana/plugins/oci-metrics-datasource/) on Grafana Cloud you need a valid [Grafana Cloud Account](https://grafana.com/products/cloud/).
 
-Log in into your Grafana Cloud Account and go to the **Administration** section:
+Log in to your Grafana Cloud Account and go to the **Administration** section:
 ![Administration](images/grafanacloud-administration.png)
 
 Select **Plugins** and search for **oracle**:
@@ -118,7 +118,7 @@ You will be forwarded to the grafana.com website where you can proceed with the 
 
 ## Configure Grafana
 
-Log in **Grafana Cloud** using your grafana cloud credentials:
+Log in to **Grafana Cloud** using your grafana cloud credentials:
 ![Grafana Cloud Login](images/grafanacloud-login.png)
 
 On the Home Dashboard go to the **Administration** section:
@@ -174,7 +174,7 @@ The configured data source will look like the following:
 
 Click **Save & Test** to return to the home dashboard.
 
-After the initial configuration, you can modify the datasource by adding a new tenancy by clicking on the **Add another Tenancy** checkbox and filling in the additional credentials. You can also disable a configured Tenancy leaving ampty the **Profile Name** as in this screenshot:
+After the initial configuration, you can modify the datasource by adding a new tenancy by clicking on the **Add another Tenancy** checkbox and filling in the additional credentials. You can also disable a configured Tenancy leaving empty the **Profile Name** as in this screenshot:
 
 ![Tenancy Disabled](images/multi_disable.png)
 
