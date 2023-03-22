@@ -1,4 +1,4 @@
-# Local Installation (Linux) - Oracle Cloud Infrastructure Data Source for Grafana
+# Grafana Cloud Installation - Oracle Cloud Infrastructure Data Source for Grafana
 
 ## Background
 
