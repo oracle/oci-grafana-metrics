@@ -54,7 +54,7 @@ To get the user OCID, follow these steps:
 For details and reference, see: [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
 Make note of the user OCID as you'll need it later to configure your OCI Metrics Grafana Data Source.
 
-### Getting the Private Key and API Key Fingerprint
+### Getting the Private API Key and Fingerprint
 
 To get the private key, follow these steps:
 
@@ -137,8 +137,8 @@ If you selected **single** as **Tenancy mode** then fill in the following creden
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
 * `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
-* `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-private-key-and-api-key-fingerprint).
-* `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key-and-api-key-fingerprint).
+* `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-private-api-key-and-fingerprint).
+* `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-api-key-and-fingerprint).
 
 The configured data source will look like the following:
 
