@@ -54,36 +54,27 @@ To get the user OCID, follow these steps:
 For details and reference, see: [Where to Get the Tenancy's OCID and User's OCID](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five).
 Make note of the user OCID as you'll need it later to configure your OCI Metrics Grafana Data Source.
 
-### Getting the API Key Fingerprint
-
-To get the API key fingerprint, follow these steps:
-
-1. Log in to the OCI console.
-2. From the OCI menu, select **Identity** > **Users**.
-3. Click on the user you want to use with OCI Metrics Grafana Data Source.
-4. Click on the **API Keys** tab.
-5. The API key fingerprint is listed in the **Fingerprint** column.
-
-![OCI Fingerprint](images/oci_fingerprint.png)
-
-For details and reference, see: [How to Get the Key's Fingerprint](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#four)
-Make note of the API key fingerprint as you'll need it later to configure your OCI Metrics Grafana Data Source.
-
-#### Getting the Private Key
+### Getting the Private Key and API Key Fingerprint
 
 To get the private key, follow these steps:
 
-1. Log in to the OCI console.
-2. From the OCI menu, select **Identity** > **Users**.
-3. Click on the user you want to use with OCI Metrics Grafana Data Source.
-4. Click on the **API Keys** tab.
-5. Click on the **Actions** dropdown and select **Download** .
-6. Save the private key to a secure location on your computer.
+1. Log in to your **OCI tenancy** and click on your username on the top right corner.
+2. Go to **Resources** and **API Keys** and click on **Add API Key**.
+3. Choose if you want to generate a new API key or use your own:
+    - Select **Generate API Key Pair** if you want to generate a new API key. Click then on **Download Private Key** and **Dowload Public Key** to get your new generated key
+    - Select **Public Key File** or **Paste Public Key** in case you want to paste your own public key: select **Paste Public Key** in the **Add API Key** dialog and copy and paste the key contents into the field, then click **Add**.
+
 
 ![OCI API Key](images/oci_apikey.png)
 
+4. Once the key is added take note of the API key fingerprint listed in the **Fingerprint** column.
+
+![OCI Fingerprint](images/oci_fingerprint.png)
+
+
 For details on how to create and configure keys see [How to Generate an API Signing Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#two) and [How to Upload the Public Key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#three).
-Make note of the private key file location as you'll need it later to configure your OCI Metrics Grafana Data Source
+Make note of the private key file location and API key fingerprint as you'll need it later to configure your OCI Metrics Grafana Data Source.
+
 
 ## Configure OCI Identity Policies
 
@@ -146,8 +137,8 @@ If you selected **single** as **Tenancy mode** then fill in the following creden
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
 * `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
-* `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-api-key-fingerprint).
-* `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key).
+* `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-private-key-and-api-key-fingerprint).
+* `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-key-and-api-key-fingerprint).
 
 The configured data source will look like the following:
 
