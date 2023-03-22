@@ -61,7 +61,7 @@ To get the private key, follow these steps:
 1. Log in to your **OCI tenancy** and click on your username on the top right corner.
 2. Go to **Resources** and **API Keys** and click on **Add API Key**.
 3. Choose if you want to generate a new API key or use your own:
-    - Select **Generate API Key Pair** if you want to generate a new API key. Click then on **Download Private Key** and **Dowload Public Key** to get your new generated key
+    - Select **Generate API Key Pair** if you want to generate a new API key. Click then on **Download Private Key** and **Download Public Key** to get your new generated key
     - Select **Public Key File** or **Paste Public Key** in case you want to paste your own public key: select **Paste Public Key** in the **Add API Key** dialog and copy and paste the key contents into the field, then click **Add**.
 
 
