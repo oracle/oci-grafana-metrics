@@ -30,6 +30,11 @@ interface Props {
   onRegionChange?: (region?: typeof regions[number]) => void;  
 }
 
+interface RegionSelectorProps {
+    value?: string;
+    onChange?: (value?: string) => void;
+  }
+
 const ConfigEditor: React.FC<Props> = ({
   profiles,
   onProfileChange,
@@ -66,9 +71,11 @@ const ConfigEditor: React.FC<Props> = ({
             onChange={(e) => onProfileChange('region', e.target.value, 0)}
           >
             <option value=""></option>
-            <option value="us-phoenix-1">US Phoenix 1</option>
-            <option value="us-ashburn-1">US Ashburn 1</option>
-            <option value="eu-frankfurt-1">EU Frankfurt 1</option>
+            {regions.map((region) => (
+                <option key={region} value={region}>
+                {region}
+                </option>
+            ))}
           </select>
         </div>
       )}
