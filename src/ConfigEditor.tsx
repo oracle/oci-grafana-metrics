@@ -6,6 +6,8 @@
 import React from 'react';
 import { regions, environments, tenancymodes } from './constants'
 
+
+
 interface Profile {
   name: string;
   region?: string;
@@ -35,7 +37,7 @@ interface RegionSelectorProps {
     onChange?: (value?: string) => void;
   }
 
-const ConfigEditor: React.FC<Props> = ({
+export const ConfigEditor: React.FC<Props> = ({
   profiles,
   onProfileChange,
   onRemoveProfile,
