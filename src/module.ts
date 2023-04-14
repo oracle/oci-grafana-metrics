@@ -7,7 +7,7 @@ import { OCIDatasourceQueryCtrl } from './query_ctrl'
 // import { OCIConfigCtrl } from './config_ctrl'
 import { DataSourcePlugin } from '@grafana/data';
 // import { DataSource } from './datasource';
-import { ConfigEditor } from './ConfigEditor';
+import { OCIConfigCtrl } from './ConfigEditor';
 // import { QueryEditor } from './QueryEditor';
 import { MyQuery, MyDataSourceOptions } from './types';
 
@@ -21,14 +21,14 @@ import { MyQuery, MyDataSourceOptions } from './types';
 // class OCIAnnotationsQueryCtrl {}
 // OCIAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'
 
-// export {
-//   OCIDatasource as Datasource,
-//   OCIDatasourceQueryCtrl as QueryCtrl,
-//   ConfigEditor as ConfigCtrl
-//   // OCIQueryOptionsCtrl as QueryOptionsCtrl,
-//   // OCIAnnotationsQueryCtrl as AnnotationsQueryCtrl
-// }
+export {
+  OCIDatasource as Datasource,
+  OCIDatasourceQueryCtrl as QueryCtrl,
+  OCIConfigCtrl as OCIConfigCtrl
+  // OCIQueryOptionsCtrl as QueryOptionsCtrl,
+  // OCIAnnotationsQueryCtrl as AnnotationsQueryCtrl
+}
 
-export const plugin = new DataSourcePlugin<Datasource, MyQuery, MyDataSourceOptions>(Datasource)
-  .setConfigEditor(ConfigEditor);
-  // .setQueryEditor(QueryEditor);
+// export const plugin = new DataSourcePlugin<Datasource, MyQuery, MyDataSourceOptions>(Datasource)
+//   .setConfigEditor(OCIConfigCtrl);
+//   // .setQueryEditor(QueryEditor);

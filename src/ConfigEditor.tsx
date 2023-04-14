@@ -37,7 +37,7 @@ interface RegionSelectorProps {
     onChange?: (value?: string) => void;
   }
 
-export const ConfigEditor: React.FC<Props> = ({
+export const OCIConfigCtrl: React.FC<Props> = ({
   profiles,
   onProfileChange,
   onRemoveProfile,
@@ -174,4 +174,4 @@ export const ConfigEditor: React.FC<Props> = ({
   );
 };
 
-export default ConfigEditor;
+export default OCIConfigCtrl;

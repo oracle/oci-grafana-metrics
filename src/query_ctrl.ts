@@ -267,8 +267,8 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
    * Collect data from  dimension segments to pass to query
    */
   updateQueryWithDimensions() {
-    const dimensions = [];
-    let index;
+    const dimensions: any = [];
+    let index: number;
 
     this.dimensionSegments.forEach(s => {
       if (s.type === 'key') {
