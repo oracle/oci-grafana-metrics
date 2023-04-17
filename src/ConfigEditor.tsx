@@ -5,7 +5,14 @@
 
 import React from 'react';
 import { regions, environments, tenancymodes } from './constants'
+import {
+  DataSourcePluginOptionsEditorProps,
+  onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceSecureJsonDataOption,
+} from '@grafana/data';
+import { OCIConfig, OCIConfigSec } from './types';
 
+// export interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {}
 
 
 interface Profile {
@@ -19,7 +26,7 @@ interface Profile {
   tenancyMode: string;  
 }
 
-interface Props {
+interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
   profiles: Profile[];
   onProfileChange: (key: keyof Profile, value: string, index: number) => void;
   onRemoveProfile: (index: number) => void;
@@ -32,12 +39,25 @@ interface Props {
   onRegionChange?: (region?: typeof regions[number]) => void;  
 }
 
+// const onTLSSettingsChange = (
+//   key: keyof Pick<OCIConfig, 'tlsSkipVerify' | 'tlsAuth' | 'tlsAuthWithCACert'>,
+//   value: boolean
+// ) => {
+//   onOptionsChange({
+//     ...options,
+//     jsonData: {
+//       ...options.jsonData,
+//       [key]: value,
+//     },
+//   });
+// };
+
 // interface RegionSelectorProps {
 //     value?: string;
 //     onChange?: (value?: string) => void;
 //   }
 
-export const OCIConfigCtrl: React.FC<Props> = ({
+export const OCIConfigCtrl: React.FC<Props> = ({ 
   profiles,
   onProfileChange,
   onRemoveProfile,
@@ -46,6 +66,21 @@ export const OCIConfigCtrl: React.FC<Props> = ({
   tenancyMode,
 }) => {
   const numProfiles = profiles.length;
+  const { options, onOptionsChange } = props;
+  const { jsonData, secureJsonFields } = options;
+  const secureJsonData = (options.secureJsonData || {}) as OCIConfigSec;
+  const hasTLSCACert = secureJsonFields && secureJsonFields.tlsCACert;
+  const hasTLSClientCert = secureJsonFields && secureJsonFields.tlsClientCert;
+  const hasTLSClientKey = secureJsonFields && secureJsonFields.tlsClientKey;   
+  const onAPIKeyChangeFactory = (key: keyof Omit<OCIConfigSec, 'password'>, value: string) => {
+    onOptionsChange({
+      ...options,
+      secureJsonData: {
+        ...secureJsonData,
+        [key]: value,
+      },
+    });
+  };  
 
   return (
     <>

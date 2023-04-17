@@ -4,6 +4,12 @@
  */
 import _ from "lodash";
 import {
+  DataSourceInstanceSettings,
+} from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
+import { DataSourceWithBackend } from '@grafana/runtime';
+import { OCIConfig } from './types';
+import {
   aggregations,
   dimensionKeysQueryRegex,
   namespacesQueryRegex,
@@ -17,7 +23,7 @@ import {
   AUTO,
 } from "./constants";
 import retryOrThrow from "./util/retry";
-import { SELECT_PLACEHOLDERS } from "./query_ctrl";
+// import { SELECT_PLACEHOLDERS } from "./query_ctrl";
 import { resolveAutoWinRes } from "./util/utilFunctions";
 import { toDataQueryResponse } from "@grafana/runtime";
 
@@ -25,27 +31,39 @@ const DEFAULT_RESOURCE_GROUP = "NoResourceGroup";
 const DEFAULT_TENANCY = "NoTenancy";
 
 
-export default class OCIDatasource {
-  constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
-    this.type = instanceSettings.type;
-    this.url = instanceSettings.url;
-    this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
-    this.defaultRegion = instanceSettings.jsonData.defaultRegion;
-    this.environment = instanceSettings.jsonData.environment;
-    this.tenancymode = instanceSettings.jsonData.tenancymode;
-    this.q = $q;
-    this.backendSrv = backendSrv;
-    this.templateSrv = templateSrv;
-    this.timeSrv = timeSrv;
+// export class OCIDatasource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
+export class OCIDatasource extends DataSourceWithBackend<OCIConfig> {
 
-    this.compartmentsCache = [];
-    this.regionsCache = [];
-    this.tenanciesCache = [];
+  // This enables default annotation support for 7.2+
+  annotations = {};
+  settings: DataSourceInstanceSettings<OCIConfig>;
 
-    // this.getRegions();
-    // this.getCompartments();
+  constructor(instanceSettings: DataSourceInstanceSettings<OCIConfig>) {
+    super(instanceSettings);
+    this.settings = instanceSettings;
   }
+
+// export default class OCIDatasource {
+//   constructor(instanceSettings: {[key: string]: any}, $q: {[key: string]: any}, backendSrv: {[key: string]: any}, templateSrv: {[key: string]: any}, timeSrv: {[key: string]: any}) {
+//     this.type = instanceSettings.type;
+//     this.url = instanceSettings.url;
+//     this.name = instanceSettings.name;
+//     this.id = instanceSettings.id;
+//     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
+//     this.environment = instanceSettings.jsonData.environment;
+//     this.tenancymode = instanceSettings.jsonData.tenancymode;
+//     this.q = $q;
+//     this.backendSrv = backendSrv;
+//     this.templateSrv = templateSrv;
+//     this.timeSrv = timeSrv;
+
+//     this.compartmentsCache = [];
+//     this.regionsCache = [];
+//     this.tenanciesCache = [];
+
+//     // this.getRegions();
+//     // this.getCompartments();
+//   }
 
   /**
    * Each Grafana Data source should contain the following functions:
