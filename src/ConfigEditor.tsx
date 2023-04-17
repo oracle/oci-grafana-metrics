@@ -32,10 +32,10 @@ interface Props {
   onRegionChange?: (region?: typeof regions[number]) => void;  
 }
 
-interface RegionSelectorProps {
-    value?: string;
-    onChange?: (value?: string) => void;
-  }
+// interface RegionSelectorProps {
+//     value?: string;
+//     onChange?: (value?: string) => void;
+//   }
 
 export const OCIConfigCtrl: React.FC<Props> = ({
   profiles,

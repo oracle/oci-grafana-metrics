@@ -34,6 +34,9 @@
     "@grafana/e2e-selectors": "9.3.8",
     "@grafana/eslint-config": "^5.1.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
+    "@grafana/data": "latest",
+    "@grafana/runtime": "latest",
+    "@grafana/ui": "latest",    
     "@swc/core": "^1.2.144",
     "@swc/helpers": "^0.4.12",
     "@swc/jest": "^0.2.23",
@@ -83,7 +86,7 @@
     "tsconfig-paths": "^4.1.0",
     "typescript": "^4.4.0",
     "webpack": "^5.69.1",
-    "webpack-cli": "^4.9.2",
+    "webpack-cli": "^5.0.1",
     "webpack-livereload-plugin": "^3.0.2"
   },
   "dependencies": {
@@ -97,7 +100,7 @@
     "babel-plugin-transform-es2015-for-of": "^6.6.0",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
     "babel-preset-es2015": "^6.24.1",
-    "eslint": "^5.12.0",
+    "eslint": "^8.38.0",
     "eslint-config-standard": "^12.0.0",
     "js-yaml": "^3.13.1",
     "lodash": "^4.17.21",
