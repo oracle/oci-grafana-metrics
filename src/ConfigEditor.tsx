@@ -27,7 +27,9 @@ interface Profile {
   tenancyMode: string;  
 }
 
-interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
+interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig, {}> {
+
+// interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
   profiles: Profile[];
   onProfileChange: (key: keyof Profile, value: string, index: number) => void;
   onRemoveProfile: (index: number) => void;
@@ -39,6 +41,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
   region?: typeof regions[number];
   onRegionChange?: (region?: typeof regions[number]) => void;  
 }
+
 
 // const onTLSSettingsChange = (
 //   key: keyof Pick<OCIConfig, 'tlsSkipVerify' | 'tlsAuth' | 'tlsAuthWithCACert'>,
@@ -58,6 +61,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
 //     onChange?: (value?: string) => void;
 //   }
 
+
 export const ConfigEditor: React.FC<Props> = ({ 
   profiles,
   onProfileChange,
@@ -65,9 +69,10 @@ export const ConfigEditor: React.FC<Props> = ({
   onAddProfile,
   environment,
   tenancyMode,
+  options,
+  onOptionsChange,
 }) => {
   const numProfiles = profiles.length;
-  const { options, onOptionsChange } = props;
   const { jsonData, secureJsonFields } = options;
   const secureJsonData = (options.secureJsonData || {}) as OCIConfigSec;
   const hasTLSCACert = secureJsonFields && secureJsonFields.tlsCACert;

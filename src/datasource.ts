@@ -4,6 +4,8 @@
  */
 import _ from "lodash";
 import {
+  DataQuery,
+  DataQueryResponse,
   DataSourceInstanceSettings,
 } from '@grafana/data';
 import { QueryEditorProps } from '@grafana/data';
@@ -75,19 +77,19 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * Required method
    * Used by panels to get data
    */
-  async query(options) {
+  async query(options: any) {
     var query = await this.buildQueryParameters(options);
     if (query.targets.length <= 0) {
       return this.q.when({ data: [] });
     }
 
     return this.doRequest(query).then((result) => {
-      var res = [];
+      var res: any[] = [];
       _.forEach(result.data, (r) => {
         const name = r.fields[1].config.displayNameFromDS;
         const timeArr = r.fields[0].values.toArray();
         const values = r.fields[1].values.toArray();
-        const points = timeArr.map((t, i) => [values[i], t]);
+        const points = timeArr.map((t: any, i: string | number) => [values[i], t]);
         res.push({ target: name, datapoints: points });
       });
 
@@ -136,7 +138,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * Required method
    * Used by query editor to get metric suggestions
    */
-  async metricFindQuery(target) {
+  async metricFindQuery(target: { tenancy: any; region: any; compartment: any; namespace: any; resourcegroup: any; }) {
     if (typeof target === "string") {
       // used in template editor for creating variables
       return this.templateMetricQuery(target);
@@ -190,39 +192,39 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
   /**
    * Build and validate query parameters.
    */
-  async buildQueryParameters(options) {
+  async buildQueryParameters(options: { targets: any[]; scopedVars: {} | undefined; }) {
     let queries = options.targets
-      .filter((t) => !t.hide)
+      .filter((t: { hide: any; }) => !t.hide)
       .filter(
-        (t) =>
+        (t: { compartment: any; }) =>
           !_.isEmpty(
             this.getVariableValue(t.compartment, options.scopedVars)
           ) && t.compartment !== SELECT_PLACEHOLDERS.COMPARTMENT
       )    
       .filter(
-        (t) =>
+        (t: { namespace: any; }) =>
           !_.isEmpty(this.getVariableValue(t.namespace, options.scopedVars)) &&
           t.namespace !== SELECT_PLACEHOLDERS.NAMESPACE
       )
       .filter(
-        (t) =>
+        (t: { resourcegroup: any; }) =>
           !_.isEmpty(this.getVariableValue(t.resourcegroup, options.scopedVars))
       )
       .filter(
-        (t) =>
+        (t: { metric: any; target: any; }) =>
           (!_.isEmpty(this.getVariableValue(t.metric, options.scopedVars)) &&
             t.metric !== SELECT_PLACEHOLDERS.METRIC) ||
           !_.isEmpty(this.getVariableValue(t.target))
       );
 
-    queries.forEach((t) => {
+    queries.forEach((t: { dimensions: any; resourcegroup: any; }) => {
       t.dimensions = (t.dimensions || [])
         .filter(
-          (dim) =>
+          (dim: { key: any; }) =>
             !_.isEmpty(dim.key) && dim.key !== SELECT_PLACEHOLDERS.DIMENSION_KEY
         )
         .filter(
-          (dim) =>
+          (dim: { value: any; }) =>
             !_.isEmpty(dim.value) &&
             dim.value !== SELECT_PLACEHOLDERS.DIMENSION_VALUE
         );
@@ -269,7 +271,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
       resolution = resolvedWinResolObj.resolution;
       if (_.isEmpty(query)) {
         // construct query
-        const dimensions = (t.dimensions || []).reduce((result, dim) => {
+        const dimensions = (t.dimensions || []).reduce((result: string[], dim: { key: any; operator: any; value: any; }) => {
           const d = `${this.getVariableValue(dim.key, options.scopedVars)} ${
             dim.operator
           } "${this.getVariableValue(dim.value, options.scopedVars)}"`;
@@ -338,15 +340,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    *    "DeliverySucceedEvents[1m]{resourceDisplayName = "ResouceName_2", eventType = "Delete"}.mean()",
    *  ]
    */
-  splitMultiValueDimensionsIntoQueries(queries, options) {
-    return queries.reduce((data, t) => {
+  splitMultiValueDimensionsIntoQueries(queries: any[], options: { scopedVars: {} | undefined; }) {
+    return queries.reduce((data: any[], t: { dimensions: any[]; target: any; }) => {
       if (_.isEmpty(t.dimensions) || !_.isEmpty(t.target)) {
         // nothing to split or dimensions won't be used, query is set manually
         return data.concat(t);
       }
 
       // create a map key : [values] for multiple values
-      const multipleValueDims = t.dimensions.reduce((data, dim) => {
+      const multipleValueDims = t.dimensions.reduce((data: { [x: string]: any; }, dim: { key: any; value: any; }) => {
         const key = dim.key;
         const value = this.getVariableValue(dim.value, options.scopedVars);
         if (value.startsWith("{") && value.endsWith("}")) {
@@ -361,9 +363,9 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
         return data.concat(t);
       }
 
-      const splitDimensions = (dims, multiDims) => {
+      const splitDimensions = (dims: string | any[], multiDims: { [x: string]: any[]; }) => {
         let prev = [];
-        let next = [];
+        let next: any[] = [];
 
         const firstDimKey = dims[0].key;
         const firstDimValues = multiDims[firstDimKey] || [dims[0].value];
@@ -417,11 +419,11 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * Example:
    * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
    */
-  templateMetricQuery(varString) {
+  templateMetricQuery(varString: string) {
 
     let tenancyQuery = varString.match(tenanciesQueryRegex);
     if (tenancyQuery) {
-      return this.getTenancies().catch((err) => {
+      return this.getTenancies().catch((err: string) => {
         throw new Error("Unable to get tenancies: " + err);
       });    
     }    
@@ -453,7 +455,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
         };       
         return this.getCompartments(target)
           .then((compartments) => {
-            return compartments.map((c) => ({ text: c.text, value: c.text }));
+            return compartments.map((c: { text: any; }) => ({ text: c.text, value: c.text }));
           })
           .catch((err) => {
             throw new Error("Unable to get compartments: " + err);
@@ -464,7 +466,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
           };        
           return this.getCompartments(target)
             .then((compartments) => {
-              return compartments.map((c) => ({ text: c.text, value: c.text }));
+              return compartments.map((c: { text: any; }) => ({ text: c.text, value: c.text }));
             })
             .catch((err) => {
               throw new Error("Unable to get compartments: " + err);
@@ -531,7 +533,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
           namespace: removeQuotes(this.getVariableValue(metricQuery[4])),
           resourcegroup: removeQuotes(this.getVariableValue(metricQuery[5])),
         };
-        return this.metricFindQuery(target).catch((err) => {
+        return this.metricFindQuery(target).catch((err: string) => {
           throw new Error("Unable to get metrics: " + err);
         });
       } else {
@@ -542,7 +544,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
           namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
           resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
         };
-        return this.metricFindQuery(target).catch((err) => {
+        return this.metricFindQuery(target).catch((err: string) => {
           throw new Error("Unable to get metrics: " + err);
         });        
       }  
@@ -611,7 +613,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
     throw new Error("Unable to parse templating string");
   }
 
-  async getRegions(target) {
+  async getRegions(target: { tenancy: any; }) {
     const tenancy =
         target.tenancy === SELECT_PLACEHOLDERS.TENANCY
           ? DEFAULT_TENANCY
@@ -655,7 +657,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
     });
   }
 
-  async getCompartments(target) {
+  async getCompartments(target: { tenancy: any; }) {
     const tenancy =
         target.tenancy === SELECT_PLACEHOLDERS.TENANCY
           ? DEFAULT_TENANCY
@@ -678,16 +680,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
     });
   }
 
-  getCompartmentId(compartment, target) {   
+  getCompartmentId(compartment: any, target: { tenancy: any; region: any; }) {   
     return this.getCompartments(target).then((compartments) => {
       const compartmentFound = compartments.find(
-        (c) => c.text === compartment || c.value === compartment
+        (c: { text: any; value: any; }) => c.text === compartment || c.value === compartment
       );
       return compartmentFound ? compartmentFound.value : compartment;
     });
   }
 
-  async getNamespaces(target) {
+  async getNamespaces(target: { tenancy: any; region: any; compartment: any; }) {
     const region =
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
@@ -723,7 +725,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
     });
   }
 
-  async getResourceGroups(target) {
+  async getResourceGroups(target: { tenancy: any; region: any; compartment: any; namespace: any; }) {
     const region =
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
@@ -764,7 +766,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
     });
   }
 
-  async getDimensions(target) {
+  async getDimensions(target: { region: any; compartment: any; namespace: any; resourcegroup: any; metric: any; tenancy: any; }) {
     const region =
       target.region === SELECT_PLACEHOLDERS.REGION
         ? ""
@@ -834,13 +836,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
         });
     }
 
-    let result = [];
+    let result: unknown = [];
     Object.values(dimensionsMap).forEach((dims) => {
       if (_.isEmpty(result)) {
         result = dims;
       } else {
-        const newResult = [];
-        dims.forEach((dim) => {
+        const newResult: any[] = [];
+        dims.forEach((dim: { value: any; }) => {
           if (
             !!result.find((d) => d.value === dim.value) &&
             !newResult.find((d) => d.value === dim.value)
@@ -855,10 +857,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
     return result;
   }
 
-  getDimensionKeys(target) {
+  getDimensionKeys(target: { tenancy: string; region: string; compartment: string; namespace: string; metric: string; resourcegroup: string; }) {
     return this.getDimensions(target)
       .then((dims) => {
-        const dimCache = dims.reduce((data, item) => {
+        const dimCache = dims.reduce((data: { [x: string]: any[]; }, item: { value: { split: (arg0: string) => never[]; }; }) => {
           const values = item.value.split("=") || [];
           const key = values[0] || item.value;
           const value = values[1];
@@ -876,10 +878,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
       });
   }
 
-  getDimensionValues(target, dimKey) {
+  getDimensionValues(target: { tenancy: string; region: string; compartment: string; namespace: string; metric: string; resourcegroup: string; }, dimKey: string) {
     return this.getDimensions(target)
       .then((dims) => {
-        const dimCache = dims.reduce((data, item) => {
+        const dimCache = dims.reduce((data: { [x: string]: any[]; }, item: { value: { split: (arg0: string) => never[]; }; }) => {
           const values = item.value.split("=") || [];
           const key = values[0] || item.value;
           const value = values[1];
@@ -893,7 +895,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
         return dimCache[this.getVariableValue(dimKey)] || [];
       })
       .then((items) => {
-        return items.map((item) => ({ text: item, value: item }));
+        return items.map((item: any) => ({ text: item, value: item }));
       });
   }
 
@@ -905,7 +907,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * Calls grafana backend.
    * Retries 10 times before failure.
    */
-  doRequest(options) {
+  doRequest(options: DataQuery[] | undefined) {
     let _this = this;
     return retryOrThrow(() => {
       return _this.backendSrv.datasourceRequest({
@@ -923,7 +925,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
   /**
    * Converts data from grafana backend to UI format
    */
-  mapToTextValue(result, searchField) {
+  mapToTextValue(result: DataQueryResponse, searchField: string) {
     if (_.isEmpty(result)) return [];
 
     // All drop-downs send a request to the backend and based on the query type, the backend sends a response
@@ -932,7 +934,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
 
     switch (searchField) {
       case "compartments":
-        return result.data[0].fields[0].values.toArray().map((name, i) => ({
+        return result.data[0].fields[0].values.toArray().map((name: any, i: string | number) => ({
           text: name,
           value: result.data[0].fields[1].values.toArray()[i],
         }));
@@ -942,7 +944,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
       case "resourcegroups":
       case "search":
       case "dimensions":
-        return result.data[0].fields[0].values.toArray().map((name) => ({
+        return result.data[0].fields[0].values.toArray().map((name: any) => ({
           text: name,
           value: name,
         }));
@@ -957,19 +959,19 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
   /**
    * Get all template variable descriptors
    */
-  getVariableDescriptors(regex, includeCustom = true) {
+  getVariableDescriptors(regex: any, includeCustom = true) {
     const vars = this.templateSrv.variables || [];
 
     if (regex) {
-      let regexVars = vars.filter((item) => _.isString(item.query) && item.query.match(regex) !== null);
+      let regexVars = vars.filter((item: { query: { match: (arg0: any) => null; }; }) => _.isString(item.query) && item.query.match(regex) !== null);
       if (includeCustom) {
         const custom = vars.filter(
-          (item) => item.type === "custom" || item.type === "constant"
+          (item: { type: string; }) => item.type === "custom" || item.type === "constant"
         );
         regexVars = regexVars.concat(custom);
       }
       const uniqueRegexVarsMap = new Map();
-      regexVars.forEach((varObj) =>
+      regexVars.forEach((varObj: { name: any; }) =>
         uniqueRegexVarsMap.set(varObj.name, varObj)
       );
       return Array.from(uniqueRegexVarsMap.values());
@@ -986,17 +988,17 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * If a custom or constant is in  variables and  includeCustom, default is false.
    * Hence,the varDescriptors list is filtered for a unique set of var names
    */
-  getVariables(regex, includeCustom) {
+  getVariables(regex: undefined, includeCustom: boolean | undefined) {
     const varDescriptors =
       this.getVariableDescriptors(regex, includeCustom) || [];
-    return varDescriptors.map((item) => `$${item.name}`);
+    return varDescriptors.map((item: { name: any; }) => `$${item.name}`);
   }
 
   /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
    * Returns an array with variable values or empty array
    */
-  getVariableValue(varName, scopedVars = {}) {
+  getVariableValue(varName: any, scopedVars = {}) {
     return this.templateSrv.replace(varName, scopedVars) || varName;
   }
 
@@ -1004,8 +1006,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
    * Returns true if variable with the given name is found
    */
-  isVariable(varName) {
+  isVariable(varName: any) {
     const varNames = this.getVariables() || [];
-    return !!varNames.find((item) => item === varName);
+    return !!varNames.find((item: any) => item === varName);
   }
 }
