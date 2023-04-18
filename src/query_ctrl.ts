@@ -41,7 +41,7 @@ interface ITarget {
 
 export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
   private q: any;
-  private uiSegmentSrv: IUiSegmentSrv;
+  private uiSegmentSrv: Record<string, any>;
   private dimensionsCache: Record<string, any>;
   private dimensionSegments: Record<string, any>;
   target: any;
@@ -53,7 +53,7 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
   static templateUrl: string;
 
 
-  constructor($scope: any, $injector: any, private $q: ng.IQService, uiSegmentSrv: IUiSegmentSrv) {
+  constructor($scope: any, $injector: any, private $q: any, uiSegmentSrv: Record<string, any>) {
     // super($scope, $injector)
 
     this.q = $q;
@@ -282,7 +282,9 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
         //update value to be part of the available options
         const value = this.dimensionSegments[index + 2].value;
         const options = cache[segment.value] || [];
-        if (!this.datasource.isVariable(value) && options.indexOf(value) < 0) {
+        if (!this.datasource.isVariable(value)) {
+          // if (!this.datasource.isVariable(value) && options.indexOf(value) < 0) {
+
           this.dimensionSegments[index + 2] = this.getSelectDimensionValueSegment();
         }
 

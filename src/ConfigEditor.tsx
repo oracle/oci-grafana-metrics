@@ -226,4 +226,4 @@ export const ConfigEditor: React.FC<Props> = ({
   );
 };
 
-export default ConfigEditor;
+// export default ConfigEditor;

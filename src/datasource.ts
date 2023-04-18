@@ -25,7 +25,7 @@ import {
   AUTO,
 } from "./constants";
 import retryOrThrow from "./util/retry";
-// import { SELECT_PLACEHOLDERS } from "./query_ctrl";
+import { SELECT_PLACEHOLDERS } from "./query_ctrl";
 import { resolveAutoWinRes } from "./util/utilFunctions";
 import { toDataQueryResponse } from "@grafana/runtime";
 
@@ -42,7 +42,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
   tenancymode: any;
   timeSrv: any;
   regionsCache: any;
-  tenanciesCache: boolean;
+  tenanciesCache: boolean = false;
   compartmentsCache: any;
   backendSrv: any;
   templateSrv: any;
@@ -87,25 +87,34 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * Required method
    * Used by panels to get data
    */
-  async query(options: any) {
-    var query = await this.buildQueryParameters(options);
-    if (query.targets.length <= 0) {
-      return this.q.when({ data: [] });
-    }
+  // async query(options: any) {
+  //   var query = await this.buildQueryParameters(options);
+  //   if (query.targets.length <= 0) {
+  //     return this.q.when({ data: [] });
+  //   }
 
-    return this.doRequest(query).then((result) => {
-      var res: any[] = [];
-      _.forEach(result.data, (r) => {
-        const name = r.fields[1].config.displayNameFromDS;
-        const timeArr = r.fields[0].values.toArray();
-        const values = r.fields[1].values.toArray();
-        const points = timeArr.map((t: any, i: string | number) => [values[i], t]);
-        res.push({ target: name, datapoints: points });
-      });
+  //   return this.doRequest(query).then((result) => {
+  //     var res: any[] = [];
+  //     _.forEach(result.data, (r) => {
+  //       const name = r.fields[1].config.displayNameFromDS;
+  //       const timeArr = r.fields[0].values.toArray();
+  //       const values = r.fields[1].values.toArray();
+  //       const points = timeArr.map((t: any, i: string | number) => [values[i], t]);
+  //       res.push({ target: name, datapoints: points });
+  //     });
 
-      result.data = res;
-      return result;
-    });
+  //     result.data = res;
+  //     return result;
+  //   });
+  // }
+
+  async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
+    return {
+      data: options.targets.map(query => {
+        const timeSeries: TimeSeries = await doLegacyRequest(query);
+        return toDataFrame(timeSeries);
+      }
+    };
   }
 
   /**
@@ -1019,7 +1028,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * Returns true if variable with the given name is found
    */
   isVariable(varName: any) {
-    const varNames = this.getVariables() || [];
+    const varNames = this.getVariables(undefined, false) || [];
     return !!varNames.find((item: any) => item === varName);
-  }
+  }  
 }
