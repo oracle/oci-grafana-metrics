@@ -4,10 +4,10 @@
  */
 import _ from "lodash";
 import {
-  DataQuery,
   DataQueryResponse,
   DataSourceInstanceSettings,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { OCIQuery, OCIConfig } from './types';
@@ -36,6 +36,16 @@ const DEFAULT_TENANCY = "NoTenancy";
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
   annotations = {};
   settings: DataSourceInstanceSettings<OCIConfig>;
+  q: any;
+  defaultRegion: any;
+  environment: any;
+  tenancymode: any;
+  timeSrv: any;
+  regionsCache: any;
+  tenanciesCache: boolean;
+  compartmentsCache: any;
+  backendSrv: any;
+  templateSrv: any;
 
   constructor(instanceSettings: DataSourceInstanceSettings<OCIConfig>) {
     super(instanceSettings);
@@ -341,7 +351,9 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    *  ]
    */
   splitMultiValueDimensionsIntoQueries(queries: any[], options: { scopedVars: {} | undefined; }) {
-    return queries.reduce((data: any[], t: { dimensions: any[]; target: any; }) => {
+    return queries.reduce((data: any[], t: {
+      refId: string; dimensions: any[]; target: any; 
+}) => {
       if (_.isEmpty(t.dimensions) || !_.isEmpty(t.target)) {
         // nothing to split or dimensions won't be used, query is set manually
         return data.concat(t);

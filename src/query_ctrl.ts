@@ -3,7 +3,8 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 import React, { PureComponent } from 'react';
-import { QueryEditorProps } from '@grafana/data';
+import { CoreApp, HistoryItem, PanelData, QueryEditorProps, TimeRange } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import {
   windows,
   namespacesQueryRegex,
@@ -16,6 +17,7 @@ import {
   dimensionValuesQueryRegex,
   windowsAndResolutionRegex, resolutions, AUTO
 } from './constants'
+import { OCIConfig, OCIConfigSec } from './types';
 
 
 export const SELECT_PLACEHOLDERS = {
@@ -42,10 +44,17 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
   private uiSegmentSrv: IUiSegmentSrv;
   private dimensionsCache: Record<string, any>;
   private dimensionSegments: Record<string, any>;
+  target: any;
+  removeDimensionSegment: any;
+  getSelectDimensionKeySegment: () => any;
+  getDimensionOperatorSegment: () => any;
+  getSelectDimensionValueSegment: () => any;
+  panelCtrl: any;
+  static templateUrl: string;
 
 
   constructor($scope: any, $injector: any, private $q: ng.IQService, uiSegmentSrv: IUiSegmentSrv) {
-    super($scope, $injector)
+    // super($scope, $injector)
 
     this.q = $q;
     this.uiSegmentSrv = uiSegmentSrv;
@@ -86,48 +95,60 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
     }
     this.dimensionSegments.push(this.uiSegmentSrv.newPlusButton())
   }
+  datasource: any;
+  query: any;
+  onRunQuery!: () => void;
+  onChange!: (value: any) => void;
+  onBlur?: (() => void) | undefined;
+  onAddQuery?: ((query: any) => void) | undefined;
+  data?: PanelData | undefined;
+  range?: TimeRange | undefined;
+  exploreId?: any;
+  history?: HistoryItem<any>[] | undefined;
+  queries?: DataQuery[] | undefined;
+  app?: CoreApp | undefined;
 
   // ****************************** Options **********************************
 
   getRegions() {
-    return this.datasource.getRegions(this.target).then(regions => {
+    return this.datasource.getRegions(this.target).then((regions: any) => {
       return this.appendVariables([ ...regions], regionsQueryRegex);
     });
   }
 
   getTenancies() {
-    return this.datasource.getTenancies().then(tenancies => {
+    return this.datasource.getTenancies().then((tenancies: any) => {
       return this.appendVariables([ ...tenancies], tenanciesQueryRegex);
     });
   }
 
   getCompartments() {
-    return this.datasource.getCompartments(this.target).then(compartments => {
+    return this.datasource.getCompartments(this.target).then((compartments: any) => {
       return this.appendVariables([...compartments], compartmentsQueryRegex);
     });
   }
 
   getNamespaces() {
-    return this.datasource.getNamespaces(this.target).then(namespaces => {
+    return this.datasource.getNamespaces(this.target).then((namespaces: any) => {
       return this.appendVariables([...namespaces], namespacesQueryRegex);
     });
   }
 
   getResourceGroups() {
-    return this.datasource.getResourceGroups(this.target).then(resourcegroups => {
+    return this.datasource.getResourceGroups(this.target).then((resourcegroups: any) => {
       return this.appendVariables([...resourcegroups], resourcegroupsQueryRegex);
     });
   }
 
   getMetrics() {
-    return this.datasource.metricFindQuery(this.target).then(metrics => {
+    return this.datasource.metricFindQuery(this.target).then((metrics: any) => {
       return this.appendVariables([...metrics], metricsQueryRegex);
     });
   }
 
   getAggregations() {
-    return this.datasource.getAggregations().then(aggs => {
-      return aggs.map((val) => ({ text: val, value: val }));
+    return this.datasource.getAggregations().then((aggs: any[]) => {
+      return aggs.map((val: any) => ({ text: val, value: val }));
     });
   }
 
@@ -144,20 +165,20 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
    * @param segment 
    * @param index 
    */
-  getDimensionOptions(segment, index) {
+  getDimensionOptions(segment: { type: string; }, index: number) {
     if (segment.type === 'key' || segment.type === 'plus-button') {
-      return this.getDimensionsCache().then(cache => {
+      return this.getDimensionsCache().then((cache: {}) => {
         const keys = Object.keys(cache);
         const vars = this.datasource.getVariables(dimensionKeysQueryRegex) || [];
         const keysWithVariables = vars.concat(keys);
-        const segments = keysWithVariables.map(key => this.uiSegmentSrv.newSegment({ value: key }));
+        const segments = keysWithVariables.map((key: any) => this.uiSegmentSrv.newSegment({ value: key }));
         segments.unshift(this.removeDimensionSegment);
         return segments;
       });
     }
 
     if (segment.type === 'value') {
-      return this.getDimensionsCache().then(cache => {
+      return this.getDimensionsCache().then((cache: { [x: string]: never[]; }) => {
         const keySegment = this.dimensionSegments[index - 2];
         const key = this.datasource.getVariableValue(keySegment.value);
         const options = cache[key] || [];
@@ -165,7 +186,7 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
         // return all the values for the key
         const vars = this.datasource.getVariables(dimensionValuesQueryRegex) || [];
         const optionsWithVariables = vars.concat(options);
-        const segments = optionsWithVariables.map(v => this.uiSegmentSrv.newSegment({ value: v }));
+        const segments = optionsWithVariables.map((v: any) => this.uiSegmentSrv.newSegment({ value: v }));
         return segments;
       });
     }
@@ -186,8 +207,8 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
       return this.q.when(this.dimensionsCache[targetSelector]);
     }
 
-    return this.datasource.getDimensions(this.target).then(dimensions => {
-      const cache = dimensions.reduce((data, item) => {
+    return this.datasource.getDimensions(this.target).then((dimensions: any[]) => {
+      const cache = dimensions.reduce((data: { [x: string]: any[]; }, item: { value: { split: (arg0: string) => never[]; }; }) => {
         const values = item.value.split('=') || [];
         const key = values[0] || item.value;
         const value = values[1];
@@ -203,15 +224,15 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
     })
   }
 
-  appendVariables(options, varQueryRegex) {
+  appendVariables(options: any[], varQueryRegex: RegExp) {
     const vars = this.datasource.getVariables(varQueryRegex) || [];
-    vars.forEach(value => {
+    vars.forEach((value: any) => {
       options.unshift({ value, text: value });
     });
     return options;
   }
 
-  appendWindowsAndResolutionVariables (options, varQueryRegex) {
+  appendWindowsAndResolutionVariables (options: string[], varQueryRegex: RegExp) {
     const vars = this.datasource.getVariables(varQueryRegex) || []
     return [...options, ...vars].map(value => ({ value, text: value }))
   }
@@ -224,7 +245,7 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
   onChangeInternal() {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
     const namespc=(this.datasource.getNamespaces(this.target))
-    namespc.then((value) => {
+    namespc.then((value: string | any[]) => {
       if (value.length === 0){
         this.target.namespace = SELECT_PLACEHOLDERS.NAMESPACE;
         this.panelCtrl.refresh(); // Asks the panel to refresh data.
@@ -238,7 +259,7 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
    * @param segment 
    * @param index 
    */
-  onDimensionsChange(segment, index) {
+  onDimensionsChange(segment: { value: string | number; type: string; cssClass: string; }, index: number) {
     if (segment.value === this.removeDimensionSegment.value) {
       // remove dimension: key - op - value
       this.dimensionSegments.splice(index, 3);
@@ -257,7 +278,7 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
       this.dimensionSegments.push(this.getDimensionOperatorSegment());
       this.dimensionSegments.push(this.getSelectDimensionValueSegment());
     } else if (segment.type === 'key') {
-      this.getDimensionsCache().then(cache => {
+      this.getDimensionsCache().then((cache: { [x: string]: never[]; }) => {
         //update value to be part of the available options
         const value = this.dimensionSegments[index + 2].value;
         const options = cache[segment.value] || [];
@@ -284,7 +305,7 @@ export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
     const dimensions: any = [];
     let index: number;
 
-    this.dimensionSegments.forEach(s => {
+    this.dimensionSegments.forEach((s: { type: string; value: any; }) => {
       if (s.type === 'key') {
         if (dimensions.length === 0) {
           dimensions.push({});
