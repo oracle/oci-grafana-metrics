@@ -2,8 +2,8 @@
 ** Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
-import { QueryCtrl } from 'app/plugins/sdk'
-import './css/query-editor.css!'
+import React, { PureComponent } from 'react';
+import { QueryEditorProps } from '@grafana/data';
 import {
   windows,
   namespacesQueryRegex,
@@ -17,6 +17,7 @@ import {
   windowsAndResolutionRegex, resolutions, AUTO
 } from './constants'
 
+
 export const SELECT_PLACEHOLDERS = {
   DIMENSION_KEY: 'select dimension',
   DIMENSION_VALUE: 'select value',
@@ -29,8 +30,21 @@ export const SELECT_PLACEHOLDERS = {
   WINDOW: 'select window'
 }
 
-export class OCIDatasourceQueryCtrl extends QueryCtrl {
-  constructor($scope, $injector, $q, uiSegmentSrv) {
+
+interface ITarget {
+  region: string;
+  tenancy: string;
+  MultiTenancy?: boolean;
+}
+
+export class OCIDatasourceQueryCtrl implements QueryEditorProps<any, any> {
+  private q: any;
+  private uiSegmentSrv: IUiSegmentSrv;
+  private dimensionsCache: Record<string, any>;
+  private dimensionSegments: Record<string, any>;
+
+
+  constructor($scope: any, $injector: any, private $q: ng.IQService, uiSegmentSrv: IUiSegmentSrv) {
     super($scope, $injector)
 
     this.q = $q;
@@ -267,8 +281,8 @@ export class OCIDatasourceQueryCtrl extends QueryCtrl {
    * Collect data from  dimension segments to pass to query
    */
   updateQueryWithDimensions() {
-    const dimensions = [];
-    let index;
+    const dimensions: any = [];
+    let index: number;
 
     this.dimensionSegments.forEach(s => {
       if (s.type === 'key') {

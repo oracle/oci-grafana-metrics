@@ -11,8 +11,8 @@ fi
 rm -rf ./oci-metrics-datasource
 rm ./oci-metrics-datasource.zip 
 rm ./plugin.tar
-./node_modules/.bin/grunt
-
+# yarn create @grafana/plugin
+yarn build
 mage --debug -v
 
 cp LICENSE.txt ./dist/LICENSE
