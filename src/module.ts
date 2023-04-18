@@ -11,5 +11,7 @@ import { OCIQuery, OCIConfig } from './types';
 
 
 export const plugin = new DataSourcePlugin<OCIDataSource, OCIQuery, OCIConfig>(OCIDataSource)
-  .setConfigEditor(ConfigEditor)
+  .setConfigEditor(ConfigEditor) //fix this error
+  .setQueryCtrl(OCIDatasourceQueryCtrl)
   .setQueryEditor(QueryEditor);
+

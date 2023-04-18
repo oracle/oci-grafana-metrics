@@ -112,7 +112,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
    * Required method
    * Used by data source configuration page to make sure the connection is working
    */
-  testDatasource() {
+  testDatasource(): Promise<{ status: string; message: string; title: string } | undefined> {
     return this.doRequest({
       targets: [
         {
@@ -143,7 +143,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
         };
       });
   }
-
+  
   /**
    * Required method
    * Used by query editor to get metric suggestions

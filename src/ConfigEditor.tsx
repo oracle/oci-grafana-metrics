@@ -27,20 +27,6 @@ interface Profile {
   tenancyMode: string;  
 }
 
-interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig, {}> {
-
-// interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
-  profiles: Profile[];
-  onProfileChange: (key: keyof Profile, value: string, index: number) => void;
-  onRemoveProfile: (index: number) => void;
-  onAddProfile: () => void;
-//   environments: 'OCI' | 'other';
-//   tenancyMode: 'single' | 'multi';
-  environment: typeof environments[number];
-  tenancyMode: typeof tenancymodes[number];
-  region?: typeof regions[number];
-  onRegionChange?: (region?: typeof regions[number]) => void;  
-}
 
 
 // const onTLSSettingsChange = (
@@ -60,6 +46,31 @@ interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig, {}> {
 //     value?: string;
 //     onChange?: (value?: string) => void;
 //   }
+// interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig, {}> {
+
+// // interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
+//   profiles: Profile[];
+//   onProfileChange: (key: keyof Profile, value: string, index: number) => void;
+//   onRemoveProfile: (index: number) => void;
+//   onAddProfile: () => void;
+// //   environments: 'OCI' | 'other';
+// //   tenancyMode: 'single' | 'multi';
+//   environment: typeof environments[number];
+//   tenancyMode: typeof tenancymodes[number];
+//   region?: typeof regions[number];
+//   onRegionChange?: (region?: typeof regions[number]) => void;  
+// }
+
+interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
+  profiles: Profile[];
+  onProfileChange: (key: keyof Profile, value: string, index: number) => void;
+  onRemoveProfile: (index: number) => void;
+  onAddProfile: () => void;
+  environment: typeof environments[number];
+  tenancyMode: typeof tenancymodes[number];
+  region?: typeof regions[number];
+  onRegionChange?: (region?: typeof regions[number]) => void;  
+}
 
 
 export const ConfigEditor: React.FC<Props> = ({ 
