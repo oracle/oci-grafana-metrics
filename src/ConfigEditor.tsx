@@ -3,7 +3,8 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import React from 'react';
+import React, { PureComponent } from 'react';
+import { DataSourceHttpSettings } from '@grafana/ui';
 import { regions, environments, tenancymodes } from './constants'
 import {
   DataSourcePluginOptionsEditorProps,
@@ -57,7 +58,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<OCIConfig> {
 //     onChange?: (value?: string) => void;
 //   }
 
-export const OCIConfigCtrl: React.FC<Props> = ({ 
+export const ConfigEditor: React.FC<Props> = ({ 
   profiles,
   onProfileChange,
   onRemoveProfile,
@@ -209,4 +210,4 @@ export const OCIConfigCtrl: React.FC<Props> = ({
   );
 };
 
-export default OCIConfigCtrl;
+export default ConfigEditor;

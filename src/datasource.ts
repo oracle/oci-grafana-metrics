@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { OCIConfig } from './types';
+import { OCIQuery, OCIConfig } from './types';
 import {
   aggregations,
   dimensionKeysQueryRegex,
@@ -31,10 +31,7 @@ const DEFAULT_RESOURCE_GROUP = "NoResourceGroup";
 const DEFAULT_TENANCY = "NoTenancy";
 
 
-// export class OCIDatasource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
-export class OCIDatasource extends DataSourceWithBackend<OCIConfig> {
-
-  // This enables default annotation support for 7.2+
+export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIConfig> {
   annotations = {};
   settings: DataSourceInstanceSettings<OCIConfig>;
 

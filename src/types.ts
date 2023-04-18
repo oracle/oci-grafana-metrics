@@ -1,4 +1,17 @@
 import { DataSourceJsonData } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
+
+export interface OCIQuery extends DataQuery {
+  multiplier: number;
+  queryType: string;
+  region: string;
+  compartment: string;
+  tenancy: string;
+  namespace: string
+  resourcegroup: string;  
+}
+
+export interface MyDataSourceOptions extends DataSourceJsonData {}
 
 export interface OCIConfig extends DataSourceJsonData {
   refId: string;
