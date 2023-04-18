@@ -2,7 +2,7 @@
 ** Copyright © 2022 Oracle and/or its affiliates. All rights reserved.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
-import OCIDatasource from './datasource'
+import { OCIDataSource } from './datasource';
 
 describe('OCIDatasource', () => {
   const instanceSettings = {
@@ -33,7 +33,7 @@ describe('OCIDatasource', () => {
             dimensions: []
           }
         ] }
-      const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
+      const ds = new OCIDataSource(instanceSettings, null, backendSrvMock, templateSrvMock)
       let opts = ds.buildQueryParameters(options)
       expect(opts.targets.length).toBe(1)
       expect(opts.targets[0].region).toMatch(/us-ashburn-1/)
@@ -52,7 +52,7 @@ describe('OCIDatasource', () => {
             dimensions: []
           }
         ] }
-      const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
+      const ds = new OCIDataSource(instanceSettings, null, backendSrvMock, templateSrvMock)
       let opts = ds.buildQueryParameters(options)
       expect(opts.targets.length).toBe(1)
       expect(opts.targets[0].region).toMatch(/uk-london-1/)
@@ -71,7 +71,7 @@ describe('OCIDatasource', () => {
             dimensions: []
           }
         ] }
-      const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
+      const ds = new OCIDataSource(instanceSettings, null, backendSrvMock, templateSrvMock)
       let opts = ds.buildQueryParameters(options)
       expect(opts.targets.length).toBe(1)
       expect(opts.targets[0].query).toMatch(/CpuUtilization\[1m\]\.mean\(\)/)
@@ -90,7 +90,7 @@ describe('OCIDatasource', () => {
             dimensions: [{ key: 'key', operator: '=', value: 'value' }]
           }
         ] }
-      const ds = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock)
+      const ds = new OCIDataSource(instanceSettings, null, backendSrvMock, templateSrvMock)
       let opts = ds.buildQueryParameters(options)
       expect(opts.targets.length).toBe(1)
       expect(opts.targets[0].query).toMatch(/CpuUtilization\[1m\]\{key = "value"}.mean\(\)/)
@@ -106,7 +106,7 @@ describe('OCIDatasource', () => {
     }
     test('should handle errors gracefully', (done) => {
       const backendSrvMock = { datasourceRequest: jest.fn(() => { throw new Error('Network Request') }) }
-      const myDS = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock, timeSrvMock)
+      const myDS = new OCIDataSource(instanceSettings, null, backendSrvMock, templateSrvMock, timeSrvMock)
       return myDS.testDatasource().then((err) => {
         expect(err).toEqual({ status: 'error', message: 'Data source is not working', title: 'Failure' })
         done()
@@ -115,7 +115,7 @@ describe('OCIDatasource', () => {
 
     test('should return success on a 200', (done) => {
       const backendSrvMock = { datasourceRequest: jest.fn(() => Promise.resolve({ status: 200 })) }
-      const myDS = new OCIDatasource(instanceSettings, null, backendSrvMock, templateSrvMock, timeSrvMock)
+      const myDS = new OCIDataSource(instanceSettings, null, backendSrvMock, templateSrvMock, timeSrvMock)
       return myDS.testDatasource().then((data) => {
         expect(data).toEqual({ status: 'success', message: 'Data source is working', title: 'Success' })
         done()
