@@ -302,14 +302,29 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		if tenancyErr != nil {
 			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 		}
+
+		o.logger.Debug(key, "tenancyocid", tenancyocid)
+		reqComp := identity.ListCompartmentsRequest{AccessLevel: identity.ListCompartmentsAccessLevelAny,
+			CompartmentId:          common.String(tenancyocid),
+			CompartmentIdInSubtree: common.Bool(true),
+			Limit:                  common.Int(100)}
+
+		// Send the request using the service client
+		comparts, Comperr := o.tenancyAccess[key].identityClient.ListCompartments(context.Background(), reqComp)
+		if Comperr != nil {
+			return nil, errors.Wrap(Comperr, "error fetching Compartments")
+		}
+
+		o.logger.Debug(key, "comparts", comparts.Items[1].Id)
+
 		regio, regErr := o.tenancyAccess[key].config.Region()
 		if regErr != nil {
-			return nil, errors.Wrap(regErr, "error fetching TenancyOCID")
+			return nil, errors.Wrap(regErr, "error fetching Region")
 		}
 		reg = common.StringToRegion(regio)
 
 		listMetrics := monitoring.ListMetricsRequest{
-			CompartmentId: common.String(tenancyocid),
+			CompartmentId: common.String(*comparts.Items[1].Id),
 		}
 		o.tenancyAccess[key].metricsClient.SetRegion(string(reg))
 		res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
