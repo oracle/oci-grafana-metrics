@@ -289,12 +289,15 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
 	var reg common.Region
+	var testResult bool
+	var errAllComp error
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
 	for key, _ := range o.tenancyAccess {
+		testResult = false
 		if ts.TenancyMode == "multitenancy" && ts.Environment != "local" {
 			return &backend.QueryDataResponse{}, errors.New("Multitenancy mode using instance principals is not implemented yet.")
 		}
@@ -303,42 +306,46 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 		}
 
-		o.logger.Debug(key, "tenancyocid", tenancyocid)
-		reqComp := identity.ListCompartmentsRequest{AccessLevel: identity.ListCompartmentsAccessLevelAny,
-			CompartmentId:          common.String(tenancyocid),
-			CompartmentIdInSubtree: common.Bool(true),
-			Limit:                  common.Int(100)}
-
-		// Send the request using the service client
-		comparts, Comperr := o.tenancyAccess[key].identityClient.ListCompartments(context.Background(), reqComp)
-		if Comperr != nil {
-			return nil, errors.Wrap(Comperr, "error fetching Compartments")
-		}
-
-		o.logger.Debug(key, "comparts", comparts.Items[1].Id)
-
 		regio, regErr := o.tenancyAccess[key].config.Region()
 		if regErr != nil {
 			return nil, errors.Wrap(regErr, "error fetching Region")
 		}
 		reg = common.StringToRegion(regio)
-
-		listMetrics := monitoring.ListMetricsRequest{
-			CompartmentId: common.String(*comparts.Items[1].Id),
-		}
 		o.tenancyAccess[key].metricsClient.SetRegion(string(reg))
-		res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
-		if err != nil {
-			o.logger.Debug(key, "FAILED", err)
-			return &backend.QueryDataResponse{}, err
+
+		comparts, Comperr := o.getCompartments(ctx, tenancyocid, regio, key)
+		if Comperr != nil {
+			return nil, errors.Wrap(Comperr, "error fetching Compartments")
 		}
-		status := res.RawResponse.StatusCode
-		if status >= 200 && status < 300 {
-			o.logger.Debug(key, "OK", status)
+
+		for _, v := range comparts {
+			o.logger.Debug(key, "Testing", v)
+			listMetrics := monitoring.ListMetricsRequest{
+				CompartmentId: common.String(v),
+			}
+
+			res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
+			if err != nil {
+				o.logger.Debug(key, "FAILED", err)
+				return &backend.QueryDataResponse{}, err
+			}
+			status := res.RawResponse.StatusCode
+			if status >= 200 && status < 300 {
+				o.logger.Debug(key, "OK", status)
+				testResult = true
+				break
+			} else {
+				errAllComp = err
+				o.logger.Debug(key, "SKIPPED", status)
+			}
+		}
+		if testResult {
+			continue
 		} else {
-			o.logger.Debug(key, "FAILED", status)
-			return nil, errors.Wrap(err, fmt.Sprintf("list metrics failed %s %d", spew.Sdump(res), status))
+			o.logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
+			return &backend.QueryDataResponse{}, errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
 		}
+
 	}
 	return &backend.QueryDataResponse{}, nil
 }
