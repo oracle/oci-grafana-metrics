@@ -313,37 +313,52 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 		reg = common.StringToRegion(regio)
 		o.tenancyAccess[key].metricsClient.SetRegion(string(reg))
 
-		comparts, Comperr := o.getCompartments(ctx, tenancyocid, regio, key)
-		if Comperr != nil {
-			return nil, errors.Wrap(Comperr, "error fetching Compartments")
+		// Test Tenancy OCID first
+		o.logger.Debug(key, "Testing Tenancy OCID", tenancyocid)
+		listMetrics := monitoring.ListMetricsRequest{
+			CompartmentId: &tenancyocid,
 		}
 
-		for _, v := range comparts {
-			o.logger.Debug(key, "Testing", v)
-			listMetrics := monitoring.ListMetricsRequest{
-				CompartmentId: common.String(v),
-			}
-
-			res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
-			if err != nil {
-				o.logger.Debug(key, "FAILED", err)
-				return &backend.QueryDataResponse{}, err
-			}
-			status := res.RawResponse.StatusCode
-			if status >= 200 && status < 300 {
-				o.logger.Debug(key, "OK", status)
-				testResult = true
-				break
-			} else {
-				errAllComp = err
-				o.logger.Debug(key, "SKIPPED", status)
-			}
+		res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
+		if err != nil {
+			o.logger.Debug(key, "SKIPPED", err)
 		}
-		if testResult {
-			continue
+		status := res.RawResponse.StatusCode
+		if status >= 200 && status < 300 {
+			o.logger.Debug(key, "OK", status)
 		} else {
-			o.logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
-			return &backend.QueryDataResponse{}, errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
+			o.logger.Debug(key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
+			comparts, Comperr := o.getCompartments(ctx, tenancyocid, regio, key)
+			if Comperr != nil {
+				return &backend.QueryDataResponse{}, errors.Wrap(Comperr, fmt.Sprintf("error fetching Compartments"))
+			}
+
+			for _, v := range comparts {
+				o.logger.Debug(key, "Testing", v)
+				listMetrics := monitoring.ListMetricsRequest{
+					CompartmentId: common.String(v),
+				}
+
+				res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
+				if err != nil {
+					o.logger.Debug(key, "FAILED", err)
+				}
+				status := res.RawResponse.StatusCode
+				if status >= 200 && status < 300 {
+					o.logger.Debug(key, "OK", status)
+					testResult = true
+					break
+				} else {
+					errAllComp = err
+					o.logger.Debug(key, "SKIPPED", status)
+				}
+			}
+			if testResult {
+				continue
+			} else {
+				o.logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
+				return &backend.QueryDataResponse{}, errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
+			}
 		}
 
 	}
