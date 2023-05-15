@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -241,6 +242,13 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		for key, _ := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
+			// test if PEM key is valid
+			block, _ := pem.Decode([]byte(q.privkey[key]))
+			if block == nil {
+				o.logger.Error("Private Key cannot be validated: " + key)
+				return errors.New("error with Private Key")
+			}
+
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
@@ -298,17 +306,18 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 
 	for key, _ := range o.tenancyAccess {
 		testResult = false
+
 		if ts.TenancyMode == "multitenancy" && ts.Environment != "local" {
 			return &backend.QueryDataResponse{}, errors.New("Multitenancy mode using instance principals is not implemented yet.")
 		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
 		if tenancyErr != nil {
-			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+			return &backend.QueryDataResponse{}, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 		}
 
 		regio, regErr := o.tenancyAccess[key].config.Region()
 		if regErr != nil {
-			return nil, errors.Wrap(regErr, "error fetching Region")
+			return &backend.QueryDataResponse{}, errors.Wrap(regErr, "error fetching Region")
 		}
 		reg = common.StringToRegion(regio)
 		o.tenancyAccess[key].metricsClient.SetRegion(string(reg))
