@@ -10,9 +10,11 @@ import { OCIDataSourceOptions, DefaultOCIOptions } from './types';
 import {
   AuthProviders,
   MultiTenancyChoices,
+  TenancyChoices,
   AuthProviderOptions,
   MultiTenancyChoiceOptions,
   MultiTenancyModeOptions,
+  TenancyChoiceOptions,
 } from './config.options';
 // import * as XLSX from 'ts-xlsx';
 
@@ -74,7 +76,25 @@ export class ConfigEditor extends PureComponent<Props, State> {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'authProvider')(option);
             }}
           />
-        </InlineField>        
+        </InlineField>
+
+        <InlineField              
+              label="Tenancy Mode"
+              labelWidth={28}
+              tooltip="Choose if want to enable multi-tenancy mode to fetch metrics accross multiple OCI tenancies"
+            >
+              <Select
+                className="width-30"
+                value={options.jsonData.TenancyChoice || ''}
+                options={TenancyChoiceOptions}
+                defaultValue={TenancyChoiceOptions[1]}
+                onChange={(option) => {
+                  onUpdateDatasourceJsonDataOptionSelect(this.props, 'TenancyChoice')(option);
+                }}
+              />
+            </InlineField>
+        {options.jsonData.TenancyChoice === TenancyChoices.multitenancy && (
+          <>                          
         <InlineField
           label="Base Tenancy Name"
           labelWidth={28}
@@ -88,6 +108,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={onUpdateDatasourceJsonDataOption(this.props, 'tenancyName')}
           />
         </InlineField>
+        </>
+        )}         
         <InlineField
           label="Authentication Provider"
           labelWidth={28}
