@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 
 export enum AuthProviders {
 
-  OCI_CLI = 'oci-cli',
+  OCI_USER = 'oci-user-principals',
 
   OCI_INSTANCE = 'oci-instance',
 
@@ -40,11 +40,11 @@ export const AuthProviderOptions = [
 
   {
 
-    label: 'OCI CLI',
+    label: 'OCI User',
 
-    value: AuthProviders.OCI_CLI,
+    value: AuthProviders.OCI_USER,
 
-    description: 'The grafana instance is configured with oci cli',
+    description: 'The grafana instance is configured with oci user principals',
 
   },
 

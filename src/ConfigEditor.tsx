@@ -61,6 +61,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return (
       <FieldSet label="Connection Details">
         <InlineField
+          label="Authentication Provider"
+          labelWidth={28}
+          tooltip="Specify which OCI credentials chain to use"
+        >
+          <Select
+            className="width-30"
+            value={options.jsonData.authProvider || ''}
+            options={AuthProviderOptions}
+            defaultValue={options.jsonData.authProvider}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'authProvider')(option);
+            }}
+          />
+        </InlineField>        
+        <InlineField
           label="Base Tenancy Name"
           labelWidth={28}
           tooltip="Specify the tenancy name where user profile is associated or instance is deployed"
@@ -88,7 +103,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             }}
           />
         </InlineField>
-        {options.jsonData.authProvider === AuthProviders.OCI_CLI && (
+        {options.jsonData.authProvider === AuthProviders.OCI_USER && (
           <>
             <InlineField label="Config Path" labelWidth={28} tooltip="Config file path. Default path is ~/.oci/config.">
               <Input
