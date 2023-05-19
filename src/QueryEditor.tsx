@@ -225,26 +225,26 @@ export const QueryEditor: React.FC<Props> = (props) => {
       }, 0);
     });
   };
-  const getGroupByOptions = () => {
-    return new Promise<Array<SelectableValue<string>>>((resolve) => {
-      setTimeout(async () => {
-        const response = await datasource.getDimensions(
-          query.tenancyOCID,
-          query.compartmentOCID,
-          query.region,
-          query.namespace,
-          query.metric
-        );
-        const result = response.map((res: any) => {
-          return {
-            label: res.key,
-            value: res.key,
-          };
-        });
-        resolve(result);
-      }, 0);
-    });
-  };
+  // const getGroupByOptions = () => {
+  //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
+  //     setTimeout(async () => {
+  //       const response = await datasource.getDimensions(
+  //         query.tenancyOCID,
+  //         query.compartmentOCID,
+  //         query.region,
+  //         query.namespace,
+  //         query.metric
+  //       );
+  //       const result = response.map((res: any) => {
+  //         return {
+  //           label: res.key,
+  //           value: res.key,
+  //         };
+  //       });
+  //       resolve(result);
+  //     }, 0);
+  //   });
+  // };
 
   const onTenancyChange = (data: any) => {
     onApplyQueryChange(
