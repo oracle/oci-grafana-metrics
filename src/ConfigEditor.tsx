@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Input, Select, InlineField, FieldSet, InlineSwitch, FileDropzone } from '@grafana/ui';
+import { Input, Select, InlineField, FieldSet, InlineSwitch } from '@grafana/ui';
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
@@ -9,6 +9,7 @@ import {
 import { OCIDataSourceOptions, DefaultOCIOptions } from './types';
 import {
   AuthProviders,
+  // regions,
   MultiTenancyChoices,
   TenancyChoices,
   AuthProviderOptions,
@@ -16,7 +17,6 @@ import {
   MultiTenancyModeOptions,
   TenancyChoiceOptions,
 } from './config.options';
-// import * as XLSX from 'ts-xlsx';
 
 interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {}
 
@@ -25,40 +25,6 @@ interface State {}
 export class ConfigEditor extends PureComponent<Props, State> {
   render() {
     const { options } = this.props;
-
-    const cmdbFileValidator = (cmdbFile: File) => {
-      let fName = cmdbFile.name;
-      let ext = fName.substr(fName.lastIndexOf('.') + 1);
-      if (ext !== 'xlsx') {
-        return { code: 'file-invalid-type', message: 'Only excel (.xlsx) is supported' };
-      }
-
-      return null;
-    };
-
-    const readCMDBExcelFile = (result: string | ArrayBuffer | null) => {
-      if (result === null || typeof result === 'string') {
-        return;
-      }
-
-      let data = new Uint8Array(result);
-      let arr: any[] = [];
-      for (let i = 0; i !== data.length; ++i) {
-        arr[i] = String.fromCharCode(data[i]);
-      }
-
-    //   let bstr = arr.join('');
-    //   let workbook = XLSX.read(bstr, { type: 'binary' });
-    //   let cmdbData: any = {};
-    //   for (let ws_name of workbook.SheetNames) {
-    //     let ws = workbook.Sheets[ws_name];
-    //     cmdbData[ws_name] = XLSX.utils.sheet_to_json(ws, { raw: true });
-    //   }
-
-    //   options.jsonData.cmdbFileContent = JSON.stringify(cmdbData);
-    };
-
-    let cmdbFileOptions = { maxFiles: 1, multiple: false, validator: cmdbFileValidator };
 
     return (
       <FieldSet label="Connection Details">
@@ -93,6 +59,46 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 }}
               />
             </InlineField>
+
+{/* Instance Principals  */}
+        {options.jsonData.authProvider === AuthProviders.OCI_INSTANCE && (
+          <>
+        {/* <InlineField
+          label="Default Region"
+          labelWidth={28}
+          tooltip="Specify the default Region for the tenancy"
+        >
+          <Select
+            className="width-30"
+            {regions.map((region) => (
+              <option key={region} value={region}>
+                {region}
+              </option>
+            ))}
+            // options={AuthProviderOptions}
+            defaultValue={options.jsonData.authProvider}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')(option);
+            }}
+          />
+        </InlineField>         */}
+
+        <InlineField
+          label="Default Region"
+          labelWidth={28}
+          tooltip="Specify the default Region for the tenancy"
+        >
+          <Input
+            className="width-30"
+            // css=""
+            value={options.jsonData.defaultRegion || ''}
+            required={true}
+            onChange={onUpdateDatasourceJsonDataOption(this.props, 'defaultRegion')}
+          />
+        </InlineField>
+        </>
+        )}  
+
         {options.jsonData.TenancyChoice === TenancyChoices.multitenancy && (
           <>                          
         <InlineField
@@ -226,11 +232,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'enableCMDBUploadFile')}
               />
             </InlineField>
-            {options.jsonData.enableCMDBUploadFile === true && (
-              <>
-                <FileDropzone options={cmdbFileOptions} onLoad={readCMDBExcelFile} readAs={'readAsArrayBuffer'} />
-              </>
-            )}
           </>
         )}
       </FieldSet>
