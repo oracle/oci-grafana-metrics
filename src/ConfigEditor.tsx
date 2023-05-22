@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Input, Select, InlineField, FieldSet, InlineSwitch, FileDropzone } from '@grafana/ui';
+import { Input, Select, InlineField, FieldSet, InlineSwitch } from '@grafana/ui';
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
@@ -9,12 +9,14 @@ import {
 import { OCIDataSourceOptions, DefaultOCIOptions } from './types';
 import {
   AuthProviders,
+  regions,
   MultiTenancyChoices,
+  TenancyChoices,
   AuthProviderOptions,
   MultiTenancyChoiceOptions,
   MultiTenancyModeOptions,
+  TenancyChoiceOptions,
 } from './config.options';
-// import * as XLSX from 'ts-xlsx';
 
 interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {}
 
@@ -24,55 +26,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   render() {
     const { options } = this.props;
 
-    const cmdbFileValidator = (cmdbFile: File) => {
-      let fName = cmdbFile.name;
-      let ext = fName.substr(fName.lastIndexOf('.') + 1);
-      if (ext !== 'xlsx') {
-        return { code: 'file-invalid-type', message: 'Only excel (.xlsx) is supported' };
-      }
-
-      return null;
-    };
-
-    const readCMDBExcelFile = (result: string | ArrayBuffer | null) => {
-      if (result === null || typeof result === 'string') {
-        return;
-      }
-
-      let data = new Uint8Array(result);
-      let arr: any[] = [];
-      for (let i = 0; i !== data.length; ++i) {
-        arr[i] = String.fromCharCode(data[i]);
-      }
-
-    //   let bstr = arr.join('');
-    //   let workbook = XLSX.read(bstr, { type: 'binary' });
-    //   let cmdbData: any = {};
-    //   for (let ws_name of workbook.SheetNames) {
-    //     let ws = workbook.Sheets[ws_name];
-    //     cmdbData[ws_name] = XLSX.utils.sheet_to_json(ws, { raw: true });
-    //   }
-
-    //   options.jsonData.cmdbFileContent = JSON.stringify(cmdbData);
-    };
-
-    let cmdbFileOptions = { maxFiles: 1, multiple: false, validator: cmdbFileValidator };
-
     return (
       <FieldSet label="Connection Details">
-        <InlineField
-          label="Base Tenancy Name"
-          labelWidth={28}
-          tooltip="Specify the tenancy name where user profile is associated or instance is deployed"
-        >
-          <Input
-            className="width-30"
-            // css=""
-            value={options.jsonData.tenancyName || ''}
-            required={true}
-            onChange={onUpdateDatasourceJsonDataOption(this.props, 'tenancyName')}
-          />
-        </InlineField>
         <InlineField
           label="Authentication Provider"
           labelWidth={28}
@@ -88,7 +43,93 @@ export class ConfigEditor extends PureComponent<Props, State> {
             }}
           />
         </InlineField>
-        {options.jsonData.authProvider === AuthProviders.OCI_CLI && (
+
+        <InlineField              
+              label="Tenancy Mode"
+              labelWidth={28}
+              tooltip="Choose if want to enable multi-tenancy mode to fetch metrics accross multiple OCI tenancies"
+            >
+              <Select
+                className="width-30"
+                value={options.jsonData.TenancyChoice || ''}
+                options={TenancyChoiceOptions}
+                defaultValue={TenancyChoiceOptions[1]}
+                onChange={(option) => {
+                  onUpdateDatasourceJsonDataOptionSelect(this.props, 'TenancyChoice')(option);
+                }}
+              />
+            </InlineField>
+
+{/* Instance Principals  */}
+        {options.jsonData.authProvider === AuthProviders.OCI_INSTANCE && (
+          <>
+        <InlineField
+          label="Default Region"
+          labelWidth={28}
+          tooltip="Specify the default Region for the tenancy"
+        >
+          <Select
+            className="width-30"
+            options={regions.map((region) => ({
+              label: region,
+              value: region,
+              }))}
+            defaultValue={options.jsonData.authProvider}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')(option);
+            }}
+          />
+        </InlineField>        
+
+        <InlineField
+          label="Default Region"
+          labelWidth={28}
+          tooltip="Specify the default Region for the tenancy"
+        >
+          <Input
+            className="width-30"
+            // css=""
+            value={options.jsonData.defaultRegion || ''}
+            required={true}
+            onChange={onUpdateDatasourceJsonDataOption(this.props, 'defaultRegion')}
+          />
+        </InlineField>
+        </>
+        )}  
+
+        {options.jsonData.TenancyChoice === TenancyChoices.multitenancy && (
+          <>                          
+        <InlineField
+          label="Base Tenancy Name"
+          labelWidth={28}
+          tooltip="Specify the tenancy name where user profile is associated or instance is deployed"
+        >
+          <Input
+            className="width-30"
+            // css=""
+            value={options.jsonData.tenancyName || ''}
+            required={true}
+            onChange={onUpdateDatasourceJsonDataOption(this.props, 'tenancyName')}
+          />
+        </InlineField>
+        </>
+        )}         
+        <InlineField
+          label="Authentication Provider"
+          labelWidth={28}
+          tooltip="Specify which OCI credentials chain to use"
+        >
+          <Select
+            className="width-30"
+            value={options.jsonData.authProvider || ''}
+            options={AuthProviderOptions}
+            defaultValue={options.jsonData.authProvider}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'authProvider')(option);
+            }}
+          />
+        </InlineField>
+        {options.jsonData.authProvider === AuthProviders.OCI_USER && (
           <>
             <InlineField label="Config Path" labelWidth={28} tooltip="Config file path. Default path is ~/.oci/config.">
               <Input
@@ -189,11 +230,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'enableCMDBUploadFile')}
               />
             </InlineField>
-            {options.jsonData.enableCMDBUploadFile === true && (
-              <>
-                <FileDropzone options={cmdbFileOptions} onLoad={readCMDBExcelFile} readAs={'readAsArrayBuffer'} />
-              </>
-            )}
           </>
         )}
       </FieldSet>

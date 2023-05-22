@@ -260,9 +260,12 @@ export const defaultQuery: Partial<OCIQuery> = {};
  */
 export interface OCIDataSourceOptions extends DataSourceJsonData {
   tenancyName: string; // name of the base tenancy
+  defaultRegion: string; // name of the base tenancy
   authProvider: string; // oci-cli, oci-instance
   multiTenancyMode?: string; // multi-profile, cross-tenancy-policy
   multiTenancyChoice?: string; // yes, no
+  TenancyMode?: string; // multi-profile, cross-tenancy-policy
+  TenancyChoice?: string; // yes, no 
   multiTenancyFile?: string; // Default is ~/.oci/tenancies, if enabled
   configPath?: string; // Config file path. Default is ~/.oci/config
   configProfile?: string; // Config profile name, as specified in ~/.oci/config. Default is DEFAULT
