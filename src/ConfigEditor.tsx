@@ -9,7 +9,7 @@ import {
 import { OCIDataSourceOptions, DefaultOCIOptions } from './types';
 import {
   AuthProviders,
-  // regions,
+  regions,
   MultiTenancyChoices,
   TenancyChoices,
   AuthProviderOptions,
@@ -63,25 +63,23 @@ export class ConfigEditor extends PureComponent<Props, State> {
 {/* Instance Principals  */}
         {options.jsonData.authProvider === AuthProviders.OCI_INSTANCE && (
           <>
-        {/* <InlineField
+        <InlineField
           label="Default Region"
           labelWidth={28}
           tooltip="Specify the default Region for the tenancy"
         >
           <Select
             className="width-30"
-            {regions.map((region) => (
-              <option key={region} value={region}>
-                {region}
-              </option>
-            ))}
-            // options={AuthProviderOptions}
+            options={regions.map((region) => ({
+              label: region,
+              value: region,
+              }))}
             defaultValue={options.jsonData.authProvider}
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')(option);
             }}
           />
-        </InlineField>         */}
+        </InlineField>        
 
         <InlineField
           label="Default Region"
