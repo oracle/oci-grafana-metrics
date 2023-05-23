@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -241,6 +242,13 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		for key, _ := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
+			// test if PEM key is valid
+			block, _ := pem.Decode([]byte(q.privkey[key]))
+			if block == nil {
+				o.logger.Error("Private Key cannot be validated: " + key)
+				return errors.New("error with Private Key")
+			}
+
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
@@ -289,41 +297,79 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var ts GrafanaCommonRequest
 	var reg common.Region
+	var testResult bool
+	var errAllComp error
 	query := req.Queries[0]
 	if err := json.Unmarshal(query.JSON, &ts); err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
 	for key, _ := range o.tenancyAccess {
+		testResult = false
+
 		if ts.TenancyMode == "multitenancy" && ts.Environment != "local" {
 			return &backend.QueryDataResponse{}, errors.New("Multitenancy mode using instance principals is not implemented yet.")
 		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
 		if tenancyErr != nil {
-			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+			return &backend.QueryDataResponse{}, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 		}
+
 		regio, regErr := o.tenancyAccess[key].config.Region()
 		if regErr != nil {
-			return nil, errors.Wrap(regErr, "error fetching TenancyOCID")
+			return &backend.QueryDataResponse{}, errors.Wrap(regErr, "error fetching Region")
 		}
 		reg = common.StringToRegion(regio)
-
-		listMetrics := monitoring.ListMetricsRequest{
-			CompartmentId: common.String(tenancyocid),
-		}
 		o.tenancyAccess[key].metricsClient.SetRegion(string(reg))
+
+		// Test Tenancy OCID first
+		o.logger.Debug(key, "Testing Tenancy OCID", tenancyocid)
+		listMetrics := monitoring.ListMetricsRequest{
+			CompartmentId: &tenancyocid,
+		}
+
 		res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
 		if err != nil {
-			o.logger.Debug(key, "FAILED", err)
-			return &backend.QueryDataResponse{}, err
+			o.logger.Debug(key, "SKIPPED", err)
 		}
 		status := res.RawResponse.StatusCode
 		if status >= 200 && status < 300 {
 			o.logger.Debug(key, "OK", status)
 		} else {
-			o.logger.Debug(key, "FAILED", status)
-			return nil, errors.Wrap(err, fmt.Sprintf("list metrics failed %s %d", spew.Sdump(res), status))
+			o.logger.Debug(key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
+			comparts, Comperr := o.getCompartments(ctx, tenancyocid, regio, key)
+			if Comperr != nil {
+				return &backend.QueryDataResponse{}, errors.Wrap(Comperr, fmt.Sprintf("error fetching Compartments"))
+			}
+
+			for _, v := range comparts {
+				o.logger.Debug(key, "Testing", v)
+				listMetrics := monitoring.ListMetricsRequest{
+					CompartmentId: common.String(v),
+				}
+
+				res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
+				if err != nil {
+					o.logger.Debug(key, "FAILED", err)
+				}
+				status := res.RawResponse.StatusCode
+				if status >= 200 && status < 300 {
+					o.logger.Debug(key, "OK", status)
+					testResult = true
+					break
+				} else {
+					errAllComp = err
+					o.logger.Debug(key, "SKIPPED", status)
+				}
+			}
+			if testResult {
+				continue
+			} else {
+				o.logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
+				return &backend.QueryDataResponse{}, errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
+			}
 		}
+
 	}
 	return &backend.QueryDataResponse{}, nil
 }
