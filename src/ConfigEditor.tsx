@@ -1,20 +1,21 @@
 import React, { PureComponent } from 'react';
-import { Input, Select, InlineField, FieldSet, InlineSwitch } from '@grafana/ui';
+import { Input, Select, InlineField, FieldSet, InlineSwitch, TextArea } from '@grafana/ui';
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionChecked,
+  onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
 import { OCIDataSourceOptions, DefaultOCIOptions } from './types';
 import {
   AuthProviders,
   regions,
-  MultiTenancyChoices,
+  // MultiTenancyChoices,
   TenancyChoices,
   AuthProviderOptions,
-  MultiTenancyChoiceOptions,
-  MultiTenancyModeOptions,
+  // MultiTenancyChoiceOptions,
+  // MultiTenancyModeOptions,
   TenancyChoiceOptions,
 } from './config.options';
 
@@ -115,9 +116,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 // css=""
                 placeholder={DefaultOCIOptions.ConfigProfile}
                 value={options.jsonData.configProfile || DefaultOCIOptions.ConfigProfile}
-                onChange={onUpdateDatasourceJsonDataOption(this.props, 'configProfile')}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile0')}
               />
-            </InlineField>
+      </InlineField>
       <InlineField
           label="Region"
           labelWidth={28}
@@ -131,138 +132,237 @@ export class ConfigEditor extends PureComponent<Props, State> {
               }))}
             defaultValue={options.jsonData.authProvider}
             onChange={(option) => {
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')(option);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(option);
             }}
           />
         </InlineField>
-        
+        <InlineField
+              label="User OCID"
+              labelWidth={28}
+              tooltip="User OCID"
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'user0')}
+                />
+      </InlineField>
+      <InlineField
+              label="Tenancy OCID"
+              labelWidth={28}
+              tooltip="Tenancy OCID"
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy0')}
+                />
+      </InlineField>
+      <InlineField
+              label="Fingerprint"
+              labelWidth={28}
+              tooltip="Fingerprint"
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'fingerprint0')}
+                />
+      </InlineField>
+      <InlineField
+              label="Private Key"
+              labelWidth={28}
+              tooltip="Private Key"
+            >
+              <TextArea
+                type="text"
+                className="width-30"
+                cols={20}
+                rows={4}
+                maxLength={4096}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey0')}
+                />
+      </InlineField>
 
       </FieldSet>
       </>
-        )}  
+      )}  
 
 
+{/* User Principals - Multitenancy Tenancy 1*/}
         {options.jsonData.TenancyChoice === TenancyChoices.multitenancy && (
           <>                          
-        <InlineField
-          label="Base Tenancy Name"
+      <FieldSet label="Tenancy-1 Connection Details">
+      <InlineField
+              label="Config Profile Name"
+              labelWidth={28}
+              tooltip="Config profile name. Default value is DEFAULT."
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile1')}
+              />
+      </InlineField>
+      <InlineField
+          label="Region"
           labelWidth={28}
-          tooltip="Specify the tenancy name where user profile is associated or instance is deployed"
-        >
-          <Input
-            className="width-30"
-            // css=""
-            value={options.jsonData.tenancyName || ''}
-            required={true}
-            onChange={onUpdateDatasourceJsonDataOption(this.props, 'tenancyName')}
-          />
-        </InlineField>
-        </>
-        )}         
-        <InlineField
-          label="Authentication Provider"
-          labelWidth={28}
-          tooltip="Specify which OCI credentials chain to use"
+          tooltip="Specify the Region"
         >
           <Select
             className="width-30"
-            value={options.jsonData.authProvider || ''}
-            options={AuthProviderOptions}
+            options={regions.map((region) => ({
+              label: region,
+              value: region,
+              }))}
             defaultValue={options.jsonData.authProvider}
             onChange={(option) => {
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'authProvider')(option);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region1')(option);
             }}
           />
         </InlineField>
-        {options.jsonData.authProvider === AuthProviders.OCI_USER && (
-          <>
-            <InlineField label="Config Path" labelWidth={28} tooltip="Config file path. Default path is ~/.oci/config.">
+        <InlineField
+              label="User OCID"
+              labelWidth={28}
+              tooltip="User OCID"
+            >
               <Input
                 className="width-30"
-                // css=""
-                placeholder={DefaultOCIOptions.ConfigPath}
-                value={options.jsonData.configPath || DefaultOCIOptions.ConfigPath}
-                onChange={onUpdateDatasourceJsonDataOption(this.props, 'configPath')}
-              />
-            </InlineField>
-
-            <InlineField
-              label="Enable Multi-Tenancy"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'user1')}
+                />
+      </InlineField>
+      <InlineField
+              label="Tenancy OCID"
               labelWidth={28}
-              tooltip="Choose if want to enable multi-tenancy mode to fetch metrics accross multiple OCI tenancies"
+              tooltip="Tenancy OCID"
             >
-              <Select
+              <Input
                 className="width-30"
-                value={options.jsonData.multiTenancyChoice || ''}
-                options={MultiTenancyChoiceOptions}
-                defaultValue={MultiTenancyChoiceOptions[1]}
-                onChange={(option) => {
-                  onUpdateDatasourceJsonDataOptionSelect(this.props, 'multiTenancyChoice')(option);
-                }}
-              />
-            </InlineField>
-            {options.jsonData.multiTenancyChoice === MultiTenancyChoices.YES && (
-              <>
-                <InlineField
-                  label="Mode of Multi-Tenancy"
-                  labelWidth={28}
-                  tooltip="The mode via which multi-tenancy will be used."
-                >
-                  <Select
-                    className="width-30"
-                    value={options.jsonData.multiTenancyMode || ''}
-                    options={MultiTenancyModeOptions}
-                    defaultValue={MultiTenancyModeOptions[0]}
-                    onChange={(option) => {
-                      onUpdateDatasourceJsonDataOptionSelect(this.props, 'multiTenancyMode')(option);
-                    }}
-                  />
-                </InlineField>
-                <InlineField
-                  label="Tenancy List File"
-                  labelWidth={28}
-                  tooltip="File which will contain list of target tenancy information in the format '<tenancy_name>,<tenancy_ocid>'. Default path is ~/.oci/tenancies"
-                >
-                  <Input
-                    className="width-30"
-                    // css=""
-                    placeholder={DefaultOCIOptions.MultiTenanciesFile}
-                    value={options.jsonData.multiTenancyFile || DefaultOCIOptions.MultiTenanciesFile}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'multiTenancyFile')}
-                  />
-                </InlineField>
-              </>
-            )}
-          </>
-        )}
-        <InlineField
-          label="Enable Customer Mapping"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy1')}
+                />
+      </InlineField>
+      <InlineField
+              label="Fingerprint"
+              labelWidth={28}
+              tooltip="Fingerprint"
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'fingerprint1')}
+                />
+      </InlineField>
+      <InlineField
+              label="Private Key"
+              labelWidth={28}
+              tooltip="Private Key"
+            >
+              <TextArea
+                type="text"
+                className="width-30"
+                cols={20}
+                rows={4}
+                maxLength={4096}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey1')}
+                />
+      </InlineField>
+      <InlineField
+          label="Add another Tenancy ?"
           labelWidth={28}
-          tooltip="Provide more metadata about resources under tenancy. Possible via two way. 1. Using oracle CMDB, 2. Using user provide customer mapping file"
+          tooltip="Add Another tenancy YES/NO"
         >
           <InlineSwitch
             className="width-30"
-            // css=""
-            value={!!options.jsonData.enableCMDB}
             defaultChecked={false}
-            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'enableCMDB')}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'addon1')}
           />
         </InlineField>
-        {options.jsonData.enableCMDB === true && (
+      </FieldSet>
+        </>
+        )}
+
+{/* User Principals - Multitenancy Tenancy 2*/}
+        {options.jsonData.addon1 === true && (
           <>
-            <InlineField
-              label="Enable Mapping via file (excel)"
+      <FieldSet label="Tenancy-1 Connection Details">
+      <InlineField
+              label="Config Profile Name"
               labelWidth={28}
-              tooltip="Customer mapping excel for tenancy resource. It must be an excel file."
+              tooltip="Config profile name."
             >
-              <InlineSwitch
+              <Input
                 className="width-30"
-                // css=""
-                value={!!options.jsonData.enableCMDBUploadFile}
-                defaultChecked={false}
-                onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'enableCMDBUploadFile')}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile2')}
               />
-            </InlineField>
+      </InlineField>
+      <InlineField
+          label="Region"
+          labelWidth={28}
+          tooltip="Specify the Region"
+        >
+          <Select
+            className="width-30"
+            options={regions.map((region) => ({
+              label: region,
+              value: region,
+              }))}
+            defaultValue={options.jsonData.authProvider}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region2')(option);
+            }}
+          />
+        </InlineField>
+        <InlineField
+              label="User OCID"
+              labelWidth={28}
+              tooltip="User OCID"
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'user2')}
+                />
+      </InlineField>
+      <InlineField
+              label="Tenancy OCID"
+              labelWidth={28}
+              tooltip="Tenancy OCID"
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy2')}
+                />
+      </InlineField>
+      <InlineField
+              label="Fingerprint"
+              labelWidth={28}
+              tooltip="Fingerprint"
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'fingerprint2')}
+                />
+      </InlineField>
+      <InlineField
+              label="Private Key"
+              labelWidth={28}
+              tooltip="Private Key"
+            >
+              <TextArea
+                type="text"
+                className="width-30"
+                cols={20}
+                rows={4}
+                maxLength={4096}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey2')}
+                />
+      </InlineField>
+      <InlineField
+          label="Add another Tenancy ?"
+          labelWidth={28}
+          tooltip="Add Another tenancy YES/NO"
+        >
+          <InlineSwitch
+            className="width-30"
+            defaultChecked={false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'addon2')}
+          />
+        </InlineField>
+      </FieldSet>
           </>
         )}
       </FieldSet>

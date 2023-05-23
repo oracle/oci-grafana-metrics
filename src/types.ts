@@ -19,23 +19,6 @@ export interface OCIConfig extends DataSourceJsonData {
   region?: string;
   environments: string;
   tenancyMode: string;
-	profile0: string;
-	region0: string;
-
-	profile1: string;
-	region1: string;
-
-	profile2: string;
-	region2: string;
-
-	profile3: string;
-	region3: string;
-
-	profile4: string;
-	region4: string;
-
-	profile5: string;
-	region5: string;
 }
 
 export interface OCIConfigSec {
@@ -289,6 +272,29 @@ export interface OCIDataSourceOptions extends DataSourceJsonData {
   enableCMDB?: boolean; // Choice to enable oracel cmdb datasource mapping
   enableCMDBUploadFile?: boolean; // Choice to enable user to upload customer mapping file
   cmdbFileContent: string; // CMDB file content as json string
+
+  addon1: boolean;
+  addon2: boolean;
+  addon3: boolean;
+  addon4: boolean;
+
+	profile0: string;
+	region0: string;
+
+	profile1: string;
+	region1: string;
+
+	profile2: string;
+	region2: string;
+
+	profile3: string;
+	region3: string;
+
+	profile4: string;
+	region4: string;
+
+	profile5: string;
+	region5: string;
 }
 
 /**
