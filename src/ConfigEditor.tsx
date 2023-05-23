@@ -59,10 +59,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 }}
               />
             </InlineField>
+            <br></br>
 
 {/* Instance Principals  */}
         {options.jsonData.authProvider === AuthProviders.OCI_INSTANCE && (
           <>
+      <FieldSet label="Instance Principals Connection Details">
         <InlineField
           label="Default Region"
           labelWidth={28}
@@ -94,8 +96,51 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={onUpdateDatasourceJsonDataOption(this.props, 'defaultRegion')}
           />
         </InlineField>
+        </FieldSet>
         </>
+        )}
+
+
+{/* User Principals  */}
+  {options.jsonData.authProvider === AuthProviders.OCI_USER && (
+              <>
+      <FieldSet label="DEFAULT Connection Details">
+      <InlineField
+              label="Config Profile Name"
+              labelWidth={28}
+              tooltip="Config profile name. Default value is DEFAULT."
+            >
+              <Input
+                className="width-30"
+                // css=""
+                placeholder={DefaultOCIOptions.ConfigProfile}
+                value={options.jsonData.configProfile || DefaultOCIOptions.ConfigProfile}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'configProfile')}
+              />
+            </InlineField>
+      <InlineField
+          label="Region"
+          labelWidth={28}
+          tooltip="Specify the Region"
+        >
+          <Select
+            className="width-30"
+            options={regions.map((region) => ({
+              label: region,
+              value: region,
+              }))}
+            defaultValue={options.jsonData.authProvider}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')(option);
+            }}
+          />
+        </InlineField>
+        
+
+      </FieldSet>
+      </>
         )}  
+
 
         {options.jsonData.TenancyChoice === TenancyChoices.multitenancy && (
           <>                          
@@ -140,19 +185,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'configPath')}
               />
             </InlineField>
-            <InlineField
-              label="Config Profile Name"
-              labelWidth={28}
-              tooltip="Config profile name, as specified in oci config file. Default value is DEFAULT."
-            >
-              <Input
-                className="width-30"
-                // css=""
-                placeholder={DefaultOCIOptions.ConfigProfile}
-                value={options.jsonData.configProfile || DefaultOCIOptions.ConfigProfile}
-                onChange={onUpdateDatasourceJsonDataOption(this.props, 'configProfile')}
-              />
-            </InlineField>
+
             <InlineField
               label="Enable Multi-Tenancy"
               labelWidth={28}

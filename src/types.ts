@@ -18,7 +18,24 @@ export interface OCIConfig extends DataSourceJsonData {
   name: string;
   region?: string;
   environments: string;
-  tenancyMode: string; 
+  tenancyMode: string;
+	profile0: string;
+	region0: string;
+
+	profile1: string;
+	region1: string;
+
+	profile2: string;
+	region2: string;
+
+	profile3: string;
+	region3: string;
+
+	profile4: string;
+	region4: string;
+
+	profile5: string;
+	region5: string;
 }
 
 export interface OCIConfigSec {
@@ -260,7 +277,7 @@ export const defaultQuery: Partial<OCIQuery> = {};
  */
 export interface OCIDataSourceOptions extends DataSourceJsonData {
   tenancyName: string; // name of the base tenancy
-  defaultRegion: string; // name of the base tenancy
+  defaultRegion: string; // name of the base region
   authProvider: string; // oci-cli, oci-instance
   multiTenancyMode?: string; // multi-profile, cross-tenancy-policy
   multiTenancyChoice?: string; // yes, no
@@ -278,5 +295,33 @@ export interface OCIDataSourceOptions extends DataSourceJsonData {
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface OCISecureJsonData {
-  // nothing for now
+	tenancy0: string;
+	user0: string;
+	privkey0: string;
+	fingerprint0: string;
+
+	tenancy1: string;
+	user1: string;
+	fingerprint1: string;
+	privkey1: string;
+
+	tenancy2: string;
+	user2: string;
+	fingerprint2: string;
+	privkey2: string;
+
+	tenancy3: string;
+	user3: string;
+	fingerprint3: string;
+	privkey3: string;
+
+	tenancy4: string;
+	user4: string;
+	fingerprint4: string;
+	privkey4: string;
+
+	tenancy5: string;
+	user5: string;
+	fingerprint5: string;
+	privkey5: string;
 }
