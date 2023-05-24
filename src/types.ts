@@ -261,7 +261,7 @@ export const defaultQuery: Partial<OCIQuery> = {};
 export interface OCIDataSourceOptions extends DataSourceJsonData {
   tenancyName: string; // name of the base tenancy
   defaultRegion: string; // name of the base region
-  authProvider: string; // oci-cli, oci-instance
+  Environment: string; // oci-cli, oci-instance
   multiTenancyMode?: string; // multi-profile, cross-tenancy-policy
   multiTenancyChoice?: string; // yes, no
   TenancyMode?: string; // multi-profile, cross-tenancy-policy

@@ -233,8 +233,60 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req backend.DataSourceInstanceSettings) error {
+
+	// TEST statements
+	var dat OCISecuredSettings
+	decryptedJSONData := req.DecryptedSecureJSONData
+	transcode(decryptedJSONData, &dat)
+	log.DefaultLogger.Error(environment)
+	log.DefaultLogger.Error(tenancymode)
+
+	log.DefaultLogger.Error(dat.Tenancy_0)
+	log.DefaultLogger.Error(dat.Tenancy_1)
+	log.DefaultLogger.Error(dat.Tenancy_2)
+	log.DefaultLogger.Error(dat.Tenancy_3)
+	log.DefaultLogger.Error(dat.Tenancy_4)
+	log.DefaultLogger.Error(dat.Tenancy_5)
+
+	log.DefaultLogger.Error(dat.Region_0)
+	log.DefaultLogger.Error(dat.Region_1)
+	log.DefaultLogger.Error(dat.Region_2)
+	log.DefaultLogger.Error(dat.Region_3)
+	log.DefaultLogger.Error(dat.Region_4)
+	log.DefaultLogger.Error(dat.Region_5)
+
+	log.DefaultLogger.Error(dat.User_0)
+	log.DefaultLogger.Error(dat.User_1)
+	log.DefaultLogger.Error(dat.User_2)
+	log.DefaultLogger.Error(dat.User_3)
+	log.DefaultLogger.Error(dat.User_4)
+	log.DefaultLogger.Error(dat.User_5)
+
+	log.DefaultLogger.Error(dat.Profile_0)
+	log.DefaultLogger.Error(dat.Profile_1)
+	log.DefaultLogger.Error(dat.Profile_2)
+	log.DefaultLogger.Error(dat.Profile_3)
+	log.DefaultLogger.Error(dat.Profile_4)
+	log.DefaultLogger.Error(dat.Profile_5)
+
+	log.DefaultLogger.Error(dat.Fingerprint_0)
+	log.DefaultLogger.Error(dat.Fingerprint_1)
+	log.DefaultLogger.Error(dat.Fingerprint_2)
+	log.DefaultLogger.Error(dat.Fingerprint_3)
+	log.DefaultLogger.Error(dat.Fingerprint_4)
+	log.DefaultLogger.Error(dat.Fingerprint_5)
+
+	log.DefaultLogger.Error(dat.Privkey_0)
+	log.DefaultLogger.Error(dat.Privkey_1)
+	log.DefaultLogger.Error(dat.Privkey_2)
+	log.DefaultLogger.Error(dat.Privkey_3)
+	log.DefaultLogger.Error(dat.Privkey_4)
+	log.DefaultLogger.Error(dat.Privkey_5)
+
+	// end test statements
+
 	switch environment {
-	case "local":
+	case "oci-user-principals":
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
@@ -263,7 +315,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		return nil
 
-	case "OCI Instance":
+	case "oci-instance":
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
@@ -295,7 +347,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	}
 
 	for key, _ := range o.tenancyAccess {
-		if ts.TenancyMode == "multitenancy" && ts.Environment != "local" {
+		if ts.TenancyMode == "multitenancy" && ts.Environment != "oci-user-principals" {
 			return &backend.QueryDataResponse{}, errors.New("Multitenancy mode using instance principals is not implemented yet.")
 		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
