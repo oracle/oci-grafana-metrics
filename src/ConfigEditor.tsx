@@ -120,7 +120,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label: region,
               value: region,
               }))}
-            defaultValue={options.jsonData.Environment}
+            defaultValue={options.jsonData.region0}
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(option);
             }}
@@ -130,10 +130,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="User OCID"
               labelWidth={28}
               tooltip="User OCID"
-              placeholder={options.secureJsonFields.user0 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
+                placeholder={options.secureJsonFields.user0 ? 'configured' : ''}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'user0')}
                 />
       </InlineField>
@@ -141,10 +141,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Tenancy OCID"
               labelWidth={28}
               tooltip="Tenancy OCID"
-              placeholder={options.secureJsonFields.tenancy0 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
+                placeholder={options.secureJsonFields.tenancy0 ? 'configured' : ''}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy0')}
                 />
       </InlineField>
@@ -163,11 +163,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Private Key"
               labelWidth={28}
               tooltip="Private Key"
-              placeholder={options.secureJsonFields.privkey0 ? 'configured' : ''}
             >
               <TextArea
                 type="text"
                 className="width-30"
+                placeholder={options.secureJsonFields.privkey0 ? 'configured' : ''}
                 cols={20}
                 rows={4}
                 maxLength={4096}
@@ -205,7 +205,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label: region,
               value: region,
               }))}
-            defaultValue={options.jsonData.Environment}
+            defaultValue={options.jsonData.region1}
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region1')(option);
             }}
@@ -215,10 +215,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="User OCID"
               labelWidth={28}
               tooltip="User OCID"
-              placeholder={options.secureJsonFields.user1 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
+                placeholder={options.secureJsonFields.user1 ? 'configured' : ''}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'user1')}
                 />
       </InlineField>
@@ -226,10 +226,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Tenancy OCID"
               labelWidth={28}
               tooltip="Tenancy OCID"
-              placeholder={options.secureJsonFields.tenancy1 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
+                placeholder={options.secureJsonFields.tenancy1 ? 'configured' : ''}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy1')}
                 />
       </InlineField>
@@ -237,10 +237,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Fingerprint"
               labelWidth={28}
               tooltip="Fingerprint"
-              placeholder={options.secureJsonFields.fingerprint1 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
+                placeholder={options.secureJsonFields.fingerprint1 ? 'configured' : ''}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'fingerprint1')}
                 />
       </InlineField>
@@ -248,11 +248,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Private Key"
               labelWidth={28}
               tooltip="Private Key"
-              placeholder={options.secureJsonFields.privkey1 ? 'configured' : ''}
             >
               <TextArea
                 type="text"
                 className="width-30"
+                placeholder={options.secureJsonFields.privkey1 ? 'configured' : ''}
                 cols={20}
                 rows={4}
                 maxLength={4096}
@@ -299,7 +299,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label: region,
               value: region,
               }))}
-            defaultValue={options.jsonData.Environment}
+            defaultValue={options.jsonData.region2}
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region2')(option);
             }}
@@ -320,10 +320,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Tenancy OCID"
               labelWidth={28}
               tooltip="Tenancy OCID"
-              placeholder={options.secureJsonFields.tenancy2 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
+                placeholder={options.secureJsonFields.tenancy2 ? 'configured' : ''}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy2')}
                 />
       </InlineField>
@@ -331,10 +331,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Fingerprint"
               labelWidth={28}
               tooltip="Fingerprint"
-              placeholder={options.secureJsonFields.fingerprint2 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
+                placeholder={options.secureJsonFields.fingerprint2 ? 'configured' : ''}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'fingerprint2')}
                 />
       </InlineField>
@@ -342,11 +342,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Private Key"
               labelWidth={28}
               tooltip="Private Key"
-              placeholder={options.secureJsonFields.privkey2 ? 'configured' : ''}
             >
               <TextArea
                 type="text"
                 className="width-30"
+                placeholder={options.secureJsonFields.privkey2 ? 'configured' : ''}
                 cols={20}
                 rows={4}
                 maxLength={4096}
@@ -393,7 +393,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label: region,
               value: region,
               }))}
-            defaultValue={options.jsonData.Environment}
+            defaultValue={options.jsonData.region3}
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region3')(option);
             }}

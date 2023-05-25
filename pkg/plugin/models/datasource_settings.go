@@ -17,13 +17,13 @@ type OCIDatasourceSettings struct {
 	AuthProvider         string `json:"authProvider"`
 	ConfigPath           string `json:"configPath"`
 	ConfigProfile        string `json:"configProfile"`
-	MultiTenancyChoice   string `json:"multiTenancyChoice"`
+	TenancyMode          string `json:"TenancyMode"`
 	MultiTenancyMode     string `json:"multiTenancyMode"`
 	MultiTenancyFile     string `json:"multiTenancyFile"`
 	TenancyName          string `json:"tenancyName,omitempty"`
 	EnableCMDB           bool   `json:"enableCMDB"`
 	EnableCMDBUploadFile bool   `json:"enableCMDBUploadFile"`
-	CMDBFileContent      string `json:"cmdbFileContent"`
+	Environment          string `json:"Environment"`
 }
 
 func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSettings) error {
@@ -44,12 +44,6 @@ func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSetti
 
 		if d.ConfigProfile == "" {
 			d.ConfigProfile = constants.DEFAULT_PROFILE
-		}
-
-		if d.MultiTenancyChoice == constants.YES {
-			if d.MultiTenancyFile == "" || d.MultiTenancyFile == constants.DEFAULT_MULTI_TENANCY_FILE {
-				d.MultiTenancyFile = path.Join(homeFolder, constants.DEFAULT_CONFIG_DIR_NAME, "tenancies")
-			}
 		}
 
 		if d.TenancyName == "" {

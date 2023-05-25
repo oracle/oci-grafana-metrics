@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"strings"
 	"sync"
@@ -69,23 +68,12 @@ func New(ociSettings *models.OCIDatasourceSettings, rCache *ristretto.Cache) (*O
 
 	// setting the tenancies map with ocid and profile name
 	ociClients.tenanciesMap[baseOciClient.tenancyOCID] = ociSettings.ConfigProfile
-	if ociSettings.MultiTenancyChoice == constants.YES {
-		if err := readMultiTenancySourceFile(ociSettings.MultiTenancyFile, ociClients.tenanciesMap); err != nil {
-			backend.Logger.Error("client", "New", err)
-			return nil, err
-		}
-	}
-
-	// setting cmdb data, when enabled
-	if ociSettings.EnableCMDB && ociSettings.EnableCMDBUploadFile {
-		cmdbData, err := constructCMDBData(ociSettings.CMDBFileContent)
-		if err != nil {
-			backend.Logger.Error("client", "New", err)
-			return nil, err
-		}
-
-		ociClients.cmdbData = cmdbData
-	}
+	// if ociSettings.MultiTenancyChoice == constants.YES {
+	// 	if err := readMultiTenancySourceFile(ociSettings.MultiTenancyFile, ociClients.tenanciesMap); err != nil {
+	// 		backend.Logger.Error("client", "New", err)
+	// 		return nil, err
+	// 	}
+	// }
 
 	// setting base oci client
 	ociClients.clientPerProfile[ociSettings.ConfigProfile] = baseOciClient
@@ -130,47 +118,6 @@ func (oc *OCIClients) GetOciClient(tenancyOCID string, suffixes ...string) *OCIC
 	oc.clientPerProfile[profile+suffix] = client
 
 	return client
-}
-
-// TestConnectivity Check the OCI data source test request in Grafana's Datasource configuration UI.
-func (oc *OCIClients) TestConnectivity(ctx context.Context) error {
-	backend.Logger.Debug("client", "TestConnectivity", "testing the OCI connectivity")
-
-	client := oc.GetOciClient(oc.baseTenancyOCID)
-	if client == nil {
-		return errors.New("could not create the client to check the connectivity")
-	}
-
-	cRes, cErr := client.identityClient.ListCompartments(ctx, identity.ListCompartmentsRequest{
-		CompartmentId:          common.String(oc.baseTenancyOCID),
-		AccessLevel:            identity.ListCompartmentsAccessLevelAny,
-		CompartmentIdInSubtree: common.Bool(true),
-		Limit:                  common.Int(5),
-	})
-	if cErr != nil {
-		backend.Logger.Error("client", "TestConnectivity", "error to list compartments: "+cErr.Error())
-		return cErr
-	}
-	if cRes.RawResponse.StatusCode < 200 || cRes.RawResponse.StatusCode >= 300 {
-		return errors.New("lising compartments failed, please check doc for required oci policies")
-	}
-
-	mRes, mErr := client.monitoringClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
-		CompartmentId:          common.String(oc.baseTenancyOCID),
-		CompartmentIdInSubtree: common.Bool(true),
-		Limit:                  common.Int(1),
-	})
-	if mErr != nil {
-		backend.Logger.Error("client", "TestConnectivity", "error to list metrics: "+mErr.Error())
-		return mErr
-	}
-	if mRes.RawResponse.StatusCode < 200 || mRes.RawResponse.StatusCode >= 300 {
-		return errors.New("lising metrics failed, please check doc for required oci policies")
-	}
-
-	backend.Logger.Info("client", "TestConnectivity", "datasource connectivity with oci is successful.")
-
-	return nil
 }
 
 // GetTenancies Returns all the tenancies
