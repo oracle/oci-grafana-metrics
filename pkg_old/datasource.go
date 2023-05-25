@@ -44,6 +44,7 @@ type OCIDatasource struct {
 	logger           log.Logger
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
+	// clients          *client.OCIClients
 }
 
 // NewOCIConfigFile - constructor
@@ -226,7 +227,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	case "search":
 		return o.searchResponse(ctx, req, takey)
 	case "test":
-		return o.testResponse(ctx, req)
+		return o.CheckHealth(ctx, req)
 	default:
 		return o.queryResponse(ctx, req)
 	}
@@ -338,7 +339,30 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	}
 }
 
-func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+// func (ocidx *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+// 	backend.Logger.Debug("plugin", "CheckHealth", req.PluginContext.PluginID)
+
+// 	hRes := &backend.CheckHealthResult{}
+// 	var beq *backend.QueryDataResponse
+
+// 	if err, beq := ocidx.testResponse(ctx, req); err != nil {
+// 	// if err := ocidx.clients.TestConnectivity(ctx); err != nil {
+// 		hRes.Status = backend.HealthStatusError
+// 		hRes.Message = err.Error()
+// 		backend.Logger.Error("plugin", "CheckHealth", err)
+
+// 		return hRes, nil
+// 	}
+
+// 	return &backend.CheckHealthResult{
+// 		Status:  backend.HealthStatusOk,
+// 		Message: "Success",
+// 	}, nil
+// }
+
+// func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// hRes := &backend.CheckHealthResult{}
 	var ts GrafanaCommonRequest
 	var reg common.Region
 	query := req.Queries[0]

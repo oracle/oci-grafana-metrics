@@ -4,12 +4,14 @@ go 1.16
 
 require (
 	github.com/davecgh/go-spew v1.1.1
+	github.com/dgraph-io/ristretto v0.1.1
 	github.com/google/flatbuffers v22.9.29+incompatible // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.140.0
 	github.com/hashicorp/go-hclog v1.3.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.5 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
