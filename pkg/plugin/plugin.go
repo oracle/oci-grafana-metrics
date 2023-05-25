@@ -204,12 +204,12 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	}
 	o.cache = cache
 
-	ociClients, err := client.New(dsSettings, cache)
-	if err != nil {
-		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci client: "+err.Error())
-		return nil, err
-	}
-	o.clients = ociClients
+	// ociClients, err := client.New(dsSettings, cache)
+	// if err != nil {
+	// 	backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci client: "+err.Error())
+	// 	return nil, err
+	// }
+	// o.clients = ociClients
 
 	mux := http.NewServeMux()
 	o.registerRoutes(mux)
@@ -430,6 +430,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			return errors.New("Error Loading config settings")
 		}
 		for key, _ := range q.tenancyocid {
+			log.DefaultLogger.Error("Key: " + key)
 			var configProvider common.ConfigurationProvider
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
@@ -484,15 +485,18 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	var testResult bool
 	var errAllComp error
 
-	// tenv := o.settings.AuthProvider
-	// tmode := o.settings.TenancyMode
+	tenv := o.settings.Environment
+	tmode := o.settings.TenancyMode
+	// orco, _ := o.tenancyAccess["DEFAULT/"].config.TenancyOCID()
+
+	// backend.Logger.Debug("test", "TestConnectivity", orco)
 
 	for key, _ := range o.tenancyAccess {
 		testResult = false
 
-		// if tmode == "multitenancy" && tenv == "oci-instance" {
-		// 	return errors.New("Multitenancy mode using instance principals is not implemented yet.")
-		// }
+		if tmode == "multitenancy" && tenv == "oci-instance" {
+			return errors.New("Multitenancy mode using instance principals is not implemented yet.")
+		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
 		if tenancyErr != nil {
 			return errors.Wrap(tenancyErr, "error fetching TenancyOCID")

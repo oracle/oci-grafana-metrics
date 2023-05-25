@@ -116,6 +116,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
+            value={options.jsonData.region0 || ''}
             options={regions.map((region) => ({
               label: region,
               value: region,
@@ -201,6 +202,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
+            value={options.jsonData.region1 || ''}
             options={regions.map((region) => ({
               label: region,
               value: region,
@@ -295,6 +297,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
+            value={options.jsonData.region2 || ''}
             options={regions.map((region) => ({
               label: region,
               value: region,
@@ -389,6 +392,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
+            value={options.jsonData.region3 || ''}
             options={regions.map((region) => ({
               label: region,
               value: region,
