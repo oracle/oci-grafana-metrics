@@ -24,6 +24,24 @@ type OCIDatasourceSettings struct {
 	EnableCMDB           bool   `json:"enableCMDB"`
 	EnableCMDBUploadFile bool   `json:"enableCMDBUploadFile"`
 	Environment          string `json:"Environment"`
+
+	Profile_0 string `json:"profile0,omitempty"`
+	Region_0  string `json:"region0,omitempty"`
+
+	Profile_1 string `json:"profile1,omitempty"`
+	Region_1  string `json:"region1,omitempty"`
+
+	Profile_2 string `json:"profile2,omitempty"`
+	Region_2  string `json:"region2,omitempty"`
+
+	Profile_3 string `json:"profile3,omitempty"`
+	Region_3  string `json:"region3,omitempty"`
+
+	Profile_4 string `json:"profile4,omitempty"`
+	Region_4  string `json:"region4,omitempty"`
+
+	Profile_5 string `json:"profile5,omitempty"`
+	Region_5  string `json:"region5,omitempty"`
 }
 
 func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSettings) error {

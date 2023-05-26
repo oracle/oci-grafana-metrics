@@ -7,7 +7,7 @@ import {
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { OCIDataSourceOptions, DefaultOCIOptions } from './types';
+import { OCIDataSourceOptions } from './types';
 import {
   AuthProviders,
   regions,
@@ -96,18 +96,20 @@ export class ConfigEditor extends PureComponent<Props, State> {
   {options.jsonData.Environment === AuthProviders.OCI_USER && (
               <>
       <FieldSet label="DEFAULT Connection Details">
+
       <InlineField
-              label="Config Profile Name"
-              labelWidth={28}
-              tooltip="Config profile name. Default value is DEFAULT."
-            >
-              <Input
-                className="width-30"
-                // css=""
-                placeholder={DefaultOCIOptions.ConfigProfile}
-                value={options.jsonData.configProfile || DefaultOCIOptions.ConfigProfile}
-                onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile0')}
-              />
+          label="Config Profile Name"
+          labelWidth={28}
+          tooltip="Config profile name. Default value is DEFAULT."
+        >
+        <Input
+          className="width-30"
+          defaultValue="DEFAULT"
+          readOnly
+          placeholder={options.jsonData.profile0 === undefined ? 'DEFAULT' : options.jsonData.profile0}
+          value={options.jsonData.profile0 === undefined ? 'DEFAULT' : options.jsonData.profile0}
+          onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile0')}
+        />
       </InlineField>
       <InlineField
           label="Region"

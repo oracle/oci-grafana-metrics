@@ -1,3 +1,5 @@
+// Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+// Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 package plugin
 
 import (
@@ -320,29 +322,64 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 
 	TenancySettingsBlock := 0
 	var dat OCISecuredSettings
+	var nonsecdat models.OCIDatasourceSettings
 
 	if err := json.Unmarshal(req.JSONData, &dat); err != nil {
+		return nil, fmt.Errorf("can not read Secured settings: %s", err.Error())
+	}
+
+	if err := json.Unmarshal(req.JSONData, &nonsecdat); err != nil {
 		return nil, fmt.Errorf("can not read settings: %s", err.Error())
 	}
 
 	decryptedJSONData := req.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
 
+	dat.Region_0 = nonsecdat.Region_0
+	dat.Region_1 = nonsecdat.Region_1
+	dat.Region_2 = nonsecdat.Region_2
+	dat.Region_3 = nonsecdat.Region_3
+	dat.Region_4 = nonsecdat.Region_4
+	dat.Region_5 = nonsecdat.Region_5
+
+	dat.Profile_0 = nonsecdat.Profile_0
+	dat.Profile_1 = nonsecdat.Profile_1
+	dat.Profile_2 = nonsecdat.Profile_2
+	dat.Profile_3 = nonsecdat.Profile_3
+	dat.Profile_4 = nonsecdat.Profile_4
+	dat.Profile_5 = nonsecdat.Profile_5
+
+	log.DefaultLogger.Error(dat.Region_0)
+	log.DefaultLogger.Error(nonsecdat.Region_0)
+
+	log.DefaultLogger.Error(dat.Profile_0)
+	log.DefaultLogger.Error(nonsecdat.Profile_0)
+
 	v := reflect.ValueOf(dat)
 	typeOfS := v.Type()
 	var key string
 
+	backend.Logger.Error("OCILoadSettings", "OCILoadSettings", "Siamo in OCILoadSettings")
+
 	for FieldIndex := 0; FieldIndex < v.NumField(); FieldIndex++ {
+		backend.Logger.Error("OCILoadSettings2", "OCILoadSettings2", typeOfS.Field(FieldIndex).Name)
 		splits := strings.Split(typeOfS.Field(FieldIndex).Name, "_")
 		SettingsBlockIndex, interr := strconv.Atoi(splits[1])
 		if interr != nil {
 			return nil, fmt.Errorf("can not read settings: %s", interr.Error())
 		}
+		backend.Logger.Error("OCILoadSettings3", "OCILoadSettings3", splits[0])
+		backend.Logger.Error("OCILoadSettings4", "OCILoadSettings4", splits[1])
+
 		if SettingsBlockIndex == TenancySettingsBlock {
 			if splits[0] == "Profile" {
+				backend.Logger.Error("asasas", "asasas", v.Field(FieldIndex).Interface())
 				if v.Field(FieldIndex).Interface() != "" {
 					key = fmt.Sprintf("%v", v.Field(FieldIndex).Interface())
+					backend.Logger.Error("key", "key", key)
+
 				} else {
+					backend.Logger.Error("keyelse", "keyelse", v.Field(FieldIndex).Interface())
 					return q, nil
 				}
 			} else {
@@ -350,8 +387,10 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 				switch value := v.Field(FieldIndex).Interface(); strings.ToLower(splits[0]) {
 				case "tenancy":
 					q.tenancyocid[key] = fmt.Sprintf("%v", value)
+					backend.Logger.Error("tenancy", "tenancy", value)
 				case "region":
 					q.region[key] = fmt.Sprintf("%v", value)
+					backend.Logger.Error("region", "region", value)
 				case "user":
 					q.user[key] = fmt.Sprintf("%v", value)
 				case "privkey":
@@ -425,6 +464,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 	switch environment {
 	case "oci-user-principals":
+		log.DefaultLogger.Error("User Principals siamo qui")
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
@@ -485,18 +525,15 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	var testResult bool
 	var errAllComp error
 
-	tenv := o.settings.Environment
-	tmode := o.settings.TenancyMode
-	// orco, _ := o.tenancyAccess["DEFAULT/"].config.TenancyOCID()
-
-	// backend.Logger.Debug("test", "TestConnectivity", orco)
+	// tenv := o.settings.Environment
+	// tmode := o.settings.TenancyMode
 
 	for key, _ := range o.tenancyAccess {
 		testResult = false
 
-		if tmode == "multitenancy" && tenv == "oci-instance" {
-			return errors.New("Multitenancy mode using instance principals is not implemented yet.")
-		}
+		// if tmode == "multitenancy" && tenv == "oci-instance" {
+		// 	return errors.New("Multitenancy mode using instance principals is not implemented yet.")
+		// }
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
 		if tenancyErr != nil {
 			return errors.Wrap(tenancyErr, "error fetching TenancyOCID")
