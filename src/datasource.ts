@@ -76,12 +76,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseTenancies(response);
     });
   }
+
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
     if (tenancyOCID === '') {
       return [];
     }
     const reqBody: JSON = {
       tenancy: tenancyOCID,
+      queryType: "regions"
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Regions, reqBody).then((response) => {
       return new ResponseParser().parseRegions(response);

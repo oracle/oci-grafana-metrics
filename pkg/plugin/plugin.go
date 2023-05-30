@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -21,12 +22,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"github.com/oracle/oci-go-sdk/v65/identity"
 	"github.com/oracle/oci-go-sdk/v65/monitoring"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/client"
+	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
@@ -224,67 +227,40 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	return o, nil
 }
 
-// func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-// 	backend.Logger.Debug("plugin", "NewOCIDatasource", settings.ID)
-// 	ociDx := &OCIDatasource{}
-// 	dsSettings := &models.OCIDatasourceSettings{}
-
-// 	if err := dsSettings.Load(settings); err != nil {
-// 		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci datasource settings: "+err.Error())
-// 		return nil, err
-// 	}
-// 	ociDx.settings = dsSettings
-
-// 	cache, err := ristretto.NewCache(&ristretto.Config{
-// 		NumCounters: 1e7,     // number of keys to track frequency of (10M).
-// 		MaxCost:     1 << 30, // maximum cost of cache (1GB).
-// 		BufferItems: 64,      // number of keys per Get buffer.
-// 		Metrics:     false,
-// 	})
-// 	if err != nil {
-// 		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to create cache: "+err.Error())
-// 		return nil, err
-// 	}
-// 	ociDx.cache = cache
-
-// 	ociClients, err := client.New(dsSettings, cache)
-// 	if err != nil {
-// 		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci client: "+err.Error())
-// 		return nil, err
-// 	}
-// 	ociDx.clients = ociClients
-
-// 	mux := http.NewServeMux()
-// 	ociDx.registerRoutes(mux)
-// 	ociDx.CallResourceHandler = httpadapter.New(mux)
-
-// 	return ociDx, nil
-// }
-
-// Dispose Called before creatinga a new instance to allow plugin authors
-// to cleanup.
-// func (ocidx *OCIDatasource) Dispose() {
-// 	backend.Logger.Debug("plugin", "NewOCIDatasource", "Clearing up")
-
-// 	ocidx.clients.Destroy()
-// 	ocidx.clients = nil
-// 	ocidx.cache.Clear()
-// 	ocidx.cache.Close()
-// }
-
-// QueryData Primary method called by grafana-server to handle multiple queries and returns multiple responses.
-// req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
-// The QueryDataResponse contains a map of RefID to the response for each query, and each response
-// contains Frames ([]*Frame).
-func (ocidx *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	backend.Logger.Debug("plugin", "QueryData", req.PluginContext.DataSourceInstanceSettings.Name)
 
+	var ts GrafanaCommonRequest
+	var takey string
+
+	query := req.Queries[0]
+	if err := json.Unmarshal(query.JSON, &ts); err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
+	tenancymode := o.settings.TenancyMode
+	// queryType := ts.QueryType
+
+	if tenancymode == "multitenancy" {
+		takey = ts.Tenancy
+	} else {
+		takey = SingleTenancyKey
+	}
+
+	if len(o.tenancyAccess) == 0 {
+		return &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: backend.DataResponse{
+					Error: fmt.Errorf("no such tenancy access key %q, make sure your datasources are migrated", takey),
+				},
+			},
+		}, nil
+	}
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
-		res := ocidx.query(ctx, req.PluginContext, q)
+		res := o.query(ctx, req.PluginContext, q)
 
 		// saving the response in a hashmap based on with RefID as identifier
 		response.Responses[q.RefID] = res
@@ -670,4 +646,120 @@ func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment str
 	}
 
 	return m, nil
+}
+
+/*
+Function generates an array  containing OCI tenancy list in the following format:
+<Label/TenancyOCID>
+*/
+func (o *OCIDatasource) GetTenancies2(ctx context.Context) []models.OCIResource {
+	backend.Logger.Debug("client", "GetTenancies", "fetching the tenancies")
+
+	tenancyList := []models.OCIResource{}
+	for key, _ := range o.tenancyAccess {
+		// frame.AppendRow(*(common.String(key)))
+
+		tenancyList = append(tenancyList, models.OCIResource{
+			Name: *(common.String(key)),
+			OCID: *(common.String(key)),
+		})
+	}
+
+	return tenancyList
+}
+
+// GetSubscribedRegions Returns the subscribed regions by the mentioned tenancy
+// API Operation: ListRegionSubscriptions
+// Permission Required: TENANCY_INSPECT
+// Links:
+// https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/iampolicyreference.htm
+// https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingregions.htm
+// https://docs.oracle.com/en-us/iaas/api/#/en/identity/20160918/RegionSubscription/ListRegionSubscriptions
+func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID string) []string {
+	backend.Logger.Debug("client", "GetSubscribedRegions", "fetching the subscribed region for tenancy: "+tenancyOCID)
+
+	var subscribedRegions []string
+	takey := o.GetTenancyAccessKey(tenancyOCID)
+
+	tenancyocid, tenancyErr := o.tenancyAccess[takey].config.TenancyOCID()
+	if tenancyErr != nil {
+		return nil
+	}
+	req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
+
+	resp, err := o.tenancyAccess[takey].identityClient.ListRegionSubscriptions(ctx, req)
+	if err != nil {
+		backend.Logger.Warn("client", "GetSubscribedRegions", err)
+		return nil
+	}
+
+	// if err != nil {
+	// 	backend.Logger.Warn("client", "GetSubscribedRegions", err)
+	// 	subscribedRegions = append(subscribedRegions, o.tenancyAccess[takey].region)
+	// 	return subscribedRegions
+	// }
+	if resp.RawResponse.StatusCode != 200 {
+		backend.Logger.Warn("client", "GetSubscribedRegions", "Could not fetch subscribed regions. Please check IAM policy.")
+		return subscribedRegions
+	}
+
+	for _, item := range resp.Items {
+		if item.Status == identity.RegionSubscriptionStatusReady {
+			subscribedRegions = append(subscribedRegions, *item.RegionName)
+		}
+	}
+
+	if len(subscribedRegions) > 1 {
+		subscribedRegions = append(subscribedRegions, constants.ALL_REGION)
+	}
+	return subscribedRegions
+}
+
+func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+	for _, query := range req.Queries {
+		tenancyocid, tenancyErr := o.tenancyAccess[takey].config.TenancyOCID()
+		if tenancyErr != nil {
+			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+		}
+		req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
+
+		// Send the request using the service client
+		res, err := o.tenancyAccess[takey].identityClient.ListRegionSubscriptions(ctx, req)
+		if err != nil {
+			return nil, errors.Wrap(err, "error fetching regions")
+		}
+
+		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
+		var regionName []string
+
+		/* Generate list of regions */
+		for _, item := range res.Items {
+			regionName = append(regionName, *(item.RegionName))
+		}
+
+		/* Sort regions list */
+		sort.Strings(regionName)
+		for _, sortedRegions := range regionName {
+			frame.AppendRow(sortedRegions)
+		}
+
+		respD := resp.Responses[query.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[query.RefID] = respD
+	}
+	return resp, nil
+}
+
+func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
+
+	var takey string
+	tenancymode := o.settings.TenancyMode
+
+	if tenancymode == "multitenancy" {
+		takey = tenancyOCID
+	} else {
+		takey = SingleTenancyKey
+	}
+	return takey
 }

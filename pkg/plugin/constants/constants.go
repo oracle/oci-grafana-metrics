@@ -7,7 +7,7 @@ const (
 	OCI_INSTANCE_AUTH_PROVIDER        = "oci-instance"
 	DEFAULT_CONFIG_DIR_NAME           = ".oci"
 	DEFAULT_CONFIG_FILE               = "~/.oci/config"
-	DEFAULT_PROFILE                   = "DEFAULT"
+	DEFAULT_PROFILE                   = "DEFAULT/"
 	DEFAULT_INSTANCE_PROFILE          = "instance_profile"
 	DEFAULT_MULTI_TENANCY_FILE        = "~/.oci/tenancies"
 	DEFAULT_RESOURCE_GROUP            = "NoResourceGroup"

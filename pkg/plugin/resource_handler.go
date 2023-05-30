@@ -54,7 +54,8 @@ func (ocidx *OCIDatasource) GetTenanciesHandler(rw http.ResponseWriter, req *htt
 		return
 	}
 
-	ts := ocidx.clients.GetTenancies(req.Context())
+	// ts := ocidx.clients.GetTenancies(req.Context())
+	ts := ocidx.GetTenancies2(req.Context())
 
 	writeResponse(rw, ts)
 }
@@ -72,7 +73,8 @@ func (ocidx *OCIDatasource) GetRegionsHandler(rw http.ResponseWriter, req *http.
 		return
 	}
 
-	regions := ocidx.clients.GetSubscribedRegions(req.Context(), rr.Tenancy)
+	// regions := ocidx.clients.GetSubscribedRegions(req.Context(), rr.Tenancy)
+	regions := ocidx.GetSubscribedRegions(req.Context(), rr.Tenancy)
 
 	writeResponse(rw, regions)
 }
