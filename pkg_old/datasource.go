@@ -44,6 +44,7 @@ type OCIDatasource struct {
 	logger           log.Logger
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
+	// clients          *client.OCIClients
 }
 
 // NewOCIConfigFile - constructor
@@ -226,15 +227,67 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 	case "search":
 		return o.searchResponse(ctx, req, takey)
 	case "test":
-		return o.testResponse(ctx, req)
+		return o.CheckHealth(ctx, req)
 	default:
 		return o.queryResponse(ctx, req)
 	}
 }
 
 func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req backend.DataSourceInstanceSettings) error {
+
+	// TEST statements
+	var dat OCISecuredSettings
+	decryptedJSONData := req.DecryptedSecureJSONData
+	transcode(decryptedJSONData, &dat)
+	log.DefaultLogger.Error(environment)
+	log.DefaultLogger.Error(tenancymode)
+
+	log.DefaultLogger.Error(dat.Tenancy_0)
+	log.DefaultLogger.Error(dat.Tenancy_1)
+	log.DefaultLogger.Error(dat.Tenancy_2)
+	log.DefaultLogger.Error(dat.Tenancy_3)
+	log.DefaultLogger.Error(dat.Tenancy_4)
+	log.DefaultLogger.Error(dat.Tenancy_5)
+
+	log.DefaultLogger.Error(dat.Region_0)
+	log.DefaultLogger.Error(dat.Region_1)
+	log.DefaultLogger.Error(dat.Region_2)
+	log.DefaultLogger.Error(dat.Region_3)
+	log.DefaultLogger.Error(dat.Region_4)
+	log.DefaultLogger.Error(dat.Region_5)
+
+	log.DefaultLogger.Error(dat.User_0)
+	log.DefaultLogger.Error(dat.User_1)
+	log.DefaultLogger.Error(dat.User_2)
+	log.DefaultLogger.Error(dat.User_3)
+	log.DefaultLogger.Error(dat.User_4)
+	log.DefaultLogger.Error(dat.User_5)
+
+	log.DefaultLogger.Error(dat.Profile_0)
+	log.DefaultLogger.Error(dat.Profile_1)
+	log.DefaultLogger.Error(dat.Profile_2)
+	log.DefaultLogger.Error(dat.Profile_3)
+	log.DefaultLogger.Error(dat.Profile_4)
+	log.DefaultLogger.Error(dat.Profile_5)
+
+	log.DefaultLogger.Error(dat.Fingerprint_0)
+	log.DefaultLogger.Error(dat.Fingerprint_1)
+	log.DefaultLogger.Error(dat.Fingerprint_2)
+	log.DefaultLogger.Error(dat.Fingerprint_3)
+	log.DefaultLogger.Error(dat.Fingerprint_4)
+	log.DefaultLogger.Error(dat.Fingerprint_5)
+
+	log.DefaultLogger.Error(dat.Privkey_0)
+	log.DefaultLogger.Error(dat.Privkey_1)
+	log.DefaultLogger.Error(dat.Privkey_2)
+	log.DefaultLogger.Error(dat.Privkey_3)
+	log.DefaultLogger.Error(dat.Privkey_4)
+	log.DefaultLogger.Error(dat.Privkey_5)
+
+	// end test statements
+
 	switch environment {
-	case "local":
+	case "oci-user-principals":
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
@@ -263,7 +316,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		return nil
 
-	case "OCI Instance":
+	case "oci-instance":
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
@@ -286,7 +339,30 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	}
 }
 
-func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+// func (ocidx *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+// 	backend.Logger.Debug("plugin", "CheckHealth", req.PluginContext.PluginID)
+
+// 	hRes := &backend.CheckHealthResult{}
+// 	var beq *backend.QueryDataResponse
+
+// 	if err, beq := ocidx.testResponse(ctx, req); err != nil {
+// 	// if err := ocidx.clients.TestConnectivity(ctx); err != nil {
+// 		hRes.Status = backend.HealthStatusError
+// 		hRes.Message = err.Error()
+// 		backend.Logger.Error("plugin", "CheckHealth", err)
+
+// 		return hRes, nil
+// 	}
+
+// 	return &backend.CheckHealthResult{
+// 		Status:  backend.HealthStatusOk,
+// 		Message: "Success",
+// 	}, nil
+// }
+
+// func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// hRes := &backend.CheckHealthResult{}
 	var ts GrafanaCommonRequest
 	var reg common.Region
 	query := req.Queries[0]
@@ -295,7 +371,7 @@ func (o *OCIDatasource) testResponse(ctx context.Context, req *backend.QueryData
 	}
 
 	for key, _ := range o.tenancyAccess {
-		if ts.TenancyMode == "multitenancy" && ts.Environment != "local" {
+		if ts.TenancyMode == "multitenancy" && ts.Environment != "oci-user-principals" {
 			return &backend.QueryDataResponse{}, errors.New("Multitenancy mode using instance principals is not implemented yet.")
 		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()

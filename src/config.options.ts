@@ -32,11 +32,11 @@ export enum TenancyChoices {
 
 export const TenancyChoiceOptions = [
   {
-    label: 'multitenancy',
+    label: 'Multi Tenancy',
     value: TenancyChoices.multitenancy,
   },
   {
-    label: 'single',
+    label: 'Single Tenancy',
     value: TenancyChoices.single,
   },
 ] as Array<SelectableValue<string>>;

@@ -35,17 +35,55 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return super.postResource(path, body);
   }
 
+
+  async testoDatasource (
+    tenancyOCID: any,
+    compartmentOCID: any,
+    region: any,
+    environment: string,
+    tenancymode: string,
+    namespace: any
+  ): Promise<OCIResourceGroupWithMetricNamesItem[]> {
+    if (tenancyOCID === '') {
+      return [];
+    }
+    if (region === undefined || namespace === undefined) {
+      return [];
+    }
+    if (region === QueryPlaceholder.Region || namespace === QueryPlaceholder.Namespace) {
+      return [];
+    }
+
+    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
+      compartmentOCID = '';
+    }
+
+    const reqBody: JSON = {
+      tenancy: tenancyOCID,
+      compartment: compartmentOCID,
+      region: region,
+      environment: environment,
+      tenancymode: tenancymode,
+      namespace: namespace,
+    } as unknown as JSON;
+    return this.postResource(OCIResourceCall.ResourceGroups, reqBody).then((response) => {
+      return new ResponseParser().parseResourceGroupWithMetricNames(response);
+    });  
+  }
+
   async getTenancies(): Promise<OCIResourceItem[]> {
     return this.getResource(OCIResourceCall.Tenancies).then((response) => {
       return new ResponseParser().parseTenancies(response);
     });
   }
+
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
     if (tenancyOCID === '') {
       return [];
     }
     const reqBody: JSON = {
       tenancy: tenancyOCID,
+      queryType: "regions"
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Regions, reqBody).then((response) => {
       return new ResponseParser().parseRegions(response);
