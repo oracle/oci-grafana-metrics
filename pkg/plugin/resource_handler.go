@@ -92,7 +92,8 @@ func (ocidx *OCIDatasource) GetCompartmentsHandler(rw http.ResponseWriter, req *
 		return
 	}
 
-	compartments := ocidx.clients.GetCompartments(req.Context(), rr.Tenancy)
+	// compartments := ocidx.clients.GetCompartments(req.Context(), rr.Tenancy)
+	compartments := ocidx.GetCompartments(req.Context(), rr.Tenancy)
 
 	writeResponse(rw, compartments)
 }

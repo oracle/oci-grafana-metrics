@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/common/auth"
@@ -715,42 +714,6 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 	return subscribedRegions
 }
 
-func (o *OCIDatasource) regionsResponse(ctx context.Context, req *backend.QueryDataRequest, takey string) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-	for _, query := range req.Queries {
-		tenancyocid, tenancyErr := o.tenancyAccess[takey].config.TenancyOCID()
-		if tenancyErr != nil {
-			return nil, errors.Wrap(tenancyErr, "error fetching TenancyOCID")
-		}
-		req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
-
-		// Send the request using the service client
-		res, err := o.tenancyAccess[takey].identityClient.ListRegionSubscriptions(ctx, req)
-		if err != nil {
-			return nil, errors.Wrap(err, "error fetching regions")
-		}
-
-		frame := data.NewFrame(query.RefID, data.NewField("text", nil, []string{}))
-		var regionName []string
-
-		/* Generate list of regions */
-		for _, item := range res.Items {
-			regionName = append(regionName, *(item.RegionName))
-		}
-
-		/* Sort regions list */
-		sort.Strings(regionName)
-		for _, sortedRegions := range regionName {
-			frame.AppendRow(sortedRegions)
-		}
-
-		respD := resp.Responses[query.RefID]
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[query.RefID] = respD
-	}
-	return resp, nil
-}
-
 func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 
 	var takey string
@@ -762,4 +725,121 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 		takey = SingleTenancyKey
 	}
 	return takey
+}
+
+// GetCompartments Returns all the sub compartments under the tenancy
+// API Operation: ListCompartments
+// Permission Required: COMPARTMENT_INSPECT
+// Links:
+// https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/iampolicyreference.htm
+// https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm
+// https://docs.oracle.com/en-us/iaas/api/#/en/identity/20160918/Compartment/ListCompartments
+func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string) []models.OCIResource {
+	backend.Logger.Debug("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
+
+	// // fetching from cache, if present
+	// cacheKey := strings.Join([]string{tenancyOCID, "cs"}, "-")
+	// if cachedCompartments, found := oc.cache.Get(cacheKey); found {
+	// 	backend.Logger.Warn("client", "GetCompartments", "getting the data from cache")
+	// 	return cachedCompartments.([]models.OCIResource)
+	// }
+
+	takey := o.GetTenancyAccessKey(tenancyOCID)
+	var tenancyocid string
+	var tenancyErr error
+
+	tenancymode := o.settings.TenancyMode
+
+	if tenancymode == "multitenancy" {
+		if len(takey) <= 0 || takey == NoTenancy {
+			o.logger.Error("Unable to get Multi-tenancy OCID")
+			return nil
+		}
+		res := strings.Split(takey, "/")
+		tenancyocid = res[1]
+	} else {
+		tenancyocid, tenancyErr = o.tenancyAccess[takey].config.TenancyOCID()
+		if tenancyErr != nil {
+			return nil
+		}
+	}
+
+	// regio, regErr := o.tenancyAccess[takey].config.Region()
+	// if regErr != nil {
+	// 	return nil
+	// }
+
+	compartments := map[string]string{}
+	// calling the api if not present in cache
+	compartmentList := []models.OCIResource{}
+	var fetchedCompartments []identity.Compartment
+	var pageHeader string
+
+	for {
+		// reg := common.StringToRegion(regio)
+		// o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
+		req := identity.ListCompartmentsRequest{
+			CompartmentId:          common.String(tenancyocid),
+			CompartmentIdInSubtree: common.Bool(true),
+			LifecycleState:         identity.CompartmentLifecycleStateActive,
+			Limit:                  common.Int(1000),
+		}
+
+		if len(pageHeader) != 0 {
+			req.Page = common.String(pageHeader)
+		}
+
+		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx, req)
+		if err != nil {
+			backend.Logger.Warn("client", "GetCompartments", err)
+			break
+		}
+
+		fetchedCompartments = append(fetchedCompartments, res.Items...)
+
+		if len(res.RawResponse.Header.Get("opc-next-page")) != 0 {
+			pageHeader = *res.OpcNextPage
+		} else {
+			break
+		}
+	}
+
+	// storing compartment ocid and name
+	for _, item := range fetchedCompartments {
+		compartments[*item.Id] = *item.Name
+	}
+
+	// checking if parent compartment is there or not, and update name accordingly
+	for _, item := range fetchedCompartments {
+		compartmentName := *item.Name
+		compartmentOCID := *item.Id
+		parentCompartmentOCID := *item.CompartmentId
+
+		if pcn, found := compartments[parentCompartmentOCID]; found {
+			compartmentName = pcn + " > " + compartmentName
+		}
+
+		compartmentList = append(compartmentList, models.OCIResource{
+			Name: compartmentName,
+			OCID: compartmentOCID,
+		})
+	}
+
+	if len(compartmentList) > 1 {
+		compartmentList = append(compartmentList, models.OCIResource{
+			Name: constants.ALL_COMPARTMENT,
+			OCID: "",
+		})
+	}
+
+	// sorting based on compartment name
+	sort.SliceStable(compartmentList, func(i, j int) bool {
+		return compartmentList[i].Name < compartmentList[j].Name
+	})
+
+	// // saving in the cache
+	// oc.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
+	// oc.cache.Wait()
+
+	return compartmentList
 }
