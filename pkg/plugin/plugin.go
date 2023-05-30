@@ -497,14 +497,14 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	backend.Logger.Debug("client", "TestConnectivity", "testing the OCI connectivity")
 
 	var reg common.Region
-	var testResult bool
-	var errAllComp error
+	// var testResult bool
+	// var errAllComp error
 
 	// tenv := o.settings.Environment
 	// tmode := o.settings.TenancyMode
 
 	for key, _ := range o.tenancyAccess {
-		testResult = false
+		// testResult = false
 
 		// if tmode == "multitenancy" && tenv == "oci-instance" {
 		// 	return errors.New("Multitenancy mode using instance principals is not implemented yet.")
@@ -535,116 +535,40 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		if status >= 200 && status < 300 {
 			backend.Logger.Debug(key, "OK", status)
 		} else {
-			backend.Logger.Debug(key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
-			comparts, Comperr := o.getCompartments(ctx, tenancyocid, regio, key)
-			if Comperr != nil {
-				return errors.Wrap(Comperr, fmt.Sprintf("error fetching Compartments"))
-			}
+			// backend.Logger.Debug(key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
+			// comparts := o.GetCompartments(ctx, tenancyocid)
 
-			for _, v := range comparts {
-				backend.Logger.Debug(key, "Testing", v)
-				listMetrics := monitoring.ListMetricsRequest{
-					CompartmentId: common.String(v),
-				}
+			// for _, v := range comparts {
+			// 	backend.Logger.Debug(key, "Testing", v)
+			// 	listMetrics := monitoring.ListMetricsRequest{
+			// 		CompartmentId: common.String(v),
+			// 	}
 
-				res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
-				if err != nil {
-					backend.Logger.Debug(key, "FAILED", err)
-				}
-				status := res.RawResponse.StatusCode
-				if status >= 200 && status < 300 {
-					backend.Logger.Debug(key, "OK", status)
-					testResult = true
-					break
-				} else {
-					errAllComp = err
-					backend.Logger.Debug(key, "SKIPPED", status)
-				}
-			}
-			if testResult {
-				continue
-			} else {
-				backend.Logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
-				return errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
-			}
+			// 	res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
+			// 	if err != nil {
+			// 		backend.Logger.Debug(key, "FAILED", err)
+			// 	}
+			// 	status := res.RawResponse.StatusCode
+			// 	if status >= 200 && status < 300 {
+			// 		backend.Logger.Debug(key, "OK", status)
+			// 		testResult = true
+			// 		break
+			// 	} else {
+			// 		errAllComp = err
+			// 		backend.Logger.Debug(key, "SKIPPED", status)
+			// 	}
+			// }
+			// if testResult {
+			// 	continue
+			// } else {
+			// 	backend.Logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
+			// 	return errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
+			// }
 		}
 
 	}
 	return nil
 
-}
-
-func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment string, region string, takey string) (map[string]string, error) {
-	m := make(map[string]string)
-
-	tenancyOcid := rootCompartment
-
-	reg := common.StringToRegion(region)
-	o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
-	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
-
-	// Send the request using the service client
-	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("This is what we were trying to get %s", " : fetching tenancy name"))
-	}
-
-	mapFromIdToName := make(map[string]string)
-	mapFromIdToName[tenancyOcid] = *resp.Name //tenancy name
-
-	mapFromIdToParentCmptId := make(map[string]string)
-	mapFromIdToParentCmptId[tenancyOcid] = "" //since root cmpt does not have a parent
-
-	var page *string
-	for {
-		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
-			identity.ListCompartmentsRequest{
-				CompartmentId:          &rootCompartment,
-				Page:                   page,
-				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
-				CompartmentIdInSubtree: common.Bool(true),
-			})
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("this is what we were trying to get %s", rootCompartment))
-		}
-		for _, compartment := range res.Items {
-			if compartment.LifecycleState == identity.CompartmentLifecycleStateActive {
-				mapFromIdToName[*(compartment.Id)] = *(compartment.Name)
-				mapFromIdToParentCmptId[*(compartment.Id)] = *(compartment.CompartmentId)
-			}
-		}
-		if res.OpcNextPage == nil {
-			break
-		}
-		page = res.OpcNextPage
-	}
-
-	mapFromIdToFullCmptName := make(map[string]string)
-	mapFromIdToFullCmptName[tenancyOcid] = mapFromIdToName[tenancyOcid] + "(tenancy, shown as '/')"
-
-	for len(mapFromIdToFullCmptName) < len(mapFromIdToName) {
-		for cmptId, cmptParentCmptId := range mapFromIdToParentCmptId {
-			_, isCmptNameResolvedFullyAlready := mapFromIdToFullCmptName[cmptId]
-			if !isCmptNameResolvedFullyAlready {
-				if cmptParentCmptId == tenancyOcid {
-					// If tenancy/rootCmpt my parent
-					// cmpt name itself is fully qualified, just prepend '/' for tenancy aka rootCmpt
-					mapFromIdToFullCmptName[cmptId] = "/" + mapFromIdToName[cmptId]
-				} else {
-					fullNameOfParentCmpt, isMyParentNameResolvedFully := mapFromIdToFullCmptName[cmptParentCmptId]
-					if isMyParentNameResolvedFully {
-						mapFromIdToFullCmptName[cmptId] = fullNameOfParentCmpt + "/" + mapFromIdToName[cmptId]
-					}
-				}
-			}
-		}
-	}
-
-	for cmptId, fullyQualifiedCmptName := range mapFromIdToFullCmptName {
-		m[fullyQualifiedCmptName] = cmptId
-	}
-
-	return m, nil
 }
 
 /*
@@ -779,10 +703,10 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		// reg := common.StringToRegion(regio)
 		// o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
 		req := identity.ListCompartmentsRequest{
-			CompartmentId:          common.String(tenancyocid),
+			CompartmentId:          &tenancyocid,
+			AccessLevel:            identity.ListCompartmentsAccessLevelAny,
 			CompartmentIdInSubtree: common.Bool(true),
 			LifecycleState:         identity.CompartmentLifecycleStateActive,
-			Limit:                  common.Int(1000),
 		}
 
 		if len(pageHeader) != 0 {
