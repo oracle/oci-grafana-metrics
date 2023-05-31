@@ -172,6 +172,7 @@ export enum DefaultOCIOptions {
 
 export enum OCIResourceCall {
   Tenancies = 'tenancies',
+  TenancyMode = 'tenancymode',
   Compartments = 'compartments',
   Regions = 'regions',
   Namespaces = 'namespaces',

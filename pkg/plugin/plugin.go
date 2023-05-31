@@ -635,6 +635,8 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 	if len(subscribedRegions) > 1 {
 		subscribedRegions = append(subscribedRegions, constants.ALL_REGION)
 	}
+	/* Sort regions list */
+	sort.Strings(subscribedRegions)
 	return subscribedRegions
 }
 

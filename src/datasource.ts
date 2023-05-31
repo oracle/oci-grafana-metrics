@@ -71,6 +71,17 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });  
   }
 
+  // async getTenancyMode(
+  //   tenancymode: string,
+  // ): Promise<string> {
+  //   const reqBody: JSON = {
+  //     tenancymode: tenancymode,
+  //   } as unknown as JSON;
+  //   return this.postResource(OCIResourceCall.TenancyMode, reqBody).then((response) => {
+  //     return new ResponseParser().parseTenancyMode(response);
+  //   });
+  // }
+
   async getTenancies(): Promise<OCIResourceItem[]> {
     return this.getResource(OCIResourceCall.Tenancies).then((response) => {
       return new ResponseParser().parseTenancies(response);
@@ -83,7 +94,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
     const reqBody: JSON = {
       tenancy: tenancyOCID,
-      queryType: "regions"
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Regions, reqBody).then((response) => {
       return new ResponseParser().parseRegions(response);
