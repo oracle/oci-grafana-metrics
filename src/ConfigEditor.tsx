@@ -26,7 +26,7 @@ interface State {}
 export class ConfigEditor extends PureComponent<Props, State> {
   render() {
     const { options } = this.props;
-
+    options.jsonData.profile0 = 'DEFAULT';
     return (
       <FieldSet label="Connection Details">
         <InlineField
@@ -104,11 +104,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
         <Input
           className="width-30"
-          defaultValue="DEFAULT"
           readOnly
-          placeholder={options.jsonData.profile0 === undefined ? 'DEFAULT' : options.jsonData.profile0}
-          value={options.jsonData.profile0 === undefined ? 'DEFAULT' : options.jsonData.profile0}
-          onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile0')}
+          value={options.jsonData.profile0}
         />
       </InlineField>
       <InlineField

@@ -420,19 +420,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          <InlineField label="COMPARTMENT" labelWidth={20}>
-            <SegmentAsync
-              className="width-14"
-              allowCustomValue={false}
-              required={false}
-              loadOptions={getCompartmentOptions}
-              value={query.compartmentName}
-              placeholder={QueryPlaceholder.Compartment}
-              onChange={(data) => {
-                onCompartmentChange(data);
-              }}
-            />
-          </InlineField>
           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
@@ -443,6 +430,19 @@ export const QueryEditor: React.FC<Props> = (props) => {
               placeholder={QueryPlaceholder.Region}
               onChange={(data) => {
                 onRegionChange(data);
+              }}
+            />
+          </InlineField>          
+          <InlineField label="COMPARTMENT" labelWidth={20}>
+            <SegmentAsync
+              className="width-14"
+              allowCustomValue={false}
+              required={false}
+              loadOptions={getCompartmentOptions}
+              value={query.compartmentName}
+              placeholder={QueryPlaceholder.Compartment}
+              onChange={(data) => {
+                onCompartmentChange(data);
               }}
             />
           </InlineField>

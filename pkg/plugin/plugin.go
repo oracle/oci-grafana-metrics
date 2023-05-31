@@ -674,6 +674,13 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 
 	tenancymode := o.settings.TenancyMode
 
+	region, regErr := o.tenancyAccess[takey].config.Region()
+	if regErr != nil {
+		return nil
+	}
+	reg := common.StringToRegion(region)
+	o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
+
 	if tenancymode == "multitenancy" {
 		if len(takey) <= 0 || takey == NoTenancy {
 			o.logger.Error("Unable to get Multi-tenancy OCID")
@@ -688,8 +695,11 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 	}
 
-	// regio, regErr := o.tenancyAccess[takey].config.Region()
-	// if regErr != nil {
+	// req := identity.GetTenancyRequest{TenancyId: common.String(tenancyocid)}
+
+	// Send the request using the service client
+	// resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
+	// if err != nil {
 	// 	return nil
 	// }
 
@@ -699,24 +709,36 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	var fetchedCompartments []identity.Compartment
 	var pageHeader string
 
+	backend.Logger.Debug("client", "GetCompartments", "fetching the sub-compartments 2 for tenancy: "+tenancyocid)
+
 	for {
-		// reg := common.StringToRegion(regio)
-		// o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
-		req := identity.ListCompartmentsRequest{
-			CompartmentId:          &tenancyocid,
-			AccessLevel:            identity.ListCompartmentsAccessLevelAny,
-			CompartmentIdInSubtree: common.Bool(true),
-			LifecycleState:         identity.CompartmentLifecycleStateActive,
-		}
+		// req := identity.ListCompartmentsRequest{
+		// 	CompartmentId:          &tenancyocid,
+		// 	AccessLevel:            identity.ListCompartmentsAccessLevelAny,
+		// 	CompartmentIdInSubtree: common.Bool(true),
+		// 	Page:                   &pageHeader,
+		// }
 
-		if len(pageHeader) != 0 {
-			req.Page = common.String(pageHeader)
-		}
+		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
+			identity.ListCompartmentsRequest{
+				CompartmentId:          &tenancyocid,
+				Page:                   &pageHeader,
+				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
+				CompartmentIdInSubtree: common.Bool(true),
+			})
 
-		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx, req)
+		// if len(pageHeader) != 0 {
+		// 	req.Page = common.String(pageHeader)
+		// }
+
+		// res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx, req)
 		if err != nil {
 			backend.Logger.Warn("client", "GetCompartments", err)
 			break
+		}
+		for _, compartment := range res.Items {
+			backend.Logger.Debug("client", "GetCompartments", "fetching compartments: "+*(compartment.Name))
+
 		}
 
 		fetchedCompartments = append(fetchedCompartments, res.Items...)
