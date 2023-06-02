@@ -663,13 +663,6 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string) []models.OCIResource {
 	backend.Logger.Debug("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
 
-	// // fetching from cache, if present
-	// cacheKey := strings.Join([]string{tenancyOCID, "cs"}, "-")
-	// if cachedCompartments, found := oc.cache.Get(cacheKey); found {
-	// 	backend.Logger.Warn("client", "GetCompartments", "getting the data from cache")
-	// 	return cachedCompartments.([]models.OCIResource)
-	// }
-
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 	var tenancyocid string
 	var tenancyErr error
@@ -697,6 +690,13 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 	}
 
+	// fetching from cache, if present
+	cacheKey := strings.Join([]string{tenancyocid, "cs"}, "-")
+	if cachedCompartments, found := o.cache.Get(cacheKey); found {
+		backend.Logger.Warn("client", "GetCompartments", "getting the data from cache")
+		return cachedCompartments.([]models.OCIResource)
+	}
+
 	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyocid)}
 
 	// Send the request using the service client
@@ -712,16 +712,7 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	var fetchedCompartments []identity.Compartment
 	var pageHeader string
 
-	backend.Logger.Debug("client", "GetCompartments", "fetching the sub-compartments 2 for tenancy: "+tenancyocid)
-
 	for {
-		// req := identity.ListCompartmentsRequest{
-		// 	CompartmentId:          &tenancyocid,
-		// 	AccessLevel:            identity.ListCompartmentsAccessLevelAny,
-		// 	CompartmentIdInSubtree: common.Bool(true),
-		// 	Page:                   &pageHeader,
-		// }
-
 		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
 			identity.ListCompartmentsRequest{
 				CompartmentId:          common.String(tenancyocid),
@@ -731,19 +722,9 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 				CompartmentIdInSubtree: common.Bool(true),
 			})
 
-		// if len(pageHeader) != 0 {
-		// 	req.Page = common.String(pageHeader)
-		// }
-
-		// res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx, req)
 		if err != nil {
 			backend.Logger.Warn("client", "GetCompartments", err)
 			break
-		}
-		for _, compartment := range res.Items {
-			backend.Logger.Debug("client", "GetCompartments", "fetching compartments: "+*(compartment.Name))
-			backend.Logger.Debug("client", "GetCompartments", "fetching compartments ID: "+*(compartment.CompartmentId))
-
 		}
 
 		fetchedCompartments = append(fetchedCompartments, res.Items...)
@@ -795,9 +776,9 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		return compartmentList[i].Name < compartmentList[j].Name
 	})
 
-	// // saving in the cache
-	// oc.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
-	// oc.cache.Wait()
+	// saving in the cache
+	o.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
+	o.cache.Wait()
 
 	return compartmentList
 }

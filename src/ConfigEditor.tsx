@@ -371,7 +371,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         )}
 
 {/* User Principals - Multitenancy Tenancy 3*/}
-{options.jsonData.addon1 === true && (
+{options.jsonData.addon2 === true && (
           <>
       <FieldSet label="Tenancy-3 Connection Details">
       <InlineField
@@ -406,7 +406,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="User OCID"
               labelWidth={28}
               tooltip="User OCID"
-              placeholder={options.secureJsonFields.user2 ? 'configured' : ''}
+              placeholder={options.secureJsonFields.user3 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
@@ -417,18 +417,18 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Tenancy OCID"
               labelWidth={28}
               tooltip="Tenancy OCID"
-              placeholder={options.secureJsonFields.tenancy2 ? 'configured' : ''}
+              placeholder={options.secureJsonFields.tenancy3 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
-                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy2')}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy3')}
                 />
       </InlineField>
       <InlineField
               label="Fingerprint"
               labelWidth={28}
               tooltip="Fingerprint"
-              placeholder={options.secureJsonFields.fingerprint2 ? 'configured' : ''}
+              placeholder={options.secureJsonFields.fingerprint3 ? 'configured' : ''}
             >
               <Input
                 className="width-30"
@@ -439,7 +439,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label="Private Key"
               labelWidth={28}
               tooltip="Private Key"
-              placeholder={options.secureJsonFields.privkey2 ? 'configured' : ''}
+              placeholder={options.secureJsonFields.privkey3 ? 'configured' : ''}
             >
               <TextArea
                 type="text"
@@ -461,6 +461,185 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'addon3')}
           />
         </InlineField>
+      </FieldSet>
+          </>
+        )}
+
+{/* User Principals - Multitenancy Tenancy 4*/}
+{options.jsonData.addon3 === true && (
+          <>
+      <FieldSet label="Tenancy-4 Connection Details">
+      <InlineField
+              label="Config Profile Name"
+              labelWidth={28}
+              tooltip="Config profile name."
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile4')}
+              />
+      </InlineField>
+      <InlineField
+          label="Region"
+          labelWidth={28}
+          tooltip="Specify the Region"
+        >
+          <Select
+            className="width-30"
+            value={options.jsonData.region4 || ''}
+            options={regions.map((region) => ({
+              label: region,
+              value: region,
+              }))}
+            defaultValue={options.jsonData.region4}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(option);
+            }}
+          />
+        </InlineField>
+        <InlineField
+              label="User OCID"
+              labelWidth={28}
+              tooltip="User OCID"
+              placeholder={options.secureJsonFields.user4 ? 'configured' : ''}
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'user4')}
+                />
+      </InlineField>
+      <InlineField
+              label="Tenancy OCID"
+              labelWidth={28}
+              tooltip="Tenancy OCID"
+              placeholder={options.secureJsonFields.tenancy4 ? 'configured' : ''}
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy4')}
+                />
+      </InlineField>
+      <InlineField
+              label="Fingerprint"
+              labelWidth={28}
+              tooltip="Fingerprint"
+              placeholder={options.secureJsonFields.fingerprint4 ? 'configured' : ''}
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'fingerprint4')}
+                />
+      </InlineField>
+      <InlineField
+              label="Private Key"
+              labelWidth={28}
+              tooltip="Private Key"
+              placeholder={options.secureJsonFields.privkey4 ? 'configured' : ''}
+            >
+              <TextArea
+                type="text"
+                className="width-30"
+                cols={20}
+                rows={4}
+                maxLength={4096}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey4')}
+                />
+      </InlineField>
+      <InlineField
+          label="Add another Tenancy ?"
+          labelWidth={28}
+          tooltip="Add Another tenancy YES/NO"
+        >
+          <InlineSwitch
+            className="width-30"
+            defaultChecked={false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'addon4')}
+          />
+        </InlineField>
+      </FieldSet>
+          </>
+        )}
+
+{/* User Principals - Multitenancy Tenancy 5*/}
+{options.jsonData.addon4 === true && (
+          <>
+      <FieldSet label="Tenancy-5 Connection Details">
+      <InlineField
+              label="Config Profile Name"
+              labelWidth={28}
+              tooltip="Config profile name."
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile5')}
+              />
+      </InlineField>
+      <InlineField
+          label="Region"
+          labelWidth={28}
+          tooltip="Specify the Region"
+        >
+          <Select
+            className="width-30"
+            value={options.jsonData.region5 || ''}
+            options={regions.map((region) => ({
+              label: region,
+              value: region,
+              }))}
+            defaultValue={options.jsonData.region5}
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(option);
+            }}
+          />
+        </InlineField>
+        <InlineField
+              label="User OCID"
+              labelWidth={28}
+              tooltip="User OCID"
+              placeholder={options.secureJsonFields.user5 ? 'configured' : ''}
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'user5')}
+                />
+      </InlineField>
+      <InlineField
+              label="Tenancy OCID"
+              labelWidth={28}
+              tooltip="Tenancy OCID"
+              placeholder={options.secureJsonFields.tenancy5 ? 'configured' : ''}
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'tenancy5')}
+                />
+      </InlineField>
+      <InlineField
+              label="Fingerprint"
+              labelWidth={28}
+              tooltip="Fingerprint"
+              placeholder={options.secureJsonFields.fingerprint5 ? 'configured' : ''}
+            >
+              <Input
+                className="width-30"
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'fingerprint5')}
+                />
+      </InlineField>
+      <InlineField
+              label="Private Key"
+              labelWidth={28}
+              tooltip="Private Key"
+              placeholder={options.secureJsonFields.privkey5 ? 'configured' : ''}
+            >
+              <TextArea
+                type="text"
+                className="width-30"
+                cols={20}
+                rows={4}
+                maxLength={4096}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey5')}
+                />
+      </InlineField>
       </FieldSet>
           </>
         )}
