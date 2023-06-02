@@ -782,3 +782,88 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 
 	return compartmentList
 }
+
+// // GetNamespaceWithMetricNames Returns all the namespaces with associated metrics under the compartment of mentioned tenancy
+// // API Operation: ListMetrics
+// // Permission Required: METRIC_INSPECT
+// // Links:
+// // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
+// // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+// func (oc *OCIClients) GetNamespaceWithMetricNames(
+// 	ctx context.Context,
+// 	tenancyOCID string,
+// 	compartmentOCID string,
+// 	region string) []models.OCIMetricNamesWithNamespace {
+// 	backend.Logger.Debug("client", "GetNamespaceWithMetricNames", "fetching the metric names along with namespaces under compartment: "+compartmentOCID)
+
+// 	// fetching from cache, if present
+// 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, "nss"}, "-")
+// 	if cachedMetricNamesWithNamespaces, found := oc.cache.Get(cacheKey); found {
+// 		backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
+// 		return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
+// 	}
+
+// 	// calling the api if not present in cache
+// 	var namespaceWithMetricNames map[string][]string
+// 	namespaceWithMetricNamesList := []models.OCIMetricNamesWithNamespace{}
+
+// 	client := oc.GetOciClient(tenancyOCID)
+// 	if client == nil {
+// 		return namespaceWithMetricNamesList
+// 	}
+
+// 	monitoringRequest := monitoring.ListMetricsRequest{
+// 		CompartmentId:          common.String(compartmentOCID),
+// 		CompartmentIdInSubtree: common.Bool(false),
+// 		ListMetricsDetails: monitoring.ListMetricsDetails{
+// 			GroupBy:   []string{"namespace", "name"},
+// 			SortBy:    monitoring.ListMetricsDetailsSortByNamespace,
+// 			SortOrder: monitoring.ListMetricsDetailsSortOrderAsc,
+// 		},
+// 	}
+
+// 	// when search is wide along the tenancy
+// 	if len(compartmentOCID) == 0 {
+// 		monitoringRequest.CompartmentId = common.String(tenancyOCID)
+// 		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
+// 	}
+
+// 	// when user wants to fetch everything for all subscribed regions
+// 	if region == constants.ALL_REGION {
+// 		namespaceWithMetricNames = listMetricsMetadataFromAllRegion(
+// 			ctx,
+// 			oc.cache,
+// 			cacheKey,
+// 			constants.FETCH_FOR_NAMESPACE,
+// 			client.monitoringClient,
+// 			monitoringRequest,
+// 			oc.GetSubscribedRegions(ctx, tenancyOCID),
+// 		)
+// 	} else {
+// 		if region != "" {
+// 			client.monitoringClient.SetRegion(region)
+// 		}
+// 		namespaceWithMetricNames = listMetricsMetadataPerRegion(
+// 			ctx,
+// 			oc.cache,
+// 			cacheKey,
+// 			constants.FETCH_FOR_NAMESPACE,
+// 			client.monitoringClient,
+// 			monitoringRequest,
+// 		)
+// 	}
+
+// 	// preparing for frontend
+// 	for k, v := range namespaceWithMetricNames {
+// 		namespaceWithMetricNamesList = append(namespaceWithMetricNamesList, models.OCIMetricNamesWithNamespace{
+// 			Namespace:   k,
+// 			MetricNames: v,
+// 		})
+// 	}
+
+// 	// saving into the cache
+// 	oc.cache.SetWithTTL(cacheKey, namespaceWithMetricNamesList, 1, 5*time.Minute)
+// 	oc.cache.Wait()
+
+// 	return namespaceWithMetricNamesList
+// }

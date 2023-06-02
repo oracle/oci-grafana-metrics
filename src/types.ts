@@ -235,6 +235,7 @@ export interface OCIQuery extends DataQuery {
   //hide: boolean;
   tenancyName: string;
   tenancyOCID: string;
+  tenancymode: string;
   compartments?: any;
   compartmentName?: string;
   compartmentOCID?: string;

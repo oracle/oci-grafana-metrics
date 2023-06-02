@@ -71,16 +71,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });  
   }
 
-  // async getTenancyMode(
-  //   tenancymode: string,
-  // ): Promise<string> {
-  //   const reqBody: JSON = {
-  //     tenancymode: tenancymode,
-  //   } as unknown as JSON;
-  //   return this.postResource(OCIResourceCall.TenancyMode, reqBody).then((response) => {
-  //     return new ResponseParser().parseTenancyMode(response);
-  //   });
-  // }
+  async getTenancyMode(
+    tenancymode: string,
+  ): Promise<string> {
+    const reqBody: JSON = {
+      tenancymode: tenancymode,
+    } as unknown as JSON;
+    return this.postResource(OCIResourceCall.TenancyMode, reqBody).then((response) => {
+      return new ResponseParser().parseTenancyMode(response);
+    });
+  }
 
   async getTenancies(): Promise<OCIResourceItem[]> {
     return this.getResource(OCIResourceCall.Tenancies).then((response) => {

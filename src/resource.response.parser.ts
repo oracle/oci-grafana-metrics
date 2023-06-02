@@ -41,15 +41,15 @@ export class ResponseParser {
     return rList;
   }
 
-  // parseTenancyMode(results: any): string {
-  //   const tenancymode: string = "";
-  //   if (!results) {
-  //     return tenancymode;
-  //   }
+  parseTenancyMode(results: any): string {
+    // const tenancymode: string = "";
+    // if (!results) {
+    //   return tenancymode;
+    // }
 
-  //   let rList: string = JSON.parse(JSON.stringify(results));
-  //   return rList;
-  // }
+    let rList: string = JSON.parse(JSON.stringify(results));
+    return rList;
+  }
 
   parseCompartments(results: any): OCIResourceItem[] {
     const compartments: OCIResourceItem[] = [];
