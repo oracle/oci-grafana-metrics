@@ -697,15 +697,16 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 	}
 
-	// req := identity.GetTenancyRequest{TenancyId: common.String(tenancyocid)}
+	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyocid)}
 
 	// Send the request using the service client
-	// resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
-	// if err != nil {
-	// 	return nil
-	// }
+	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
+	if err != nil {
+		return nil
+	}
 
 	compartments := map[string]string{}
+
 	// calling the api if not present in cache
 	compartmentList := []models.OCIResource{}
 	var fetchedCompartments []identity.Compartment
@@ -723,9 +724,10 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 
 		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
 			identity.ListCompartmentsRequest{
-				CompartmentId:          &tenancyocid,
+				CompartmentId:          common.String(tenancyocid),
 				Page:                   &pageHeader,
 				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
+				LifecycleState:         identity.CompartmentLifecycleStateActive,
 				CompartmentIdInSubtree: common.Bool(true),
 			})
 
@@ -740,6 +742,7 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 		for _, compartment := range res.Items {
 			backend.Logger.Debug("client", "GetCompartments", "fetching compartments: "+*(compartment.Name))
+			backend.Logger.Debug("client", "GetCompartments", "fetching compartments ID: "+*(compartment.CompartmentId))
 
 		}
 
@@ -751,6 +754,8 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 			break
 		}
 	}
+
+	compartments[tenancyocid] = *resp.Name //tenancy name
 
 	// storing compartment ocid and name
 	for _, item := range fetchedCompartments {
@@ -772,6 +777,11 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 			OCID: compartmentOCID,
 		})
 	}
+
+	compartmentList = append(compartmentList, models.OCIResource{
+		Name: *resp.Name,
+		OCID: tenancyocid,
+	})
 
 	if len(compartmentList) > 1 {
 		compartmentList = append(compartmentList, models.OCIResource{
