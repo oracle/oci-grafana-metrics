@@ -41,13 +41,13 @@ export class ResponseParser {
     return rList;
   }
 
-  parseTenancyMode(results: any): string {
-    // const tenancymode: string = "";
-    // if (!results) {
-    //   return tenancymode;
-    // }
+  parseTenancyMode(results: any): string[] {
+    const tenancymodes: string[] = [];
+    if (!results) {
+      return tenancymodes;
+    }
 
-    let rList: string = JSON.parse(JSON.stringify(results));
+    let rList: string[] = JSON.parse(JSON.stringify(results));
     return rList;
   }
 

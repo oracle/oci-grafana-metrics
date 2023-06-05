@@ -36,48 +36,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
 
-  async testoDatasource (
-    tenancyOCID: any,
-    compartmentOCID: any,
-    region: any,
-    environment: string,
-    tenancymode: string,
-    namespace: any
-  ): Promise<OCIResourceGroupWithMetricNamesItem[]> {
-    if (tenancyOCID === '') {
-      return [];
-    }
-    if (region === undefined || namespace === undefined) {
-      return [];
-    }
-    if (region === QueryPlaceholder.Region || namespace === QueryPlaceholder.Namespace) {
-      return [];
-    }
-
-    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      compartmentOCID = '';
-    }
-
-    const reqBody: JSON = {
-      tenancy: tenancyOCID,
-      compartment: compartmentOCID,
-      region: region,
-      environment: environment,
-      tenancymode: tenancymode,
-      namespace: namespace,
-    } as unknown as JSON;
-    return this.postResource(OCIResourceCall.ResourceGroups, reqBody).then((response) => {
-      return new ResponseParser().parseResourceGroupWithMetricNames(response);
-    });  
-  }
-
-  async getTenancyMode(
-    tenancymode: string,
-  ): Promise<string> {
-    const reqBody: JSON = {
-      tenancymode: tenancymode,
-    } as unknown as JSON;
-    return this.postResource(OCIResourceCall.TenancyMode, reqBody).then((response) => {
+  async getTenancyMode(): Promise<string[]> {
+    return this.getResource(OCIResourceCall.Tenancies).then((response) => {
       return new ResponseParser().parseTenancyMode(response);
     });
   }
