@@ -41,6 +41,16 @@ export class ResponseParser {
     return rList;
   }
 
+  parseTenancyMode(results: any): string[] {
+    const tenancymodes: string[] = [];
+    if (!results) {
+      return tenancymodes;
+    }
+
+    let rList: string[] = JSON.parse(JSON.stringify(results));
+    return rList;
+  }
+
   parseCompartments(results: any): OCIResourceItem[] {
     const compartments: OCIResourceItem[] = [];
     if (!results) {

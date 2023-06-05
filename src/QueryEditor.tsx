@@ -3,10 +3,12 @@ import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
-import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder } from './types';
+import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder, OCIConfig } from './types';
 import QueryModel from './query_model';
+// import {TenancyChoices} from './config.options';
 
 type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
+
 
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
@@ -403,10 +405,33 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, groupBy: selectedGroup });
   };
 
+  function printTenancyMode(config: OCIConfig) {
+    console.log(config.tenancyMode);
+  }
+  
+
+  const tenancymode = "ciao";
+  const iglitare = getTenancyOptions();
+  console.log(tenancymode);
+  console.log(iglitare);
+  const result = datasource.getTenancyMode();
+  const resultString = JSON.stringify(result);
+
+  console.log(resultString);
+  printTenancyMode;
+
+  console.log(query.tenancymode);
+  console.log(query.tenancyOCID);
+
+
+  
+
   return (
     <>
       <FieldSet>
         <InlineFieldRow>
+        {/* {query.tenancymode === TenancyChoices.multitenancy && (
+          <>    */}
           <InlineField label="TENANCY" labelWidth={20} required={true}>
             <SegmentAsync
               className="width-14"
@@ -420,19 +445,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          <InlineField label="COMPARTMENT" labelWidth={20}>
-            <SegmentAsync
-              className="width-14"
-              allowCustomValue={false}
-              required={false}
-              loadOptions={getCompartmentOptions}
-              value={query.compartmentName}
-              placeholder={QueryPlaceholder.Compartment}
-              onChange={(data) => {
-                onCompartmentChange(data);
-              }}
-            />
-          </InlineField>
+          {/* </>
+        )} */}
           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
@@ -443,6 +457,19 @@ export const QueryEditor: React.FC<Props> = (props) => {
               placeholder={QueryPlaceholder.Region}
               onChange={(data) => {
                 onRegionChange(data);
+              }}
+            />
+          </InlineField>          
+          <InlineField label="COMPARTMENT" labelWidth={20}>
+            <SegmentAsync
+              className="width-14"
+              allowCustomValue={false}
+              required={false}
+              loadOptions={getCompartmentOptions}
+              value={query.compartmentName}
+              placeholder={QueryPlaceholder.Compartment}
+              onChange={(data) => {
+                onCompartmentChange(data);
               }}
             />
           </InlineField>

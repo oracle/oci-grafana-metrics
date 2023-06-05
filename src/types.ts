@@ -172,6 +172,7 @@ export enum DefaultOCIOptions {
 
 export enum OCIResourceCall {
   Tenancies = 'tenancies',
+  TenancyMode = 'tenancymode',
   Compartments = 'compartments',
   Regions = 'regions',
   Namespaces = 'namespaces',
@@ -234,6 +235,7 @@ export interface OCIQuery extends DataQuery {
   //hide: boolean;
   tenancyName: string;
   tenancyOCID: string;
+  tenancymode: string;
   compartments?: any;
   compartmentName?: string;
   compartmentOCID?: string;

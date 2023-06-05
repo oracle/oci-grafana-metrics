@@ -497,14 +497,14 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	backend.Logger.Debug("client", "TestConnectivity", "testing the OCI connectivity")
 
 	var reg common.Region
-	var testResult bool
-	var errAllComp error
+	// var testResult bool
+	// var errAllComp error
 
 	// tenv := o.settings.Environment
 	// tmode := o.settings.TenancyMode
 
 	for key, _ := range o.tenancyAccess {
-		testResult = false
+		// testResult = false
 
 		// if tmode == "multitenancy" && tenv == "oci-instance" {
 		// 	return errors.New("Multitenancy mode using instance principals is not implemented yet.")
@@ -535,116 +535,40 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		if status >= 200 && status < 300 {
 			backend.Logger.Debug(key, "OK", status)
 		} else {
-			backend.Logger.Debug(key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
-			comparts, Comperr := o.getCompartments(ctx, tenancyocid, regio, key)
-			if Comperr != nil {
-				return errors.Wrap(Comperr, fmt.Sprintf("error fetching Compartments"))
-			}
+			// backend.Logger.Debug(key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
+			// comparts := o.GetCompartments(ctx, tenancyocid)
 
-			for _, v := range comparts {
-				backend.Logger.Debug(key, "Testing", v)
-				listMetrics := monitoring.ListMetricsRequest{
-					CompartmentId: common.String(v),
-				}
+			// for _, v := range comparts {
+			// 	backend.Logger.Debug(key, "Testing", v)
+			// 	listMetrics := monitoring.ListMetricsRequest{
+			// 		CompartmentId: common.String(v),
+			// 	}
 
-				res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
-				if err != nil {
-					backend.Logger.Debug(key, "FAILED", err)
-				}
-				status := res.RawResponse.StatusCode
-				if status >= 200 && status < 300 {
-					backend.Logger.Debug(key, "OK", status)
-					testResult = true
-					break
-				} else {
-					errAllComp = err
-					backend.Logger.Debug(key, "SKIPPED", status)
-				}
-			}
-			if testResult {
-				continue
-			} else {
-				backend.Logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
-				return errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
-			}
+			// 	res, err := o.tenancyAccess[key].metricsClient.ListMetrics(ctx, listMetrics)
+			// 	if err != nil {
+			// 		backend.Logger.Debug(key, "FAILED", err)
+			// 	}
+			// 	status := res.RawResponse.StatusCode
+			// 	if status >= 200 && status < 300 {
+			// 		backend.Logger.Debug(key, "OK", status)
+			// 		testResult = true
+			// 		break
+			// 	} else {
+			// 		errAllComp = err
+			// 		backend.Logger.Debug(key, "SKIPPED", status)
+			// 	}
+			// }
+			// if testResult {
+			// 	continue
+			// } else {
+			// 	backend.Logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
+			// 	return errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
+			// }
 		}
 
 	}
 	return nil
 
-}
-
-func (o *OCIDatasource) getCompartments(ctx context.Context, rootCompartment string, region string, takey string) (map[string]string, error) {
-	m := make(map[string]string)
-
-	tenancyOcid := rootCompartment
-
-	reg := common.StringToRegion(region)
-	o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
-	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyOcid)}
-
-	// Send the request using the service client
-	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("This is what we were trying to get %s", " : fetching tenancy name"))
-	}
-
-	mapFromIdToName := make(map[string]string)
-	mapFromIdToName[tenancyOcid] = *resp.Name //tenancy name
-
-	mapFromIdToParentCmptId := make(map[string]string)
-	mapFromIdToParentCmptId[tenancyOcid] = "" //since root cmpt does not have a parent
-
-	var page *string
-	for {
-		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
-			identity.ListCompartmentsRequest{
-				CompartmentId:          &rootCompartment,
-				Page:                   page,
-				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
-				CompartmentIdInSubtree: common.Bool(true),
-			})
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("this is what we were trying to get %s", rootCompartment))
-		}
-		for _, compartment := range res.Items {
-			if compartment.LifecycleState == identity.CompartmentLifecycleStateActive {
-				mapFromIdToName[*(compartment.Id)] = *(compartment.Name)
-				mapFromIdToParentCmptId[*(compartment.Id)] = *(compartment.CompartmentId)
-			}
-		}
-		if res.OpcNextPage == nil {
-			break
-		}
-		page = res.OpcNextPage
-	}
-
-	mapFromIdToFullCmptName := make(map[string]string)
-	mapFromIdToFullCmptName[tenancyOcid] = mapFromIdToName[tenancyOcid] + "(tenancy, shown as '/')"
-
-	for len(mapFromIdToFullCmptName) < len(mapFromIdToName) {
-		for cmptId, cmptParentCmptId := range mapFromIdToParentCmptId {
-			_, isCmptNameResolvedFullyAlready := mapFromIdToFullCmptName[cmptId]
-			if !isCmptNameResolvedFullyAlready {
-				if cmptParentCmptId == tenancyOcid {
-					// If tenancy/rootCmpt my parent
-					// cmpt name itself is fully qualified, just prepend '/' for tenancy aka rootCmpt
-					mapFromIdToFullCmptName[cmptId] = "/" + mapFromIdToName[cmptId]
-				} else {
-					fullNameOfParentCmpt, isMyParentNameResolvedFully := mapFromIdToFullCmptName[cmptParentCmptId]
-					if isMyParentNameResolvedFully {
-						mapFromIdToFullCmptName[cmptId] = fullNameOfParentCmpt + "/" + mapFromIdToName[cmptId]
-					}
-				}
-			}
-		}
-	}
-
-	for cmptId, fullyQualifiedCmptName := range mapFromIdToFullCmptName {
-		m[fullyQualifiedCmptName] = cmptId
-	}
-
-	return m, nil
 }
 
 /*
@@ -711,6 +635,8 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 	if len(subscribedRegions) > 1 {
 		subscribedRegions = append(subscribedRegions, constants.ALL_REGION)
 	}
+	/* Sort regions list */
+	sort.Strings(subscribedRegions)
 	return subscribedRegions
 }
 
@@ -737,18 +663,18 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string) []models.OCIResource {
 	backend.Logger.Debug("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
 
-	// // fetching from cache, if present
-	// cacheKey := strings.Join([]string{tenancyOCID, "cs"}, "-")
-	// if cachedCompartments, found := oc.cache.Get(cacheKey); found {
-	// 	backend.Logger.Warn("client", "GetCompartments", "getting the data from cache")
-	// 	return cachedCompartments.([]models.OCIResource)
-	// }
-
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 	var tenancyocid string
 	var tenancyErr error
 
 	tenancymode := o.settings.TenancyMode
+
+	region, regErr := o.tenancyAccess[takey].config.Region()
+	if regErr != nil {
+		return nil
+	}
+	reg := common.StringToRegion(region)
+	o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
 
 	if tenancymode == "multitenancy" {
 		if len(takey) <= 0 || takey == NoTenancy {
@@ -764,32 +690,38 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 	}
 
-	// regio, regErr := o.tenancyAccess[takey].config.Region()
-	// if regErr != nil {
-	// 	return nil
-	// }
+	// fetching from cache, if present
+	cacheKey := strings.Join([]string{tenancyocid, "cs"}, "-")
+	if cachedCompartments, found := o.cache.Get(cacheKey); found {
+		backend.Logger.Warn("client", "GetCompartments", "getting the data from cache")
+		return cachedCompartments.([]models.OCIResource)
+	}
+
+	req := identity.GetTenancyRequest{TenancyId: common.String(tenancyocid)}
+
+	// Send the request using the service client
+	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
+	if err != nil {
+		return nil
+	}
 
 	compartments := map[string]string{}
+
 	// calling the api if not present in cache
 	compartmentList := []models.OCIResource{}
 	var fetchedCompartments []identity.Compartment
 	var pageHeader string
 
 	for {
-		// reg := common.StringToRegion(regio)
-		// o.tenancyAccess[takey].metricsClient.SetRegion(string(reg))
-		req := identity.ListCompartmentsRequest{
-			CompartmentId:          common.String(tenancyocid),
-			CompartmentIdInSubtree: common.Bool(true),
-			LifecycleState:         identity.CompartmentLifecycleStateActive,
-			Limit:                  common.Int(1000),
-		}
+		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
+			identity.ListCompartmentsRequest{
+				CompartmentId:          common.String(tenancyocid),
+				Page:                   &pageHeader,
+				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
+				LifecycleState:         identity.CompartmentLifecycleStateActive,
+				CompartmentIdInSubtree: common.Bool(true),
+			})
 
-		if len(pageHeader) != 0 {
-			req.Page = common.String(pageHeader)
-		}
-
-		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx, req)
 		if err != nil {
 			backend.Logger.Warn("client", "GetCompartments", err)
 			break
@@ -803,6 +735,8 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 			break
 		}
 	}
+
+	compartments[tenancyocid] = *resp.Name //tenancy name
 
 	// storing compartment ocid and name
 	for _, item := range fetchedCompartments {
@@ -825,6 +759,11 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		})
 	}
 
+	compartmentList = append(compartmentList, models.OCIResource{
+		Name: *resp.Name,
+		OCID: tenancyocid,
+	})
+
 	if len(compartmentList) > 1 {
 		compartmentList = append(compartmentList, models.OCIResource{
 			Name: constants.ALL_COMPARTMENT,
@@ -837,9 +776,94 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		return compartmentList[i].Name < compartmentList[j].Name
 	})
 
-	// // saving in the cache
-	// oc.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
-	// oc.cache.Wait()
+	// saving in the cache
+	o.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
+	o.cache.Wait()
 
 	return compartmentList
 }
+
+// // GetNamespaceWithMetricNames Returns all the namespaces with associated metrics under the compartment of mentioned tenancy
+// // API Operation: ListMetrics
+// // Permission Required: METRIC_INSPECT
+// // Links:
+// // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
+// // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+// func (oc *OCIClients) GetNamespaceWithMetricNames(
+// 	ctx context.Context,
+// 	tenancyOCID string,
+// 	compartmentOCID string,
+// 	region string) []models.OCIMetricNamesWithNamespace {
+// 	backend.Logger.Debug("client", "GetNamespaceWithMetricNames", "fetching the metric names along with namespaces under compartment: "+compartmentOCID)
+
+// 	// fetching from cache, if present
+// 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, "nss"}, "-")
+// 	if cachedMetricNamesWithNamespaces, found := oc.cache.Get(cacheKey); found {
+// 		backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
+// 		return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
+// 	}
+
+// 	// calling the api if not present in cache
+// 	var namespaceWithMetricNames map[string][]string
+// 	namespaceWithMetricNamesList := []models.OCIMetricNamesWithNamespace{}
+
+// 	client := oc.GetOciClient(tenancyOCID)
+// 	if client == nil {
+// 		return namespaceWithMetricNamesList
+// 	}
+
+// 	monitoringRequest := monitoring.ListMetricsRequest{
+// 		CompartmentId:          common.String(compartmentOCID),
+// 		CompartmentIdInSubtree: common.Bool(false),
+// 		ListMetricsDetails: monitoring.ListMetricsDetails{
+// 			GroupBy:   []string{"namespace", "name"},
+// 			SortBy:    monitoring.ListMetricsDetailsSortByNamespace,
+// 			SortOrder: monitoring.ListMetricsDetailsSortOrderAsc,
+// 		},
+// 	}
+
+// 	// when search is wide along the tenancy
+// 	if len(compartmentOCID) == 0 {
+// 		monitoringRequest.CompartmentId = common.String(tenancyOCID)
+// 		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
+// 	}
+
+// 	// when user wants to fetch everything for all subscribed regions
+// 	if region == constants.ALL_REGION {
+// 		namespaceWithMetricNames = listMetricsMetadataFromAllRegion(
+// 			ctx,
+// 			oc.cache,
+// 			cacheKey,
+// 			constants.FETCH_FOR_NAMESPACE,
+// 			client.monitoringClient,
+// 			monitoringRequest,
+// 			oc.GetSubscribedRegions(ctx, tenancyOCID),
+// 		)
+// 	} else {
+// 		if region != "" {
+// 			client.monitoringClient.SetRegion(region)
+// 		}
+// 		namespaceWithMetricNames = listMetricsMetadataPerRegion(
+// 			ctx,
+// 			oc.cache,
+// 			cacheKey,
+// 			constants.FETCH_FOR_NAMESPACE,
+// 			client.monitoringClient,
+// 			monitoringRequest,
+// 		)
+// 	}
+
+// 	// preparing for frontend
+// 	for k, v := range namespaceWithMetricNames {
+// 		namespaceWithMetricNamesList = append(namespaceWithMetricNamesList, models.OCIMetricNamesWithNamespace{
+// 			Namespace:   k,
+// 			MetricNames: v,
+// 		})
+// 	}
+
+// 	// saving into the cache
+// 	oc.cache.SetWithTTL(cacheKey, namespaceWithMetricNamesList, 1, 5*time.Minute)
+// 	oc.cache.Wait()
+
+// 	return namespaceWithMetricNamesList
+// }
