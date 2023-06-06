@@ -191,6 +191,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             >
               <Input
                 className="width-30"
+                defaultValue={options.jsonData.profile1}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile1')}
               />
       </InlineField>
@@ -286,6 +287,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             >
               <Input
                 className="width-30"
+                defaultValue={options.jsonData.profile2}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile2')}
               />
       </InlineField>
@@ -381,6 +383,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             >
               <Input
                 className="width-30"
+                defaultValue={options.jsonData.profile3}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile3')}
               />
       </InlineField>
@@ -476,6 +479,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             >
               <Input
                 className="width-30"
+                defaultValue={options.jsonData.profile4}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile4')}
               />
       </InlineField>
@@ -571,6 +575,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             >
               <Input
                 className="width-30"
+                defaultValue={options.jsonData.profile5}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile5')}
               />
       </InlineField>
