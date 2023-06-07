@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, AsyncSelect } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
-import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder, OCIConfig } from './types';
+import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder } from './types';
 import QueryModel from './query_model';
 // import {TenancyChoices} from './config.options';
 
@@ -12,6 +12,8 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
+  const tmode = datasource.getJsonData().TenancyMode;
+
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
     if (runQuery) {
@@ -405,23 +407,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, groupBy: selectedGroup });
   };
 
-  function printTenancyMode(config: OCIConfig) {
-    console.log(config.tenancyMode);
-  }
   
 
   const tenancymode = "ciao";
-  const iglitare = getTenancyOptions();
+
   console.log(tenancymode);
-  console.log(iglitare);
-  const result = datasource.getTenancyMode();
-  const resultString = JSON.stringify(result);
 
-  console.log(resultString);
-  printTenancyMode;
-
-  console.log(query.tenancymode);
-  console.log(query.tenancyOCID);
+  console.log(tmode)
 
 
   
