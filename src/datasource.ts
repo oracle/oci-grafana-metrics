@@ -12,16 +12,23 @@ import {
 } from './resource.response.parser';
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
+  private jsonData: any;
   // private backendSrv: BackendSrv;
   // private templateSrv: TemplateSrv;
 
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
+    this.jsonData = instanceSettings.jsonData;
+
 
     // this.backendSrv = getBackendSrv();
     // this.templateSrv = getTemplateSrv();
   }
 
+  getJsonData() {
+    return this.jsonData;
+  }
+  
   query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
     return super.query(options);
   }

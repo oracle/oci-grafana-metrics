@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, AsyncSelect } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
 import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder } from './types';
 import QueryModel from './query_model';
-// import {TenancyChoices} from './config.options';
+import {TenancyChoices} from './config.options';
 
 type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 
 
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
+  const tmode = datasource.getJsonData().TenancyMode;
+
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
     if (runQuery) {
@@ -405,29 +407,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, groupBy: selectedGroup });
   };
 
-  
-
-  const tenancymode = "ciao";
-  const iglitare = getTenancyOptions();
-  console.log(tenancymode);
-  console.log(iglitare);
-  const result = datasource.getTenancyMode();
-  const resultString = JSON.stringify(result);
-
-  console.log(resultString);
-
-  console.log(query.tenancymode);
-  console.log(query.tenancyOCID);
-
-
-  
-
   return (
     <>
       <FieldSet>
         <InlineFieldRow>
-        {/* {query.tenancymode === TenancyChoices.multitenancy && (
-          <>    */}
+        {tmode === TenancyChoices.multitenancy && (
+          <>   
           <InlineField label="TENANCY" labelWidth={20} required={true}>
             <SegmentAsync
               className="width-14"
@@ -441,8 +426,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          {/* </>
-        )} */}
+          </>
+        )}
           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
