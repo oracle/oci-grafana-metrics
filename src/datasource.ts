@@ -43,12 +43,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
 
-  async getTenancyMode(): Promise<string[]> {
-    return this.getResource(OCIResourceCall.Tenancies).then((response) => {
-      return new ResponseParser().parseTenancyMode(response);
-    });
-  }
-
   async getTenancies(): Promise<OCIResourceItem[]> {
     return this.getResource(OCIResourceCall.Tenancies).then((response) => {
       return new ResponseParser().parseTenancies(response);

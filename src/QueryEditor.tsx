@@ -251,10 +251,16 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
   const onTenancyChange = (data: any) => {
+    var tname
+    if (tmode === TenancyChoices.multitenancy){
+      tname='DEFAULT/'
+    } else {
+      tname = data.label
+    }
     onApplyQueryChange(
       {
         ...query,
-        tenancyName: data.label,
+        tenancyName: tname,
         tenancyOCID: data.value,
         compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
@@ -413,7 +419,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         <InlineFieldRow>
         {tmode === TenancyChoices.multitenancy && (
           <>   
-          <InlineField label="TENANCY" labelWidth={20} required={true}>
+          <InlineField label="TENANCY" labelWidth={20}>
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
@@ -428,6 +434,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
           </InlineField>
           </>
         )}
+
           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"

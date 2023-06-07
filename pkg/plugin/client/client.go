@@ -1082,3 +1082,5 @@ func (oc *OCIClients) GetTags(
 
 	return resourceTagsList
 }
+
+// ***************** Migrated Functions ************************
