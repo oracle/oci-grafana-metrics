@@ -3,7 +3,7 @@ import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
-import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder, OCIConfig } from './types';
+import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder } from './types';
 import QueryModel from './query_model';
 // import {TenancyChoices} from './config.options';
 
@@ -405,9 +405,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, groupBy: selectedGroup });
   };
 
-  function printTenancyMode(config: OCIConfig) {
-    console.log(config.tenancyMode);
-  }
   
 
   const tenancymode = "ciao";
@@ -418,7 +415,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const resultString = JSON.stringify(result);
 
   console.log(resultString);
-  printTenancyMode;
 
   console.log(query.tenancymode);
   console.log(query.tenancyOCID);
