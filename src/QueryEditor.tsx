@@ -5,7 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
 import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder } from './types';
 import QueryModel from './query_model';
-// import {TenancyChoices} from './config.options';
+import {TenancyChoices} from './config.options';
 
 type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 
@@ -407,23 +407,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, groupBy: selectedGroup });
   };
 
-  
-
-  const tenancymode = "ciao";
-
-  console.log(tenancymode);
-
-  console.log(tmode)
-
-
-  
-
   return (
     <>
       <FieldSet>
         <InlineFieldRow>
-        {/* {query.tenancymode === TenancyChoices.multitenancy && (
-          <>    */}
+        {tmode === TenancyChoices.multitenancy && (
+          <>   
           <InlineField label="TENANCY" labelWidth={20} required={true}>
             <SegmentAsync
               className="width-14"
@@ -437,8 +426,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          {/* </>
-        )} */}
+          </>
+        )}
           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
