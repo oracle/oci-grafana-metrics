@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, AsyncSelect } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -13,21 +13,36 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().TenancyMode;
+  console.log(tmode)
 
-
-  const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
+  const onApplyQueryChange = useCallback((changedQuery: OCIQuery, runQuery = true) => {
     if (runQuery) {
-      const queryModel = new QueryModel(changedQuery, getTemplateSrv());
-      if (queryModel.isQueryReady()) {
-        changedQuery.queryText = queryModel.buildQuery();
-
-        onChange({ ...changedQuery });
-        onRunQuery();
-      }
-    } else {
-      onChange({ ...changedQuery });
+    const queryModel = new QueryModel(changedQuery, getTemplateSrv());
+    if (queryModel.isQueryReady()) {
+    changedQuery.queryText = queryModel.buildQuery();
+   
+    onChange({ ...changedQuery });
+    onRunQuery();
     }
-  };
+    } else {
+    onChange({ ...changedQuery });
+    }
+   }, [ onChange, onRunQuery]);
+   
+
+  // const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
+  //   if (runQuery) {
+  //     const queryModel = new QueryModel(changedQuery, getTemplateSrv());
+  //     if (queryModel.isQueryReady()) {
+  //       changedQuery.queryText = queryModel.buildQuery();
+
+  //       onChange({ ...changedQuery });
+  //       onRunQuery();
+  //     }
+  //   } else {
+  //     onChange({ ...changedQuery });
+  //   }
+  // };
 
   const init = () => {
     let initialDimensions: any = [];
@@ -102,8 +117,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
   const getSubscribedRegionOptions = () => {
     const existingRegionsResponse = query.regions;
+    console.log("getSubscribedRegionOptions")
 
     if (query.namespace !== undefined) {
+      console.log("getSubscribedRegionOptions 1")
+
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
         setTimeout(async () => {
           const response = await datasource.getSubscribedRegions(query.tenancyOCID);
@@ -114,6 +132,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }, 0);
       });
     } else {
+      console.log("getSubscribedRegionOptions 2")
+      console.log(existingRegionsResponse)
+
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
         setTimeout(async () => {
           resolve(existingRegionsResponse);
@@ -250,45 +271,100 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //   });
   // };
 
-  const onTenancyChange = (data: any) => {
-    var tname
-    if (tmode === TenancyChoices.multitenancy){
-      tname='DEFAULT/'
+  // const onTenancyDefault = (data: any) => {
+  //   console.log("onTenancyDefault");
+  //   let tname: string;
+  //   let tvalue: string;
+  //   if (tmode !== TenancyChoices.multitenancy){
+  //     tname='DEFAULT/';
+  //     tvalue='DEFAULT/';
+  //   } else {
+  //     tname = data.label;
+  //     tvalue = data.value;
+  //   }
+  //   console.log("onTenancyDefault 2");
+  //   onApplyQueryChange(
+  //     {
+  //       ...query,
+  //       tenancyName: tname,
+  //       tenancyOCID: tvalue,
+  //       compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
+  //         setTimeout(async () => {
+  //           console.log(tvalue);
+  //           const response = await datasource.getCompartments(tvalue);
+  //           const result = response.map((res: any) => {
+  //             return { label: res.name, value: res.ocid };
+  //           });
+  //           resolve(result);
+  //         }, 0);
+  //       }),
+  //       compartmentName: undefined,
+  //       compartmentOCID: undefined,
+  //       regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
+  //         setTimeout(async () => {
+  //           console.log(tvalue);
+  //           const response = await datasource.getSubscribedRegions(tvalue);
+  //           let result = response.map((res: any) => {
+  //             return { label: res, value: res };
+  //           });
+  //           resolve(result);
+  //         }, 0);
+  //       }),
+  //       region: undefined,
+  //       namespace: undefined,
+  //       metric: undefined,
+  //     },
+  //     false
+  //   );
+  // };  
+
+  const onTenancyChange = useCallback((data: any) => {
+    console.log("onTenancyChange");
+    let tname: string;
+    let tvalue: string;
+    if (tmode !== TenancyChoices.multitenancy){
+    tname='DEFAULT/';
+    tvalue='DEFAULT/';
     } else {
-      tname = data.label
+    tname = data.label;
+    tvalue = data.value;
     }
+    console.log("onTenancyChange 2");
     onApplyQueryChange(
-      {
-        ...query,
-        tenancyName: tname,
-        tenancyOCID: data.value,
-        compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
-          setTimeout(async () => {
-            const response = await datasource.getCompartments(data.value);
-            const result = response.map((res: any) => {
-              return { label: res.name, value: res.ocid };
-            });
-            resolve(result);
-          }, 0);
-        }),
-        compartmentName: undefined,
-        compartmentOCID: undefined,
-        regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
-          setTimeout(async () => {
-            const response = await datasource.getSubscribedRegions(data.value);
-            let result = response.map((res: any) => {
-              return { label: res, value: res };
-            });
-            resolve(result);
-          }, 0);
-        }),
-        region: undefined,
-        namespace: undefined,
-        metric: undefined,
-      },
-      false
+    {
+    ...query,
+    tenancyName: tname,
+    tenancyOCID: tvalue,
+    compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
+    setTimeout(async () => {
+    console.log(tvalue);
+    const response = await datasource.getCompartments(tvalue);
+    const result = response.map((res: any) => {
+    return { label: res.name, value: res.ocid };
+    });
+    resolve(result);
+    }, 0);
+    }),
+    compartmentName: undefined,
+    compartmentOCID: undefined,
+    regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
+    setTimeout(async () => {
+    console.log(tvalue);
+    const response = await datasource.getSubscribedRegions(tvalue);
+    let result = response.map((res: any) => {
+    return { label: res, value: res };
+    });
+    resolve(result);
+    }, 0);
+    }),
+    region: undefined,
+    namespace: undefined,
+    metric: undefined,
+    },
+    false
     );
-  };
+   }, [datasource, onApplyQueryChange, query, tmode]);
+   
   const onCompartmentChange = (data: any) => {
     onApplyQueryChange(
       {
@@ -413,6 +489,15 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, groupBy: selectedGroup });
   };
 
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
+  console.log("useEffect")
+  if (tmode !== TenancyChoices.multitenancy) {
+    onTenancyChange(null);
+  }
+}, []);
+
+
   return (
     <>
       <FieldSet>
@@ -435,7 +520,16 @@ export const QueryEditor: React.FC<Props> = (props) => {
           </>
         )}
 
-          <InlineField label="REGION" labelWidth={20}>
+        {tmode !== TenancyChoices.multitenancy && (
+          <>
+          <InlineField label="TENANCY" labelWidth={20}>
+            <div>DEFAULT/</div>
+          </InlineField>
+        </>
+        )}        
+        </InlineFieldRow>
+        <InlineFieldRow>         
+           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
