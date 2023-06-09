@@ -127,10 +127,14 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 	var subscribedRegions []string
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 
+	backend.Logger.Debug("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy takey: "+takey)
+
 	tenancyocid, tenancyErr := o.tenancyAccess[takey].config.TenancyOCID()
 	if tenancyErr != nil {
 		return nil
 	}
+	backend.Logger.Debug("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy OCID: "+*common.String(tenancyocid))
+
 	req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
 
 	resp, err := o.tenancyAccess[takey].identityClient.ListRegionSubscriptions(ctx, req)
@@ -151,6 +155,7 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 
 	for _, item := range resp.Items {
 		if item.Status == identity.RegionSubscriptionStatusReady {
+			backend.Logger.Debug("client", "GetSubscribedRegionstakey", "fetching the subscribed region for regioname: "+*item.RegionName)
 			subscribedRegions = append(subscribedRegions, *item.RegionName)
 		}
 	}
@@ -176,7 +181,8 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 	var tenancyocid string
 	var tenancyErr error
-
+	backend.Logger.Debug("client", "GetCompartmentstakey", "fetching the subscribed region for tenancy takey: "+takey)
+	backend.Logger.Debug("client", "GetCompartmentstakey", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
 	tenancymode := o.settings.TenancyMode
 
 	region, regErr := o.tenancyAccess[takey].config.Region()
