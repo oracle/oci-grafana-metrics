@@ -5,7 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
 import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder } from './types';
 import QueryModel from './query_model';
-import {TenancyChoices} from './config.options';
+// import {TenancyChoices} from './config.options';
 
 type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 
