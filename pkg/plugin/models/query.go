@@ -12,6 +12,7 @@ type QueryModel struct {
 	Metric          string   `json:"metric"`
 	Interval        string   `json:"interval"`
 	Statistic       string   `json:"statistic"`
+	LegendFormat    string   `json:"legendformat"`
 	ResourceGroup   string   `json:"resourceGroup,omitempty"`
 	DimensionValues []string `json:"dimensionValues,omitempty"`
 	TagsValues      []string `json:"tagsValues,omitempty"`

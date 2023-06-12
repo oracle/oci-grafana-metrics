@@ -43,27 +43,9 @@ var (
 )
 
 type TenancyAccess struct {
-	metricsClient  monitoring.MonitoringClient
-	identityClient identity.IdentityClient
-	config         common.ConfigurationProvider
-}
-
-// GrafanaOCIRequest - Query Request comning in from the front end
-type GrafanaOCIRequest struct {
-	GrafanaCommonRequest
-	Query         string
-	Resolution    string
-	Namespace     string
-	ResourceGroup string
-	LegendFormat  string
-}
-
-// GrafanaSearchRequest incoming request body for search requests
-type GrafanaSearchRequest struct {
-	GrafanaCommonRequest
-	Metric        string `json:"metric,omitempty"`
-	Namespace     string
-	ResourceGroup string
+	monitoringClient monitoring.MonitoringClient
+	identityClient   identity.IdentityClient
+	config           common.ConfigurationProvider
 }
 
 type OCIDatasource struct {
@@ -85,17 +67,6 @@ type OCIConfigFile struct {
 	privkey     map[string]string
 	privkeypass map[string]*string
 	logger      log.Logger
-}
-
-// GrafanaCommonRequest - captures the common parts of the search and metricsRequests
-type GrafanaCommonRequest struct {
-	Compartment string
-	Environment string
-	TenancyMode string
-	QueryType   string
-	Region      string
-	Tenancy     string // the actual tenancy with the format <configfile entry name/tenancyOCID>
-	TenancyOCID string `json:"tenancyOCID"`
 }
 
 type OCISecuredSettings struct {
@@ -421,23 +392,31 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			log.DefaultLogger.Error("Key: " + key)
 			var configProvider common.ConfigurationProvider
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
-			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+
+			// creating oci monitoring client
+			mrp := clientRetryPolicy()
+			monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				backend.Logger.Error("Error with config:" + key)
 				return errors.New("error with client")
 			}
+			monitoringClient.Configuration.RetryPolicy = &mrp
+
+			// creating oci identity client
+			irp := clientRetryPolicy()
 			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				return errors.New("Error creating identity client")
 			}
+			identityClient.Configuration.RetryPolicy = &irp
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
 				return errors.New("error with TenancyOCID")
 			}
 			if tenancymode == "multitenancy" {
-				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
+				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{monitoringClient, identityClient, configProvider}
 			} else {
-				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{monitoringClient, identityClient, configProvider}
 			}
 		}
 		return nil
@@ -448,7 +427,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		if err != nil {
 			return errors.New("error with instance principals")
 		}
-		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+		monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
 			backend.Logger.Error("Error with config:" + SingleTenancyKey)
 			return errors.New("error with client")
@@ -457,7 +436,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		if err != nil {
 			return errors.New("Error creating identity client")
 		}
-		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{monitoringClient, identityClient, configProvider}
 		return nil
 
 	default:
@@ -476,4 +455,41 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 		takey = SingleTenancyKey
 	}
 	return takey
+}
+
+// clientRetryPolicy is a helper method that assembles and returns a return policy that is defined to call in every second
+// to use maximum benefit of TPS limit (which is currently 10)
+// This retry policy will retry on (409, IncorrectState), (429, TooManyRequests) and any 5XX errors except (501, MethodNotImplemented)
+// The retry behavior is constant with 1s
+// The number of retries is 10
+func clientRetryPolicy() common.RetryPolicy {
+	clientRetryOperation := func(r common.OCIOperationResponse) bool {
+		type HTTPStatus struct {
+			code    int
+			message string
+		}
+		clientRetryStatusCodeMap := map[HTTPStatus]bool{
+			{409, "IncorrectState"}:       true,
+			{429, "TooManyRequests"}:      true,
+			{501, "MethodNotImplemented"}: false,
+		}
+
+		if r.Error == nil && 199 < r.Response.HTTPResponse().StatusCode && r.Response.HTTPResponse().StatusCode < 300 {
+			return false
+		}
+		if common.IsNetworkError(r.Error) {
+			return true
+		}
+		if err, ok := common.IsServiceError(r.Error); ok {
+			if shouldRetry, ok := clientRetryStatusCodeMap[HTTPStatus{err.GetHTTPStatusCode(), err.GetCode()}]; ok {
+				return shouldRetry
+			}
+			return 500 <= r.Response.HTTPResponse().StatusCode && r.Response.HTTPResponse().StatusCode < 600
+		}
+		return false
+	}
+	nextCallAt := func(r common.OCIOperationResponse) time.Duration {
+		return time.Duration(1) * time.Second
+	}
+	return common.NewRetryPolicy(uint(10), clientRetryOperation, nextCallAt)
 }
