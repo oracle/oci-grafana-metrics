@@ -12,7 +12,9 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
-  // const tmode = datasource.getJsonData().TenancyMode;
+  const tmode = datasource.getJsonData().TenancyMode;
+  console.log(tmode)
+  const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
 
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
@@ -102,8 +104,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
   const getSubscribedRegionOptions = () => {
     const existingRegionsResponse = query.regions;
+    console.log("getSubscribedRegionOptions")
 
     if (query.namespace !== undefined) {
+      console.log("getSubscribedRegionOptions 1")
+
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
         setTimeout(async () => {
           const response = await datasource.getSubscribedRegions(query.tenancyOCID);
@@ -114,6 +119,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }, 0);
       });
     } else {
+      console.log("getSubscribedRegionOptions 2")
+      console.log(existingRegionsResponse)
+
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
         setTimeout(async () => {
           resolve(existingRegionsResponse);
@@ -251,14 +259,23 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
   const onTenancyChange = (data: any) => {
+    let tname: string;
+    let tvalue: string;
+    if (tmode !== TenancyChoices.multitenancy) {
+      tname='DEFAULT/';
+      tvalue='DEFAULT/';
+    } else {
+      tname = data.label
+      tvalue = data.value
+    }
     onApplyQueryChange(
       {
         ...query,
-        tenancyName: data.label,
-        tenancyOCID: data.value,
+        tenancyName: tname,
+        tenancyOCID: tvalue,
         compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
-            const response = await datasource.getCompartments(data.value);
+            const response = await datasource.getCompartments(tvalue);
             const result = response.map((res: any) => {
               return { label: res.name, value: res.ocid };
             });
@@ -269,7 +286,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         compartmentOCID: undefined,
         regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
-            const response = await datasource.getSubscribedRegions(data.value);
+            const response = await datasource.getSubscribedRegions(tvalue);
             let result = response.map((res: any) => {
               return { label: res, value: res };
             });
@@ -282,7 +299,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
       },
       false
     );
-  };
+  };  
+
   const onCompartmentChange = (data: any) => {
     onApplyQueryChange(
       {
@@ -407,13 +425,19 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, groupBy: selectedGroup });
   };
 
+
+if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
+  onTenancyChange(null);
+  setHasTenancyDefault(true);
+}
+
   return (
     <>
       <FieldSet>
         <InlineFieldRow>
-        {/* {tmode === TenancyChoices.multitenancy && (
-          <>    */}
-          <InlineField label="TENANCY" labelWidth={20} required={true}>
+        {tmode === TenancyChoices.multitenancy && (
+          <>   
+          <InlineField label="TENANCY" labelWidth={20}>
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
@@ -426,9 +450,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          {/* </>
-        )} */}
-          <InlineField label="REGION" labelWidth={20}>
+          </>
+        )}  
+        </InlineFieldRow>
+        <InlineFieldRow>         
+           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}

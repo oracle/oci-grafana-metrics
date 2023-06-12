@@ -55,7 +55,7 @@ func (ocidx *OCIDatasource) GetTenanciesHandler(rw http.ResponseWriter, req *htt
 	}
 
 	// ts := ocidx.clients.GetTenancies(req.Context())
-	ts := ocidx.GetTenancies2(req.Context())
+	ts := ocidx.GetTenancies(req.Context())
 
 	writeResponse(rw, ts)
 }
