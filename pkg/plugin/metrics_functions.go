@@ -4,8 +4,10 @@ import (
 	"context"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/dgraph-io/ristretto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/identity"
@@ -308,87 +310,294 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	return compartmentList
 }
 
-// // GetNamespaceWithMetricNames Returns all the namespaces with associated metrics under the compartment of mentioned tenancy
-// // API Operation: ListMetrics
-// // Permission Required: METRIC_INSPECT
-// // Links:
-// // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
-// // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
-// func (oc *OCIClients) GetNamespaceWithMetricNames(
-// 	ctx context.Context,
-// 	tenancyOCID string,
-// 	compartmentOCID string,
-// 	region string) []models.OCIMetricNamesWithNamespace {
-// 	backend.Logger.Debug("client", "GetNamespaceWithMetricNames", "fetching the metric names along with namespaces under compartment: "+compartmentOCID)
+// GetNamespaceWithMetricNames Returns all the namespaces with associated metrics under the compartment of mentioned tenancy
+// API Operation: ListMetrics
+// Permission Required: METRIC_INSPECT
+// Links:
+// https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
+// https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+func (o *OCIDatasource) GetNamespaceWithMetricNames(
+	ctx context.Context,
+	tenancyOCID string,
+	compartmentOCID string,
+	region string) []models.OCIMetricNamesWithNamespace {
+	backend.Logger.Debug("client", "GetNamespaceWithMetricNames", "fetching the metric names along with namespaces under compartment: "+compartmentOCID)
 
-// 	// fetching from cache, if present
-// 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, "nss"}, "-")
-// 	if cachedMetricNamesWithNamespaces, found := oc.cache.Get(cacheKey); found {
-// 		backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
-// 		return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
-// 	}
+	takey := o.GetTenancyAccessKey(tenancyOCID)
+	// fetching from cache, if present
+	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, "nss"}, "-")
+	if cachedMetricNamesWithNamespaces, found := o.cache.Get(cacheKey); found {
+		backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
+		return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
+	}
 
-// 	// calling the api if not present in cache
-// 	var namespaceWithMetricNames map[string][]string
-// 	namespaceWithMetricNamesList := []models.OCIMetricNamesWithNamespace{}
+	// calling the api if not present in cache
+	var namespaceWithMetricNames map[string][]string
+	namespaceWithMetricNamesList := []models.OCIMetricNamesWithNamespace{}
 
-// 	client := oc.GetOciClient(tenancyOCID)
-// 	if client == nil {
-// 		return namespaceWithMetricNamesList
-// 	}
+	// client := oc.GetOciClient(tenancyOCID)
+	// if client == nil {
+	// 	return namespaceWithMetricNamesList
+	// }
 
-// 	monitoringRequest := monitoring.ListMetricsRequest{
-// 		CompartmentId:          common.String(compartmentOCID),
-// 		CompartmentIdInSubtree: common.Bool(false),
-// 		ListMetricsDetails: monitoring.ListMetricsDetails{
-// 			GroupBy:   []string{"namespace", "name"},
-// 			SortBy:    monitoring.ListMetricsDetailsSortByNamespace,
-// 			SortOrder: monitoring.ListMetricsDetailsSortOrderAsc,
-// 		},
-// 	}
+	monitoringRequest := monitoring.ListMetricsRequest{
+		CompartmentId:          common.String(compartmentOCID),
+		CompartmentIdInSubtree: common.Bool(false),
+		ListMetricsDetails: monitoring.ListMetricsDetails{
+			GroupBy:   []string{"namespace", "name"},
+			SortBy:    monitoring.ListMetricsDetailsSortByNamespace,
+			SortOrder: monitoring.ListMetricsDetailsSortOrderAsc,
+		},
+	}
 
-// 	// when search is wide along the tenancy
-// 	if len(compartmentOCID) == 0 {
-// 		monitoringRequest.CompartmentId = common.String(tenancyOCID)
-// 		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
-// 	}
+	// when search is wide along the tenancy
+	if len(compartmentOCID) == 0 {
+		monitoringRequest.CompartmentId = common.String(tenancyOCID)
+		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
+	}
 
-// 	// when user wants to fetch everything for all subscribed regions
-// 	if region == constants.ALL_REGION {
-// 		namespaceWithMetricNames = listMetricsMetadataFromAllRegion(
-// 			ctx,
-// 			oc.cache,
-// 			cacheKey,
-// 			constants.FETCH_FOR_NAMESPACE,
-// 			client.monitoringClient,
-// 			monitoringRequest,
-// 			oc.GetSubscribedRegions(ctx, tenancyOCID),
-// 		)
-// 	} else {
-// 		if region != "" {
-// 			client.monitoringClient.SetRegion(region)
-// 		}
-// 		namespaceWithMetricNames = listMetricsMetadataPerRegion(
-// 			ctx,
-// 			oc.cache,
-// 			cacheKey,
-// 			constants.FETCH_FOR_NAMESPACE,
-// 			client.monitoringClient,
-// 			monitoringRequest,
-// 		)
-// 	}
+	// when user wants to fetch everything for all subscribed regions
+	if region == constants.ALL_REGION {
+		namespaceWithMetricNames = listMetricsMetadataFromAllRegion(
+			ctx,
+			o.cache,
+			cacheKey,
+			constants.FETCH_FOR_NAMESPACE,
+			o.tenancyAccess[takey].metricsClient,
+			monitoringRequest,
+			o.GetSubscribedRegions(ctx, tenancyOCID),
+		)
+	} else {
+		if region != "" {
+			o.tenancyAccess[takey].metricsClient.SetRegion(region)
+		}
+		namespaceWithMetricNames = listMetricsMetadataPerRegion(
+			ctx,
+			o.cache,
+			cacheKey,
+			constants.FETCH_FOR_NAMESPACE,
+			o.tenancyAccess[takey].metricsClient,
+			monitoringRequest,
+		)
+	}
 
-// 	// preparing for frontend
-// 	for k, v := range namespaceWithMetricNames {
-// 		namespaceWithMetricNamesList = append(namespaceWithMetricNamesList, models.OCIMetricNamesWithNamespace{
-// 			Namespace:   k,
-// 			MetricNames: v,
-// 		})
-// 	}
+	// preparing for frontend
+	for k, v := range namespaceWithMetricNames {
+		namespaceWithMetricNamesList = append(namespaceWithMetricNamesList, models.OCIMetricNamesWithNamespace{
+			Namespace:   k,
+			MetricNames: v,
+		})
+	}
 
-// 	// saving into the cache
-// 	oc.cache.SetWithTTL(cacheKey, namespaceWithMetricNamesList, 1, 5*time.Minute)
-// 	oc.cache.Wait()
+	// saving into the cache
+	o.cache.SetWithTTL(cacheKey, namespaceWithMetricNamesList, 1, 5*time.Minute)
+	o.cache.Wait()
 
-// 	return namespaceWithMetricNamesList
-// }
+	return namespaceWithMetricNamesList
+}
+
+// listMetricsMetadataFromAllRegion will list either metric names with namespaces or dimensions for all subscribed region
+func listMetricsMetadataFromAllRegion(
+	ctx context.Context,
+	ci *ristretto.Cache,
+	cacheKey string,
+	fetchFor string,
+	mClient monitoring.MonitoringClient,
+	req monitoring.ListMetricsRequest,
+	regions []string) map[string][]string {
+
+	backend.Logger.Debug("client.utils", "listMetricsMetadataFromAllRegion", "Data fetch start by calling list metrics API from all subscribed regions")
+
+	var metricsMetadata map[string][]string
+	var allRegionsData sync.Map
+	var wg sync.WaitGroup
+
+	for _, subscribedRegion := range regions {
+		if subscribedRegion != constants.ALL_REGION {
+			mClient.SetRegion(subscribedRegion)
+
+			wg.Add(1)
+			go func(mc monitoring.MonitoringClient, sRegion string) {
+				defer wg.Done()
+
+				newCacheKey := strings.ReplaceAll(cacheKey, constants.ALL_REGION, subscribedRegion)
+				metadata := listMetricsMetadataPerRegion(ctx, ci, newCacheKey, fetchFor, mc, req)
+
+				if len(metadata) > 0 {
+					allRegionsData.Store(sRegion, metadata)
+				}
+			}(mClient, subscribedRegion)
+		}
+	}
+	wg.Wait()
+
+	allRegionsData.Range(func(key, value interface{}) bool {
+		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Data got for region-"+key.(string))
+
+		metadataGot := value.(map[string][]string)
+
+		// for first entry
+		if len(metricsMetadata) == 0 {
+			metricsMetadata = metadataGot
+			return true
+		}
+
+		// k can be namespace or dimension key
+		// values can be either metricNames or dimension values
+		for k, values := range metadataGot {
+			if _, ok := metricsMetadata[k]; !ok {
+				// when namespace not present
+				metricsMetadata[k] = values
+				continue
+			}
+
+			// when namespace is already present
+			for _, mn := range values {
+				findIndex := sort.SearchStrings(metricsMetadata[k], mn)
+				if findIndex < len(metricsMetadata[k]) && metricsMetadata[k][findIndex] != mn {
+					// not found, and insert in between
+					metricsMetadata[k] = append(metricsMetadata[k][:findIndex+1], metricsMetadata[k][findIndex:]...)
+					metricsMetadata[k][findIndex] = mn
+				} else if findIndex == len(metricsMetadata[k]) {
+					// not found and insert at last
+					metricsMetadata[k] = append(metricsMetadata[k], mn)
+				}
+			}
+		}
+
+		return true
+	})
+
+	return metricsMetadata
+}
+
+// listMetricsMetadataPerRegion will list all either dimensions or metrics either per namespaces or per resurce groups for a particular region
+func listMetricsMetadataPerRegion(
+	ctx context.Context,
+	ci *ristretto.Cache,
+	cacheKey string,
+	fetchFor string,
+	mClient monitoring.MonitoringClient,
+	req monitoring.ListMetricsRequest) map[string][]string {
+
+	backend.Logger.Debug("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
+
+	if cachedMetricsData, found := ci.Get(cacheKey); found {
+		backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
+		return cachedMetricsData.(map[string][]string)
+	}
+
+	fetchedMetricDetails := listMetrics(ctx, mClient, req)
+
+	metadataWithMetricNames := map[string][]string{}
+	sortedMetadataWithMetricNames := map[string][]string{}
+	metadata := []string{}
+	isExist := false
+	var metadataKey string
+
+	for _, item := range fetchedMetricDetails {
+		metricName := *item.Name
+
+		switch fetchFor {
+		case constants.FETCH_FOR_NAMESPACE:
+			metadataKey = *item.Namespace
+		case constants.FETCH_FOR_RESOURCE_GROUP:
+			if item.ResourceGroup != nil {
+				metadataKey = *item.ResourceGroup
+			}
+		case constants.FETCH_FOR_DIMENSION:
+			for k, v := range item.Dimensions {
+				// we don't need region or resource id dimensions as
+				// we already filtered by region and resourceDisplayName is already there
+				// in the dimensions
+				// and do we really need imageId, image name will be good to have
+				if k == "region" || k == "resourceId" || k == "imageId" {
+					continue
+				}
+
+				// to sort the final map by dimension keys
+				metadata = append(metadata, k)
+
+				if oldVs, ok := metadataWithMetricNames[k]; ok {
+					for _, oldv := range oldVs {
+						if v == oldv {
+							isExist = true
+							break
+						}
+					}
+					if !isExist {
+						metadataWithMetricNames[k] = append(metadataWithMetricNames[k], v)
+					}
+
+					isExist = false
+					continue
+				}
+
+				metadataWithMetricNames[k] = []string{v}
+			}
+		}
+
+		if len(metadataKey) == 0 {
+			// in case of dimensions
+			continue
+		}
+
+		// to sort the final map by namespaces
+		metadata = append(metadata, metadataKey)
+
+		if _, ok := metadataWithMetricNames[metadataKey]; ok {
+			metadataWithMetricNames[metadataKey] = append(metadataWithMetricNames[metadataKey], metricName)
+			continue
+		}
+
+		metadataWithMetricNames[metadataKey] = []string{metricName}
+	}
+
+	// sorting the metadata key values
+	if len(metadata) != 0 {
+		sort.Strings(metadata)
+	}
+
+	// generating new map with sorted metadata keys and metric names
+	for _, md := range metadata {
+		sort.Strings(metadataWithMetricNames[md])
+		sortedMetadataWithMetricNames[md] = metadataWithMetricNames[md]
+	}
+
+	ci.SetWithTTL(cacheKey, sortedMetadataWithMetricNames, 1, 5*time.Minute)
+	ci.Wait()
+
+	return sortedMetadataWithMetricNames
+}
+
+// listMetrics will list all metrics with namespaces
+// API Operation: ListMetrics
+// Permission Required: METRIC_INSPECT
+// Links:
+// https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
+// https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+func listMetrics(ctx context.Context, mClient monitoring.MonitoringClient, req monitoring.ListMetricsRequest) []monitoring.Metric {
+	var fetchedMetricDetails []monitoring.Metric
+	var pageHeader string
+
+	for {
+		if len(pageHeader) != 0 {
+			req.Page = common.String(pageHeader)
+		}
+
+		res, err := mClient.ListMetrics(ctx, req)
+		if err != nil {
+			backend.Logger.Error("client.utils", "listMetrics", err)
+			break
+		}
+
+		fetchedMetricDetails = append(fetchedMetricDetails, res.Items...)
+		if len(res.RawResponse.Header.Get("opc-next-page")) != 0 {
+			pageHeader = *res.OpcNextPage
+		} else {
+			break
+		}
+	}
+
+	return fetchedMetricDetails
+}
