@@ -187,6 +187,7 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 
 	region, regErr := o.tenancyAccess[takey].config.Region()
 	if regErr != nil {
+		backend.Logger.Debug("client", "GetCompartments", "error retrieving default region")
 		return nil
 	}
 	reg := common.StringToRegion(region)
@@ -206,6 +207,8 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 	}
 
+	backend.Logger.Debug("client", "GetCompartmentstakey2", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
+
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyocid, "cs"}, "-")
 	if cachedCompartments, found := o.cache.Get(cacheKey); found {
@@ -218,8 +221,10 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	// Send the request using the service client
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
 	if err != nil {
+		backend.Logger.Debug("client", "GetCompartments", "error in GetTenancy")
 		return nil
 	}
+	backend.Logger.Debug("client", "GetCompartmentstakey3", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
 
 	compartments := map[string]string{}
 
@@ -251,6 +256,8 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 			break
 		}
 	}
+
+	backend.Logger.Debug("client", "GetCompartmentstakey4", "fetching the subscribed region for tenancy tenancyOCID: "+*resp.Name)
 
 	compartments[tenancyocid] = *resp.Name //tenancy name
 
@@ -295,6 +302,8 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	// saving in the cache
 	o.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
 	o.cache.Wait()
+
+	backend.Logger.Debug("client", "GetCompartmentstakey5", "fetching the subscribed region for tenancy tenancyOCID: "+*resp.Name)
 
 	return compartmentList
 }

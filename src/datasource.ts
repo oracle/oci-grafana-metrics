@@ -51,10 +51,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
-    console.log ("Siamo di REgione");
-
     if (tenancyOCID === '') {
-      console.log ("Ritorno di REgione");
       return [];
     }
     const reqBody: JSON = {
