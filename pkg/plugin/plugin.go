@@ -3,7 +3,6 @@
 package plugin
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -113,13 +112,6 @@ type OCISecuredSettings struct {
 	Privkey_5     string `json:"privkey5,omitempty"`
 }
 
-// Prepare format to decode SecureJson
-func transcode(in, out interface{}) {
-	buf := new(bytes.Buffer)
-	json.NewEncoder(buf).Encode(in)
-	json.NewDecoder(buf).Decode(out)
-}
-
 // NewOCIConfigFile - constructor
 func NewOCIConfigFile() *OCIConfigFile {
 	return &OCIConfigFile{
@@ -176,13 +168,6 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 		return nil, err
 	}
 	o.cache = cache
-
-	// ociClients, err := client.New(dsSettings, cache)
-	// if err != nil {
-	// 	backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci client: "+err.Error())
-	// 	return nil, err
-	// }
-	// o.clients = ociClients
 
 	mux := http.NewServeMux()
 	o.registerRoutes(mux)
@@ -442,54 +427,4 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	default:
 		return errors.New("unknown environment type")
 	}
-}
-
-func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
-
-	var takey string
-	tenancymode := o.settings.TenancyMode
-
-	if tenancymode == "multitenancy" {
-		takey = tenancyOCID
-	} else {
-		takey = SingleTenancyKey
-	}
-	return takey
-}
-
-// clientRetryPolicy is a helper method that assembles and returns a return policy that is defined to call in every second
-// to use maximum benefit of TPS limit (which is currently 10)
-// This retry policy will retry on (409, IncorrectState), (429, TooManyRequests) and any 5XX errors except (501, MethodNotImplemented)
-// The retry behavior is constant with 1s
-// The number of retries is 10
-func clientRetryPolicy() common.RetryPolicy {
-	clientRetryOperation := func(r common.OCIOperationResponse) bool {
-		type HTTPStatus struct {
-			code    int
-			message string
-		}
-		clientRetryStatusCodeMap := map[HTTPStatus]bool{
-			{409, "IncorrectState"}:       true,
-			{429, "TooManyRequests"}:      true,
-			{501, "MethodNotImplemented"}: false,
-		}
-
-		if r.Error == nil && 199 < r.Response.HTTPResponse().StatusCode && r.Response.HTTPResponse().StatusCode < 300 {
-			return false
-		}
-		if common.IsNetworkError(r.Error) {
-			return true
-		}
-		if err, ok := common.IsServiceError(r.Error); ok {
-			if shouldRetry, ok := clientRetryStatusCodeMap[HTTPStatus{err.GetHTTPStatusCode(), err.GetCode()}]; ok {
-				return shouldRetry
-			}
-			return 500 <= r.Response.HTTPResponse().StatusCode && r.Response.HTTPResponse().StatusCode < 600
-		}
-		return false
-	}
-	nextCallAt := func(r common.OCIOperationResponse) time.Duration {
-		return time.Duration(1) * time.Second
-	}
-	return common.NewRetryPolicy(uint(10), clientRetryOperation, nextCallAt)
 }
