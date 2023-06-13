@@ -472,7 +472,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
           </InlineField>          
           <InlineField label="COMPARTMENT" labelWidth={20}>
             <SegmentAsync
-              className="width-14"
+              className="width-28"
               allowCustomValue={false}
               required={false}
               loadOptions={getCompartmentOptions}

@@ -57,11 +57,13 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 			CompartmentId: &tenancyocid,
 		}
 
+		var status int
 		res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
 		if err != nil {
 			backend.Logger.Debug(key, "SKIPPED", err)
+		} else {
+			status = res.RawResponse.StatusCode
 		}
-		status := res.RawResponse.StatusCode
 		if status >= 200 && status < 300 {
 			backend.Logger.Debug(key, "OK", status)
 		} else {
