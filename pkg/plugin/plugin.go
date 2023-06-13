@@ -367,7 +367,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	// end test statements
 
 	switch environment {
-	case "oci-user-principals":
+	case "oci-user-principals", "local":
 		log.DefaultLogger.Error("User Principals siamo qui")
 		q, err := OCILoadSettings(req)
 		if err != nil {
@@ -406,7 +406,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		return nil
 
-	case "oci-instance":
+	case "oci-instance", "OCI Instance":
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {

@@ -10,12 +10,13 @@ import {
 import { OCIDataSourceOptions } from './types';
 import {
   AuthProviders,
+  AuthProvidersLegacy,
   regions,
   // MultiTenancyChoices,
   TenancyChoices,
   AuthProviderOptions,
   // MultiTenancyChoiceOptions,
-  // MultiTenancyModeOptions,
+  // MultitenancymodeOptions,
   TenancyChoiceOptions,
 } from './config.options';
 
@@ -36,16 +37,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.Environment || ''}
+            value={options.jsonData.environment || ''}
             options={AuthProviderOptions}
-            defaultValue={options.jsonData.Environment}
+            defaultValue={options.jsonData.environment}
             onChange={(option) => {
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'Environment')(option);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'environment')(option);
             }}
           />
         </InlineField>
 
-        {options.jsonData.Environment === AuthProviders.OCI_USER && (
+        {(options.jsonData.environment === AuthProviders.OCI_USER || options.jsonData.environment === AuthProvidersLegacy.OCI_USER) && (
               <>
         <InlineField              
               label="Tenancy Mode"
@@ -54,11 +55,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
             >
               <Select
                 className="width-30"
-                value={options.jsonData.TenancyMode || ''}
+                value={options.jsonData.tenancymode || ''}
                 options={TenancyChoiceOptions}
-                defaultValue={options.jsonData.TenancyMode}
+                defaultValue={options.jsonData.tenancymode}
                 onChange={(option) => {
-                  onUpdateDatasourceJsonDataOptionSelect(this.props, 'TenancyMode')(option);
+                  onUpdateDatasourceJsonDataOptionSelect(this.props, 'tenancymode')(option);
                 }}
               />
             </InlineField>
@@ -67,7 +68,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <br></br>
 
 {/* Instance Principals  */}
-        {options.jsonData.Environment === AuthProviders.OCI_INSTANCE && (
+        {options.jsonData.environment === AuthProviders.OCI_INSTANCE && (
           <>
       <FieldSet label="Instance Principals Connection Details">
         <InlineField
@@ -81,7 +82,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               label: region,
               value: region,
               }))}
-            defaultValue={options.jsonData.Environment}
+            defaultValue={options.jsonData.environment}
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')(option);
             }}
@@ -93,7 +94,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
 
 {/* User Principals - Default tenancy */}
-  {options.jsonData.Environment === AuthProviders.OCI_USER && (
+  {(options.jsonData.environment === AuthProviders.OCI_USER || options.jsonData.environment === AuthProvidersLegacy.OCI_USER) && (
               <>
       <FieldSet label="DEFAULT Connection Details">
 
@@ -181,7 +182,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
 
 {/* User Principals - Multitenancy Tenancy 1*/}
-        {options.jsonData.TenancyMode === TenancyChoices.multitenancy && (
+        {options.jsonData.tenancymode === TenancyChoices.multitenancy && (
           <>                          
       <FieldSet label="Tenancy-1 Connection Details">
       <InlineField

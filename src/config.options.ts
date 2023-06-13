@@ -10,6 +10,11 @@ export enum AuthProviders {
   OCI_INSTANCE = 'oci-instance',
 }
 
+export enum AuthProvidersLegacy {
+  OCI_USER = 'local',
+  OCI_INSTANCE = 'OCI Instance',
+}
+
 export const AUTO = 'auto' ;
 export const regions = ['af-johannesburg-1', 'ap-chiyoda-1', 'ap-chuncheon-1', 'ap-dcc-canberra-1', 'ap-hyderabad-1', 'ap-ibaraki-1', 'ap-melbourne-1',
     'ap-mumbai-1', 'ap-osaka-1', 'ap-seoul-1', 'ap-singapore-1', 'ap-sydney-1', 'ap-tokyo-1', 'ca-montreal-1', 'ca-toronto-1',
@@ -131,7 +136,18 @@ export const AuthProviderOptions = [
   },
 ] as Array<SelectableValue<string>>;
 
-
+export const AuthProviderLegacyOptions = [
+  {
+    label: 'OCI User',
+    value: AuthProvidersLegacy.OCI_USER,
+    description: 'The grafana instance is configured with oci user principals',
+  },
+  {
+    label: 'OCI Instance',
+    value: AuthProvidersLegacy.OCI_INSTANCE,
+    description: 'The grafana instance is configured in OCI environment',
+  },
+] as Array<SelectableValue<string>>;
 
 
 export const MultiTenancyModeOptions = [
