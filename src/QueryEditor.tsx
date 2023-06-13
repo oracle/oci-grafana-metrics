@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, AsyncSelect } from '@grafana/ui';
+import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, AsyncSelect, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
@@ -358,6 +358,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const onIntervalChange = (data: any) => {
     onApplyQueryChange({ ...query, intervalLabel: data.label, interval: data.value });
   };
+  const onLegendFormatChange = (data: any) => {
+    onApplyQueryChange({ ...query, legendFormat: data.value });
+  };  
   const onDimensionChange = (data: any) => {
     const existingDVs = query.dimensionValues || [];
     let newDimensionValues: string[] = [];
@@ -585,6 +588,18 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
             </>
           </InlineField>
         </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField label="LEGEND FORMAT" labelWidth={20} grow={true} tooltip="Start typing to see the options">
+              <>             
+                <Input
+                  className="width-30"
+                  onChange={(data) => {
+                    onLegendFormatChange(data);
+                  }}                
+                />
+              </> 
+          </InlineField>
+        </InlineFieldRow>       
         <InlineFieldRow>
           <InlineField label="TAGS" labelWidth={20} grow={true} tooltip="Start typing to see the options">
             <>

@@ -14,6 +14,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/monitoring"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
+	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
 // Prepare format to decode SecureJson
@@ -278,4 +279,246 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 		takey = SingleTenancyKey
 	}
 	return takey
+}
+
+// till here
+
+func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string][]string, map[string]map[string]struct{}) {
+	backend.Logger.Debug("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
+
+	// holds key: value1, value2, for UI
+	resourceTags := map[string][]string{}
+	// holds key.value: map of resourceIDs, for caching
+	resourceIDsPerTag := map[string]map[string]struct{}{}
+
+	for _, item := range resourceTagsResponse {
+		resourceID := item.ResourceID
+		isExist := false
+		// for defined tags
+		for rootTagKey, rootTags := range item.DefinedTags {
+			if rootTagKey == "Oracle-Tags" {
+				continue
+			}
+
+			for k, v := range rootTags {
+				if k == "Created_On" {
+					continue
+				}
+				tagValue := v.(string)
+
+				key := strings.Join([]string{rootTagKey, k}, ".")
+				cacheKey := strings.Join([]string{key, tagValue}, "=")
+
+				// for UI
+				existingVs, ok := resourceTags[key]
+				if ok {
+					for _, oldv := range existingVs {
+						if oldv == tagValue {
+							isExist = true
+							break
+						}
+					}
+					if !isExist {
+						resourceTags[key] = append(resourceTags[key], tagValue)
+					}
+
+					isExist = false
+				} else {
+					resourceTags[key] = []string{tagValue}
+				}
+
+				// for caching
+				if len(resourceIDsPerTag[cacheKey]) == 0 {
+					resourceIDsPerTag[cacheKey] = map[string]struct{}{
+						resourceID: {},
+					}
+				} else {
+					resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+				}
+			}
+		}
+
+		isExist = false
+		// for freeform tags
+		for k, v := range item.FreeFormTags {
+			cacheKey := strings.Join([]string{k, v}, "=")
+
+			// for UI
+			existingVs, ok := resourceTags[k]
+			if ok {
+				for _, oldv := range existingVs {
+					if v == oldv {
+						isExist = true
+						break
+					}
+				}
+				if !isExist {
+					resourceTags[k] = append(resourceTags[k], v)
+				}
+
+				isExist = false
+			} else {
+				resourceTags[k] = []string{v}
+			}
+
+			// for caching
+			if len(resourceIDsPerTag[cacheKey]) == 0 {
+				resourceIDsPerTag[cacheKey] = map[string]struct{}{
+					resourceID: {},
+				}
+			} else {
+				resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+			}
+		}
+	}
+
+	return resourceTags, resourceIDsPerTag
+}
+
+func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string]map[string]struct{}, map[string]map[string]struct{}) {
+	backend.Logger.Debug("client.utils", "collectResourceTags", "Fetching the tags from the oci call response")
+
+	// holds key: map of values, for UI
+	resourceTags := map[string]map[string]struct{}{}
+	// holds key.value: map of resourceIDs, for caching
+	resourceIDsPerTag := map[string]map[string]struct{}{}
+
+	for _, item := range resourceTagsResponse {
+		resourceID := item.ResourceID
+		// for defined tags
+		for rootTagKey, rootTags := range item.DefinedTags {
+			if rootTagKey == "Oracle-Tags" {
+				continue
+			}
+
+			for k, v := range rootTags {
+				if k == "Created_On" {
+					continue
+				}
+				tagValue := v.(string)
+
+				tagKey := strings.Join([]string{rootTagKey, k}, ".")
+				cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
+
+				// for UI
+				// when the tag key is already present
+				if existingVs, ok := resourceTags[tagKey]; ok {
+					// if the value for the tag key is not added before
+					if _, found := existingVs[tagValue]; !found {
+						existingVs[tagValue] = struct{}{}
+						resourceTags[tagKey] = existingVs
+					}
+				} else {
+					// when the tag key is added for first time
+					resourceTags[tagKey] = map[string]struct{}{
+						tagValue: {},
+					}
+				}
+
+				// for caching
+				if len(resourceIDsPerTag[cacheKey]) == 0 {
+					resourceIDsPerTag[cacheKey] = map[string]struct{}{
+						resourceID: {},
+					}
+				} else {
+					resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+				}
+			}
+		}
+
+		// for freeform tags
+		for tagKey, tagValue := range item.FreeFormTags {
+			cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
+
+			// for UI
+			// when the tag key is already present
+			if existingVs, ok := resourceTags[tagKey]; ok {
+				// if the value for the tag key is not added before
+				if _, found := existingVs[tagValue]; !found {
+					existingVs[tagValue] = struct{}{}
+					resourceTags[tagKey] = existingVs
+				}
+			} else {
+				// when the tag key is added for first time
+				resourceTags[tagKey] = map[string]struct{}{
+					tagValue: {},
+				}
+			}
+
+			// for caching
+			if len(resourceIDsPerTag[cacheKey]) == 0 {
+				resourceIDsPerTag[cacheKey] = map[string]struct{}{
+					resourceID: {},
+				}
+			} else {
+				resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+			}
+		}
+	}
+
+	return resourceTags, resourceIDsPerTag
+}
+
+func convertToArray(input map[string]map[string]struct{}) map[string][]string {
+	backend.Logger.Debug("client.utils", "convertToArray", "Converting to array")
+
+	output := map[string][]string{}
+
+	for key, values := range input {
+		for v := range values {
+			if len(output[key]) == 0 {
+				output[key] = []string{v}
+			} else {
+				output[key] = append(output[key], v)
+			}
+		}
+	}
+
+	return output
+}
+
+func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (string, string, string, bool) {
+	monitorID := ""
+
+	// getting the resource unique ID
+	resourceID, found := dimensions["resourceId"]
+	if !found {
+		resourceID, found = dimensions["ResourceId"]
+		if !found {
+			// as only one key and value pair will be present based on group by key selection
+			for _, v := range dimensions {
+				resourceID = v
+			}
+		}
+	}
+
+	// some data give ocid in all caps
+	resourceID = strings.ToLower(resourceID)
+
+	// getting the resource name
+	resourceDisplayName := resourceID
+	if v, got := dimensions["resourceDisplayName"]; got {
+		resourceDisplayName = v
+	}
+
+	// getting the extra unique id as per namespace
+	if namespace == constants.OCI_NS_APM {
+		monitorID = dimensions["MonitorId"]
+	}
+
+	return resourceID, resourceDisplayName, monitorID, found
+}
+
+func addSelectedValuesLabels(existingLabels map[string]string, selectedValuePairs []string) map[string]string {
+	if existingLabels == nil {
+		existingLabels = map[string]string{}
+	}
+
+	for _, valuePair := range selectedValuePairs {
+		kv := strings.Split(valuePair, "=")
+
+		existingLabels[strings.ToLower(kv[0])] = strings.TrimPrefix(strings.TrimSuffix(kv[1], "\""), "\"")
+	}
+
+	return existingLabels
 }

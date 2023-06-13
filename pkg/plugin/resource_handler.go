@@ -43,9 +43,9 @@ func (ocidx *OCIDatasource) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/regions", ocidx.GetRegionsHandler)
 	mux.HandleFunc("/compartments", ocidx.GetCompartmentsHandler)
 	mux.HandleFunc("/namespaces", ocidx.GetNamespacesHandler)
-	mux.HandleFunc("/resourcegroups", ocidx.GetResourceGroupHandler)
-	mux.HandleFunc("/dimensions", ocidx.GetDimensionsHandler)
-	mux.HandleFunc("/tags", ocidx.GetTagsHandler)
+	// mux.HandleFunc("/resourcegroups", ocidx.GetResourceGroupHandler)
+	// mux.HandleFunc("/dimensions", ocidx.GetDimensionsHandler)
+	// mux.HandleFunc("/tags", ocidx.GetTagsHandler)
 }
 
 func (ocidx *OCIDatasource) GetTenanciesHandler(rw http.ResponseWriter, req *http.Request) {
@@ -117,59 +117,59 @@ func (ocidx *OCIDatasource) GetNamespacesHandler(rw http.ResponseWriter, req *ht
 	writeResponse(rw, namespaces)
 }
 
-func (ocidx *OCIDatasource) GetResourceGroupHandler(rw http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
-		return
-	}
+// func (ocidx *OCIDatasource) GetResourceGroupHandler(rw http.ResponseWriter, req *http.Request) {
+// 	if req.Method != http.MethodPost {
+// 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
+// 		return
+// 	}
 
-	var rgr resourceGroupRequest
-	if err := jsoniter.NewDecoder(req.Body).Decode(&rgr); err != nil {
-		backend.Logger.Error("plugin.resource_handler", "GetResourceGroupHandler", err)
-		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
-		return
-	}
+// 	var rgr resourceGroupRequest
+// 	if err := jsoniter.NewDecoder(req.Body).Decode(&rgr); err != nil {
+// 		backend.Logger.Error("plugin.resource_handler", "GetResourceGroupHandler", err)
+// 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
+// 		return
+// 	}
 
-	rgs := ocidx.clients.GetResourceGroups(req.Context(), rgr.Tenancy, rgr.Compartment, rgr.Region, rgr.Namespace)
+// 	rgs := ocidx.clients.GetResourceGroups(req.Context(), rgr.Tenancy, rgr.Compartment, rgr.Region, rgr.Namespace)
 
-	writeResponse(rw, rgs)
-}
+// 	writeResponse(rw, rgs)
+// }
 
-func (ocidx *OCIDatasource) GetDimensionsHandler(rw http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
-		return
-	}
+// func (ocidx *OCIDatasource) GetDimensionsHandler(rw http.ResponseWriter, req *http.Request) {
+// 	if req.Method != http.MethodPost {
+// 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
+// 		return
+// 	}
 
-	var dr dimensionRequest
-	if err := jsoniter.NewDecoder(req.Body).Decode(&dr); err != nil {
-		backend.Logger.Error("plugin.resource_handler", "GetDimensionsHandler", err)
-		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
-		return
-	}
+// 	var dr dimensionRequest
+// 	if err := jsoniter.NewDecoder(req.Body).Decode(&dr); err != nil {
+// 		backend.Logger.Error("plugin.resource_handler", "GetDimensionsHandler", err)
+// 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
+// 		return
+// 	}
 
-	dimensions := ocidx.clients.GetDimensions(req.Context(), dr.Tenancy, dr.Compartment, dr.Region, dr.Namespace, dr.MetricName)
+// 	dimensions := ocidx.clients.GetDimensions(req.Context(), dr.Tenancy, dr.Compartment, dr.Region, dr.Namespace, dr.MetricName)
 
-	writeResponse(rw, dimensions)
-}
+// 	writeResponse(rw, dimensions)
+// }
 
-func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
-		return
-	}
+// func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Request) {
+// 	if req.Method != http.MethodPost {
+// 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
+// 		return
+// 	}
 
-	var tr tagRequest
-	if err := jsoniter.NewDecoder(req.Body).Decode(&tr); err != nil {
-		backend.Logger.Error("ResourceHandler", "GetTagsHandler", err)
-		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
-		return
-	}
+// 	var tr tagRequest
+// 	if err := jsoniter.NewDecoder(req.Body).Decode(&tr); err != nil {
+// 		backend.Logger.Error("ResourceHandler", "GetTagsHandler", err)
+// 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
+// 		return
+// 	}
 
-	tags := ocidx.clients.GetTags(req.Context(), tr.Tenancy, tr.Compartment, tr.CompartmentName, tr.Region, tr.Namespace)
+// 	tags := ocidx.clients.GetTags(req.Context(), tr.Tenancy, tr.Compartment, tr.CompartmentName, tr.Region, tr.Namespace)
 
-	writeResponse(rw, tags)
-}
+// 	writeResponse(rw, tags)
+// }
 
 func writeResponse(rw http.ResponseWriter, resp interface{}) {
 	resultJson, err := jsoniter.Marshal(resp)

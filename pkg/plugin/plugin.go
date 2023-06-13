@@ -25,7 +25,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"github.com/oracle/oci-go-sdk/v65/identity"
 	"github.com/oracle/oci-go-sdk/v65/monitoring"
-	"github.com/oracle/oci-grafana-metrics/pkg/plugin/client"
+
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
@@ -53,7 +53,7 @@ type OCIDatasource struct {
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
 	backend.CallResourceHandler
-	clients  *client.OCIClients
+	// clients  *client.OCIClients
 	settings *models.OCIDatasourceSettings
 	cache    *ristretto.Cache
 }

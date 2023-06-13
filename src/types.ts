@@ -247,6 +247,7 @@ export interface OCIQuery extends DataQuery {
   metric?: string;
   interval: string;
   intervalLabel?: string;
+  legendFormat?: string;
   statistic: string;
   statisticLabel?: string;
   resourceGroup?: string;
