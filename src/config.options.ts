@@ -6,11 +6,6 @@
 import { SelectableValue } from '@grafana/data';
 
 export enum AuthProviders {
-  OCI_USER = 'oci-user-principals',
-  OCI_INSTANCE = 'oci-instance',
-}
-
-export enum AuthProvidersLegacy {
   OCI_USER = 'local',
   OCI_INSTANCE = 'OCI Instance',
 }
@@ -132,19 +127,6 @@ export const AuthProviderOptions = [
   {
     label: 'OCI Instance',
     value: AuthProviders.OCI_INSTANCE,
-    description: 'The grafana instance is configured in OCI environment',
-  },
-] as Array<SelectableValue<string>>;
-
-export const AuthProviderLegacyOptions = [
-  {
-    label: 'OCI User',
-    value: AuthProvidersLegacy.OCI_USER,
-    description: 'The grafana instance is configured with oci user principals',
-  },
-  {
-    label: 'OCI Instance',
-    value: AuthProvidersLegacy.OCI_INSTANCE,
     description: 'The grafana instance is configured in OCI environment',
   },
 ] as Array<SelectableValue<string>>;

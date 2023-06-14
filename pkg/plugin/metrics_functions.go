@@ -34,7 +34,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	// tmode := o.settings.TenancyMode
 
 	for key, _ := range o.tenancyAccess {
-		// testResult = false
+		testResult = false
 
 		// if tmode == "multitenancy" && tenv == "oci-instance" {
 		// 	return errors.New("Multitenancy mode using instance principals is not implemented yet.")

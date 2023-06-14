@@ -10,7 +10,6 @@ import {
 import { OCIDataSourceOptions } from './types';
 import {
   AuthProviders,
-  AuthProvidersLegacy,
   regions,
   // MultiTenancyChoices,
   TenancyChoices,
@@ -46,7 +45,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           />
         </InlineField>
 
-        {(options.jsonData.environment === AuthProviders.OCI_USER || options.jsonData.environment === AuthProvidersLegacy.OCI_USER) && (
+        {options.jsonData.environment === AuthProviders.OCI_USER  && (
               <>
         <InlineField              
               label="Tenancy Mode"
@@ -94,7 +93,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
 
 {/* User Principals - Default tenancy */}
-  {(options.jsonData.environment === AuthProviders.OCI_USER || options.jsonData.environment === AuthProvidersLegacy.OCI_USER) && (
+  {options.jsonData.environment === AuthProviders.OCI_USER && (
               <>
       <FieldSet label="DEFAULT Connection Details">
 
