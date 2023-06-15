@@ -5,6 +5,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -376,6 +377,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		for key, _ := range q.tenancyocid {
 			log.DefaultLogger.Error("Key: " + key)
 			var configProvider common.ConfigurationProvider
+			// test if PEM key is valid
+			block, _ := pem.Decode([]byte(q.privkey[key]))
+			if block == nil {
+				o.logger.Error("Private Key cannot be validated: " + key)
+				return errors.New("error with Private Key")
+			}
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 
 			// creating oci monitoring client
