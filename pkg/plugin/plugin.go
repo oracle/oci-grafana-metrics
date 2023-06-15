@@ -3,9 +3,9 @@
 package plugin
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -26,7 +26,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"github.com/oracle/oci-go-sdk/v65/identity"
 	"github.com/oracle/oci-go-sdk/v65/monitoring"
-	"github.com/oracle/oci-grafana-metrics/pkg/plugin/client"
+
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
@@ -43,27 +43,9 @@ var (
 )
 
 type TenancyAccess struct {
-	metricsClient  monitoring.MonitoringClient
-	identityClient identity.IdentityClient
-	config         common.ConfigurationProvider
-}
-
-// GrafanaOCIRequest - Query Request comning in from the front end
-type GrafanaOCIRequest struct {
-	GrafanaCommonRequest
-	Query         string
-	Resolution    string
-	Namespace     string
-	ResourceGroup string
-	LegendFormat  string
-}
-
-// GrafanaSearchRequest incoming request body for search requests
-type GrafanaSearchRequest struct {
-	GrafanaCommonRequest
-	Metric        string `json:"metric,omitempty"`
-	Namespace     string
-	ResourceGroup string
+	monitoringClient monitoring.MonitoringClient
+	identityClient   identity.IdentityClient
+	config           common.ConfigurationProvider
 }
 
 type OCIDatasource struct {
@@ -72,7 +54,7 @@ type OCIDatasource struct {
 	nameToOCID       map[string]string
 	timeCacheUpdated time.Time
 	backend.CallResourceHandler
-	clients  *client.OCIClients
+	// clients  *client.OCIClients
 	settings *models.OCIDatasourceSettings
 	cache    *ristretto.Cache
 }
@@ -85,17 +67,6 @@ type OCIConfigFile struct {
 	privkey     map[string]string
 	privkeypass map[string]*string
 	logger      log.Logger
-}
-
-// GrafanaCommonRequest - captures the common parts of the search and metricsRequests
-type GrafanaCommonRequest struct {
-	Compartment string
-	Environment string
-	TenancyMode string
-	QueryType   string
-	Region      string
-	Tenancy     string // the actual tenancy with the format <configfile entry name/tenancyOCID>
-	TenancyOCID string `json:"tenancyOCID"`
 }
 
 type OCISecuredSettings struct {
@@ -140,13 +111,6 @@ type OCISecuredSettings struct {
 	User_5        string `json:"user5,omitempty"`
 	Fingerprint_5 string `json:"fingerprint5,omitempty"`
 	Privkey_5     string `json:"privkey5,omitempty"`
-}
-
-// Prepare format to decode SecureJson
-func transcode(in, out interface{}) {
-	buf := new(bytes.Buffer)
-	json.NewEncoder(buf).Encode(in)
-	json.NewDecoder(buf).Decode(out)
 }
 
 // NewOCIConfigFile - constructor
@@ -205,13 +169,6 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 		return nil, err
 	}
 	o.cache = cache
-
-	// ociClients, err := client.New(dsSettings, cache)
-	// if err != nil {
-	// 	backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci client: "+err.Error())
-	// 	return nil, err
-	// }
-	// o.clients = ociClients
 
 	mux := http.NewServeMux()
 	o.registerRoutes(mux)
@@ -411,7 +368,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	// end test statements
 
 	switch environment {
-	case "oci-user-principals":
+	case "local":
 		log.DefaultLogger.Error("User Principals siamo qui")
 		q, err := OCILoadSettings(req)
 		if err != nil {
@@ -420,35 +377,49 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		for key, _ := range q.tenancyocid {
 			log.DefaultLogger.Error("Key: " + key)
 			var configProvider common.ConfigurationProvider
+			// test if PEM key is valid
+			block, _ := pem.Decode([]byte(q.privkey[key]))
+			if block == nil {
+				o.logger.Error("Private Key cannot be validated: " + key)
+				return errors.New("error with Private Key")
+			}
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
-			metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+
+			// creating oci monitoring client
+			mrp := clientRetryPolicy()
+			monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				backend.Logger.Error("Error with config:" + key)
 				return errors.New("error with client")
 			}
+			monitoringClient.Configuration.RetryPolicy = &mrp
+
+			// creating oci identity client
+			irp := clientRetryPolicy()
 			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
 			if err != nil {
 				return errors.New("Error creating identity client")
 			}
+			identityClient.Configuration.RetryPolicy = &irp
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
 				return errors.New("error with TenancyOCID")
 			}
 			if tenancymode == "multitenancy" {
-				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{metricsClient, identityClient, configProvider}
+				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{monitoringClient, identityClient, configProvider}
 			} else {
-				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{monitoringClient, identityClient, configProvider}
 			}
 		}
 		return nil
 
-	case "oci-instance":
+	case "OCI Instance":
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
 			return errors.New("error with instance principals")
 		}
-		metricsClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
+		monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
 			backend.Logger.Error("Error with config:" + SingleTenancyKey)
 			return errors.New("error with client")
@@ -457,23 +428,10 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		if err != nil {
 			return errors.New("Error creating identity client")
 		}
-		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{metricsClient, identityClient, configProvider}
+		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{monitoringClient, identityClient, configProvider}
 		return nil
 
 	default:
 		return errors.New("unknown environment type")
 	}
-}
-
-func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
-
-	var takey string
-	tenancymode := o.settings.TenancyMode
-
-	if tenancymode == "multitenancy" {
-		takey = tenancyOCID
-	} else {
-		takey = SingleTenancyKey
-	}
-	return takey
 }

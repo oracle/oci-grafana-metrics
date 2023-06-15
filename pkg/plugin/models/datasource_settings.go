@@ -17,13 +17,13 @@ type OCIDatasourceSettings struct {
 	AuthProvider         string `json:"authProvider"`
 	ConfigPath           string `json:"configPath"`
 	ConfigProfile        string `json:"configProfile"`
-	TenancyMode          string `json:"TenancyMode"`
+	TenancyMode          string `json:"tenancymode"`
 	MultiTenancyMode     string `json:"multiTenancyMode"`
 	MultiTenancyFile     string `json:"multiTenancyFile"`
 	TenancyName          string `json:"tenancyName,omitempty"`
 	EnableCMDB           bool   `json:"enableCMDB"`
 	EnableCMDBUploadFile bool   `json:"enableCMDBUploadFile"`
-	Environment          string `json:"Environment"`
+	Environment          string `json:"environment"`
 
 	Profile_0 string `json:"profile0,omitempty"`
 	Region_0  string `json:"region0,omitempty"`

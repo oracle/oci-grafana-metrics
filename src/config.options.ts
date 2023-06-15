@@ -6,8 +6,8 @@
 import { SelectableValue } from '@grafana/data';
 
 export enum AuthProviders {
-  OCI_USER = 'oci-user-principals',
-  OCI_INSTANCE = 'oci-instance',
+  OCI_USER = 'local',
+  OCI_INSTANCE = 'OCI Instance',
 }
 
 export const AUTO = 'auto' ;
@@ -130,8 +130,6 @@ export const AuthProviderOptions = [
     description: 'The grafana instance is configured in OCI environment',
   },
 ] as Array<SelectableValue<string>>;
-
-
 
 
 export const MultiTenancyModeOptions = [
