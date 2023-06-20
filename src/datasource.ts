@@ -143,14 +143,11 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     namespace: any,
     metricName: any
   ): Promise<OCIResourceMetadataItem[]> {
-    console.log("DO0o0o0o ste altre cose qua")
 
     if (tenancyOCID === '') {
-      console.log("DO no tenancy")
       return [];
     }
     if (region === undefined || namespace === undefined || metricName === undefined) {
-      console.log("DO ste altre cose qua")
       return [];
     }
     if (
@@ -158,7 +155,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       namespace === QueryPlaceholder.Namespace ||
       metricName === QueryPlaceholder.Metric
     ) {
-      console.log("DO placeholders")
       return [];
     }
 

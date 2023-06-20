@@ -200,7 +200,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
     });
   };
   const getDimensionOptions = () => {
-    console.log("getDimensionOptions")
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource.getDimensions(
@@ -631,12 +630,14 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               <AsyncMultiSelect
                 loadOptions={getDimensionOptions}
                 isSearchable={true}
-                defaultOptions={false}
+                defaultOptions={true}
                 allowCustomValue={false}
                 isClearable={true}
                 closeMenuOnSelect={false}
-                placeholder={QueryPlaceholder.Dimensions}
+                // placeholder={QueryPlaceholder.Dimensions}
+                placeholder={""}
                 value={dimensionValue}
+                noOptionsMessage="Start typing to see values ..."
                 onChange={(data) => {
                   onDimensionChange(data);
                 }}
