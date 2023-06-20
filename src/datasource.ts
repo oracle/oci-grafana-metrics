@@ -77,14 +77,23 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     compartmentOCID: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
+    console.log("NS")
+    console.log("NS "+tenancyOCID)
+    console.log("NS "+compartmentOCID)
+    console.log("NS "+region)
+
+
     if (tenancyOCID === '') {
+      console.log("NS notenancy")
       return [];
     }
     if (region === undefined || region === QueryPlaceholder.Region) {
+      console.log("NS noregion")
       return [];
     }
 
     if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
+      console.log("NS compartmentOCID")
       compartmentOCID = '';
     }
 
@@ -134,10 +143,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     namespace: any,
     metricName: any
   ): Promise<OCIResourceMetadataItem[]> {
+    console.log("DO0o0o0o ste altre cose qua")
+
     if (tenancyOCID === '') {
+      console.log("DO no tenancy")
       return [];
     }
     if (region === undefined || namespace === undefined || metricName === undefined) {
+      console.log("DO ste altre cose qua")
       return [];
     }
     if (
@@ -145,6 +158,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       namespace === QueryPlaceholder.Namespace ||
       metricName === QueryPlaceholder.Metric
     ) {
+      console.log("DO placeholders")
       return [];
     }
 
@@ -160,6 +174,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       metric_name: metricName,
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Dimensions, reqBody).then((response) => {
+      console.log("DO OK")
       return new ResponseParser().parseDimensions(response);
     });
   }

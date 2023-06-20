@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, AsyncSelect, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
@@ -15,6 +15,14 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const tmode = datasource.getJsonData().tenancymode;
   console.log(tmode)
   const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
+  const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
+  const [regionValue, setRegionValue] = useState(query.region);
+  const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
+  const [namespaceValue, setNamespaceValue] = useState(query.namespace);
+  const [resourceGroupValue, setResourceGroupValue] = useState(query.resourceGroup);
+  const [metricValue, setMetricValue] = useState(query.metric);
+  // const [aggregationValue, setaggregationValue] = useState(query.aggregation);
+  const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
 
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
@@ -67,7 +75,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [initialDimensions, initialTags] = init();
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
   const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
-  const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]);
+  // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]);
 
   // fetch the tenancies from tenancies files, with name as key and ocid as value
   const getTenancyOptions = () => {
@@ -192,6 +200,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     });
   };
   const getDimensionOptions = () => {
+    console.log("getDimensionOptions")
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource.getDimensions(
@@ -258,6 +267,41 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //   });
   // };
 
+
+  const getTenancyDefault = () => {
+    let tname: string;
+    let tvalue: string;
+    tname='DEFAULT/';
+    tvalue='DEFAULT/';
+    onApplyQueryChange(
+      {
+        ...query,
+        tenancyName: tname,
+        tenancyOCID: tvalue,
+        compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
+          setTimeout(async () => {
+            const response = await datasource.getCompartments(tvalue);
+            const result = response.map((res: any) => {
+              return { label: res.name, value: res.ocid };
+            });
+            resolve(result);
+          }, 0);
+        }),
+        regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
+          setTimeout(async () => {
+            const response = await datasource.getSubscribedRegions(tvalue);
+            let result = response.map((res: any) => {
+              return { label: res, value: res };
+            });
+            resolve(result);
+          }, 0);
+        }),
+      },
+      false
+    );
+  };  
+  
+
   const onTenancyChange = (data: any) => {
     let tname: string;
     let tvalue: string;
@@ -265,6 +309,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       tname='DEFAULT/';
       tvalue='DEFAULT/';
     } else {
+      setTenancyValue(data);
       tname = data.label
       tvalue = data.value
     }
@@ -302,6 +347,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };  
 
   const onCompartmentChange = (data: any) => {
+    setCompartmentValue(data);
     onApplyQueryChange(
       {
         ...query,
@@ -313,22 +359,25 @@ export const QueryEditor: React.FC<Props> = (props) => {
       false
     );
   };
+
   const onRegionChange = (data: any) => {
+    setRegionValue(data);
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
-  const onNamespaceChange = (data: any) => {
-    new Promise<Array<SelectableValue<string>>>(() => {
-      setTimeout(async () => {
-        await datasource.getTags(
-          query.tenancyOCID,
-          query.compartmentOCID,
-          query.compartmentName,
-          query.region,
-          data.label
-        );
-      }, 0);
-    });
 
+  const onNamespaceChange = (data: any) => {
+    // new Promise<Array<SelectableValue<string>>>(() => {
+    //   setTimeout(async () => {
+    //     await datasource.getTags(
+    //       query.tenancyOCID,
+    //       query.compartmentOCID,
+    //       query.compartmentName,
+    //       query.region,
+    //       data.label
+    //     );
+    //   }, 0);
+    // });
+    setNamespaceValue(data);
     onApplyQueryChange(
       {
         ...query,
@@ -341,21 +390,27 @@ export const QueryEditor: React.FC<Props> = (props) => {
       false
     );
   };
+
   const onResourceGroupChange = (data: any) => {
     //setRGValue(data);
     let mn: string[] = data.value;
     if (data.label === 'NoResourceGroup') {
       mn = query.merticNamesFromNS || [];
     }
+    setResourceGroupValue(data);
+
     onApplyQueryChange({ ...query, resourceGroup: data.label, merticNames: mn, metric: undefined }, false);
   };
+
   const onMetricChange = (data: any) => {
+    setMetricValue(data);
     onApplyQueryChange({ ...query, metric: data.value });
   };
   const onAggregationChange = (data: any) => {
     onApplyQueryChange({ ...query, statisticLabel: data.label, statistic: data.value });
   };
   const onIntervalChange = (data: any) => {
+    setIntervalValue(data);
     onApplyQueryChange({ ...query, intervalLabel: data.label, interval: data.value });
   };
   const onLegendFormatChange = (data: any) => {
@@ -417,20 +472,20 @@ export const QueryEditor: React.FC<Props> = (props) => {
     setTagValue(data);
     onApplyQueryChange({ ...query, tagsValues: newTagsValues });
   };
-  const onGroupByChange = (data: any) => {
-    setGroupValue(data);
-    let selectedGroup: string = QueryPlaceholder.GroupBy;
+  // const onGroupByChange = (data: any) => {
+  //   setGroupValue(data);
+  //   let selectedGroup: string = QueryPlaceholder.GroupBy;
 
-    if (data !== null) {
-      selectedGroup = data.value;
-    }
+  //   if (data !== null) {
+  //     selectedGroup = data.value;
+  //   }
 
-    onApplyQueryChange({ ...query, groupBy: selectedGroup });
-  };
+  //   onApplyQueryChange({ ...query, groupBy: selectedGroup });
+  // };
 
 
 if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
-  onTenancyChange(null);
+  getTenancyDefault();
   setHasTenancyDefault(true);
 }
 
@@ -446,7 +501,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               allowCustomValue={false}
               required={true}
               loadOptions={getTenancyOptions}
-              value={query.tenancyName}
+              value={tenancyValue}
               placeholder={QueryPlaceholder.Tenancy}
               onChange={(data) => {
                 onTenancyChange(data);
@@ -463,7 +518,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               allowCustomValue={false}
               required={true}
               loadOptions={getSubscribedRegionOptions}
-              value={query.region}
+              value={regionValue}
               placeholder={QueryPlaceholder.Region}
               onChange={(data) => {
                 onRegionChange(data);
@@ -476,7 +531,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               allowCustomValue={false}
               required={false}
               loadOptions={getCompartmentOptions}
-              value={query.compartmentName}
+              value={compartmentValue}
               placeholder={QueryPlaceholder.Compartment}
               onChange={(data) => {
                 onCompartmentChange(data);
@@ -491,7 +546,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               allowCustomValue={false}
               required={true}
               loadOptions={getNamespaceOptions}
-              value={query.namespace}
+              value={namespaceValue}
               placeholder={QueryPlaceholder.Namespace}
               onChange={(data) => {
                 onNamespaceChange(data);
@@ -504,7 +559,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               allowCustomValue={false}
               required={false}
               loadOptions={getResourceGroupOptions}
-              value={query.resourceGroup}
+              value={resourceGroupValue}
               placeholder={QueryPlaceholder.ResourceGroup}
               onChange={(data) => {
                 onResourceGroupChange(data);
@@ -517,7 +572,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               allowCustomValue={false}
               required={true}
               loadOptions={getMetricOptions}
-              value={query.metric}
+              value={metricValue}
               placeholder={QueryPlaceholder.Metric}
               onChange={(data) => {
                 onMetricChange(data);
@@ -545,14 +600,15 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               allowCustomValue={false}
               required={true}
               loadOptions={getIntervalOptions}
-              value={query.intervalLabel || IntervalOptions[0].label}
+              // value={query.intervalLabel || IntervalOptions[0].label}
+              value={intervalValue}
               placeholder={QueryPlaceholder.Interval}
               onChange={(data) => {
                 onIntervalChange(data);
               }}
             />
           </InlineField>
-          <InlineField label="GROUP BY" labelWidth={20} tooltip="Start typing to see the options">
+          {/* <InlineField label="GROUP BY" labelWidth={20} tooltip="Start typing to see the options">
             <AsyncSelect
               className="width-14"
               isSearchable={true}
@@ -567,7 +623,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
                 onGroupByChange(data);
               }}
             />
-          </InlineField>
+          </InlineField> */}
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="DIMENSIONS" labelWidth={20} grow={true} tooltip="Start typing to see the options">

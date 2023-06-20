@@ -397,6 +397,11 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 		})
 	}
 
+	// sort namespace
+	sort.Slice(namespaceWithMetricNamesList, func(i, j int) bool {
+		return namespaceWithMetricNamesList[i].Namespace < namespaceWithMetricNamesList[j].Namespace
+	})
+
 	// saving into the cache
 	o.cache.SetWithTTL(cacheKey, namespaceWithMetricNamesList, 1, 5*time.Minute)
 	o.cache.Wait()
