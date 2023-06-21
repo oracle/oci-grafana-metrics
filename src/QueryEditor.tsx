@@ -75,7 +75,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [initialDimensions, initialTags] = init();
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
   const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
-  // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]);
+  // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]); 
+
 
   // fetch the tenancies from tenancies files, with name as key and ocid as value
   const getTenancyOptions = () => {

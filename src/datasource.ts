@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSourceOptions, OCIQuery, OCIResourceCall, QueryPlaceholder } from './types';
 import {
   OCIResourceItem,
@@ -10,6 +10,20 @@ import {
   ResponseParser,
   OCIResourceMetadataItem,
 } from './resource.response.parser';
+import {
+  // aggregations,
+  // dimensionKeysQueryRegex,
+  // namespacesQueryRegex,
+  // resourcegroupsQueryRegex,
+  // metricsQueryRegex,
+  regionsQueryRegex,
+  tenanciesQueryRegex,
+  DEFAULT_TENANCY,
+  // compartmentsQueryRegex,
+  // dimensionValuesQueryRegex,
+  // removeQuotes,
+  // AUTO,
+} from "./constants";
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
@@ -24,6 +38,374 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     // this.backendSrv = getBackendSrv();
     // this.templateSrv = getTemplateSrv();
   }
+
+
+  // // **************************** Template variable helpers ****************************
+
+  // /**
+  //  * Matches the regex from creating template variables and returns options for the corresponding variable.
+  //  * Example:
+  //  * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
+  //  */
+  // templateMetricQuery(query: OCIQuery,varString: string) {
+
+  //   let tenancyQuery = varString.match(tenanciesQueryRegex);
+  //   if (tenancyQuery) {
+  //     return this.getTenancies().catch((err) => {
+  //       throw new Error("Unable to get tenancies: " + err);
+  //     });    
+  //   }    
+
+  //   let regionQuery = varString.match(regionsQueryRegex);
+  //   if (regionQuery) {
+  //     if (this.tenancymode === "multitenancy") {
+  //       let target = {
+  //         tenancy: query.tenancyOCID,
+  //       };
+  //       return this.getRegions(target).catch((err) => {
+  //         throw new Error("Unable to get regions: " + err);
+  //       });
+  //     } else {
+  //       let target = {
+  //         tenancy: DEFAULT_TENANCY,
+  //       };        
+  //       return this.getRegions(target).catch((err) => {
+  //         throw new Error("Unable to get regions: " + err);
+  //       });        
+  //     }
+  //   }
+
+  //   let compartmentQuery = varString.match(compartmentsQueryRegex);
+  //   if (compartmentQuery){
+  //     if (this.tenancymode === "multitenancy") {
+  //       let target = {
+  //         tenancy: removeQuotes(this.getVariableValue(compartmentQuery[1])),
+  //       };       
+  //       return this.getCompartments(target)
+  //         .then((compartments) => {
+  //           return compartments.map((c) => ({ text: c.text, value: c.text }));
+  //         })
+  //         .catch((err) => {
+  //           throw new Error("Unable to get compartments: " + err);
+  //         });
+  //     } else {
+  //         let target = {
+  //           tenancy: DEFAULT_TENANCY,
+  //         };        
+  //         return this.getCompartments(target)
+  //           .then((compartments) => {
+  //             return compartments.map((c) => ({ text: c.text, value: c.text }));
+  //           })
+  //           .catch((err) => {
+  //             throw new Error("Unable to get compartments: " + err);
+  //           });  
+  //     }   
+  //   }
+
+
+  //   let namespaceQuery = varString.match(namespacesQueryRegex);
+  //   if (namespaceQuery) {
+  //     if (this.tenancymode === "multitenancy") {
+  //       let target = {
+  //         tenancy: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+  //         region: removeQuotes(this.getVariableValue(namespaceQuery[2])),
+  //         compartment: removeQuotes(this.getVariableValue(namespaceQuery[3])),
+  //       };
+  //       return this.getNamespaces(target).catch((err) => {
+  //         throw new Error("Unable to get namespaces: " + err);
+  //       });
+  //     } else {
+  //       let target = {
+  //         tenancy: DEFAULT_TENANCY,
+  //         region: removeQuotes(this.getVariableValue(namespaceQuery[1])),
+  //         compartment: removeQuotes(this.getVariableValue(namespaceQuery[2])),
+  //       };
+  //       return this.getNamespaces(target).catch((err) => {
+  //         throw new Error("Unable to get namespaces: " + err);
+  //       });        
+  //     }
+  //   }
+
+  //   let resourcegroupQuery = varString.match(resourcegroupsQueryRegex);
+  //   if (resourcegroupQuery) {
+  //     if (this.tenancymode === "multitenancy") {
+  //       let target = {
+  //         tenancy: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
+  //         region: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
+  //         compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
+  //         namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[4])),
+  //       };
+  //       return this.getResourceGroups(target).catch((err) => {
+  //         throw new Error("Unable to get resourcegroups: " + err);
+  //       });
+  //     } else {
+  //       let target = {
+  //         tenancy: DEFAULT_TENANCY,
+  //         region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
+  //         compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
+  //         namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
+  //       };
+  //       return this.getResourceGroups(target).catch((err) => {
+  //         throw new Error("Unable to get resourcegroups: " + err);
+  //       });        
+  //     }
+  //   }
+
+  //   let metricQuery = varString.match(metricsQueryRegex);
+  //   if (metricQuery) {
+  //     if (this.tenancymode === "multitenancy") {
+  //       let target = {
+  //         tenancy: removeQuotes(this.getVariableValue(metricQuery[1])),
+  //         region: removeQuotes(this.getVariableValue(metricQuery[2])),
+  //         compartment: removeQuotes(this.getVariableValue(metricQuery[3])),
+  //         namespace: removeQuotes(this.getVariableValue(metricQuery[4])),
+  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[5])),
+  //       };
+  //       return this.metricFindQuery(target).catch((err) => {
+  //         throw new Error("Unable to get metrics: " + err);
+  //       });
+  //     } else {
+  //       let target = {
+  //         tenancy: DEFAULT_TENANCY,
+  //         region: removeQuotes(this.getVariableValue(metricQuery[1])),
+  //         compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
+  //         namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
+  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
+  //       };
+  //       return this.metricFindQuery(target).catch((err) => {
+  //         throw new Error("Unable to get metrics: " + err);
+  //       });        
+  //     }  
+  //   }
+
+  //   let dimensionsQuery = varString.match(dimensionKeysQueryRegex);
+  //   if (dimensionsQuery) {
+  //     if (this.tenancymode === "multitenancy") {
+  //       let target = {
+  //         tenancy: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
+  //         region: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
+  //         compartment: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
+  //         namespace: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
+  //         metric: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
+  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[6])),
+  //       };
+  //       return this.getDimensionKeys(target).catch((err) => {
+  //         throw new Error("Unable to get dimensions: " + err);
+  //       });
+  //     } else {
+  //       let target = {
+  //         tenancy: DEFAULT_TENANCY,
+  //         region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
+  //         compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
+  //         namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
+  //         metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
+  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
+  //       };
+  //       return this.getDimensionKeys(target).catch((err) => {
+  //         throw new Error("Unable to get dimensions: " + err);
+  //       });        
+  //     }      
+  //   }
+
+  //   let dimensionOptionsQuery = varString.match(dimensionValuesQueryRegex);
+  //   if (dimensionOptionsQuery) {
+  //     if (this.tenancymode === "multitenancy") {
+  //       let target = {
+  //         tenancy: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
+  //         region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
+  //         compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
+  //         namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
+  //         metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
+  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[7])),
+  //       };
+  //       let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]));
+  //       return this.getDimensionValues(target, dimensionKey).catch((err) => {
+  //         throw new Error("Unable to get dimension options: " + err);
+  //       });
+  //     } else {
+  //       let target = {
+  //         tenancy: DEFAULT_TENANCY,
+  //         region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
+  //         compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
+  //         namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
+  //         metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
+  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6])),
+  //       };
+  //       let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));        
+  //       return this.getDimensionValues(target, dimensionKey).catch((err) => {
+  //         throw new Error("Unable to get dimension options: " + err);
+  //       });        
+  //     }
+  //   }
+
+  //   throw new Error("Unable to parse templating string");
+  // }
+
+  async metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
+    // const templateSrv = getTemplateSrv();
+
+    const tenancyQuery = query.match(tenanciesQueryRegex);
+    if (tenancyQuery) {
+      const tenancy = await this.getTenancies();
+      return tenancy.map(n => {
+        return { text: n.name, value: n.ocid };
+      });   
+    }    
+
+    const regionQuery = query.match(regionsQueryRegex);
+    if (regionQuery) {
+      if (query.tenancymode === "multitenancy") {
+        const regions = await this.getSubscribedRegions(query.tenancyOCID);
+        return regions.map(n => {
+          return { text: n, value: n };
+        });
+      } else {     
+        const regions = await this.getSubscribedRegions(DEFAULT_TENANCY);
+        return regions.map(n => {
+          return { text: n, value: n };
+        });       
+      }
+    }        
+
+
+    // const workgroupNamesQuery = query.match(/^workgroup_names\(([^\)]+?)\)/);
+    // if (workgroupNamesQuery) {
+    //   const region = templateSrv.replace(workgroupNamesQuery[1]);
+    //   const workgroupNames = await this.getWorkgroupNames(region);
+    //   return workgroupNames.map(n => {
+    //     return { text: n, value: n };
+    //   });
+    // }
+
+    // const namedQueryNamesQuery = query.match(/^named_query_names\(([^\)]+?)(,\s?.+)?\)/);
+    // if (namedQueryNamesQuery) {
+    //   const region = templateSrv.replace(namedQueryNamesQuery[1]);
+    //   let workGroup = namedQueryNamesQuery[2];
+    //   if (workGroup) {
+    //     workGroup = workGroup.substr(1); //remove the comma
+    //     workGroup = workGroup.trim();
+    //   } else {
+    //     workGroup = '';
+    //   }
+    //   workGroup = templateSrv.replace(workGroup);
+    //   const namedQueryNames = await this.getNamedQueryNames(region, workGroup);
+    //   return namedQueryNames.map(n => {
+    //     return { text: n, value: n };
+    //   });
+    // }
+
+    // const namedQueryQueryQuery = query.match(/^named_query_queries\(([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
+    // if (namedQueryQueryQuery) {
+    //   const region = templateSrv.replace(namedQueryQueryQuery[1]);
+    //   const pattern = templateSrv.replace(namedQueryQueryQuery[2], {}, 'regex');
+    //   let workGroup = namedQueryQueryQuery[3];
+    //   if (workGroup) {
+    //     workGroup = workGroup.substr(1); //remove the comma
+    //     workGroup = workGroup.trim();
+    //   } else {
+    //     workGroup = '';
+    //   }
+    //   workGroup = templateSrv.replace(workGroup);
+    //   const namedQueryQueries = await this.getNamedQueryQueries(region, pattern, workGroup);
+    //   return namedQueryQueries.map(n => {
+    //     return { text: n, value: n };
+    //   });
+    // }
+
+    // const queryExecutionIdsQuery = query.match(/^query_execution_ids\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
+    // if (queryExecutionIdsQuery) {
+    //   const region = templateSrv.replace(queryExecutionIdsQuery[1]);
+    //   const limit = parseInt(templateSrv.replace(queryExecutionIdsQuery[2]), 10);
+    //   const pattern = templateSrv.replace(queryExecutionIdsQuery[3], {}, 'regex');
+    //   let workGroup = queryExecutionIdsQuery[4];
+    //   if (workGroup) {
+    //     workGroup = workGroup.substr(1); //remove the comma
+    //     workGroup = workGroup.trim();
+    //   } else {
+    //     workGroup = '';
+    //   }
+    //   workGroup = templateSrv.replace(workGroup);
+    //   const to = new Date(parseInt(templateSrv.replace('$__to'), 10)).toISOString();
+
+    //   const queryExecutions = await this.getQueryExecutions(region, limit, pattern, workGroup, to);
+    //   return queryExecutions.map(n => {
+    //     const id = n.QueryExecutionId;
+    //     return { text: id, value: id };
+    //   });
+    // }
+
+    // const queryExecutionIdsByNameQuery = query.match(
+    //   /^query_execution_ids_by_name\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/
+    // );
+    // if (queryExecutionIdsByNameQuery) {
+    //   const region = templateSrv.replace(queryExecutionIdsByNameQuery[1]);
+    //   const limit = parseInt(templateSrv.replace(queryExecutionIdsByNameQuery[2]), 10);
+    //   const pattern = templateSrv.replace(queryExecutionIdsByNameQuery[3], {}, 'regex');
+    //   let workGroup = queryExecutionIdsByNameQuery[4];
+    //   if (workGroup) {
+    //     workGroup = workGroup.substr(1); //remove the comma
+    //     workGroup = workGroup.trim();
+    //   } else {
+    //     workGroup = '';
+    //   }
+    //   workGroup = templateSrv.replace(workGroup);
+    //   const to = new Date(parseInt(templateSrv.replace('$__to'), 10)).toISOString();
+
+    //   const queryExecutionsByName = await this.getQueryExecutionsByName(region, limit, pattern, workGroup, to);
+    //   return queryExecutionsByName.map(n => {
+    //     const id = n.QueryExecutionId;
+    //     return { text: id, value: id };
+    //   });
+    // }
+
+    return [];
+  }
+
+  /**
+   * Override to apply template variables
+   *
+   * @param {string} query Query
+   * @param {ScopedVars} scopedVars Scoped variables
+   */
+  // applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
+  //   const templateSrv = getTemplateSrv();
+  //   /**
+  //    * Replace variables
+  //    */
+  //   return {
+  //     ...query,
+  //     tenancyOCID: query.tenancyOCID ? templateSrv.replace(query.tenancyOCID, scopedVars) : '',
+  //     region: query.region ? templateSrv.replace(query.region, scopedVars) : '',
+  //     namespace: query.namespace ? templateSrv.replace(query.namespace, scopedVars) : '',
+  //     resourceGroup: query.resourceGroup ? templateSrv.replace(query.resourceGroup, scopedVars) : '',
+  //     metric: query.metric ? templateSrv.replace(query.metric, scopedVars) : '',
+  //     // dimension: query.dimensionValues ? templateSrv.replace(query.dimensionValues, scopedVars) : '',
+  //   };
+  // }
+
+  applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
+    // TODO: pass scopedVars to templateSrv.replace()
+    const templateSrv = getTemplateSrv();
+    query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
+    query.region = templateSrv.replace(query.region, scopedVars);
+
+    // query.maxRows = query.maxRows || '';
+    // query.cacheDuration = query.cacheDuration || '';
+    // if (typeof query.queryString === 'undefined' || query.queryString === '') {
+    //   query.queryExecutionId = templateSrv.replace(query.queryExecutionId, scopedVars);
+    //   query.inputs = query.queryExecutionId.split(/,/).map(id => {
+    //     return {
+    //       queryExecutionId: id,
+    //     };
+    //   });
+    // } else {
+    //   query.queryExecutionId = '';
+    //   query.inputs = [];
+    // }
+    // query.queryString = templateSrv.replace(query.queryString, scopedVars) || '';
+    // query.outputLocation = this.outputLocation;
+    return query;
+  }  
 
   getJsonData() {
     return this.jsonData;
