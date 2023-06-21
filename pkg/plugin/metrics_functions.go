@@ -136,12 +136,24 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 
 	var subscribedRegions []string
 	takey := o.GetTenancyAccessKey(tenancyOCID)
+	tenancymode := o.settings.TenancyMode
+	var tenancyocid string
+	var tenancyErr error
 
 	backend.Logger.Debug("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy takey: "+takey)
 
-	tenancyocid, tenancyErr := o.tenancyAccess[takey].config.TenancyOCID()
-	if tenancyErr != nil {
-		return nil
+	if tenancymode == "multitenancy" {
+		if len(takey) <= 0 || takey == NoTenancy {
+			o.logger.Error("Unable to get Multi-tenancy OCID")
+			return nil
+		}
+		res := strings.Split(takey, "/")
+		tenancyocid = res[1]
+	} else {
+		tenancyocid, tenancyErr = o.tenancyAccess[takey].config.TenancyOCID()
+		if tenancyErr != nil {
+			return nil
+		}
 	}
 	backend.Logger.Debug("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy OCID: "+*common.String(tenancyocid))
 

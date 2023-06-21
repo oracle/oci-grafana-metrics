@@ -515,7 +515,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
            <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
-              allowCustomValue={false}
+              allowCustomValue={true}
               required={true}
               loadOptions={getSubscribedRegionOptions}
               value={regionValue}
@@ -528,7 +528,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
           <InlineField label="COMPARTMENT" labelWidth={20}>
             <SegmentAsync
               className="width-28"
-              allowCustomValue={false}
+              allowCustomValue={true}
               required={false}
               loadOptions={getCompartmentOptions}
               value={compartmentValue}
