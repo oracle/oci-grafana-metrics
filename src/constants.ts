@@ -16,6 +16,7 @@ export const windows = [AUTO, '1m', '5m', '1h']
 export const resolutions = [AUTO, '1m', '5m', '1h']
 export const environments = ['local', 'OCI Instance']
 export const tenancymodes = ['single', 'multitenancy']
+export const DEFAULT_TENANCY = "DEFAULT/";
 
 
 export const compartmentsQueryRegex = /^compartments\(\s*(\".+\"|\'.+\'|\$\w+)\s*\)|^compartments\(\)\s*/;
@@ -28,18 +29,18 @@ export const dimensionKeysQueryRegex = /^dimensions\(\s*(\".+\"|\'.+\'|\$\w+)\s*
 export const dimensionValuesQueryRegex = /^dimensionOptions\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*(?:,\s*(\".+\"|\'.+\'|\$\w+)\s*)?\)/;
 export const windowsAndResolutionRegex = /^[0-9]+[mhs]$/;
 
-export const removeQuotes = (str: string): string => {
-    if (!str) return str;
+// export const removeQuotes = (str: string): string => {
+//     if (!str) return str;
 
-    let res = str;
-    if (str.startsWith("'") || str.startsWith('"')) {
-        res = res.slice(1);
-    }
-    if (str.endsWith("'") || str.endsWith('"')) {
-        res = res.slice(0, res.length - 1);
-    }
-    return res;
-};
+//     let res = str;
+//     if (str.startsWith("'") || str.startsWith('"')) {
+//         res = res.slice(1);
+//     }
+//     if (str.endsWith("'") || str.endsWith('"')) {
+//         res = res.slice(0, res.length - 1);
+//     }
+//     return res;
+// };
 
 
 // if the user selects a time range less than 7 days ->  window will be 1m and resolution will be 1 min

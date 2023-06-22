@@ -6,4 +6,4 @@ import { OCIQuery, OCIDataSourceOptions } from './types';
 
 export const plugin = new DataSourcePlugin<OCIDataSource, OCIQuery, OCIDataSourceOptions>(OCIDataSource)
   .setConfigEditor(ConfigEditor)
-  .setQueryEditor(QueryEditor);
+  .setQueryEditor(QueryEditor)
