@@ -1,7 +1,7 @@
-// import { Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
-// import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
+// import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSourceOptions, OCIQuery, OCIResourceCall, QueryPlaceholder } from './types';
@@ -15,7 +15,7 @@ import {
 import {
   // aggregations,
   // dimensionKeysQueryRegex,
-  // namespacesQueryRegex,
+  namespacesQueryRegex,
   // resourcegroupsQueryRegex,
   // metricsQueryRegex,
   regionsQueryRegex,
@@ -48,9 +48,9 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * @param {ScopedVars} scopedVars Scoped variables
    */
 
-  // query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
-  //   return super.query(options);
-  // }
+  query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
+    return super.query(options);
+  }
 
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     // TODO: pass scopedVars to templateSrv.replace()
@@ -71,23 +71,32 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("compo2: "+query.compartmentOCID)
     console.log("name2: "+query.namespace)
 
-    
-    // query.maxRows = query.maxRows || '';
-    // query.cacheDuration = query.cacheDuration || '';
-    // if (typeof query.queryString === 'undefined' || query.queryString === '') {
-    //   query.queryExecutionId = templateSrv.replace(query.queryExecutionId, scopedVars);
-    //   query.inputs = query.queryExecutionId.split(/,/).map(id => {
-    //     return {
-    //       queryExecutionId: id,
-    //     };
-    //   });
-    // } else {
-    //   query.queryExecutionId = '';
-    //   query.inputs = [];
-    // }
-    // query.queryString = templateSrv.replace(query.queryString, scopedVars) || '';
-    // query.outputLocation = this.outputLocation;
-    return query;
+
+
+    return {
+      ...query,
+      datasource: this.getRef(),
+      region: query.region,
+      // timeSeriesList: timeSeriesList && {
+      //   ...this.interpolateProps(timeSeriesList, scopedVars),
+      //   projectName: this.templateSrv.replace(
+      //     timeSeriesList.projectName ? timeSeriesList.projectName : this.getDefaultProject(),
+      //     scopedVars
+      //   ),
+      //   filters: this.interpolateFilters(timeSeriesList.filters || [], scopedVars),
+      //   groupBys: this.interpolateGroupBys(timeSeriesList.groupBys || [], scopedVars),
+      //   view: timeSeriesList.view || 'FULL',
+      // },
+      // timeSeriesQuery: timeSeriesQuery && {
+      //   ...this.interpolateProps(timeSeriesQuery, scopedVars),
+      //   projectName: this.templateSrv.replace(
+      //     timeSeriesQuery.projectName ? timeSeriesQuery.projectName : this.getDefaultProject(),
+      //     scopedVars
+      //   ),
+      // },
+      tenancyOCID: query.tenancyOCID,
+    };
+    // return query;
   }  
 
 
@@ -266,26 +275,26 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }    
 
 
-    // const namespaceQuery = query.match(namespacesQueryRegex);
-    // if (namespaceQuery) {
-    //   if (this.jsonData.tenancymode === "multitenancy") {
-    //     const tenancy = templateSrv.replace(namespaceQuery[1]);
-    //     const region = templateSrv.replace(namespaceQuery[2]);
-    //     const compartment = templateSrv.replace(namespaceQuery[3]);
-    //     const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
-    //     return namespaces.map(n => {
-    //       return { text: n.namespace, value: n.namespace };
-    //     });        
-    //   } else {
-    //     const tenancy = DEFAULT_TENANCY;
-    //     const region = templateSrv.replace(namespaceQuery[2]);
-    //     const compartment = templateSrv.replace(namespaceQuery[3]);
-    //     const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
-    //     return namespaces.map(n => {
-    //       return { text: n.namespace, value: n.namespace };
-    //     });      
-    //   }
-    // }
+    const namespaceQuery = query.match(namespacesQueryRegex);
+    if (namespaceQuery) {
+      if (this.jsonData.tenancymode === "multitenancy") {
+        const tenancy = templateSrv.replace(namespaceQuery[1]);
+        const region = templateSrv.replace(namespaceQuery[2]);
+        const compartment = templateSrv.replace(namespaceQuery[3]);
+        const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
+        return namespaces.map(n => {
+          return { text: n.namespace, value: n.namespace };
+        });        
+      } else {
+        const tenancy = DEFAULT_TENANCY;
+        const region = templateSrv.replace(namespaceQuery[2]);
+        const compartment = templateSrv.replace(namespaceQuery[3]);
+        const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
+        return namespaces.map(n => {
+          return { text: n.namespace, value: n.namespace };
+        });      
+      }
+    }
 
     // const workgroupNamesQuery = query.match(/^workgroup_names\(([^\)]+?)\)/);
     // if (workgroupNamesQuery) {
