@@ -65,7 +65,9 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     query.tenancyOCID = templateSrv.replace('$tenancy', scopedVars);
     query.region = templateSrv.replace(query.region, scopedVars);
-    query.compartmentOCID = templateSrv.replace('$compartment', scopedVars);
+    if (query.compartmentOCID === '$compartment'){
+      query.compartmentOCID = templateSrv.replace('$compartment', scopedVars);
+    }
     // query.namespace = templateSrv.replace('$namespace', scopedVars);
     console.log("queryregion2: "+query.region)
     console.log("compo2: "+query.compartmentOCID)
