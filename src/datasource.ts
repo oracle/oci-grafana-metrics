@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-
+import { isString } from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
 // import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 
@@ -65,7 +65,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     query.tenancyOCID = templateSrv.replace('$tenancy', scopedVars);
     query.region = templateSrv.replace(query.region, scopedVars);
-    // query.compartmentOCID = templateSrv.replace('$compartment', scopedVars);
+    query.compartmentOCID = templateSrv.replace('$compartment', scopedVars);
     // query.namespace = templateSrv.replace('$namespace', scopedVars);
     console.log("queryregion2: "+query.region)
     console.log("compo2: "+query.compartmentOCID)
@@ -77,6 +77,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       ...query,
       datasource: this.getRef(),
       region: query.region,
+      compartmentOCID: query.compartmentOCID,
       // timeSeriesList: timeSeriesList && {
       //   ...this.interpolateProps(timeSeriesList, scopedVars),
       //   projectName: this.templateSrv.replace(
@@ -99,6 +100,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     // return query;
   }  
 
+
+  interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
+    const templateSrv = getTemplateSrv();
+    return Object.entries(object).reduce((acc, [key, value]) => {
+      return {
+        ...acc,
+        [key]: value && isString(value) ? templateSrv.replace(value, scopedVars) : value,
+      };
+    }, {} as T);
+  }
 
   // // **************************** Template variable helpers ****************************
 
@@ -440,11 +451,26 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     compartmentOCID: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
+    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment } = this.interpolateProps({ tenancyOCID, region, compartmentOCID });
     console.log("NS")
     console.log("NS "+tenancyOCID)
     console.log("NS "+compartmentOCID)
     console.log("NS "+region)
+    console.log("NS "+var_region)
+    console.log("NS "+var_tenancy)
+    console.log("NS "+var_compartment)
 
+    if (tenancyOCID === '$tenancy' && var_tenancy !== "") { 
+      tenancyOCID = var_tenancy
+    }
+
+    if (region === '$region' && var_region !== "") { 
+      region = var_region
+    }
+
+    if (compartmentOCID === '$compartment' && var_compartment !== "") { 
+      compartmentOCID = var_compartment
+    }    
 
     if (tenancyOCID === '') {
       console.log("NS notenancy")
@@ -459,6 +485,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       console.log("NS compartmentOCID")
       compartmentOCID = '';
     }
+
+    console.log("NS2 "+tenancyOCID)
+    console.log("NS2 "+compartmentOCID)
+    console.log("NS2 "+region)
 
     const reqBody: JSON = {
       tenancy: tenancyOCID,
