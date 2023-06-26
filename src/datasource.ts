@@ -3,7 +3,7 @@ import { isString } from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
 // import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSourceOptions, OCIQuery, OCIResourceCall, QueryPlaceholder } from './types';
 import {
   OCIResourceItem,
@@ -32,13 +32,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   // private backendSrv: BackendSrv;
   // private templateSrv: TemplateSrv;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
 
-
     // this.backendSrv = getBackendSrv();
     // this.templateSrv = getTemplateSrv();
+
   }
 
   /**
@@ -56,14 +56,12 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     // TODO: pass scopedVars to templateSrv.replace()
     const templateSrv = getTemplateSrv();
 
-    const variableValue = getTemplateSrv().replace('$region', scopedVars);
-    console.log("uno: "+variableValue)
     console.log("queryregion1: "+query.region)
     console.log("compo1: "+query.compartmentOCID)
     console.log("name1: "+query.namespace)
 
 
-    query.tenancyOCID = templateSrv.replace('$tenancy', scopedVars);
+    query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
     query.region = templateSrv.replace(query.region, scopedVars);
     if (query.compartmentOCID === '$compartment'){
       query.compartmentOCID = templateSrv.replace('$compartment', scopedVars);
@@ -309,31 +307,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }
     }
 
-    // const workgroupNamesQuery = query.match(/^workgroup_names\(([^\)]+?)\)/);
-    // if (workgroupNamesQuery) {
-    //   const region = templateSrv.replace(workgroupNamesQuery[1]);
-    //   const workgroupNames = await this.getWorkgroupNames(region);
-    //   return workgroupNames.map(n => {
-    //     return { text: n, value: n };
-    //   });
-    // }
-
-    // const namedQueryNamesQuery = query.match(/^named_query_names\(([^\)]+?)(,\s?.+)?\)/);
-    // if (namedQueryNamesQuery) {
-    //   const region = templateSrv.replace(namedQueryNamesQuery[1]);
-    //   let workGroup = namedQueryNamesQuery[2];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const namedQueryNames = await this.getNamedQueryNames(region, workGroup);
-    //   return namedQueryNames.map(n => {
-    //     return { text: n, value: n };
-    //   });
-    // }
 
     // const namedQueryQueryQuery = query.match(/^named_query_queries\(([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
     // if (namedQueryQueryQuery) {
@@ -407,6 +380,40 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return this.jsonData;
   }
   
+  getVariables() {
+    const templateSrv = getTemplateSrv();
+    return templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  getVariablesRaw() {
+    const templateSrv = getTemplateSrv();
+    return templateSrv.getVariables();
+  }  
+
+  isVar(str: string): boolean {
+    return str.charAt(0) === '$';
+  } 
+
+ 
+
+  targetContainsTemplate(target: any) {
+    console.log(target)
+    console.log(target.tenancyOCID)
+
+    if (this.templateSrv.containsTemplate(target.tenancyOCID)) {
+      return true;
+    }    
+    // if (target.tenancyOCID && target.tenancyOCID.length > 0) {
+    //   for (let i = 0; i < target.tenancyOCID.length; i++) {
+    //     if (this.templateSrv.containsTemplate(target.tenancyOCID[i].filter)) {
+    //       return true;
+    //     }
+    //   }
+    // }
+    
+    return false;
+  }  
+
 
   // main caller to call resource handler for get call
   async getResource(path: string): Promise<any> {
@@ -420,12 +427,21 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   async getTenancies(): Promise<OCIResourceItem[]> {
     return this.getResource(OCIResourceCall.Tenancies).then((response) => {
-      console.log ("Ritorno di Tenanci");
       return new ResponseParser().parseTenancies(response);
     });
   }
 
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
+    if (this.isVar(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("region vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("region tenancyOCID "+tenancyOCID)
+    }
+  
     if (tenancyOCID === '') {
       return [];
     }
@@ -437,7 +453,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });
   }
   async getCompartments(tenancyOCID: string): Promise<OCIResourceItem[]> {
-    console.log("COMP "+tenancyOCID)
+    if (this.isVar(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("COMP vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("COMP tenancyOCID "+tenancyOCID)
+    }    
     if (tenancyOCID === '') {
       return [];
     }
@@ -462,7 +486,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("NS "+var_tenancy)
     console.log("NS "+var_compartment)
 
-    if (tenancyOCID === '$tenancy' && var_tenancy !== "") { 
+    if (var_tenancy !== "") { 
       tenancyOCID = var_tenancy
     }
 

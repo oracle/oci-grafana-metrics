@@ -1,3 +1,4 @@
+import { get } from 'lodash';
 import React, { useState } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue} from '@grafana/data';
@@ -75,6 +76,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [initialDimensions, initialTags] = init();
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
   const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
+  const queryType = typeof query === 'string' ? '' : query.queryType;
+  // const variableOptionGroup = {
+  //   label: 'Template Variables',
+  //   expanded: false,
+  //   options: datasource.getVariables().map(toOption),
+  // };
+
   // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]); 
 
 
@@ -83,7 +91,29 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource.getTenancies();
+        if (datasource.targetContainsTemplate(query)){
+          console.log("Barabba ")
+        } else {
+          console.log("Mykonos ")
+
+        }           
         const result = response.map((res: any) => {
+          datasource.getVariablesRaw().forEach((v) => {
+            console.log("urkaaa "+v.label)
+            console.log("urkaab "+v.name)
+            console.log("urkacc "+`$${v.name}`)
+
+
+            console.log("qtype "+queryType)
+            console.log("qtype2 "+get(v, 'query.queryType'))
+
+
+            if (get(v, 'query.queryType') !== queryType) {
+              console.log("urkaytra "+v.label)
+              console.log("ytryrt "+v.name)
+              result.push({ label: v.label || v.name, value: `$${v.name}` });
+            }
+          });           
           return { label: res.name, value: res.ocid };
         });
         resolve(result);
