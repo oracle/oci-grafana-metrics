@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { isString } from 'lodash';
+import _,{ isString} from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
 // import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 
@@ -26,6 +26,7 @@ import {
   // removeQuotes,
   // AUTO,
 } from "./constants";
+// import _ from 'lodash';
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
@@ -63,9 +64,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
     query.region = templateSrv.replace(query.region, scopedVars);
-    if (query.compartmentOCID === '$compartment'){
-      query.compartmentOCID = templateSrv.replace('$compartment', scopedVars);
-    }
+    query.compartmentOCID = templateSrv.replace(query.compartmentOCID, scopedVars);
+
     // query.namespace = templateSrv.replace('$namespace', scopedVars);
     console.log("queryregion2: "+query.region)
     console.log("compo2: "+query.compartmentOCID)
@@ -390,30 +390,91 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return templateSrv.getVariables();
   }  
 
-  isVar(str: string): boolean {
-    return str.charAt(0) === '$';
-  } 
 
- 
+  // targetContainsTemplate(target: any) {
+  //   console.log(target)
+  //   // console.log(target.tenancyOCID)
 
-  targetContainsTemplate(target: any) {
-    console.log(target)
-    console.log(target.tenancyOCID)
-
-    if (this.templateSrv.containsTemplate(target.tenancyOCID)) {
-      return true;
-    }    
-    // if (target.tenancyOCID && target.tenancyOCID.length > 0) {
-    //   for (let i = 0; i < target.tenancyOCID.length; i++) {
-    //     if (this.templateSrv.containsTemplate(target.tenancyOCID[i].filter)) {
-    //       return true;
-    //     }
-    //   }
-    // }
+  //   if (this.templateSrv.containsTemplate(target)) {
+  //     return true;
+  //   }    
+  //   // if (target.tenancyOCID && target.tenancyOCID.length > 0) {
+  //   //   for (let i = 0; i < target.tenancyOCID.length; i++) {
+  //   //     if (this.templateSrv.containsTemplate(target.tenancyOCID[i].filter)) {
+  //   //       return true;
+  //   //     }
+  //   //   }
+  //   // }
     
-    return false;
-  }  
+  //   return false;
+  // }  
 
+
+ // **************************** Template variables helpers ****************************
+
+  /**
+   * Get all template variable descriptors
+   */
+  getVariableDescriptors(regex: string, includeCustom = true) {
+    const vars = this.templateSrv.getVariables() || [];
+
+    if (regex) {
+      let regexVars = vars.filter((item) => _.isString(item.name) && item.name.match(regex) !== null);
+      if (includeCustom) {
+        const custom = vars.filter(
+          (item) => item.type === "custom" || item.type === "constant"
+        );
+        regexVars = regexVars.concat(custom);
+      }
+      const uniqueRegexVarsMap = new Map();
+      regexVars.forEach((varObj) =>
+        uniqueRegexVarsMap.set(varObj.name, varObj)
+      );
+      return Array.from(uniqueRegexVarsMap.values());
+    }
+    return vars;
+  }
+
+  /**
+   * List all variable names optionally filtered by regex or/and type
+   * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
+   *
+   * Updates:
+   * Notes on implementation :
+   * If a custom or constant is in  variables and  includeCustom, default is false.
+   * Hence,the varDescriptors list is filtered for a unique set of var names
+   */
+  // getVariables2(regex: string, includeCustom: string) {
+  //   const varDescriptors =
+  //     this.getVariableDescriptors(regex, includeCustom) || [];
+  //   return varDescriptors.map((item) => `$${item.name}`);
+  // }
+
+  /**
+   * @param varName valid varName contains '$'. Example: '$dimensionKey'
+   * Returns an array with variable values or empty array
+   */
+  getVariableValue(varName: string, scopedVars = {}) {
+    return this.templateSrv.replace(varName, scopedVars) || varName;
+  }
+
+  /**
+   * @param varName valid varName contains '$'. Example: '$dimensionKey'
+   * Returns true if variable with the given name is found
+   */
+  isVariable(varName: string) {
+    const varNames = this.getVariables() || [];
+    console.log('variabili '+ varNames)
+    return !!varNames.find((item) => item === varName);
+  }
+
+//  appendVariables(options: string, varQueryRegex:string) {
+//     const vars = this.getVariables(varQueryRegex) || [];
+//     vars.forEach(value => {
+//       options.unshift({ value, text: value });
+//     });
+//     return options;
+//   }
 
   // main caller to call resource handler for get call
   async getResource(path: string): Promise<any> {
@@ -432,7 +493,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
-    if (this.isVar(tenancyOCID)) {
+    if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
       console.log("region vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
@@ -453,7 +514,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });
   }
   async getCompartments(tenancyOCID: string): Promise<OCIResourceItem[]> {
-    if (this.isVar(tenancyOCID)) {
+    if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
       console.log("COMP vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
@@ -485,18 +546,19 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("NS "+var_region)
     console.log("NS "+var_tenancy)
     console.log("NS "+var_compartment)
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("NS vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("NS tenancyOCID "+tenancyOCID)
+    }    
 
     if (var_tenancy !== "") { 
       tenancyOCID = var_tenancy
-    }
-
-    if (region === '$region' && var_region !== "") { 
-      region = var_region
-    }
-
-    if (compartmentOCID === '$compartment' && var_compartment !== "") { 
-      compartmentOCID = var_compartment
-    }    
+    }   
 
     if (tenancyOCID === '') {
       console.log("NS notenancy")

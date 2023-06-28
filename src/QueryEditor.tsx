@@ -1,4 +1,3 @@
-import { get } from 'lodash';
 import React, { useState } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue} from '@grafana/data';
@@ -73,10 +72,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return [initialDimensions, initialTags];
   };
 
-  const [initialDimensions, initialTags] = init();
+  const [initialDimensions] = init();
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
-  const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
-  const queryType = typeof query === 'string' ? '' : query.queryType;
+  // const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
   // const variableOptionGroup = {
   //   label: 'Template Variables',
   //   expanded: false,
@@ -85,57 +83,71 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]); 
 
-
   // fetch the tenancies from tenancies files, with name as key and ocid as value
   const getTenancyOptions = () => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource.getTenancies();
-        if (datasource.targetContainsTemplate(query)){
-          console.log("Barabba ")
-        } else {
-          console.log("Mykonos ")
-
-        }           
+        let varlabel = ''
+        let varvalue =''
         const result = response.map((res: any) => {
-          datasource.getVariablesRaw().forEach((v) => {
-            console.log("urkaaa "+v.label)
-            console.log("urkaab "+v.name)
-            console.log("urkacc "+`$${v.name}`)
-
-
-            console.log("qtype "+queryType)
-            console.log("qtype2 "+get(v, 'query.queryType'))
-
-
-            if (get(v, 'query.queryType') !== queryType) {
-              console.log("urkaytra "+v.label)
-              console.log("ytryrt "+v.name)
-              result.push({ label: v.label || v.name, value: `$${v.name}` });
-            }
-          });           
           return { label: res.name, value: res.ocid };
         });
+        datasource.getVariablesRaw().forEach((v) => {
+          if (`$${v.name}` === query.tenancyOCID){
+            varlabel = v.label || v.name
+            varvalue = `$${v.name}`
+          } 
+        });
+        if (varlabel !== '') {
+          result.push({ label: varlabel, value: varvalue });
+        }
         resolve(result);
       }, 0);
     });
   };
   const getCompartmentOptions = () => {
     const existingCompartmentsResponse = query.compartments;
+    let varlabel = ''
+    let varvalue = ''
+    datasource.getVariablesRaw().forEach((v) => {
+      console.log("urkaaa "+v.label)
+      console.log("urkaab "+v.name)
+      console.log("urkacc "+`$${v.name}`)
+      console.log("urkadd "+query.compartmentOCID)
 
+      if (`$${v.name}` === query.compartmentOCID){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        varlabel = v.label || v.name
+        varvalue = `$${v.name}`
+        console.log('varlabel:', varlabel);
+        console.log('varvalue:', varvalue);
+      } else {
+        console.log("Mykonos c")
+      }  
+    });     
     if (query.namespace !== undefined) {
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
         setTimeout(async () => {
           const response = await datasource.getCompartments(query.tenancyOCID);
           const result = response.map((res: any) => {
             return { label: res.name, value: res.ocid };
-          });
+          });    
+          if (varlabel !== '') {
+            result.push({ label: varlabel, value: varvalue });
+          }               
           resolve(result);
         }, 0);
       });
     } else {
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
-        setTimeout(async () => {
+        setTimeout(async () => { 
+          if (varlabel !== '') {
+            existingCompartmentsResponse.push({ label: varlabel, value: varvalue });
+          }                     
           resolve(existingCompartmentsResponse);
         }, 0);
       });
@@ -144,6 +156,28 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const getSubscribedRegionOptions = () => {
     const existingRegionsResponse = query.regions;
     console.log("getSubscribedRegionOptions")
+    let varlabel = ''
+    let varvalue = ''
+    datasource.getVariablesRaw().forEach((v) => {
+      console.log("urkaaa "+v.label)
+      console.log("urkaab "+v.name)
+      console.log("urkacc "+`$${v.name}`)
+      console.log("urkaddr "+query.region)
+
+
+      if (`$${v.name}` === query.region){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        varlabel = v.label || v.name
+        varvalue = `$${v.name}`
+        console.log('varlabel:', varlabel);
+        console.log('varvalue:', varvalue);
+      } else {
+        console.log("Mykonos ")
+      }  
+    });          
 
     if (query.namespace !== undefined) {
       console.log("getSubscribedRegionOptions 1")
@@ -154,6 +188,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
           let result = response.map((res: any) => {
             return { label: res, value: res };
           });
+          if (varlabel !== '') {
+            result.push({ label: varlabel, value: varvalue });
+          }            
           resolve(result);
         }, 0);
       });
@@ -163,6 +200,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
         setTimeout(async () => {
+          if (varlabel !== '') {
+            existingRegionsResponse.push({ label: varlabel, value: varvalue });
+          }           
           resolve(existingRegionsResponse);
         }, 0);
       });
@@ -253,29 +293,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       }, 0);
     });
   };
-  const getTagOptions = () => {
-    return new Promise<Array<SelectableValue<string>>>((resolve) => {
-      setTimeout(async () => {
-        const response = await datasource.getTags(
-          query.tenancyOCID,
-          query.compartmentOCID,
-          query.compartmentName,
-          query.region,
-          query.namespace
-        );
-        const result = response.map((res: any) => {
-          return {
-            label: res.key,
-            value: res.key,
-            options: res.values.map((val: any) => {
-              return { label: res.key + ' > ' + val, value: res.key + '=' + val };
-            }),
-          };
-        });
-        resolve(result);
-      }, 0);
-    });
-  };
+
   // const getGroupByOptions = () => {
   //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
   //     setTimeout(async () => {
@@ -492,16 +510,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       query.dimensionValues = newDimensionValues;
     }
   };
-  const onTagChange = (data: any) => {
-    let newTagsValues: string[] = [];
 
-    data.map((incomingT: any) => {
-      newTagsValues.push(incomingT.value);
-    });
-
-    setTagValue(data);
-    onApplyQueryChange({ ...query, tagsValues: newTagsValues });
-  };
   // const onGroupByChange = (data: any) => {
   //   setGroupValue(data);
   //   let selectedGroup: string = QueryPlaceholder.GroupBy;
@@ -527,7 +536,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
           <>   
           <InlineField label="TENANCY" labelWidth={20}>
             <SegmentAsync
-              className="width-14"
+              className="width-28"
               allowCustomValue={false}
               required={true}
               loadOptions={getTenancyOptions}
@@ -688,25 +697,6 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               </> 
           </InlineField>
         </InlineFieldRow>       
-        <InlineFieldRow>
-          <InlineField label="TAGS" labelWidth={20} grow={true} tooltip="Start typing to see the options">
-            <>
-              <AsyncMultiSelect
-                loadOptions={getTagOptions}
-                isSearchable={true}
-                defaultOptions={false}
-                allowCustomValue={false}
-                isClearable={true}
-                closeMenuOnSelect={false}
-                placeholder={QueryPlaceholder.Tags}
-                value={tagValue}
-                onChange={(data) => {
-                  onTagChange(data);
-                }}
-              />
-            </>
-          </InlineField>
-        </InlineFieldRow>
       </FieldSet>
     </>
   );
