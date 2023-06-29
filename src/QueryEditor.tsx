@@ -144,10 +144,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
       });
     } else {
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
-        setTimeout(async () => { 
+        setTimeout(async () => {   
           if (varlabel !== '') {
             existingCompartmentsResponse.push({ label: varlabel, value: varvalue });
-          }                     
+          }                                
           resolve(existingCompartmentsResponse);
         }, 0);
       });
@@ -199,10 +199,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
       console.log(existingRegionsResponse)
 
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
-        setTimeout(async () => {
+        setTimeout(async () => {    
           if (varlabel !== '') {
             existingRegionsResponse.push({ label: varlabel, value: varvalue });
-          }           
+          }                  
           resolve(existingRegionsResponse);
         }, 0);
       });
@@ -317,6 +317,38 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
 
   const getTenancyDefault = () => {
+    let regvarlabel = ''
+    let regvarvalue = ''
+    let compvarlabel = ''
+    let compvarvalue = ''    
+    datasource.getVariablesRaw().forEach((v) => {
+      console.log("urkaaa "+v.label)
+      console.log("urkaab "+v.name)
+      console.log("urkacc "+`$${v.name}`)
+      console.log("urkaddr "+query.region)
+
+
+      if (`$${v.name}` === query.region){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        regvarlabel = v.label || v.name
+        regvarvalue = `$${v.name}`
+        console.log('regvarlabel:', regvarlabel);
+        console.log('regvarvalue:', regvarvalue);
+      }
+      if (`$${v.name}` === query.compartmentOCID){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        regvarlabel = v.label || v.name
+        regvarvalue = `$${v.name}`
+        console.log('compvarlabel:', compvarlabel);
+        console.log('compvarvalue:', compvarvalue);
+      }       
+    });      
     let tname: string;
     let tvalue: string;
     tname='DEFAULT/';
@@ -332,6 +364,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
             const result = response.map((res: any) => {
               return { label: res.name, value: res.ocid };
             });
+            if (compvarlabel !== '') {
+              result.push({ label: compvarlabel, value: compvarvalue });
+            }             
             resolve(result);
           }, 0);
         }),
@@ -341,6 +376,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
             let result = response.map((res: any) => {
               return { label: res, value: res };
             });
+            if (regvarlabel !== '') {
+              result.push({ label: regvarlabel, value: regvarvalue });
+            }             
             resolve(result);
           }, 0);
         }),
