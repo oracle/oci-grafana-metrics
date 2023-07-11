@@ -45,10 +45,13 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 		Interval:        qm.Interval[1 : len(qm.Interval)-1],
 		ResourceGroup:   qm.ResourceGroup,
 		DimensionValues: qm.DimensionValues,
+		LegendFormat:    qm.LegendFormat,
 		TagsValues:      qm.TagsValues,
 		StartTime:       query.TimeRange.From.UTC(),
 		EndTime:         query.TimeRange.To.UTC(),
 	}
+
+	ocidx.logger.Debug("000 Generated metric label", "LegendFormat", qm.LegendFormat)
 
 	// create data frame response
 	frame := data.NewFrame("response").SetMeta(&data.FrameMeta{ExecutedQueryString: qm.QueryText})
@@ -68,6 +71,9 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 		for k, v := range metricDataValue.Labels {
 			dl[k] = v
+			ocidx.logger.Debug("0 Generated metric label", "k", k)
+			ocidx.logger.Debug("0 Generated metric label", "name", name)
+
 			if k == "resource_name" && len(name) == 0 {
 				name = v
 			}

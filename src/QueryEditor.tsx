@@ -18,6 +18,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
+  // const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
   const [namespaceValue, setNamespaceValue] = useState(query.namespace);
   const [resourceGroupValue, setResourceGroupValue] = useState(query.resourceGroup);
   const [metricValue, setMetricValue] = useState(query.metric);
@@ -500,7 +501,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, intervalLabel: data.label, interval: data.value });
   };
   const onLegendFormatChange = (data: any) => {
-    onApplyQueryChange({ ...query, legendFormat: data.value });
+    // setLegendFormatValue(data);
+    console.log("onLegendFormatChange "+data)
+    onApplyQueryChange({ ...query, legendFormat: data });
   };  
   const onDimensionChange = (data: any) => {
     const existingDVs = query.dimensionValues || [];
@@ -724,12 +727,13 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
           </InlineField>
         </InlineFieldRow>
           <InlineFieldRow>
-            <InlineField label="LEGEND FORMAT" labelWidth={20} grow={true} tooltip="Start typing to see the options">
+            <InlineField label="LEGEND FORMAT" labelWidth={20} grow={true}>
               <>             
                 <Input
                   className="width-30"
-                  onChange={(data) => {
-                    onLegendFormatChange(data);
+                  value={query.legendFormat}
+                  onBlur={(event) => {
+                    onLegendFormatChange(event.target.value);
                   }}                
                 />
               </> 
