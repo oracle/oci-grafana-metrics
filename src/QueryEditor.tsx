@@ -18,7 +18,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
-  // const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
+  const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
   const [namespaceValue, setNamespaceValue] = useState(query.namespace);
   const [resourceGroupValue, setResourceGroupValue] = useState(query.resourceGroup);
   const [metricValue, setMetricValue] = useState(query.metric);
@@ -501,7 +501,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, intervalLabel: data.label, interval: data.value });
   };
   const onLegendFormatChange = (data: any) => {
-    // setLegendFormatValue(data);
+    setLegendFormatValue(data);
     console.log("onLegendFormatChange "+data)
     onApplyQueryChange({ ...query, legendFormat: data });
   };  
@@ -731,7 +731,7 @@ if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
               <>             
                 <Input
                   className="width-30"
-                  value={query.legendFormat}
+                  defaultValue={legendFormatValue}
                   onBlur={(event) => {
                     onLegendFormatChange(event.target.value);
                   }}                

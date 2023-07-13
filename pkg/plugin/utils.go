@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -521,4 +522,75 @@ func addSelectedValuesLabels(existingLabels map[string]string, selectedValuePair
 	}
 
 	return existingLabels
+}
+
+/*
+Function generates a custom metric label for the identified metric based on the
+legend format provided by the user where any known placeholders within the format
+will be replaced with the appropriate value.
+
+The currently supported legend format placeholders are:
+  - {metric} - Will be replaced by the metric name
+  - {dimension} - Will be replaced by the value of the specified dimension
+
+Any placeholders (or other text) in the legend format that do not line up with one
+of these placeholders will be unchanged. Note that placeholder labels are treated
+as case sensitive.
+*/
+func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
+	dimensions []models.OCIMetricDimensions) string {
+	o.logger.Debug("generateCustomMetricLabel ", "legendFormat", legendFormat)
+	o.logger.Debug("generateCustomMetricLabel ", "metricName", metricName)
+
+	metricLabel := legendFormat
+	// Define a pattern where we are looking for a left curly brace followed by one or
+	// more characters that are not the right curly brace (or whitespace) followed
+	// finally by a right curly brace. The inclusion of the <label> portion of the
+	// pattern is to allow the logic to extract the label text from the placeholder.
+	rePlaceholderLabel, err := regexp.Compile(`\{\{\s*(?P<label>[^} ]+)\s*\}\}`)
+
+	if err != nil {
+		o.logger.Error("Compilation of legend format placeholders regex failed")
+		return metricLabel
+	}
+
+	for _, placeholderStr := range rePlaceholderLabel.FindAllString(metricLabel, -1) {
+		if rePlaceholderLabel.Match([]byte(placeholderStr)) == true {
+			matches := rePlaceholderLabel.FindStringSubmatch(placeholderStr)
+			labelIndex := rePlaceholderLabel.SubexpIndex("label")
+
+			placeholderLabel := matches[labelIndex]
+			re := regexp.MustCompile(placeholderStr)
+			o.logger.Debug("generateCustomMetricLabel ", "placeholderLabel", placeholderLabel)
+
+			// If this placeholder is the {metric} placeholder then replace the
+			// placeholder string with the metric name
+			if placeholderLabel == "metric" {
+				metricLabel = re.ReplaceAllString(metricLabel, metricName)
+			} else {
+				// Check whether there is a dimension name for the metric that matches
+				// the placeholder label. If there is then replace the placeholder with
+				// the value of the dimension
+				dimindex := 0
+				for _, dimension := range dimensions {
+					key := dimension.Key
+					if key == placeholderLabel {
+						o.logger.Debug("key Generated metric key", "key", key)
+						if dimindex < len(dimension.Values) {
+							value := dimension.Values[dimindex]
+							o.logger.Debug("key Generated metric value", "value", value)
+							o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
+							metricLabel = re.ReplaceAllString(metricLabel, value)
+							o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
+						}
+					}
+					dimindex++
+				}
+
+			}
+		}
+	}
+	o.logger.Debug("Generated metric label", "legendFormat", legendFormat,
+		"metricName", metricName, "metricLabel", metricLabel)
+	return metricLabel
 }

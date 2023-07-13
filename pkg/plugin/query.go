@@ -60,32 +60,38 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 	// plotting the x axis with time as unit
 	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
-
+	var name string
 	for _, metricDataValue := range metricDataValues {
-		name := metricDataValue.ResourceName
+		name = metricDataValue.ResourceName
 		dl := data.Labels{
 			"tenancy":   metricDataValue.TenancyName,
 			"unique_id": metricDataValue.UniqueDataID,
 			"region":    metricDataValue.Region,
 		}
+		ocidx.logger.Debug("2 Dimensiona Label metric label", "name", name)
 
-		for k, v := range metricDataValue.Labels {
-			dl[k] = v
-			ocidx.logger.Debug("0 Generated metric label", "k", k)
-			ocidx.logger.Debug("0 Generated metric label", "name", name)
+		if qm.LegendFormat != "" {
+			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName)
+			ocidx.logger.Debug("dimensions[0]", "dimensions[0]", dimensions[0].Key)
 
-			if k == "resource_name" && len(name) == 0 {
-				name = v
+			ocidx.logger.Debug("aa Generated metric label", "legendFormat", qm.LegendFormat)
+
+			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, dimensions)
+		} else {
+			for k, v := range metricDataValue.Labels {
+				dl[k] = v
+				if k == "resource_name" && len(name) == 0 {
+					name = v
+				}
+				// if k != "resource_name" {
+				// 	dl[k] = v
+				// } else {
+				// 	if len(name) == 0 {
+				// 		name = v
+				// 	}
+				// }
 			}
-			// if k != "resource_name" {
-			// 	dl[k] = v
-			// } else {
-			// 	if len(name) == 0 {
-			// 		name = v
-			// 	}
-			// }
 		}
-
 		frame.Fields = append(frame.Fields,
 			data.NewField(name, dl, metricDataValue.DataPoints),
 		)
