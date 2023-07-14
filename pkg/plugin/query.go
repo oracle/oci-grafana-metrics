@@ -51,8 +51,6 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 		EndTime:         query.TimeRange.To.UTC(),
 	}
 
-	ocidx.logger.Debug("000 Generated metric label", "LegendFormat", qm.LegendFormat)
-
 	// create data frame response
 	frame := data.NewFrame("response").SetMeta(&data.FrameMeta{ExecutedQueryString: qm.QueryText})
 
@@ -70,53 +68,42 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 			"unique_id": metricDataValue.UniqueDataID,
 			"region":    metricDataValue.Region,
 		}
-		ocidx.logger.Debug("2 Dimensiona Label metric label", "name", name)
-		for key, value := range metricDataValue.Labels {
-			ocidx.logger.Debug("sciapo key", "sciapo key", key)
-			ocidx.logger.Debug("sciapo value", "sciapo value", value)
-
-		}
 
 		if qm.LegendFormat != "" {
 			dl = data.Labels{}
 			dimensions := ocidx.GetDimForLabel(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName)
-			ocidx.logger.Debug("aa Generated metric label", "legendFormat", qm.LegendFormat)
-			// dims := map[string]string{}
-			mymap := make(map[string][]string)
-			newmap := make(map[string][]string)
-			searchValue := metricDataValue.UniqueDataID
+			OriginalDimensionMap := make(map[string][]string)
+			FoundDimensionMap := make(map[string][]string)
 			var index int
 
+			// convert dimension in a go map
 			for _, dimension := range dimensions {
 				key := dimension.Key
 				ocidx.logger.Debug("KEY DIM", "key", key)
 				for _, vall := range dimension.Values {
-					mymap[key] = dimension.Values
+					OriginalDimensionMap[key] = dimension.Values
 					ocidx.logger.Debug("ALL DIM", "dim", vall)
-
 				}
 			}
-			for _, value := range mymap {
+
+			//Search for resourceID and mark the position if found
+			for _, value := range OriginalDimensionMap {
 				for i, v := range value {
-					if v == searchValue {
+					if v == metricDataValue.UniqueDataID {
 						index = i
 						break
 					}
 				}
 			}
 
-			for key, value := range mymap {
+			// Create a new map containing only the dimensions for the found resourceID
+			for key, value := range OriginalDimensionMap {
 				if len(value) > index {
-					newmap[key] = []string{value[index]}
+					FoundDimensionMap[key] = []string{value[index]}
 				}
 			}
 
-			// for kuga, vuga := range dims {
-			// 	ocidx.logger.Debug("KUGA DIM", "kuga", kuga)
-			// 	ocidx.logger.Debug("VUGA DIM", "vuga", vuga)
-			// }
-			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, newmap)
-			// name = ocidx.OgenerateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, dims)
+			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, FoundDimensionMap)
 
 		} else {
 			for k, v := range metricDataValue.Labels {

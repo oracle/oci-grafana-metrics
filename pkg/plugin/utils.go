@@ -174,8 +174,6 @@ func listMetricsMetadataPerRegion(
 				if k == "region" || k == "resourceId" || k == "imageId" {
 					continue
 				}
-				backend.Logger.Debug("KEY item.Dimensions", "KEY item.Dimensions", k)
-				backend.Logger.Debug("VALUE item.Dimensions", "VALUE item.Dimensions", v)
 
 				// to sort the final map by dimension keys
 				metadata = append(metadata, k)
@@ -601,61 +599,6 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 					}
 				}
 
-			}
-		}
-	}
-	o.logger.Debug("Generated metric label", "legendFormat", legendFormat,
-		"metricName", metricName, "metricLabel", metricLabel)
-	return metricLabel
-}
-
-/*
-Function generates a custom metric label for the identified metric based on the
-legend format provided by the user where any known placeholders within the format
-will be replaced with the appropriate value.
-
-The currently supported legend format placeholders are:
-  - {metric} - Will be replaced by the metric name
-  - {dimension} - Will be replaced by the value of the specified dimension
-
-Any placeholders (or other text) in the legend format that do not line up with one
-of these placeholders will be unchanged. Note that placeholder labels are treated
-as case sensitive.
-*/
-func (o *OCIDatasource) OgenerateCustomMetricLabel(legendFormat string, metricName string,
-	mDimensions map[string]string) string {
-
-	metricLabel := legendFormat
-	// Define a pattern where we are looking for a left curly brace followed by one or
-	// more characters that are not the right curly brace (or whitespace) followed
-	// finally by a right curly brace. The inclusion of the <label> portion of the
-	// pattern is to allow the logic to extract the label text from the placeholder.
-	rePlaceholderLabel, err := regexp.Compile(`\{\{\s*(?P<label>[^} ]+)\s*\}\}`)
-
-	if err != nil {
-		o.logger.Error("Compilation of legend format placeholders regex failed")
-		return metricLabel
-	}
-
-	for _, placeholderStr := range rePlaceholderLabel.FindAllString(metricLabel, -1) {
-		if rePlaceholderLabel.Match([]byte(placeholderStr)) == true {
-			matches := rePlaceholderLabel.FindStringSubmatch(placeholderStr)
-			labelIndex := rePlaceholderLabel.SubexpIndex("label")
-
-			placeholderLabel := matches[labelIndex]
-			re := regexp.MustCompile(placeholderStr)
-
-			// If this placeholder is the {metric} placeholder then replace the
-			// placeholder string with the metric name
-			if placeholderLabel == "metric" {
-				metricLabel = re.ReplaceAllString(metricLabel, metricName)
-			} else {
-				// Check whether there is a dimension name for the metric that matches
-				// the placeholder label. If there is then replace the placeholder with
-				// the value of the dimension
-				if dimensionValue, ok := mDimensions[placeholderLabel]; ok {
-					metricLabel = re.ReplaceAllString(metricLabel, dimensionValue)
-				}
 			}
 		}
 	}
