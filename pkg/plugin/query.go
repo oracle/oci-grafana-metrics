@@ -61,7 +61,6 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	var name string
 	for _, metricDataValue := range metricDataValues {
 		name = metricDataValue.ResourceName
-		ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
 
 		dl := data.Labels{
 			"tenancy":   metricDataValue.TenancyName,
@@ -70,6 +69,12 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 		}
 
 		if qm.LegendFormat != "" {
+			if metricDataValue.UniqueDataID == "" {
+				ocidx.logger.Debug("UniqueDataID", "No valid ResourceID found")
+				continue
+			} else {
+				ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
+			}
 			dl = data.Labels{}
 			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
