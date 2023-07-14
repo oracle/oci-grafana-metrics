@@ -71,7 +71,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 		if qm.LegendFormat != "" {
 			dl = data.Labels{}
-			dimensions := ocidx.GetDimForLabel(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName)
+			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
 			FoundDimensionMap := make(map[string][]string)
 			var index int
