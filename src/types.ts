@@ -242,8 +242,8 @@ export interface OCIQuery extends DataQuery {
   regions?: any;
   region?: string;
   namespace?: string;
-  merticNames?: string[];
-  merticNamesFromNS?: string[];
+  metricNames?: string[];
+  metricNamesFromNS?: string[];
   metric?: string;
   interval: string;
   intervalLabel?: string;

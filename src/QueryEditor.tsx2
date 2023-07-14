@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
 import { OCIDataSourceOptions, AggregationOptions, IntervalOptions, OCIQuery, QueryPlaceholder } from './types';
 import QueryModel from './query_model';
-import { TenancyChoices } from './config.options';
+import {TenancyChoices} from './config.options';
 
 type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 
@@ -18,12 +18,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
+  const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
   const [namespaceValue, setNamespaceValue] = useState(query.namespace);
   const [resourceGroupValue, setResourceGroupValue] = useState(query.resourceGroup);
   const [metricValue, setMetricValue] = useState(query.metric);
   // const [aggregationValue, setaggregationValue] = useState(query.aggregation);
   const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
-  const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
 
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
@@ -73,11 +73,15 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return [initialDimensions, initialTags];
   };
 
-  // const [initialDimensions, initialTags] = init();
   const [initialDimensions] = init();
-
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
   // const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
+  // const variableOptionGroup = {
+  //   label: 'Template Variables',
+  //   expanded: false,
+  //   options: datasource.getVariables().map(toOption),
+  // };
+
   // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]); 
 
   // Appends all available template variables to options used by dropdowns
@@ -110,131 +114,170 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
-  const getCompartmentOptions = async () => {
+  const getCompartmentOptions = () => {
     const existingCompartmentsResponse = query.compartments;
-    if (query.namespace !== undefined) {
-      let options: Array<SelectableValue<string>> = [];
-      options = addTemplateVariablesToOptions(options)
-      const response = await datasource.getCompartments(query.tenancyOCID);
-      if (response) {
-        response.forEach((item: any) => {
-          const sv: SelectableValue<string> = {
-            label: item.name,
-            value: item.ocid,
-          };
-          options.push(sv);
-        });
-      }
-      return options;
-    }
-    if (existingCompartmentsResponse) {
-      return (existingCompartmentsResponse);
-    }
-    return [];
-  };
+    let varlabel = ''
+    let varvalue = ''
+    datasource.getVariablesRaw().forEach((v) => {
+      console.log("urkaaa "+v.label)
+      console.log("urkaab "+v.name)
+      console.log("urkacc "+`$${v.name}`)
+      console.log("urkadd "+query.compartmentOCID)
 
-  const getSubscribedRegionOptions = async () => {
+      if (`$${v.name}` === query.compartmentOCID){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        varlabel = v.label || v.name
+        varvalue = `$${v.name}`
+        console.log('varlabel:', varlabel);
+        console.log('varvalue:', varvalue);
+      } else {
+        console.log("Mykonos c")
+      }  
+    });     
+    if (query.namespace !== undefined) {
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {
+          const response = await datasource.getCompartments(query.tenancyOCID);
+          const result = response.map((res: any) => {
+            return { label: res.name, value: res.ocid };
+          });    
+          if (varlabel !== '') {
+            result.push({ label: varlabel, value: varvalue });
+          }               
+          resolve(result);
+        }, 0);
+      });
+    } else {
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {   
+          if (varlabel !== '') {
+            existingCompartmentsResponse.push({ label: varlabel, value: varvalue });
+          }                                
+          resolve(existingCompartmentsResponse);
+        }, 0);
+      });
+    }
+  };
+  const getSubscribedRegionOptions = () => {
     const existingRegionsResponse = query.regions;
+    console.log("getSubscribedRegionOptions")
+    let varlabel = ''
+    let varvalue = ''
+    datasource.getVariablesRaw().forEach((v) => {
+      console.log("urkaaa "+v.label)
+      console.log("urkaab "+v.name)
+      console.log("urkacc "+`$${v.name}`)
+      console.log("urkaddr "+query.region)
+
+
+      if (`$${v.name}` === query.region){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        varlabel = v.label || v.name
+        varvalue = `$${v.name}`
+        console.log('varlabel:', varlabel);
+        console.log('varvalue:', varvalue);
+      } else {
+        console.log("Mykonos ")
+      }  
+    });          
+
     if (query.namespace !== undefined) {
-      let options: Array<SelectableValue<string>> = [];
-      options = addTemplateVariablesToOptions(options)
-      const response = await datasource.getSubscribedRegions(query.tenancyOCID);
-      if (response) {
-        response.forEach((item: string) => {
-          const sv: SelectableValue<string> = {
-            label: item,
-            value: item,
-          };
-          options.push(sv);
+      console.log("getSubscribedRegionOptions 1")
+
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {
+          const response = await datasource.getSubscribedRegions(query.tenancyOCID);
+          let result = response.map((res: any) => {
+            return { label: res, value: res };
+          });
+          if (varlabel !== '') {
+            result.push({ label: varlabel, value: varvalue });
+          }            
+          resolve(result);
+        }, 0);
+      });
+    } else {
+      console.log("getSubscribedRegionOptions 2")
+      console.log(existingRegionsResponse)
+
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(async () => {    
+          if (varlabel !== '') {
+            existingRegionsResponse.push({ label: varlabel, value: varvalue });
+          }                  
+          resolve(existingRegionsResponse);
+        }, 0);
+      });
+    }
+  };
+  const getNamespaceOptions = () => {
+    return new Promise<Array<SelectableValue<string>>>((resolve) => {
+      setTimeout(async () => {
+        const response = await datasource.getNamespacesWithMetricNames(
+          query.tenancyOCID,
+          query.compartmentOCID,
+          query.region
+        );
+        const result = response.map((res: any) => {
+          return { label: res.namespace, value: res.metric_names };
         });
-      }
-      return options;
-    }
-    if (existingRegionsResponse) {
-      return (existingRegionsResponse);
-    }
-    return [];
-  };
-
-  const getNamespaceOptions = async () => {
-    let options: Array<SelectableValue<string>> = [];
-    options = addTemplateVariablesToOptions(options)
-    const response = await datasource.getNamespacesWithMetricNames(
-      query.tenancyOCID,
-      query.compartmentOCID,
-      query.region
-    );
-    if (response) {
-      response.forEach((item: any) => {
-        const sv: SelectableValue<string> = {
-          label: item.namespace,
-          value: item.metric_names,
-        };
-        options.push(sv);
-      });
-    }
-    return options;
-  };
-
-  const getResourceGroupOptions = async () => {
-    let options: Array<SelectableValue<string>> = [];
-    options = addTemplateVariablesToOptions(options)
-    const response = await datasource.getResourceGroupsWithMetricNames(
-      query.tenancyOCID,
-      query.compartmentOCID,
-      query.region,
-      query.namespace
-    );
-    if (response) {
-      response.forEach((item: any) => {
-        const sv: SelectableValue<string> = {
-          label: item.resource_group,
-          value: item.metric_names,
-        };
-        options.push(sv);
-      });
-    }
-    return options;
-  };
-
-  const getMetricOptions = async () => {
-    let options: Array<SelectableValue<string>> = [];
-    options = addTemplateVariablesToOptions(options)
-    const response = query.metricNames || [];
-    response.forEach((item: any) => {
-      const sv: SelectableValue<string> = {
-        label: item,
-        value: item,
-      };
-      options.push(sv);
+        resolve(result);
+      }, 0);
     });
-    return options;
   };
-
-  const getAggregationOptions = async () => {
-    let options: Array<SelectableValue<string>> = [];
-    AggregationOptions.forEach((item: any) => {
-      const sv: SelectableValue<any> = {
-        label: item.label,
-        value: item.value,
-      };
-      options.push(sv);
+  const getResourceGroupOptions = () => {
+    return new Promise<Array<SelectableValue<string>>>((resolve) => {
+      setTimeout(async () => {
+        const response = await datasource.getResourceGroupsWithMetricNames(
+          query.tenancyOCID,
+          query.compartmentOCID,
+          query.region,
+          query.namespace
+        );
+        const result = response.map((res: any) => {
+          return { label: res.resource_group, value: res.metric_names };
+        });
+        resolve(result);
+      }, 0);
     });
-    return options;
   };
-
-  const getIntervalOptions = async () => {
-    let options: Array<SelectableValue<string>> = [];
-    IntervalOptions.forEach((item: any) => {
-      const sv: SelectableValue<any> = {
-        label: item.label,
-        value: item.value,
-      };
-      options.push(sv);
+  const getMetricOptions = () => {
+    return new Promise<Array<SelectableValue<string>>>((resolve) => {
+      setTimeout(async () => {
+        const response = query.merticNames || [];
+        const result = response.map((res: any) => {
+          return { label: res, value: res };
+        });
+        resolve(result);
+      }, 0);
     });
-    return options;
   };
-
+  const getAggregationOptions = () => {
+    return new Promise<Array<SelectableValue<string>>>((resolve) => {
+      setTimeout(async () => {
+        const result = AggregationOptions.map((res: any) => {
+          return { label: res.label, value: res.value };
+        });
+        resolve(result);
+      }, 0);
+    });
+  };
+  const getIntervalOptions = () => {
+    return new Promise<Array<SelectableValue<string>>>((resolve) => {
+      setTimeout(async () => {
+        const result = IntervalOptions.map((res: any) => {
+          return { label: res.label, value: res.value };
+        });
+        resolve(result);
+      }, 0);
+    });
+  };
   const getDimensionOptions = () => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
@@ -258,29 +301,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       }, 0);
     });
   };
-  // const getTagOptions = () => {
-  //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
-  //     setTimeout(async () => {
-  //       const response = await datasource.getTags(
-  //         query.tenancyOCID,
-  //         query.compartmentOCID,
-  //         query.compartmentName,
-  //         query.region,
-  //         query.namespace
-  //       );
-  //       const result = response.map((res: any) => {
-  //         return {
-  //           label: res.key,
-  //           value: res.key,
-  //           options: res.values.map((val: any) => {
-  //             return { label: res.key + ' > ' + val, value: res.key + '=' + val };
-  //           }),
-  //         };
-  //       });
-  //       resolve(result);
-  //     }, 0);
-  //   });
-  // };
+
   // const getGroupByOptions = () => {
   //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
   //     setTimeout(async () => {
@@ -303,11 +324,43 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
 
-  const getTenancyDefault = async () => {
+  const getTenancyDefault = () => {
+    let regvarlabel = ''
+    let regvarvalue = ''
+    let compvarlabel = ''
+    let compvarvalue = ''    
+    datasource.getVariablesRaw().forEach((v) => {
+      console.log("urkaaa "+v.label)
+      console.log("urkaab "+v.name)
+      console.log("urkacc "+`$${v.name}`)
+      console.log("urkaddr "+query.region)
+
+
+      if (`$${v.name}` === query.region){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        regvarlabel = v.label || v.name
+        regvarvalue = `$${v.name}`
+        console.log('regvarlabel:', regvarlabel);
+        console.log('regvarvalue:', regvarvalue);
+      }
+      if (`$${v.name}` === query.compartmentOCID){
+        
+        console.log("Barabba ")
+        console.log('v.label:', v.label);
+        console.log('v.name:', v.name);
+        regvarlabel = v.label || v.name
+        regvarvalue = `$${v.name}`
+        console.log('compvarlabel:', compvarlabel);
+        console.log('compvarvalue:', compvarvalue);
+      }       
+    });      
     let tname: string;
     let tvalue: string;
-    tname = 'DEFAULT/';
-    tvalue = 'DEFAULT/';
+    tname='DEFAULT/';
+    tvalue='DEFAULT/';
     onApplyQueryChange(
       {
         ...query,
@@ -319,21 +372,36 @@ export const QueryEditor: React.FC<Props> = (props) => {
             const result = response.map((res: any) => {
               return { label: res.name, value: res.ocid };
             });
+            if (compvarlabel !== '') {
+              result.push({ label: compvarlabel, value: compvarvalue });
+            }             
             resolve(result);
           }, 0);
         }),
-        regions: await getSubscribedRegionOptions(),
+        regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
+          setTimeout(async () => {
+            const response = await datasource.getSubscribedRegions(tvalue);
+            let result = response.map((res: any) => {
+              return { label: res, value: res };
+            });
+            if (regvarlabel !== '') {
+              result.push({ label: regvarlabel, value: regvarvalue });
+            }             
+            resolve(result);
+          }, 0);
+        }),
       },
       false
     );
-  };
+  };  
+  
 
-  const onTenancyChange = async (data: any) => {
+  const onTenancyChange = (data: any) => {
     let tname: string;
     let tvalue: string;
     if (tmode !== TenancyChoices.multitenancy) {
-      tname = 'DEFAULT/';
-      tvalue = 'DEFAULT/';
+      tname='DEFAULT/';
+      tvalue='DEFAULT/';
     } else {
       setTenancyValue(data);
       tname = data.label
@@ -355,14 +423,22 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }),
         compartmentName: undefined,
         compartmentOCID: undefined,
-        regions: await getSubscribedRegionOptions(),
+        regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
+          setTimeout(async () => {
+            const response = await datasource.getSubscribedRegions(tvalue);
+            let result = response.map((res: any) => {
+              return { label: res, value: res };
+            });
+            resolve(result);
+          }, 0);
+        }),
         region: undefined,
         namespace: undefined,
         metric: undefined,
       },
       false
     );
-  };
+  };  
 
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
@@ -378,14 +454,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
-  const onRegionChange = (data: SelectableValue) => {
-    // eslint-disable-next-line no-debugger
-    debugger;
-    // insert the value into the options (custom value is enabled)
-    if (query.regions && data.__isNew__) {
-      query.regions = [...query.regions, { label: data.label, value: data.value }]
-    }
-    setRegionValue(data.value);
+  const onRegionChange = (data: any) => {
+    setRegionValue(data);
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
 
@@ -406,8 +476,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
       {
         ...query,
         namespace: data.label,
-        metricNames: data.value,
-        metricNamesFromNS: data.value,
+        merticNames: data.value,
+        merticNamesFromNS: data.value,
         resourceGroup: undefined,
         metric: undefined,
       },
@@ -419,11 +489,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
     //setRGValue(data);
     let mn: string[] = data.value;
     if (data.label === 'NoResourceGroup') {
-      mn = query.metricNamesFromNS || [];
+      mn = query.merticNamesFromNS || [];
     }
     setResourceGroupValue(data);
 
-    onApplyQueryChange({ ...query, resourceGroup: data.label, metricNames: mn, metric: undefined }, false);
+    onApplyQueryChange({ ...query, resourceGroup: data.label, merticNames: mn, metric: undefined }, false);
   };
 
   const onMetricChange = (data: any) => {
@@ -441,7 +511,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     setLegendFormatValue(data);
     console.log("onLegendFormatChange "+data)
     onApplyQueryChange({ ...query, legendFormat: data });
-    };
+  };  
   const onDimensionChange = (data: any) => {
     const existingDVs = query.dimensionValues || [];
     let newDimensionValues: string[] = [];
@@ -488,16 +558,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       query.dimensionValues = newDimensionValues;
     }
   };
-  // const onTagChange = (data: any) => {
-  //   let newTagsValues: string[] = [];
 
-  //   data.map((incomingT: any) => {
-  //     newTagsValues.push(incomingT.value);
-  //   });
-
-  //   setTagValue(data);
-  //   onApplyQueryChange({ ...query, tagsValues: newTagsValues });
-  // };
   // const onGroupByChange = (data: any) => {
   //   setGroupValue(data);
   //   let selectedGroup: string = QueryPlaceholder.GroupBy;
@@ -510,35 +571,35 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
 
-  if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
-    getTenancyDefault();
-    setHasTenancyDefault(true);
-  }
+if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
+  getTenancyDefault();
+  setHasTenancyDefault(true);
+}
 
   return (
     <>
       <FieldSet>
         <InlineFieldRow>
-          {tmode === TenancyChoices.multitenancy && (
-            <>
-              <InlineField label="TENANCY" labelWidth={20}>
-                <SegmentAsync
-                  className="width-14"
-                  allowCustomValue={false}
-                  required={true}
-                  loadOptions={getTenancyOptions}
-                  value={tenancyValue}
-                  placeholder={QueryPlaceholder.Tenancy}
-                  onChange={(data) => {
-                    onTenancyChange(data);
-                  }}
-                />
-              </InlineField>
-            </>
-          )}
+        {tmode === TenancyChoices.multitenancy && (
+          <>   
+          <InlineField label="TENANCY" labelWidth={20}>
+            <SegmentAsync
+              className="width-28"
+              allowCustomValue={false}
+              required={true}
+              loadOptions={getTenancyOptions}
+              value={tenancyValue}
+              placeholder={QueryPlaceholder.Tenancy}
+              onChange={(data) => {
+                onTenancyChange(data);
+              }}
+            />
+          </InlineField>
+          </>
+        )}  
         </InlineFieldRow>
-        <InlineFieldRow>
-          <InlineField label="REGION" labelWidth={20}>
+        <InlineFieldRow>         
+           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
               allowCustomValue={true}
@@ -550,7 +611,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
                 onRegionChange(data);
               }}
             />
-          </InlineField>
+          </InlineField>          
           <InlineField label="COMPARTMENT" labelWidth={20}>
             <SegmentAsync
               className="width-28"
@@ -684,7 +745,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
                 />
               </> 
           </InlineField>
-        </InlineFieldRow>  
+        </InlineFieldRow>       
       </FieldSet>
     </>
   );
