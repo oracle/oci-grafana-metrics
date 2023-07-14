@@ -142,7 +142,6 @@ func listMetricsMetadataPerRegion(
 	req monitoring.ListMetricsRequest) map[string][]string {
 
 	backend.Logger.Debug("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
-
 	if cachedMetricsData, found := ci.Get(cacheKey); found {
 		backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
 		return cachedMetricsData.(map[string][]string)
@@ -175,6 +174,8 @@ func listMetricsMetadataPerRegion(
 				if k == "region" || k == "resourceId" || k == "imageId" {
 					continue
 				}
+				backend.Logger.Debug("KEY item.Dimensions", "KEY item.Dimensions", k)
+				backend.Logger.Debug("VALUE item.Dimensions", "VALUE item.Dimensions", v)
 
 				// to sort the final map by dimension keys
 				metadata = append(metadata, k)
@@ -195,6 +196,22 @@ func listMetricsMetadataPerRegion(
 				}
 
 				metadataWithMetricNames[k] = []string{v}
+			}
+		case constants.FETCH_FOR_LABELDIMENSION:
+			for k, v := range item.Dimensions {
+				// we don't need region or resource id dimensions as
+				// we already filtered by region and resourceDisplayName is already there
+				// in the dimensions
+				// and do we really need imageId, image name will be good to have
+				if k == "region" || k == "imageId" {
+					continue
+				}
+
+				// to sort the final map by dimension keys
+				metadata = append(metadata, k)
+				metadataWithMetricNames[k] = append(metadataWithMetricNames[k], v)
+
+				// metadataWithMetricNames[k] = []string{v}
 			}
 		}
 
@@ -538,7 +555,7 @@ of these placeholders will be unchanged. Note that placeholder labels are treate
 as case sensitive.
 */
 func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
-	dimensions []models.OCIMetricDimensions) string {
+	dimensions map[string][]string) string {
 	o.logger.Debug("generateCustomMetricLabel ", "legendFormat", legendFormat)
 	o.logger.Debug("generateCustomMetricLabel ", "metricName", metricName)
 
@@ -571,22 +588,74 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 				// Check whether there is a dimension name for the metric that matches
 				// the placeholder label. If there is then replace the placeholder with
 				// the value of the dimension
-				dimindex := 0
-				for _, dimension := range dimensions {
-					key := dimension.Key
+				for key, dimension := range dimensions {
 					if key == placeholderLabel {
-						o.logger.Debug("key Generated metric key", "key", key)
-						if dimindex < len(dimension.Values) {
-							value := dimension.Values[dimindex]
+						for _, value := range dimension {
+							o.logger.Debug("key Generated metric key", "key", key)
 							o.logger.Debug("key Generated metric value", "value", value)
 							o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
 							metricLabel = re.ReplaceAllString(metricLabel, value)
 							o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
 						}
+
 					}
-					dimindex++
 				}
 
+			}
+		}
+	}
+	o.logger.Debug("Generated metric label", "legendFormat", legendFormat,
+		"metricName", metricName, "metricLabel", metricLabel)
+	return metricLabel
+}
+
+/*
+Function generates a custom metric label for the identified metric based on the
+legend format provided by the user where any known placeholders within the format
+will be replaced with the appropriate value.
+
+The currently supported legend format placeholders are:
+  - {metric} - Will be replaced by the metric name
+  - {dimension} - Will be replaced by the value of the specified dimension
+
+Any placeholders (or other text) in the legend format that do not line up with one
+of these placeholders will be unchanged. Note that placeholder labels are treated
+as case sensitive.
+*/
+func (o *OCIDatasource) OgenerateCustomMetricLabel(legendFormat string, metricName string,
+	mDimensions map[string]string) string {
+
+	metricLabel := legendFormat
+	// Define a pattern where we are looking for a left curly brace followed by one or
+	// more characters that are not the right curly brace (or whitespace) followed
+	// finally by a right curly brace. The inclusion of the <label> portion of the
+	// pattern is to allow the logic to extract the label text from the placeholder.
+	rePlaceholderLabel, err := regexp.Compile(`\{\{\s*(?P<label>[^} ]+)\s*\}\}`)
+
+	if err != nil {
+		o.logger.Error("Compilation of legend format placeholders regex failed")
+		return metricLabel
+	}
+
+	for _, placeholderStr := range rePlaceholderLabel.FindAllString(metricLabel, -1) {
+		if rePlaceholderLabel.Match([]byte(placeholderStr)) == true {
+			matches := rePlaceholderLabel.FindStringSubmatch(placeholderStr)
+			labelIndex := rePlaceholderLabel.SubexpIndex("label")
+
+			placeholderLabel := matches[labelIndex]
+			re := regexp.MustCompile(placeholderStr)
+
+			// If this placeholder is the {metric} placeholder then replace the
+			// placeholder string with the metric name
+			if placeholderLabel == "metric" {
+				metricLabel = re.ReplaceAllString(metricLabel, metricName)
+			} else {
+				// Check whether there is a dimension name for the metric that matches
+				// the placeholder label. If there is then replace the placeholder with
+				// the value of the dimension
+				if dimensionValue, ok := mDimensions[placeholderLabel]; ok {
+					metricLabel = re.ReplaceAllString(metricLabel, dimensionValue)
+				}
 			}
 		}
 	}

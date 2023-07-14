@@ -63,20 +63,61 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	var name string
 	for _, metricDataValue := range metricDataValues {
 		name = metricDataValue.ResourceName
+		ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
+
 		dl := data.Labels{
 			"tenancy":   metricDataValue.TenancyName,
 			"unique_id": metricDataValue.UniqueDataID,
 			"region":    metricDataValue.Region,
 		}
 		ocidx.logger.Debug("2 Dimensiona Label metric label", "name", name)
+		for key, value := range metricDataValue.Labels {
+			ocidx.logger.Debug("sciapo key", "sciapo key", key)
+			ocidx.logger.Debug("sciapo value", "sciapo value", value)
+
+		}
 
 		if qm.LegendFormat != "" {
-			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName)
-			ocidx.logger.Debug("dimensions[0]", "dimensions[0]", dimensions[0].Key)
-
+			dl = data.Labels{}
+			dimensions := ocidx.GetDimForLabel(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName)
 			ocidx.logger.Debug("aa Generated metric label", "legendFormat", qm.LegendFormat)
+			// dims := map[string]string{}
+			mymap := make(map[string][]string)
+			newmap := make(map[string][]string)
+			searchValue := metricDataValue.UniqueDataID
+			var index int
 
-			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, dimensions)
+			for _, dimension := range dimensions {
+				key := dimension.Key
+				ocidx.logger.Debug("KEY DIM", "key", key)
+				for _, vall := range dimension.Values {
+					mymap[key] = dimension.Values
+					ocidx.logger.Debug("ALL DIM", "dim", vall)
+
+				}
+			}
+			for _, value := range mymap {
+				for i, v := range value {
+					if v == searchValue {
+						index = i
+						break
+					}
+				}
+			}
+
+			for key, value := range mymap {
+				if len(value) > index {
+					newmap[key] = []string{value[index]}
+				}
+			}
+
+			// for kuga, vuga := range dims {
+			// 	ocidx.logger.Debug("KUGA DIM", "kuga", kuga)
+			// 	ocidx.logger.Debug("VUGA DIM", "vuga", vuga)
+			// }
+			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, newmap)
+			// name = ocidx.OgenerateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, dims)
+
 		} else {
 			for k, v := range metricDataValue.Labels {
 				dl[k] = v

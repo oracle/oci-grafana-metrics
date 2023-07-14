@@ -29,6 +29,7 @@ const (
 	FETCH_FOR_NAMESPACE               = "namespace"
 	FETCH_FOR_RESOURCE_GROUP          = "resource-group"
 	FETCH_FOR_DIMENSION               = "dimension"
+	FETCH_FOR_LABELDIMENSION          = "labeldimension"
 	TIME_IN_MINUTES                   = 5 * time.Minute
 	OCI_TARGET_COMPUTE                = "compute"
 	OCI_TARGET_VCN                    = "vcn"

@@ -438,6 +438,8 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	selectedTags := requestParams.TagsValues
 	selectedDimensions := requestParams.DimensionValues
+	selectedLegendFormat := requestParams.LegendFormat
+	o.logger.Debug("selectedLegendFormat", "selectedLegendFormat", selectedLegendFormat)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 
@@ -1094,6 +1096,85 @@ func (o *OCIDatasource) GetDimensions(
 			o.cache,
 			cacheKey,
 			constants.FETCH_FOR_DIMENSION,
+			o.tenancyAccess[takey].monitoringClient,
+			monitoringRequest,
+		)
+	}
+
+	for k, v := range metricDimensions {
+		metricDimensionsList = append(metricDimensionsList, models.OCIMetricDimensions{
+			Key:    k,
+			Values: v,
+		})
+	}
+
+	// saving into the cache
+	o.cache.SetWithTTL(cacheKey, metricDimensionsList, 1, 5*time.Minute)
+	o.cache.Wait()
+
+	return metricDimensionsList
+}
+
+// GetDimForLabel Returns all the dimensions associated with mentioned metric under the compartment of mentioned tenancy
+// API Operation: ListMetrics
+// Permission Required: METRIC_INSPECT
+// Links:
+// https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
+// https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+func (o *OCIDatasource) GetDimForLabel(
+	ctx context.Context,
+	tenancyOCID string,
+	compartmentOCID string,
+	region string,
+	namespace string,
+	metricName string) []models.OCIMetricDimensions {
+	backend.Logger.Debug("client", "GetDimForLabel", "fetching the dimension under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' and metric '"+metricName+"'")
+
+	// fetching from cache, if present
+	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, metricName, "dslabel"}, "-")
+	if cachedDimensions, found := o.cache.Get(cacheKey); found {
+		backend.Logger.Warn("client", "GetDimForLabel", "getting the data from cache")
+		return cachedDimensions.([]models.OCIMetricDimensions)
+	}
+
+	var metricDimensions map[string][]string
+	metricDimensionsList := []models.OCIMetricDimensions{}
+	takey := o.GetTenancyAccessKey(tenancyOCID)
+
+	monitoringRequest := monitoring.ListMetricsRequest{
+		CompartmentId:          common.String(compartmentOCID),
+		CompartmentIdInSubtree: common.Bool(false),
+		ListMetricsDetails: monitoring.ListMetricsDetails{
+			Name:      common.String(metricName),
+			Namespace: common.String(namespace),
+		},
+	}
+
+	if len(compartmentOCID) == 0 {
+		monitoringRequest.CompartmentId = common.String(tenancyOCID)
+		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
+	}
+
+	if region == constants.ALL_REGION {
+		metricDimensions = listMetricsMetadataFromAllRegion(
+			ctx,
+			o.cache,
+			cacheKey,
+			constants.FETCH_FOR_LABELDIMENSION,
+			o.tenancyAccess[takey].monitoringClient,
+			monitoringRequest,
+			o.GetSubscribedRegions(ctx, tenancyOCID),
+		)
+	} else {
+		if region != "" {
+			o.tenancyAccess[takey].monitoringClient.SetRegion(region)
+		}
+
+		metricDimensions = listMetricsMetadataPerRegion(
+			ctx,
+			o.cache,
+			cacheKey,
+			constants.FETCH_FOR_LABELDIMENSION,
 			o.tenancyAccess[takey].monitoringClient,
 			monitoringRequest,
 		)

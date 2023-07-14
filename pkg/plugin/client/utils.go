@@ -348,6 +348,26 @@ func listMetricsMetadataPerRegion(
 
 				metadataWithMetricNames[k] = []string{v}
 			}
+		case constants.FETCH_FOR_LABELDIMENSION:
+			for k, v := range item.Dimensions {
+				// we don't need region or resource id dimensions as
+				// we already filtered by region and resourceDisplayName is already there
+				// in the dimensions
+				// and do we really need imageId, image name will be good to have
+				if k == "region" || k == "imageId" {
+					continue
+				}
+
+				// to sort the final map by dimension keys
+				metadata = append(metadata, k)
+
+				if _, ok := metadataWithMetricNames[k]; ok {
+
+					metadataWithMetricNames[k] = append(metadataWithMetricNames[k], v)
+				}
+
+				metadataWithMetricNames[k] = []string{v}
+			}
 		}
 
 		if len(metadataKey) == 0 {
