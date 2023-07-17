@@ -66,14 +66,22 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("applyTemplateVariables: before compartmentOCID: " + query.compartmentOCID)
     console.log("applyTemplateVariables: before tenancyOCID: " + query.tenancyOCID)
     console.log("applyTemplateVariables: before namespace: " + query.namespace)
+    console.log("applyTemplateVariables: before resourceGroup: " + query.resourceGroup)
+    console.log("applyTemplateVariables: before metric: " + query.metric)
+
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
     query.compartmentOCID = templateSrv.replace(query.compartmentOCID, scopedVars);
     query.namespace = templateSrv.replace(query.namespace, scopedVars);
+    query.resourceGroup = templateSrv.replace(query.resourceGroup, scopedVars);
+    query.metric = templateSrv.replace(query.metric, scopedVars);
     console.log("applyTemplateVariables: after region: " + query.region)
     console.log("applyTemplateVariables: after compartmentOCID: " + query.compartmentOCID)
     console.log("applyTemplateVariables: after tenancyOCID: " + query.tenancyOCID)
     console.log("applyTemplateVariables: after namespace: " + query.namespace)
+    console.log("applyTemplateVariables: after resourceGroup: " + query.resourceGroup)
+    console.log("applyTemplateVariables: after metric: " + query.metric)
+
     return query;
   }
 
@@ -263,6 +271,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
         return metric_names.flatMap(n => {
           return n.metric_names.map(name => {
+            console.log("metric_names "+name)
             return { text: name, value: name };
           });
         });        
@@ -270,9 +279,12 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const tenancy = DEFAULT_TENANCY;
         const region = templateSrv.replace(metricQuery[1]);
         const compartment = templateSrv.replace(metricQuery[2]);
-        const namespace = templateSrv.replace(metricQuery[3]);
+        // const namespace = templateSrv.replace(metricQuery[3]);
         // const resource_group = templateSrv.replace(metricQuery[4]);
-        const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        const metric_names = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
+        metric_names.forEach(n => {
+          console.log("pippo pippo pippo" + n)
+        });
         return metric_names.flatMap(n => {
           return n.metric_names.map(name => {
             return { text: name, value: name };
@@ -280,52 +292,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         });       
       }  
     }    
-
-    // const queryExecutionIdsQuery = query.match(/^query_execution_ids\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
-    // if (queryExecutionIdsQuery) {
-    //   const region = templateSrv.replace(queryExecutionIdsQuery[1]);
-    //   const limit = parseInt(templateSrv.replace(queryExecutionIdsQuery[2]), 10);
-    //   const pattern = templateSrv.replace(queryExecutionIdsQuery[3], {}, 'regex');
-    //   let workGroup = queryExecutionIdsQuery[4];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const to = new Date(parseInt(templateSrv.replace('$__to'), 10)).toISOString();
-
-    //   const queryExecutions = await this.getQueryExecutions(region, limit, pattern, workGroup, to);
-    //   return queryExecutions.map(n => {
-    //     const id = n.QueryExecutionId;
-    //     return { text: id, value: id };
-    //   });
-    // }
-
-    // const queryExecutionIdsByNameQuery = query.match(
-    //   /^query_execution_ids_by_name\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/
-    // );
-    // if (queryExecutionIdsByNameQuery) {
-    //   const region = templateSrv.replace(queryExecutionIdsByNameQuery[1]);
-    //   const limit = parseInt(templateSrv.replace(queryExecutionIdsByNameQuery[2]), 10);
-    //   const pattern = templateSrv.replace(queryExecutionIdsByNameQuery[3], {}, 'regex');
-    //   let workGroup = queryExecutionIdsByNameQuery[4];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const to = new Date(parseInt(templateSrv.replace('$__to'), 10)).toISOString();
-
-    //   const queryExecutionsByName = await this.getQueryExecutionsByName(region, limit, pattern, workGroup, to);
-    //   return queryExecutionsByName.map(n => {
-    //     const id = n.QueryExecutionId;
-    //     return { text: id, value: id };
-    //   });
-    // }
 
     return [];
   }
@@ -558,12 +524,83 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseNamespacesWithMetricNames(response);
     });
   }
+
+
   async getResourceGroupsWithMetricNames(
     tenancyOCID: any,
     compartmentOCID: any,
     region: any,
     namespace: any
   ): Promise<OCIResourceGroupWithMetricNamesItem[]> {
+    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment, namespace: var_namespace } = this.interpolateProps({ tenancyOCID, region, compartmentOCID, namespace });
+    console.log("RG")
+    console.log("RG "+tenancyOCID)
+    console.log("RG "+compartmentOCID)
+    console.log("RG "+region)
+    console.log("RG "+var_region)
+    console.log("RG "+var_tenancy)
+    console.log("RG "+var_compartment)
+    console.log("RG "+var_namespace)
+
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("RG vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("RG tenancyOCID "+tenancyOCID)
+    }
+
+    if (this.isVariable(compartmentOCID)) {
+      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+      console.log("RG vartenancy "+var_compartment)
+      if (var_compartment !== "") { 
+        compartmentOCID = var_compartment
+      }      
+    } else {
+      console.log("RG compartmentOCID "+compartmentOCID)
+    }
+
+    if (this.isVariable(region)) {
+      let { region: var_region} = this.interpolateProps({region});
+      console.log("RG vartenancy "+var_region)
+      if (var_region !== "") { 
+        region = var_region
+      }      
+    } else {
+      console.log("RG region "+region)
+    }
+
+    if (this.isVariable(namespace)) {
+      let { namespace: var_namespace} = this.interpolateProps({namespace});
+      console.log("RG vartenancy "+var_namespace)
+      if (var_namespace !== "") { 
+        namespace = var_namespace
+      }      
+    } else {
+      console.log("RG namespace "+namespace)
+    }    
+
+    if (tenancyOCID === '') {
+      console.log("RG notenancy")
+      return [];
+    }
+    if (region === undefined || region === QueryPlaceholder.Region) {
+      console.log("RG noregion")
+      return [];
+    }
+
+    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
+      console.log("RG compartmentOCID")
+      compartmentOCID = '';
+    }
+
+    console.log("RG2 "+tenancyOCID)
+    console.log("RG2 "+compartmentOCID)
+    console.log("RG2 "+region)    
+    console.log("RG2 "+namespace)    
+
     if (tenancyOCID === '') {
       return [];
     }
