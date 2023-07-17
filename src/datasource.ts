@@ -17,7 +17,7 @@ import {
   // dimensionKeysQueryRegex,
   namespacesQueryRegex,
   resourcegroupsQueryRegex,
-  // metricsQueryRegex,
+  metricsQueryRegex,
   regionsQueryRegex,
   tenanciesQueryRegex,
   DEFAULT_TENANCY,
@@ -97,33 +97,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   //  */
   // templateMetricQuery(query: OCIQuery,varString: string) {
 
-
-  //   let metricQuery = varString.match(metricsQueryRegex);
-  //   if (metricQuery) {
-  //     if (this.tenancymode === "multitenancy") {
-  //       let target = {
-  //         tenancy: removeQuotes(this.getVariableValue(metricQuery[1])),
-  //         region: removeQuotes(this.getVariableValue(metricQuery[2])),
-  //         compartment: removeQuotes(this.getVariableValue(metricQuery[3])),
-  //         namespace: removeQuotes(this.getVariableValue(metricQuery[4])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[5])),
-  //       };
-  //       return this.metricFindQuery(target).catch((err) => {
-  //         throw new Error("Unable to get metrics: " + err);
-  //       });
-  //     } else {
-  //       let target = {
-  //         tenancy: DEFAULT_TENANCY,
-  //         region: removeQuotes(this.getVariableValue(metricQuery[1])),
-  //         compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
-  //         namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
-  //       };
-  //       return this.metricFindQuery(target).catch((err) => {
-  //         throw new Error("Unable to get metrics: " + err);
-  //       });        
-  //     }  
-  //   }
 
   //   let dimensionsQuery = varString.match(dimensionKeysQueryRegex);
   //   if (dimensionsQuery) {
@@ -278,6 +251,35 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         });     
       }
     }
+
+    const metricQuery = query.match(metricsQueryRegex);
+    if (metricQuery) {
+      if (this.jsonData.tenancymode === "multitenancy") {
+        const tenancy = templateSrv.replace(metricQuery[1]);
+        const region = templateSrv.replace(metricQuery[2]);
+        const compartment = templateSrv.replace(metricQuery[3]);
+        const namespace = templateSrv.replace(metricQuery[4]);
+        // const resource_group = templateSrv.replace(metricQuery[4]);
+        const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        return metric_names.map(n => {
+          return { text: n.metric_names, value: n.metric_names };
+        });
+  //       return this.metricFindQuery(target).catch((err) => {
+  //         throw new Error("Unable to get metrics: " + err);
+  //       });
+  //     } else {
+  //       let target = {
+  //         tenancy: DEFAULT_TENANCY,
+  //         region: removeQuotes(this.getVariableValue(metricQuery[1])),
+  //         compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
+  //         namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
+  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
+  //       };
+  //       return this.metricFindQuery(target).catch((err) => {
+  //         throw new Error("Unable to get metrics: " + err);
+  //       });        
+      }  
+    }    
 
     // const queryExecutionIdsQuery = query.match(/^query_execution_ids\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
     // if (queryExecutionIdsQuery) {
