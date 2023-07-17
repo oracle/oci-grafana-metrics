@@ -111,8 +111,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const getCompartmentOptions = async () => {
-    const existingCompartmentsResponse = query.compartments;
-    if (query.namespace !== undefined) {
+    // const existingCompartmentsResponse = query.compartments;
+    // if (query.namespace !== undefined) {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
       const response = await datasource.getCompartments(query.tenancyOCID);
@@ -126,16 +126,16 @@ export const QueryEditor: React.FC<Props> = (props) => {
         });
       }
       return options;
-    }
-    if (existingCompartmentsResponse) {
-      return (existingCompartmentsResponse);
-    }
-    return [];
+    // }
+    // if (existingCompartmentsResponse) {
+    //   return (existingCompartmentsResponse);
+    // }
+    // return [];
   };
 
   const getSubscribedRegionOptions = async () => {
-    const existingRegionsResponse = query.regions;
-    if (query.namespace !== undefined) {
+    // const existingRegionsResponse = query.regions;
+    // if (query.namespace !== undefined) {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
       const response = await datasource.getSubscribedRegions(query.tenancyOCID);
@@ -149,11 +149,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
         });
       }
       return options;
-    }
-    if (existingRegionsResponse) {
-      return (existingRegionsResponse);
-    }
-    return [];
+    // }
+    // if (existingRegionsResponse) {
+    //   return (existingRegionsResponse);
+    // }
+    // return [];
   };
 
   const getNamespaceOptions = async () => {

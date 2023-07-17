@@ -53,52 +53,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return super.query(options);
   }
 
-  // applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
-  //   // TODO: pass scopedVars to templateSrv.replace()
-  //   const templateSrv = getTemplateSrv();
-
-  //   console.log("queryregion1: "+query.region)
-  //   console.log("compo1: "+query.compartmentOCID)
-  //   console.log("name1: "+query.namespace)
-
-
-  //   query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
-  //   query.region = templateSrv.replace(query.region, scopedVars);
-  //   query.compartmentOCID = templateSrv.replace(query.compartmentOCID, scopedVars);
-
-  //   // query.namespace = templateSrv.replace('$namespace', scopedVars);
-  //   console.log("queryregion2: "+query.region)
-  //   console.log("compo2: "+query.compartmentOCID)
-  //   console.log("name2: "+query.namespace)
-
-
-
-  //   return {
-  //     ...query,
-  //     datasource: this.getRef(),
-  //     region: query.region,
-  //     compartmentOCID: query.compartmentOCID,
-  //     // timeSeriesList: timeSeriesList && {
-  //     //   ...this.interpolateProps(timeSeriesList, scopedVars),
-  //     //   projectName: this.templateSrv.replace(
-  //     //     timeSeriesList.projectName ? timeSeriesList.projectName : this.getDefaultProject(),
-  //     //     scopedVars
-  //     //   ),
-  //     //   filters: this.interpolateFilters(timeSeriesList.filters || [], scopedVars),
-  //     //   groupBys: this.interpolateGroupBys(timeSeriesList.groupBys || [], scopedVars),
-  //     //   view: timeSeriesList.view || 'FULL',
-  //     // },
-  //     // timeSeriesQuery: timeSeriesQuery && {
-  //     //   ...this.interpolateProps(timeSeriesQuery, scopedVars),
-  //     //   projectName: this.templateSrv.replace(
-  //     //     timeSeriesQuery.projectName ? timeSeriesQuery.projectName : this.getDefaultProject(),
-  //     //     scopedVars
-  //     //   ),
-  //     // },
-  //     tenancyOCID: query.tenancyOCID,
-  //   };
-  //   // return query;
-  // }  
 
   /**
    * Override to apply template variables
@@ -321,8 +275,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         });        
       } else {
         const tenancy = DEFAULT_TENANCY;
-        const region = templateSrv.replace(namespaceQuery[2]);
-        const compartment = templateSrv.replace(namespaceQuery[3]);
+        const region = templateSrv.replace(namespaceQuery[1]);
+        const compartment = templateSrv.replace(namespaceQuery[2]);
         const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
         return namespaces.map(n => {
           return { text: n.namespace, value: n.namespace };
@@ -577,11 +531,27 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     } else {
       console.log("NS tenancyOCID "+tenancyOCID)
-    }    
+    }
 
-    if (var_tenancy !== "") { 
-      tenancyOCID = var_tenancy
-    }   
+    if (this.isVariable(compartmentOCID)) {
+      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+      console.log("NS vartenancy "+var_compartment)
+      if (var_compartment !== "") { 
+        compartmentOCID = var_compartment
+      }      
+    } else {
+      console.log("NS compartmentOCID "+compartmentOCID)
+    }
+
+    if (this.isVariable(region)) {
+      let { region: var_region} = this.interpolateProps({region});
+      console.log("NS vartenancy "+var_region)
+      if (var_region !== "") { 
+        region = var_region
+      }      
+    } else {
+      console.log("NS region "+region)
+    }
 
     if (tenancyOCID === '') {
       console.log("NS notenancy")
