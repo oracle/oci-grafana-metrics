@@ -45,6 +45,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 		Interval:        qm.Interval[1 : len(qm.Interval)-1],
 		ResourceGroup:   qm.ResourceGroup,
 		DimensionValues: qm.DimensionValues,
+		LegendFormat:    qm.LegendFormat,
 		TagsValues:      qm.TagsValues,
 		StartTime:       query.TimeRange.From.UTC(),
 		EndTime:         query.TimeRange.To.UTC(),
@@ -57,29 +58,73 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 	// plotting the x axis with time as unit
 	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
-
+	var name string
 	for _, metricDataValue := range metricDataValues {
-		name := metricDataValue.ResourceName
+		name = metricDataValue.ResourceName
+
 		dl := data.Labels{
 			"tenancy":   metricDataValue.TenancyName,
 			"unique_id": metricDataValue.UniqueDataID,
 			"region":    metricDataValue.Region,
 		}
 
-		for k, v := range metricDataValue.Labels {
-			dl[k] = v
-			if k == "resource_name" && len(name) == 0 {
-				name = v
+		if qm.LegendFormat != "" {
+			if metricDataValue.UniqueDataID == "" {
+				ocidx.logger.Debug("UniqueDataID", "No valid ResourceID found")
+				continue
+			} else {
+				ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
 			}
-			// if k != "resource_name" {
-			// 	dl[k] = v
-			// } else {
-			// 	if len(name) == 0 {
-			// 		name = v
-			// 	}
-			// }
-		}
+			dl = data.Labels{}
+			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
+			OriginalDimensionMap := make(map[string][]string)
+			FoundDimensionMap := make(map[string][]string)
+			var index int
 
+			// convert dimension in a go map
+			for _, dimension := range dimensions {
+				key := dimension.Key
+				ocidx.logger.Debug("KEY DIM", "key", key)
+				for _, vall := range dimension.Values {
+					OriginalDimensionMap[key] = dimension.Values
+					ocidx.logger.Debug("ALL DIM", "dim", vall)
+				}
+			}
+
+			//Search for resourceID and mark the position if found
+			for _, value := range OriginalDimensionMap {
+				for i, v := range value {
+					if v == metricDataValue.UniqueDataID {
+						index = i
+						break
+					}
+				}
+			}
+
+			// Create a new map containing only the dimensions for the found resourceID
+			for key, value := range OriginalDimensionMap {
+				if len(value) > index {
+					FoundDimensionMap[key] = []string{value[index]}
+				}
+			}
+
+			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, FoundDimensionMap)
+
+		} else {
+			for k, v := range metricDataValue.Labels {
+				dl[k] = v
+				if k == "resource_name" && len(name) == 0 {
+					name = v
+				}
+				// if k != "resource_name" {
+				// 	dl[k] = v
+				// } else {
+				// 	if len(name) == 0 {
+				// 		name = v
+				// 	}
+				// }
+			}
+		}
 		frame.Fields = append(frame.Fields,
 			data.NewField(name, dl, metricDataValue.DataPoints),
 		)

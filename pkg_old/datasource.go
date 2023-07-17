@@ -817,6 +817,8 @@ func (o *OCIDatasource) queryResponse(ctx context.Context, req *backend.QueryDat
 				// If user has provided a value for the legend format then use the format to
 				// generate the display name for the metric
 			} else {
+				o.logger.Debug("aa Generated metric label", "legendFormat", q.legendFormat)
+
 				fullDisplayName = o.generateCustomMetricLabel(q.legendFormat, metricName, item.Dimensions)
 			}
 

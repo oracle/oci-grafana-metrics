@@ -1,9 +1,9 @@
-// import { Observable } from 'rxjs';
+import { Observable } from 'rxjs';
+import _,{ isString} from 'lodash';
+import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
+// import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 
-// import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
-
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSourceOptions, OCIQuery, OCIResourceCall, QueryPlaceholder } from './types';
 import {
   OCIResourceItem,
@@ -15,7 +15,7 @@ import {
 import {
   // aggregations,
   // dimensionKeysQueryRegex,
-  // namespacesQueryRegex,
+  namespacesQueryRegex,
   // resourcegroupsQueryRegex,
   // metricsQueryRegex,
   regionsQueryRegex,
@@ -26,19 +26,20 @@ import {
   // removeQuotes,
   // AUTO,
 } from "./constants";
+// import _ from 'lodash';
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
   // private backendSrv: BackendSrv;
   // private templateSrv: TemplateSrv;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
 
-
     // this.backendSrv = getBackendSrv();
     // this.templateSrv = getTemplateSrv();
+
   }
 
   /**
@@ -48,48 +49,44 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * @param {ScopedVars} scopedVars Scoped variables
    */
 
-  // query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
-  //   return super.query(options);
-  // }
+  query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
+    return super.query(options);
+  }
 
+
+  /**
+   * Override to apply template variables
+   *
+   * @param {string} query Query
+   * @param {ScopedVars} scopedVars Scoped variables
+   */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
-    // TODO: pass scopedVars to templateSrv.replace()
     const templateSrv = getTemplateSrv();
-
-    const variableValue = getTemplateSrv().replace('$region', scopedVars);
-    console.log("uno: "+variableValue)
-    console.log("queryregion1: "+query.region)
-    console.log("compo1: "+query.compartmentOCID)
-    console.log("name1: "+query.namespace)
-
-
-    query.tenancyOCID = templateSrv.replace('$tenancy', scopedVars);
+    console.log("applyTemplateVariables: before region: " + query.region)
+    console.log("applyTemplateVariables: before compartmentOCID: " + query.compartmentOCID)
+    console.log("applyTemplateVariables: before tenancyOCID: " + query.tenancyOCID)
+    console.log("applyTemplateVariables: before namespace: " + query.namespace)
     query.region = templateSrv.replace(query.region, scopedVars);
-    // query.compartmentOCID = templateSrv.replace('$compartment', scopedVars);
-    // query.namespace = templateSrv.replace('$namespace', scopedVars);
-    console.log("queryregion2: "+query.region)
-    console.log("compo2: "+query.compartmentOCID)
-    console.log("name2: "+query.namespace)
-
-    
-    // query.maxRows = query.maxRows || '';
-    // query.cacheDuration = query.cacheDuration || '';
-    // if (typeof query.queryString === 'undefined' || query.queryString === '') {
-    //   query.queryExecutionId = templateSrv.replace(query.queryExecutionId, scopedVars);
-    //   query.inputs = query.queryExecutionId.split(/,/).map(id => {
-    //     return {
-    //       queryExecutionId: id,
-    //     };
-    //   });
-    // } else {
-    //   query.queryExecutionId = '';
-    //   query.inputs = [];
-    // }
-    // query.queryString = templateSrv.replace(query.queryString, scopedVars) || '';
-    // query.outputLocation = this.outputLocation;
+    query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
+    query.compartmentOCID = templateSrv.replace(query.compartmentOCID, scopedVars);
+    query.namespace = templateSrv.replace(query.namespace, scopedVars);
+    console.log("applyTemplateVariables: after region: " + query.region)
+    console.log("applyTemplateVariables: after compartmentOCID: " + query.compartmentOCID)
+    console.log("applyTemplateVariables: after tenancyOCID: " + query.tenancyOCID)
+    console.log("applyTemplateVariables: after namespace: " + query.namespace)
     return query;
-  }  
+  }
 
+
+  interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
+    const templateSrv = getTemplateSrv();
+    return Object.entries(object).reduce((acc, [key, value]) => {
+      return {
+        ...acc,
+        [key]: value && isString(value) ? templateSrv.replace(value, scopedVars) : value,
+      };
+    }, {} as T);
+  }
 
   // // **************************** Template variable helpers ****************************
 
@@ -266,52 +263,27 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }    
 
 
-    // const namespaceQuery = query.match(namespacesQueryRegex);
-    // if (namespaceQuery) {
-    //   if (this.jsonData.tenancymode === "multitenancy") {
-    //     const tenancy = templateSrv.replace(namespaceQuery[1]);
-    //     const region = templateSrv.replace(namespaceQuery[2]);
-    //     const compartment = templateSrv.replace(namespaceQuery[3]);
-    //     const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
-    //     return namespaces.map(n => {
-    //       return { text: n.namespace, value: n.namespace };
-    //     });        
-    //   } else {
-    //     const tenancy = DEFAULT_TENANCY;
-    //     const region = templateSrv.replace(namespaceQuery[2]);
-    //     const compartment = templateSrv.replace(namespaceQuery[3]);
-    //     const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
-    //     return namespaces.map(n => {
-    //       return { text: n.namespace, value: n.namespace };
-    //     });      
-    //   }
-    // }
+    const namespaceQuery = query.match(namespacesQueryRegex);
+    if (namespaceQuery) {
+      if (this.jsonData.tenancymode === "multitenancy") {
+        const tenancy = templateSrv.replace(namespaceQuery[1]);
+        const region = templateSrv.replace(namespaceQuery[2]);
+        const compartment = templateSrv.replace(namespaceQuery[3]);
+        const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
+        return namespaces.map(n => {
+          return { text: n.namespace, value: n.namespace };
+        });        
+      } else {
+        const tenancy = DEFAULT_TENANCY;
+        const region = templateSrv.replace(namespaceQuery[1]);
+        const compartment = templateSrv.replace(namespaceQuery[2]);
+        const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
+        return namespaces.map(n => {
+          return { text: n.namespace, value: n.namespace };
+        });      
+      }
+    }
 
-    // const workgroupNamesQuery = query.match(/^workgroup_names\(([^\)]+?)\)/);
-    // if (workgroupNamesQuery) {
-    //   const region = templateSrv.replace(workgroupNamesQuery[1]);
-    //   const workgroupNames = await this.getWorkgroupNames(region);
-    //   return workgroupNames.map(n => {
-    //     return { text: n, value: n };
-    //   });
-    // }
-
-    // const namedQueryNamesQuery = query.match(/^named_query_names\(([^\)]+?)(,\s?.+)?\)/);
-    // if (namedQueryNamesQuery) {
-    //   const region = templateSrv.replace(namedQueryNamesQuery[1]);
-    //   let workGroup = namedQueryNamesQuery[2];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const namedQueryNames = await this.getNamedQueryNames(region, workGroup);
-    //   return namedQueryNames.map(n => {
-    //     return { text: n, value: n };
-    //   });
-    // }
 
     // const namedQueryQueryQuery = query.match(/^named_query_queries\(([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
     // if (namedQueryQueryQuery) {
@@ -385,6 +357,101 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return this.jsonData;
   }
   
+  getVariables() {
+    const templateSrv = getTemplateSrv();
+    return templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  getVariablesRaw() {
+    const templateSrv = getTemplateSrv();
+    return templateSrv.getVariables();
+  }  
+
+
+  // targetContainsTemplate(target: any) {
+  //   console.log(target)
+  //   // console.log(target.tenancyOCID)
+
+  //   if (this.templateSrv.containsTemplate(target)) {
+  //     return true;
+  //   }    
+  //   // if (target.tenancyOCID && target.tenancyOCID.length > 0) {
+  //   //   for (let i = 0; i < target.tenancyOCID.length; i++) {
+  //   //     if (this.templateSrv.containsTemplate(target.tenancyOCID[i].filter)) {
+  //   //       return true;
+  //   //     }
+  //   //   }
+  //   // }
+    
+  //   return false;
+  // }  
+
+
+ // **************************** Template variables helpers ****************************
+
+  /**
+   * Get all template variable descriptors
+   */
+  getVariableDescriptors(regex: string, includeCustom = true) {
+    const vars = this.templateSrv.getVariables() || [];
+
+    if (regex) {
+      let regexVars = vars.filter((item) => _.isString(item.name) && item.name.match(regex) !== null);
+      if (includeCustom) {
+        const custom = vars.filter(
+          (item) => item.type === "custom" || item.type === "constant"
+        );
+        regexVars = regexVars.concat(custom);
+      }
+      const uniqueRegexVarsMap = new Map();
+      regexVars.forEach((varObj) =>
+        uniqueRegexVarsMap.set(varObj.name, varObj)
+      );
+      return Array.from(uniqueRegexVarsMap.values());
+    }
+    return vars;
+  }
+
+  /**
+   * List all variable names optionally filtered by regex or/and type
+   * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
+   *
+   * Updates:
+   * Notes on implementation :
+   * If a custom or constant is in  variables and  includeCustom, default is false.
+   * Hence,the varDescriptors list is filtered for a unique set of var names
+   */
+  // getVariables2(regex: string, includeCustom: string) {
+  //   const varDescriptors =
+  //     this.getVariableDescriptors(regex, includeCustom) || [];
+  //   return varDescriptors.map((item) => `$${item.name}`);
+  // }
+
+  /**
+   * @param varName valid varName contains '$'. Example: '$dimensionKey'
+   * Returns an array with variable values or empty array
+   */
+  getVariableValue(varName: string, scopedVars = {}) {
+    return this.templateSrv.replace(varName, scopedVars) || varName;
+  }
+
+  /**
+   * @param varName valid varName contains '$'. Example: '$dimensionKey'
+   * Returns true if variable with the given name is found
+   */
+  isVariable(varName: string) {
+    const varNames = this.getVariables() || [];
+    console.log('variabili '+ varNames)
+    return !!varNames.find((item) => item === varName);
+  }
+
+//  appendVariables(options: string, varQueryRegex:string) {
+//     const vars = this.getVariables(varQueryRegex) || [];
+//     vars.forEach(value => {
+//       options.unshift({ value, text: value });
+//     });
+//     return options;
+//   }
 
   // main caller to call resource handler for get call
   async getResource(path: string): Promise<any> {
@@ -398,12 +465,21 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   async getTenancies(): Promise<OCIResourceItem[]> {
     return this.getResource(OCIResourceCall.Tenancies).then((response) => {
-      console.log ("Ritorno di Tenanci");
       return new ResponseParser().parseTenancies(response);
     });
   }
 
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("region vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("region tenancyOCID "+tenancyOCID)
+    }
+  
     if (tenancyOCID === '') {
       return [];
     }
@@ -415,7 +491,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });
   }
   async getCompartments(tenancyOCID: string): Promise<OCIResourceItem[]> {
-    console.log("COMP "+tenancyOCID)
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("COMP vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("COMP tenancyOCID "+tenancyOCID)
+    }    
     if (tenancyOCID === '') {
       return [];
     }
@@ -431,11 +515,43 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     compartmentOCID: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
+    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment } = this.interpolateProps({ tenancyOCID, region, compartmentOCID });
     console.log("NS")
     console.log("NS "+tenancyOCID)
     console.log("NS "+compartmentOCID)
     console.log("NS "+region)
+    console.log("NS "+var_region)
+    console.log("NS "+var_tenancy)
+    console.log("NS "+var_compartment)
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("NS vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("NS tenancyOCID "+tenancyOCID)
+    }
 
+    if (this.isVariable(compartmentOCID)) {
+      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+      console.log("NS vartenancy "+var_compartment)
+      if (var_compartment !== "") { 
+        compartmentOCID = var_compartment
+      }      
+    } else {
+      console.log("NS compartmentOCID "+compartmentOCID)
+    }
+
+    if (this.isVariable(region)) {
+      let { region: var_region} = this.interpolateProps({region});
+      console.log("NS vartenancy "+var_region)
+      if (var_region !== "") { 
+        region = var_region
+      }      
+    } else {
+      console.log("NS region "+region)
+    }
 
     if (tenancyOCID === '') {
       console.log("NS notenancy")
@@ -450,6 +566,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       console.log("NS compartmentOCID")
       compartmentOCID = '';
     }
+
+    console.log("NS2 "+tenancyOCID)
+    console.log("NS2 "+compartmentOCID)
+    console.log("NS2 "+region)
 
     const reqBody: JSON = {
       tenancy: tenancyOCID,
