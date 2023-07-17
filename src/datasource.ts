@@ -261,23 +261,23 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const namespace = templateSrv.replace(metricQuery[4]);
         // const resource_group = templateSrv.replace(metricQuery[4]);
         const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
-        return metric_names.map(n => {
-          return { text: n.metric_names, value: n.metric_names };
-        });
-  //       return this.metricFindQuery(target).catch((err) => {
-  //         throw new Error("Unable to get metrics: " + err);
-  //       });
-  //     } else {
-  //       let target = {
-  //         tenancy: DEFAULT_TENANCY,
-  //         region: removeQuotes(this.getVariableValue(metricQuery[1])),
-  //         compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
-  //         namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
-  //       };
-  //       return this.metricFindQuery(target).catch((err) => {
-  //         throw new Error("Unable to get metrics: " + err);
-  //       });        
+        return metric_names.flatMap(n => {
+          return n.metric_names.map(name => {
+            return { text: name, value: name };
+          });
+        });        
+      } else {
+        const tenancy = DEFAULT_TENANCY;
+        const region = templateSrv.replace(metricQuery[1]);
+        const compartment = templateSrv.replace(metricQuery[2]);
+        const namespace = templateSrv.replace(metricQuery[3]);
+        // const resource_group = templateSrv.replace(metricQuery[4]);
+        const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        return metric_names.flatMap(n => {
+          return n.metric_names.map(name => {
+            return { text: name, value: name };
+          });
+        });       
       }  
     }    
 
