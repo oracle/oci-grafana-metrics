@@ -16,7 +16,7 @@ import {
   // aggregations,
   // dimensionKeysQueryRegex,
   namespacesQueryRegex,
-  // resourcegroupsQueryRegex,
+  resourcegroupsQueryRegex,
   // metricsQueryRegex,
   regionsQueryRegex,
   tenanciesQueryRegex,
@@ -97,34 +97,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   //  */
   // templateMetricQuery(query: OCIQuery,varString: string) {
 
-
-
-
-
-  //   let resourcegroupQuery = varString.match(resourcegroupsQueryRegex);
-  //   if (resourcegroupQuery) {
-  //     if (this.tenancymode === "multitenancy") {
-  //       let target = {
-  //         tenancy: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
-  //         region: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
-  //         compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
-  //         namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[4])),
-  //       };
-  //       return this.getResourceGroups(target).catch((err) => {
-  //         throw new Error("Unable to get resourcegroups: " + err);
-  //       });
-  //     } else {
-  //       let target = {
-  //         tenancy: DEFAULT_TENANCY,
-  //         region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
-  //         compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
-  //         namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
-  //       };
-  //       return this.getResourceGroups(target).catch((err) => {
-  //         throw new Error("Unable to get resourcegroups: " + err);
-  //       });        
-  //     }
-  //   }
 
   //   let metricQuery = varString.match(metricsQueryRegex);
   //   if (metricQuery) {
@@ -284,24 +256,28 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }
     }
 
-
-    // const namedQueryQueryQuery = query.match(/^named_query_queries\(([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
-    // if (namedQueryQueryQuery) {
-    //   const region = templateSrv.replace(namedQueryQueryQuery[1]);
-    //   const pattern = templateSrv.replace(namedQueryQueryQuery[2], {}, 'regex');
-    //   let workGroup = namedQueryQueryQuery[3];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const namedQueryQueries = await this.getNamedQueryQueries(region, pattern, workGroup);
-    //   return namedQueryQueries.map(n => {
-    //     return { text: n, value: n };
-    //   });
-    // }
+    let resourcegroupQuery = query.match(resourcegroupsQueryRegex);
+    if (resourcegroupQuery) {
+      if (this.jsonData.tenancymode === "multitenancy") {
+        const tenancy = templateSrv.replace(resourcegroupQuery[1]);
+        const region = templateSrv.replace(resourcegroupQuery[2]);
+        const compartment = templateSrv.replace(resourcegroupQuery[3]);
+        const namespace = templateSrv.replace(resourcegroupQuery[4]);
+        const resource_group = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        return resource_group.map(n => {
+          return { text: n.resource_group, value: n.resource_group };
+        });
+      } else {
+        const tenancy = DEFAULT_TENANCY;
+        const region = templateSrv.replace(resourcegroupQuery[1]);
+        const compartment = templateSrv.replace(resourcegroupQuery[2]);
+        const namespace = templateSrv.replace(resourcegroupQuery[3]);
+        const resource_group = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        return resource_group.map(n => {
+          return { text: n.resource_group, value: n.resource_group };
+        });     
+      }
+    }
 
     // const queryExecutionIdsQuery = query.match(/^query_execution_ids\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
     // if (queryExecutionIdsQuery) {
