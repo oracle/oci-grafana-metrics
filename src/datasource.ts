@@ -279,12 +279,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const tenancy = DEFAULT_TENANCY;
         const region = templateSrv.replace(metricQuery[1]);
         const compartment = templateSrv.replace(metricQuery[2]);
-        // const namespace = templateSrv.replace(metricQuery[3]);
+        const namespace = templateSrv.replace(metricQuery[3]);
         // const resource_group = templateSrv.replace(metricQuery[4]);
-        const metric_names = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
+        const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        // const metric_names = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
         metric_names.forEach(n => {
           console.log("pippo pippo pippo" + n)
-        });
+        });   
         return metric_names.flatMap(n => {
           return n.metric_names.map(name => {
             return { text: name, value: name };
@@ -625,6 +626,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseResourceGroupWithMetricNames(response);
     });
   }
+
   async getDimensions(
     tenancyOCID: any,
     compartmentOCID: any,
@@ -632,6 +634,67 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     namespace: any,
     metricName: any
   ): Promise<OCIResourceMetadataItem[]> {
+    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment, namespace: var_namespace, metricName: var_metric } = this.interpolateProps({ tenancyOCID, region, compartmentOCID, namespace, metricName });
+    console.log("DIM")
+    console.log("DIM "+tenancyOCID)
+    console.log("DIM "+compartmentOCID)
+    console.log("DIM "+region)
+    console.log("DIM "+var_region)
+    console.log("DIM "+var_tenancy)
+    console.log("DIM "+var_compartment)
+    console.log("DIM "+var_namespace)
+    console.log("DIM "+var_metric)
+
+
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      console.log("DIM vartenancy "+var_tenancy)
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    } else {
+      console.log("DIM tenancyOCID "+tenancyOCID)
+    }
+
+    if (this.isVariable(compartmentOCID)) {
+      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+      console.log("DIM vartenancy "+var_compartment)
+      if (var_compartment !== "") { 
+        compartmentOCID = var_compartment
+      }      
+    } else {
+      console.log("DIM compartmentOCID "+compartmentOCID)
+    }
+
+    if (this.isVariable(region)) {
+      let { region: var_region} = this.interpolateProps({region});
+      console.log("DIM vartenancy "+var_region)
+      if (var_region !== "") { 
+        region = var_region
+      }      
+    } else {
+      console.log("DIM region "+region)
+    }
+
+    if (this.isVariable(namespace)) {
+      let { namespace: var_namespace} = this.interpolateProps({namespace});
+      console.log("DIM vartenancy "+var_namespace)
+      if (var_namespace !== "") { 
+        namespace = var_namespace
+      }      
+    } else {
+      console.log("DIM namespace "+namespace)
+    }
+
+    if (this.isVariable(metricName)) {
+      let { metricName: var_metric} = this.interpolateProps({metricName});
+      console.log("DIM vartenancy "+var_metric)
+      if (var_metric !== "") { 
+        metricName = var_metric
+      }      
+    } else {
+      console.log("DIM metric "+metricName)
+    }       
 
     if (tenancyOCID === '') {
       return [];
@@ -650,6 +713,12 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
       compartmentOCID = '';
     }
+
+    console.log("DIM2 "+tenancyOCID)
+    console.log("DIM2 "+compartmentOCID)
+    console.log("DIM2 "+region)    
+    console.log("DIM2 "+namespace)   
+    console.log("DIM2 "+metricName)   
 
     const reqBody: JSON = {
       tenancy: tenancyOCID,

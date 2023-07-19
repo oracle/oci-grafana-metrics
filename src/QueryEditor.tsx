@@ -197,19 +197,82 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  // const getMetricOptions = async () => {
+  //   let options: Array<SelectableValue<string>> = [];
+  //   options = addTemplateVariablesToOptions(options)
+  //   console.log("OOO0000 var_metric "+query.metricNames)
+  //   const response = query.metricNames || [];
+  //   console.log("OOO var_metric "+response)
+  //   console.log("OOO111111 var_metric "+response)    
+  //   response.forEach((item: any) => {
+  //     const sv: SelectableValue<string> = {
+  //       label: item,
+  //       value: item,
+  //     };
+  //     console.log("OOO222 var_metric "+sv.value)
+  //     options.push(sv);
+  //   });
+  //   return options;
+  // };
+
   const getMetricOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
-    const response = query.metricNames || [];
-    response.forEach((item: any) => {
-      const sv: SelectableValue<string> = {
-        label: item,
-        value: item,
-      };
-      options.push(sv);
-    });
+  //   console.log("OOO0000 var_metric "+query.metricNames)
+    // const response = query.metricNames || [];
+    // console.log("OOO var_metric "+response)
+    const response = await datasource.getResourceGroupsWithMetricNames(
+      query.tenancyOCID,
+      query.compartmentOCID,
+      query.region,
+      query.namespace
+    );
+    if (response) {
+      response.forEach((item: any) => {
+        item.metric_names.forEach((ii: any) => {
+          const sv: SelectableValue<string> = {
+            label: ii,
+            value: ii,
+          };
+          console.log("OOO111111 var_metric "+ii)    
+          options.push(sv);
+        });
+      });
+    }
     return options;
   };
+
+  // const getMetricOptions = async () => {
+  //   let options: Array<SelectableValue<string>> = [];
+  //   options = addTemplateVariablesToOptions(options);
+  //   if (datasource.isVariable(String(query.metric))) {
+  //     let { [String(query.metric)]: var_metric } = datasource.interpolateProps({ [String(query.metric)]: query.metric });
+  //     console.log("OOO var_metric "+var_metric)
+  //     if (var_metric !== "") { 
+  //       query.metric = var_metric
+  //     }      
+  //   } else {
+  //     console.log("OOO var_metric "+query.metric)
+  //   }    
+  //   const response = query.metricNames || [];
+  //   if (response.length === 0) {
+  //     const sv: SelectableValue<string> = {
+  //       label: '',
+  //       value: '',
+  //     };
+  //     options.push(sv);
+  //   } else {
+  //     response.forEach((item: any) => {
+  //       const sv: SelectableValue<string> = {
+  //         label: item,
+  //         value: item,
+  //       };
+  //       options.push(sv);
+  //     });
+  //   }
+  //   return options;
+  // };
+  
 
   const getAggregationOptions = async () => {
     let options: Array<SelectableValue<string>> = [];

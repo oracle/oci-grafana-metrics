@@ -1015,18 +1015,38 @@ func (o *OCIDatasource) GetResourceGroups(
 		)
 	}
 
-	for k, v := range metricResourceGroups {
-		metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
-			ResourceGroup: k,
-			MetricNames:   v,
-		})
+	reqDetails := monitoring.ListMetricsDetails{}
+	reqDetails.Namespace = common.String(namespace)
+	reqDetails.GroupBy = []string{"resourceGroup", "name"}
+	items, err := o.searchHelper(ctx, region, compartmentOCID, reqDetails, takey)
+	if err != nil {
+		return nil
 	}
 
-	if len(metricResourceGroupsList) > 0 {
+	if len(metricResourceGroups) == 0 {
+		var arca []string
+		for _, item := range items {
+			alfa := *(item.Name)
+			arca = append(arca, alfa)
+			backend.Logger.Debug("client", "GetResourceGroups k", "alfa the resource groups under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' "+alfa)
+		}
 		metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
 			ResourceGroup: constants.DEFAULT_RESOURCE_GROUP,
-			MetricNames:   []string{},
+			MetricNames:   arca,
 		})
+	} else {
+		for k, v := range metricResourceGroups {
+			metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
+				ResourceGroup: k,
+				MetricNames:   v,
+			})
+		}
+		if len(metricResourceGroupsList) > 0 {
+			metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
+				ResourceGroup: constants.DEFAULT_RESOURCE_GROUP,
+				MetricNames:   []string{},
+			})
+		}
 	}
 
 	// saving into the cache
@@ -1126,4 +1146,33 @@ func (o *OCIDatasource) GetDimensions(
 	o.cache.Wait()
 
 	return metricDimensionsList
+}
+
+func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails, takey string) ([]monitoring.Metric, error) {
+	var items []monitoring.Metric
+	var page *string
+
+	pageNumber := 0
+	for {
+		reg := common.StringToRegion(region)
+		o.tenancyAccess[takey].monitoringClient.SetRegion(string(reg))
+		res, err := o.tenancyAccess[takey].monitoringClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
+			CompartmentId:      common.String(compartment),
+			ListMetricsDetails: metricDetails,
+			Page:               page,
+		})
+
+		if err != nil {
+			return nil, errors.Wrap(err, "list metrics failed")
+		}
+		items = append(items, res.Items...)
+		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
+		if res.OpcNextPage == nil || pageNumber >= MaxPagesToFetch {
+			break
+		}
+
+		page = res.OpcNextPage
+		pageNumber++
+	}
+	return items, nil
 }
