@@ -242,38 +242,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
-  // const getMetricOptions = async () => {
-  //   let options: Array<SelectableValue<string>> = [];
-  //   options = addTemplateVariablesToOptions(options);
-  //   if (datasource.isVariable(String(query.metric))) {
-  //     let { [String(query.metric)]: var_metric } = datasource.interpolateProps({ [String(query.metric)]: query.metric });
-  //     console.log("OOO var_metric "+var_metric)
-  //     if (var_metric !== "") { 
-  //       query.metric = var_metric
-  //     }      
-  //   } else {
-  //     console.log("OOO var_metric "+query.metric)
-  //   }    
-  //   const response = query.metricNames || [];
-  //   if (response.length === 0) {
-  //     const sv: SelectableValue<string> = {
-  //       label: '',
-  //       value: '',
-  //     };
-  //     options.push(sv);
-  //   } else {
-  //     response.forEach((item: any) => {
-  //       const sv: SelectableValue<string> = {
-  //         label: item,
-  //         value: item,
-  //       };
-  //       options.push(sv);
-  //     });
-  //   }
-  //   return options;
-  // };
-  
-
   const getAggregationOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     AggregationOptions.forEach((item: any) => {
@@ -449,6 +417,15 @@ export const QueryEditor: React.FC<Props> = (props) => {
       query.regions = [...query.regions, { label: data.label, value: data.value }]
     }
     setRegionValue(data.value);
+    if (datasource.isVariable(String(data.value))) {
+      let { [String(data.value)]: var_region } = datasource.interpolateProps({ [String(data.value)]: data.value });
+      console.log("OOO var_region "+var_region)
+      if (var_region !== "") { 
+        data.value = var_region
+      }      
+    } else {
+      console.log("OOO var_region "+data.value)
+    }     
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
 
@@ -491,6 +468,15 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const onMetricChange = (data: any) => {
     setMetricValue(data);
+    if (datasource.isVariable(String(data.value))) {
+      let { [String(data.value)]: var_metric } = datasource.interpolateProps({ [String(data.value)]: data.value });
+      console.log("OOO var_metric "+var_metric)
+      if (var_metric !== "") { 
+        data.value = var_metric
+      }      
+    } else {
+      console.log("OOO var_metric "+data.value)
+    }      
     onApplyQueryChange({ ...query, metric: data.value });
   };
   const onAggregationChange = (data: any) => {
