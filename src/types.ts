@@ -239,6 +239,7 @@ export interface OCIQuery extends DataQuery {
   compartments?: any;
   compartmentName?: string;
   compartmentOCID?: string;
+  compartment?: string; // for legacy compatibility
   regions?: any;
   region?: string;
   namespace?: string;

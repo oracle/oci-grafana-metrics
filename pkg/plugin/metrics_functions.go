@@ -462,7 +462,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	// adding the resource group when provided
 	if len(requestParams.ResourceGroup) != 0 {
-		if requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_GROUP {
+		if requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER_LEGACY && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_GROUP {
 			metricsDataRequest.SummarizeMetricsDataDetails.ResourceGroup = &requestParams.ResourceGroup
 		}
 	}

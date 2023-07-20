@@ -14,6 +14,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
   const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
+  const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
@@ -564,6 +565,24 @@ export const QueryEditor: React.FC<Props> = (props) => {
   if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
     getTenancyDefault();
     setHasTenancyDefault(true);
+  }
+
+  if (query.compartment !== "" && !hasLegacyCompartment) {
+    console.log("Legacy compartment is present: " + query.compartment)
+    query.compartmentOCID = query.compartment
+    query.compartmentName = query.compartment
+    setCompartmentValue(query.compartment);
+    setHasLegacyCompartment(true);
+    // onApplyQueryChange(
+    //   {
+    //     ...query,
+    //     compartmentName: query.compartment,
+    //     compartmentOCID: query.compartment,
+    //     namespace: undefined,
+    //     metric: undefined,
+    //   },
+    //   false
+    // );    
   }
 
   return (
