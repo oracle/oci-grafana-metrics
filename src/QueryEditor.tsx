@@ -741,7 +741,4 @@ export const QueryEditor: React.FC<Props> = (props) => {
     </>
   );
 };
-function onRefresh() {
-  throw new Error('Function not implemented.');
-}
 
