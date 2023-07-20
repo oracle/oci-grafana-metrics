@@ -27,6 +27,8 @@ import {
   // AUTO,
 } from "./constants";
 // import _ from 'lodash';
+import QueryModel from './query_model';
+
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
@@ -77,6 +79,12 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     query.namespace = templateSrv.replace(query.namespace, scopedVars);
     query.resourceGroup = templateSrv.replace(query.resourceGroup, scopedVars);
     query.metric = templateSrv.replace(query.metric, scopedVars);
+    
+    const queryModel = new QueryModel(query, getTemplateSrv());
+    if (queryModel.isQueryReady()) {
+      query.queryText = queryModel.buildQuery(String(query.metric));
+    }
+    
     console.log("applyTemplateVariables: after region: " + query.region)
     console.log("applyTemplateVariables: after compartmentOCID: " + query.compartmentOCID)
     console.log("applyTemplateVariables: after tenancyOCID: " + query.tenancyOCID)

@@ -43,7 +43,7 @@ export default class QueryModel {
       this.target.queryText =
         incomingQuery.queryText || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
-      this.target.queryText = incomingQuery.queryText || this.buildQuery(this.target.metric);
+      this.target.queryText = incomingQuery.queryText || this.buildQuery(String(this.target.metric));
     }
   }
 
@@ -63,9 +63,7 @@ export default class QueryModel {
   
 
   buildQuery(queryText: string) {
-    // let queryText = this.target.metric;
-    
-    console.log("AAAAAAAAAAAA buildQuery() "+queryText)       
+    // let queryText = this.target.metric;     
 
     if (this.target.interval === QueryPlaceholder.Interval) {
       this.target.interval = IntervalOptions[0].value;
