@@ -13,7 +13,7 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
-  console.log(tmode)
+  console.log(tmode)   
   const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
@@ -23,14 +23,26 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [metricValue, setMetricValue] = useState(query.metric);
   // const [aggregationValue, setaggregationValue] = useState(query.aggregation);
   const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
-  const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
-
+  const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);  
+  
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
-    if (runQuery) {
+    if (runQuery) {        
       const queryModel = new QueryModel(changedQuery, getTemplateSrv());
+      // for metrics
+      if (datasource.isVariable(String(query.metric))) {
+        let { [String(query.metric)]: var_metric } = datasource.interpolateProps({ [String(query.metric)]: query.metric });
+        console.log("OOO var_metric "+var_metric)
+        if (var_metric !== "") { 
+          query.metric = var_metric
+        }
+      } else {
+        console.log("OOOelse var_metric "+query.metric)
+      } 
+      console.log("OOO changedQuery.queryText "+changedQuery.queryText)       
       if (queryModel.isQueryReady()) {
-        changedQuery.queryText = queryModel.buildQuery();
+    
+        changedQuery.queryText = queryModel.buildQuery(String(query.metric));
 
         onChange({ ...changedQuery });
         onRunQuery();
@@ -416,16 +428,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     if (query.regions && data.__isNew__) {
       query.regions = [...query.regions, { label: data.label, value: data.value }]
     }
-    setRegionValue(data.value);
-    if (datasource.isVariable(String(data.value))) {
-      let { [String(data.value)]: var_region } = datasource.interpolateProps({ [String(data.value)]: data.value });
-      console.log("OOO var_region "+var_region)
-      if (var_region !== "") { 
-        data.value = var_region
-      }      
-    } else {
-      console.log("OOO var_region "+data.value)
-    }     
+    setRegionValue(data.value);   
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
 
@@ -441,7 +444,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     //     );
     //   }, 0);
     // });
-    setNamespaceValue(data);
+    setNamespaceValue(data);  
     onApplyQueryChange(
       {
         ...query,
@@ -468,15 +471,15 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const onMetricChange = (data: any) => {
     setMetricValue(data);
-    if (datasource.isVariable(String(data.value))) {
-      let { [String(data.value)]: var_metric } = datasource.interpolateProps({ [String(data.value)]: data.value });
-      console.log("OOO var_metric "+var_metric)
-      if (var_metric !== "") { 
-        data.value = var_metric
-      }      
-    } else {
-      console.log("OOO var_metric "+data.value)
-    }      
+    // if (datasource.isVariable(String(data.value))) {
+    //   let { [String(data.value)]: var_metric } = datasource.interpolateProps({ [String(data.value)]: data.value });
+    //   console.log("OOO var_metric "+var_metric)
+    //   if (var_metric !== "") { 
+    //     data.value = var_metric
+    //   }      
+    // } else {
+    //   console.log("OOO var_metric "+data.value)
+    // }      
     onApplyQueryChange({ ...query, metric: data.value });
   };
   const onAggregationChange = (data: any) => {
@@ -738,3 +741,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     </>
   );
 };
+function onRefresh() {
+  throw new Error('Function not implemented.');
+}
+

@@ -43,7 +43,7 @@ export default class QueryModel {
       this.target.queryText =
         incomingQuery.queryText || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
-      this.target.queryText = incomingQuery.queryText || this.buildQuery();
+      this.target.queryText = incomingQuery.queryText || this.buildQuery(this.target.metric);
     }
   }
 
@@ -60,10 +60,16 @@ export default class QueryModel {
 
     return true;
   }
+  
 
-  buildQuery() {
-    let queryText = this.target.metric;
+  buildQuery(queryText: string) {
+    // let queryText = this.target.metric;
+    
+    console.log("AAAAAAAAAAAA buildQuery() "+queryText)       
 
+    if (this.target.interval === QueryPlaceholder.Interval) {
+      this.target.interval = IntervalOptions[0].value;
+    }   
     // for default interval
     if (this.target.interval === QueryPlaceholder.Interval) {
       this.target.interval = IntervalOptions[0].value;

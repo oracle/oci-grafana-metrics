@@ -50,6 +50,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
 
   query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
+    console.log("query(options: ")
+
     return super.query(options);
   }
 
@@ -458,14 +460,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     compartmentOCID: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
-    // let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment } = this.interpolateProps({ tenancyOCID, region, compartmentOCID });
-    let { tenancyOCID: var_tenancy, compartmentOCID: var_compartment } = this.interpolateProps({ tenancyOCID, region, compartmentOCID });
+    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment } = this.interpolateProps({ tenancyOCID, region, compartmentOCID });
 
     console.log("NS")
     console.log("NS "+tenancyOCID)
     console.log("NS "+compartmentOCID)
     console.log("NS "+region)
-    // console.log("NS "+var_region)
+    console.log("NS "+var_region)
     console.log("NS "+var_tenancy)
     console.log("NS "+var_compartment)
     if (this.isVariable(tenancyOCID)) {
@@ -488,15 +489,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       console.log("NS compartmentOCID "+compartmentOCID)
     }
 
-    // if (this.isVariable(region)) {
-    //   let { region: var_region} = this.interpolateProps({region});
-    //   console.log("NS vartenancy "+var_region)
-    //   if (var_region !== "") { 
-    //     region = var_region
-    //   }      
-    // } else {
-    //   console.log("NS region "+region)
-    // }
+    if (this.isVariable(region)) {
+      let { region: var_region} = this.interpolateProps({region});
+      console.log("NS vartenancy "+var_region)
+      if (var_region !== "") { 
+        region = var_region
+      }      
+    } else {
+      console.log("NS region "+region)
+    }
 
     if (tenancyOCID === '') {
       console.log("NS notenancy")
