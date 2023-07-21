@@ -22,7 +22,7 @@ import {
   tenanciesQueryRegex,
   DEFAULT_TENANCY,
   compartmentsQueryRegex,
-  dimensionValuesQueryRegex,
+  // dimensionValuesQueryRegex,
   // removeQuotes,
   // AUTO,
 } from "./constants";
@@ -70,9 +70,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("applyTemplateVariables: before namespace: " + query.namespace)
     console.log("applyTemplateVariables: before resourceGroup: " + query.resourceGroup)
     console.log("applyTemplateVariables: before metric: " + query.metric)
+
     if (query.dimensionValues) {
       for (let i = 0; i < query.dimensionValues.length; i++) {
-        console.log("applyTemplateVariables: before metric: " + query.dimensionValues[i])
+        console.log("applyTemplateVariables: before dimvalues: " + query.dimensionValues[i])
       }
     }     
 
@@ -101,7 +102,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("applyTemplateVariables: after metric: " + query.metric)
     if (query.dimensionValues) {
       for (let i = 0; i < query.dimensionValues.length; i++) {
-        console.log("applyTemplateVariables: after metric: " + query.dimensionValues[i])
+        console.log("applyTemplateVariables: after dimvalues: " + query.dimensionValues[i])
       }
     }    
 
@@ -252,58 +253,61 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     const dimensionsQuery = query.match(dimensionKeysQueryRegex);
     if (dimensionsQuery) {
       if (this.jsonData.tenancymode === "multitenancy") {
-        const tenancy = templateSrv.replace(metricQuery[1]);
-        const region = templateSrv.replace(metricQuery[2]);
-        const compartment = templateSrv.replace(metricQuery[3]);
-        const namespace = templateSrv.replace(metricQuery[4]);
-        const metric = templateSrv.replace(metricQuery[5]);
+        const tenancy = templateSrv.replace(dimensionsQuery[1]);
+        const region = templateSrv.replace(dimensionsQuery[2]);
+        const compartment = templateSrv.replace(dimensionsQuery[3]);
+        const namespace = templateSrv.replace(dimensionsQuery[4]);
+        const metric = templateSrv.replace(dimensionsQuery[5]);
         const dimension_keys = await this.getDimensions(tenancy, compartment, region, namespace, metric);
         return dimension_keys.map(n => {
           return { text: n.key, value: n.key };
         });
       } else {
         const tenancy = DEFAULT_TENANCY;
-        const region = templateSrv.replace(metricQuery[1]);
-        const compartment = templateSrv.replace(metricQuery[2]);
-        const namespace = templateSrv.replace(metricQuery[3]);
-        const metric = templateSrv.replace(metricQuery[4]);
-        const dimension_keys = await this.getDimensions(tenancy, compartment, region, namespace, metric);
-        return dimension_keys.map(n => {
-          return { text: n.key, value: n.key };
-        });       
+        const region = templateSrv.replace(dimensionsQuery[1]);
+        const compartment = templateSrv.replace(dimensionsQuery[2]);
+        const namespace = templateSrv.replace(dimensionsQuery[3]);
+        const metric = templateSrv.replace(dimensionsQuery[4]);
+        const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
+        return dimension_values.flatMap(res => {
+          return res.values.map(val => {
+              return { text: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
+          });
+        }); 
       }      
     }
 
-    const dimensionOptionsQuery = query.match(dimensionValuesQueryRegex);
-    if (dimensionOptionsQuery) {
-      if (this.jsonData.tenancymode === "multitenancy") {
-        const tenancy = templateSrv.replace(metricQuery[1]);
-        const region = templateSrv.replace(metricQuery[2]);
-        const compartment = templateSrv.replace(metricQuery[3]);
-        const namespace = templateSrv.replace(metricQuery[4]);
-        const metric = templateSrv.replace(metricQuery[5]);
-        const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
-        return dimension_values.flatMap(n => {
-          return n.values.map(values => {
-            console.log("dimension_values "+values)
-            return { text: values, value: values };
-          });
-        });
-      } else {
-        const tenancy = DEFAULT_TENANCY;
-        const region = templateSrv.replace(metricQuery[1]);
-        const compartment = templateSrv.replace(metricQuery[2]);
-        const namespace = templateSrv.replace(metricQuery[3]);
-        const metric = templateSrv.replace(metricQuery[4]);
-        const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
-        return dimension_values.flatMap(n => {
-          return n.values.map(values => {
-            console.log("dimension_values "+values)
-            return { text: values, value: values };
-          });
-        });      
-      }      
-    }    
+    // const dimensionOptionsQuery = query.match(dimensionValuesQueryRegex);
+    // if (dimensionOptionsQuery) {
+    //   if (this.jsonData.tenancymode === "multitenancy") {
+    //     const tenancy = templateSrv.replace(dimensionOptionsQuery[1]);
+    //     const region = templateSrv.replace(dimensionOptionsQuery[2]);
+    //     const compartment = templateSrv.replace(dimensionOptionsQuery[3]);
+    //     const namespace = templateSrv.replace(dimensionOptionsQuery[4]);
+    //     const metric = templateSrv.replace(dimensionOptionsQuery[5]);
+    //     const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
+    //     return dimension_values.flatMap(n => {
+    //       return n.values.map(values => {
+    //         console.log("dimension_values "+values)
+    //         return { text: values, value: values };
+    //       });
+    //     });
+    //   } else {
+    //     const tenancy = DEFAULT_TENANCY;
+    //     const region = templateSrv.replace(dimensionOptionsQuery[1]);
+    //     const compartment = templateSrv.replace(dimensionOptionsQuery[2]);
+    //     const namespace = templateSrv.replace(dimensionOptionsQuery[3]);
+    //     const metric = templateSrv.replace(dimensionOptionsQuery[4]);
+    //     const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
+    //     console.log("dimension_values "+dimension_values)
+    //     return dimension_values.flatMap(n => {
+    //       return n.values.map(values => {
+    //         console.log("dimension_values "+values)
+    //         return { text: values, value: values };
+    //       });
+    //     });      
+    //   }      
+    // }    
 
     return [];
   }

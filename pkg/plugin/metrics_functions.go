@@ -309,12 +309,12 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		OCID: tenancyocid,
 	})
 
-	if len(compartmentList) > 1 {
-		compartmentList = append(compartmentList, models.OCIResource{
-			Name: constants.ALL_COMPARTMENT,
-			OCID: "",
-		})
-	}
+	// if len(compartmentList) > 1 {
+	// 	compartmentList = append(compartmentList, models.OCIResource{
+	// 		Name: constants.ALL_COMPARTMENT,
+	// 		OCID: "",
+	// 	})
+	// }
 
 	// sorting based on compartment name
 	sort.SliceStable(compartmentList, func(i, j int) bool {

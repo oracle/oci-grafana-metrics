@@ -278,7 +278,36 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  // const getDimensionOptions = () => {
+  //   let options: Array<SelectableValue<string>> = [];
+  //   options = addTemplateVariablesToOptions(options)    
+  //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
+  //     setTimeout(async () => {
+  //       const response = await datasource.getDimensions(
+  //         query.tenancyOCID,
+  //         query.compartmentOCID,
+  //         query.region,
+  //         query.namespace,
+  //         query.metric
+  //       );
+  //       const result = response.map((res: any) => {
+  //         return {
+  //           label: res.key,
+  //           value: res.key,
+  //           options: res.values.map((val: any) => {
+  //             return { label: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
+  //           }),
+  //         };
+  //       });
+  //       options.push(...result);
+  //       resolve(result);
+  //     }, 0);
+  //   });
+  // };
+
   const getDimensionOptions = () => {
+    let templateOptions: Array<SelectableValue<string>> = [];
+    templateOptions = addTemplateVariablesToOptions(templateOptions);
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource.getDimensions(
@@ -297,10 +326,20 @@ export const QueryEditor: React.FC<Props> = (props) => {
             }),
           };
         });
+        templateOptions.forEach((option) => {
+          result.push({
+            label: option.label,
+            value: option.value,
+            options: [{ label: option.label, value: option.value }]
+          });
+        });
         resolve(result);
       }, 0);
     });
   };
+  
+  
+
   // const getTagOptions = () => {
   //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
   //     setTimeout(async () => {
