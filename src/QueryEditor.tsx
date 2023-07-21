@@ -569,13 +569,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
     console.log("Legacy compartment is present: " + query.compartment)
-    console.log("Legacy compartment is present lunghezza: " + String(query.compartmentOCID?.length))
-
     query.compartmentOCID = query.compartment
     query.compartmentName = query.compartment
     setCompartmentValue(query.compartment);
     setHasLegacyCompartment(true);
-    console.log("Legacy compartment is present lunghezza DUE: " + String(query.compartmentOCID?.length))
   }
 
   return (
