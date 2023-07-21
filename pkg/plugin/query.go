@@ -36,19 +36,20 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	}
 
 	metricsDataRequest := models.MetricsDataRequest{
-		TenancyOCID:     qm.TenancyOCID,
-		CompartmentOCID: qm.CompartmentOCID,
-		CompartmentName: qm.CompartmentName,
-		Region:          qm.Region,
-		Namespace:       qm.Namespace,
-		QueryText:       qm.QueryText,
-		Interval:        qm.Interval[1 : len(qm.Interval)-1],
-		ResourceGroup:   qm.ResourceGroup,
-		DimensionValues: qm.DimensionValues,
-		LegendFormat:    qm.LegendFormat,
-		TagsValues:      qm.TagsValues,
-		StartTime:       query.TimeRange.From.UTC(),
-		EndTime:         query.TimeRange.To.UTC(),
+		TenancyOCID:       qm.TenancyOCID,
+		CompartmentOCID:   qm.CompartmentOCID,
+		CompartmentName:   qm.CompartmentName,
+		CompartmentLegacy: qm.CompartmentLegacy,
+		Region:            qm.Region,
+		Namespace:         qm.Namespace,
+		QueryText:         qm.QueryText,
+		Interval:          qm.Interval[1 : len(qm.Interval)-1],
+		ResourceGroup:     qm.ResourceGroup,
+		DimensionValues:   qm.DimensionValues,
+		LegendFormat:      qm.LegendFormat,
+		TagsValues:        qm.TagsValues,
+		StartTime:         query.TimeRange.From.UTC(),
+		EndTime:           query.TimeRange.To.UTC(),
 	}
 
 	// create data frame response

@@ -456,8 +456,14 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	// to search for all copartments
 	if len(requestParams.CompartmentOCID) == 0 {
-		metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
-		metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
+		if len(requestParams.CompartmentLegacy) == 0 {
+			metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
+			metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
+		} else {
+			o.logger.Debug("Query is using CompartmentLegacy", "CompartmentLegacy ", requestParams.CompartmentLegacy)
+			metricsDataRequest.CompartmentId = common.String(requestParams.CompartmentLegacy)
+			requestParams.CompartmentOCID = requestParams.CompartmentLegacy
+		}
 	}
 
 	// adding the resource group when provided
