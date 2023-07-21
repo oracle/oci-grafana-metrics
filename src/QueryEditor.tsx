@@ -567,7 +567,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     setHasTenancyDefault(true);
   }
 
-  if (query.compartment !== "" && !hasLegacyCompartment) {
+  if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
     console.log("Legacy compartment is present: " + query.compartment)
     console.log("Legacy compartment is present lunghezza: " + String(query.compartmentOCID?.length))
 
