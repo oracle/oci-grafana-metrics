@@ -52,8 +52,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
 
   query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
-    console.log("query(options: ")
-
     return super.query(options);
   }
 
@@ -72,6 +70,11 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("applyTemplateVariables: before namespace: " + query.namespace)
     console.log("applyTemplateVariables: before resourceGroup: " + query.resourceGroup)
     console.log("applyTemplateVariables: before metric: " + query.metric)
+    if (query.dimensionValues) {
+      for (let i = 0; i < query.dimensionValues.length; i++) {
+        console.log("applyTemplateVariables: before metric: " + query.dimensionValues[i])
+      }
+    }     
 
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
@@ -96,6 +99,11 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("applyTemplateVariables: after namespace: " + query.namespace)
     console.log("applyTemplateVariables: after resourceGroup: " + query.resourceGroup)
     console.log("applyTemplateVariables: after metric: " + query.metric)
+    if (query.dimensionValues) {
+      for (let i = 0; i < query.dimensionValues.length; i++) {
+        console.log("applyTemplateVariables: after metric: " + query.dimensionValues[i])
+      }
+    }    
 
     return query;
   }
