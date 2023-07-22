@@ -11,11 +11,8 @@ import { OCIDataSourceOptions } from './types';
 import {
   AuthProviders,
   regions,
-  // MultiTenancyChoices,
   TenancyChoices,
   AuthProviderOptions,
-  // MultiTenancyChoiceOptions,
-  // MultitenancymodeOptions,
   TenancyChoiceOptions,
 } from './config.options';
 

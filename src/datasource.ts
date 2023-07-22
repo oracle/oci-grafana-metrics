@@ -25,7 +25,7 @@ import {
   // dimensionValuesQueryRegex,
   // removeQuotes,
   // AUTO,
-} from "./constants";
+} from "./query.options";
 // import _ from 'lodash';
 import QueryModel from './query_model';
 
