@@ -76,7 +76,7 @@
     "prettier": "^2.5.0",
     "prunk": "^1.3.0",
     "q": "^1.5.0",
-    "@types/lodash": "latest",
+    "@types/lodash": "4.14.195",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "replace-in-file-webpack-plugin": "^1.0.6",
@@ -91,7 +91,9 @@
     "@typescript-eslint/parser": "^5.0.0",    
     "webpack": "^5.69.1",
     "webpack-cli": "^5.0.1",
-    "webpack-livereload-plugin": "^3.0.2"
+    "webpack-livereload-plugin": "^3.0.2",
+    "babel-loader": "^8.0.2",
+    "mocha": "6.x || 7.x || 8.x"   
   },
   "dependencies": {
     "@apache-arrow/es5-cjs": "^4.0.1",
