@@ -1,15 +1,11 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+*/
+
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-// export interface OCIQuery extends DataQuery {
-//   multiplier: number;
-//   queryType: string;
-//   region: string;
-//   compartment: string;
-//   tenancy: string;
-//   namespace: string
-//   resourcegroup: string;  
-// }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}
 
@@ -26,24 +22,6 @@ export interface OCIConfigSec {
   tenancyOcid?: string;
   fingerprint?: string;
   apiKey?: string;
-}
-
-
-export enum Protocol {
-  NATIVE = 'native',
-  HTTP = 'http',
-}
-
-export enum Format {
-  TIMESERIES = 0,
-  TABLE = 1,
-  LOGS = 2,
-}
-
-//#region Query
-export enum QueryType {
-  SQL = 'sql',
-  Builder = 'builder',
 }
 
 
@@ -165,8 +143,6 @@ export type Filter = NullFilter | BooleanFilter | NumberFilter | DateFilter | St
 //#endregion
 
 export enum DefaultOCIOptions {
-  ConfigPath = '~/.oci/config',
-  MultiTenanciesFile = '~/.oci/tenancies',
   ConfigProfile = 'DEFAULT',
 }
 

@@ -1,3 +1,9 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+*/
+
+
 import { Observable } from 'rxjs';
 import _,{ isString} from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
@@ -14,7 +20,7 @@ import {
 } from './resource.response.parser';
 import {
   // aggregations,
-  dimensionKeysQueryRegex,
+  dimensionQueryRegex,
   namespacesQueryRegex,
   resourcegroupsQueryRegex,
   metricsQueryRegex,
@@ -250,7 +256,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }  
     }    
 
-    const dimensionsQuery = query.match(dimensionKeysQueryRegex);
+    const dimensionsQuery = query.match(dimensionQueryRegex);
     if (dimensionsQuery) {
       if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(dimensionsQuery[1]);
