@@ -332,6 +332,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
           };
         });
         templateOptions.forEach((option) => {
+          console.log("templateOption label "+option.label)
+          console.log("templateOption value "+option.value)
           result.push({
             label: option.label,
             value: option.value,

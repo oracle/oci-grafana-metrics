@@ -281,39 +281,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
           });
         }); 
       }      
-    }
-
-    // const dimensionOptionsQuery = query.match(dimensionValuesQueryRegex);
-    // if (dimensionOptionsQuery) {
-    //   if (this.jsonData.tenancymode === "multitenancy") {
-    //     const tenancy = templateSrv.replace(dimensionOptionsQuery[1]);
-    //     const region = templateSrv.replace(dimensionOptionsQuery[2]);
-    //     const compartment = templateSrv.replace(dimensionOptionsQuery[3]);
-    //     const namespace = templateSrv.replace(dimensionOptionsQuery[4]);
-    //     const metric = templateSrv.replace(dimensionOptionsQuery[5]);
-    //     const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
-    //     return dimension_values.flatMap(n => {
-    //       return n.values.map(values => {
-    //         console.log("dimension_values "+values)
-    //         return { text: values, value: values };
-    //       });
-    //     });
-    //   } else {
-    //     const tenancy = DEFAULT_TENANCY;
-    //     const region = templateSrv.replace(dimensionOptionsQuery[1]);
-    //     const compartment = templateSrv.replace(dimensionOptionsQuery[2]);
-    //     const namespace = templateSrv.replace(dimensionOptionsQuery[3]);
-    //     const metric = templateSrv.replace(dimensionOptionsQuery[4]);
-    //     const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
-    //     console.log("dimension_values "+dimension_values)
-    //     return dimension_values.flatMap(n => {
-    //       return n.values.map(values => {
-    //         console.log("dimension_values "+values)
-    //         return { text: values, value: values };
-    //       });
-    //     });      
-    //   }      
-    // }    
+    } 
 
     return [];
   }
@@ -438,14 +406,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("region vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("region tenancyOCID "+tenancyOCID)
     }
-  
     if (tenancyOCID === '') {
       return [];
     }
@@ -460,13 +424,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   async getCompartments(tenancyOCID: string): Promise<OCIResourceItem[]> {
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("COMP vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("COMP tenancyOCID "+tenancyOCID)
-    }    
+    }   
     if (tenancyOCID === '') {
       return [];
     }
@@ -483,43 +444,25 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     compartmentOCID: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
-    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment } = this.interpolateProps({ tenancyOCID, region, compartmentOCID });
-
-    console.log("NS")
-    console.log("NS "+tenancyOCID)
-    console.log("NS "+compartmentOCID)
-    console.log("NS "+region)
-    console.log("NS "+var_region)
-    console.log("NS "+var_tenancy)
-    console.log("NS "+var_compartment)
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("NS vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("NS tenancyOCID "+tenancyOCID)
     }
 
     if (this.isVariable(compartmentOCID)) {
       let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
-      console.log("NS vartenancy "+var_compartment)
       if (var_compartment !== "") { 
         compartmentOCID = var_compartment
       }      
-    } else {
-      console.log("NS compartmentOCID "+compartmentOCID)
     }
 
     if (this.isVariable(region)) {
       let { region: var_region} = this.interpolateProps({region});
-      console.log("NS vartenancy "+var_region)
       if (var_region !== "") { 
         region = var_region
       }      
-    } else {
-      console.log("NS region "+region)
     }
 
     if (tenancyOCID === '') {
@@ -557,54 +500,33 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     region: any,
     namespace: any
   ): Promise<OCIResourceGroupWithMetricNamesItem[]> {
-    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment, namespace: var_namespace } = this.interpolateProps({ tenancyOCID, region, compartmentOCID, namespace });
-    console.log("RG")
-    console.log("RG "+tenancyOCID)
-    console.log("RG "+compartmentOCID)
-    console.log("RG "+region)
-    console.log("RG "+var_region)
-    console.log("RG "+var_tenancy)
-    console.log("RG "+var_compartment)
-    console.log("RG "+var_namespace)
 
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("RG vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("RG tenancyOCID "+tenancyOCID)
     }
 
     if (this.isVariable(compartmentOCID)) {
       let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
-      console.log("RG vartenancy "+var_compartment)
       if (var_compartment !== "") { 
         compartmentOCID = var_compartment
       }      
-    } else {
-      console.log("RG compartmentOCID "+compartmentOCID)
     }
 
     if (this.isVariable(region)) {
       let { region: var_region} = this.interpolateProps({region});
-      console.log("RG vartenancy "+var_region)
       if (var_region !== "") { 
         region = var_region
       }      
-    } else {
-      console.log("RG region "+region)
     }
 
     if (this.isVariable(namespace)) {
       let { namespace: var_namespace} = this.interpolateProps({namespace});
-      console.log("RG vartenancy "+var_namespace)
       if (var_namespace !== "") { 
         namespace = var_namespace
       }      
-    } else {
-      console.log("RG namespace "+namespace)
     }    
 
     if (tenancyOCID === '') {
@@ -658,66 +580,40 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     namespace: any,
     metricName: any
   ): Promise<OCIResourceMetadataItem[]> {
-    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment, namespace: var_namespace, metricName: var_metric } = this.interpolateProps({ tenancyOCID, region, compartmentOCID, namespace, metricName });
-    console.log("DIM")
-    console.log("DIM "+tenancyOCID)
-    console.log("DIM "+compartmentOCID)
-    console.log("DIM "+region)
-    console.log("DIM "+var_region)
-    console.log("DIM "+var_tenancy)
-    console.log("DIM "+var_compartment)
-    console.log("DIM "+var_namespace)
-    console.log("DIM "+var_metric)
-
 
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("DIM vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("DIM tenancyOCID "+tenancyOCID)
     }
 
     if (this.isVariable(compartmentOCID)) {
       let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
-      console.log("DIM vartenancy "+var_compartment)
       if (var_compartment !== "") { 
         compartmentOCID = var_compartment
       }      
-    } else {
-      console.log("DIM compartmentOCID "+compartmentOCID)
     }
 
     if (this.isVariable(region)) {
       let { region: var_region} = this.interpolateProps({region});
-      console.log("DIM vartenancy "+var_region)
       if (var_region !== "") { 
         region = var_region
       }      
-    } else {
-      console.log("DIM region "+region)
     }
 
     if (this.isVariable(namespace)) {
       let { namespace: var_namespace} = this.interpolateProps({namespace});
-      console.log("DIM vartenancy "+var_namespace)
       if (var_namespace !== "") { 
         namespace = var_namespace
       }      
-    } else {
-      console.log("DIM namespace "+namespace)
     }
 
     if (this.isVariable(metricName)) {
       let { metricName: var_metric} = this.interpolateProps({metricName});
-      console.log("DIM vartenancy "+var_metric)
       if (var_metric !== "") { 
         metricName = var_metric
       }      
-    } else {
-      console.log("DIM metric "+metricName)
     }       
 
     if (tenancyOCID === '') {

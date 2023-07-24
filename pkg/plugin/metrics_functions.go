@@ -1024,8 +1024,11 @@ func (o *OCIDatasource) GetResourceGroups(
 	reqDetails := monitoring.ListMetricsDetails{}
 	reqDetails.Namespace = common.String(namespace)
 	reqDetails.GroupBy = []string{"resourceGroup", "name"}
-	items, err := o.searchHelper(ctx, region, compartmentOCID, reqDetails, takey)
+
+	// retrieve metric list for template var
+	items, err := o.getListMetrics(ctx, region, compartmentOCID, reqDetails, takey)
 	if err != nil {
+		backend.Logger.Debug("client", "GetResourceGroups", "Error retrieving metric list under compartment '"+compartmentOCID+"'")
 		return nil
 	}
 
@@ -1034,7 +1037,6 @@ func (o *OCIDatasource) GetResourceGroups(
 		for _, item := range items {
 			alfa := *(item.Name)
 			arca = append(arca, alfa)
-			backend.Logger.Debug("client", "GetResourceGroups k", "alfa the resource groups under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' "+alfa)
 		}
 		metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
 			ResourceGroup: constants.DEFAULT_RESOURCE_GROUP,
@@ -1154,7 +1156,7 @@ func (o *OCIDatasource) GetDimensions(
 	return metricDimensionsList
 }
 
-func (o *OCIDatasource) searchHelper(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails, takey string) ([]monitoring.Metric, error) {
+func (o *OCIDatasource) getListMetrics(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails, takey string) ([]monitoring.Metric, error) {
 	var items []monitoring.Metric
 	var page *string
 
