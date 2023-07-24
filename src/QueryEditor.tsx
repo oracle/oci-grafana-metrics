@@ -176,6 +176,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const getNamespaceOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
+    if (query.compartment && !query.compartmentOCID) {
+      console.log("Legacy compartment is present: " + query.compartment)
+      query.compartmentOCID = query.compartment
+      query.compartmentName = query.compartment
+    }    
     const response = await datasource.getNamespacesWithMetricNames(
       query.tenancyOCID,
       query.compartmentOCID,

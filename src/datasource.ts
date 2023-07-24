@@ -260,14 +260,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     if (dimensionsQuery) {
       if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(dimensionsQuery[1]);
-        const region = templateSrv.replace(dimensionsQuery[2]);
-        const compartment = templateSrv.replace(dimensionsQuery[3]);
-        const namespace = templateSrv.replace(dimensionsQuery[4]);
-        const metric = templateSrv.replace(dimensionsQuery[5]);
-        const dimension_keys = await this.getDimensions(tenancy, compartment, region, namespace, metric);
-        return dimension_keys.map(n => {
-          return { text: n.key, value: n.key };
-        });
+        const region = templateSrv.replace(dimensionsQuery[1]);
+        const compartment = templateSrv.replace(dimensionsQuery[2]);
+        const namespace = templateSrv.replace(dimensionsQuery[3]);
+        const metric = templateSrv.replace(dimensionsQuery[4]);
+        const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
+        return dimension_values.flatMap(res => {
+          return res.values.map(val => {
+              return { text: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
+          });
+        }); 
       } else {
         const tenancy = DEFAULT_TENANCY;
         const region = templateSrv.replace(dimensionsQuery[1]);
