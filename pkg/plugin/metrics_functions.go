@@ -593,14 +593,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 						continue
 					}
 
-					// adjustment for previous non-existance values
-					// when the time comes in later data points
-					// dataValuesWithTime[t] = []float64{0.0}
-					// for i := 2; i < resourcesFetched; i++ {
-					// 	dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
-					// }
-					// dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
-
 					// adjustment for previous non-existance values with the immediate previous value
 					// when the time comes in later data points
 					dataValuesWithTime[t] = []float64{previousValue}
@@ -640,23 +632,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 				UniqueDataID: uniqueDataID,
 				Labels:       labelsToAdd,
 			}
-
-			// // adding cmdb data as labels
-			// for ocid, cmdbData := range oc.cmdbData[tenancyName] {
-			// 	if ocid != uniqueDataID {
-			// 		// when there is no data for the resource ocid
-			// 		continue
-			// 	}
-
-			// 	dp := dataPointsWithResourceSerialNo[resourcesFetched-1]
-
-			// 	// adding to the existing labels
-			// 	for k, v := range cmdbData {
-			// 		dp.Labels[k] = v
-			// 	}
-
-			// 	dataPointsWithResourceSerialNo[resourcesFetched-1] = dp
-			// }
 		}
 
 		return true
