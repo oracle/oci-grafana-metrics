@@ -95,7 +95,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
   // const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
-  // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]); 
 
   // Appends all available template variables to options used by dropdowns
   const addTemplateVariablesToOptions = (options: Array<SelectableValue<string>>) => {
@@ -330,26 +329,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //     }, 0);
   //   });
   // };
-  // const getGroupByOptions = () => {
-  //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
-  //     setTimeout(async () => {
-  //       const response = await datasource.getDimensions(
-  //         query.tenancyOCID,
-  //         query.compartmentOCID,
-  //         query.region,
-  //         query.namespace,
-  //         query.metric
-  //       );
-  //       const result = response.map((res: any) => {
-  //         return {
-  //           label: res.key,
-  //           value: res.key,
-  //         };
-  //       });
-  //       resolve(result);
-  //     }, 0);
-  //   });
-  // };
 
 
   const getTenancyDefault = async () => {
@@ -473,16 +452,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onMetricChange = (data: any) => {
-    setMetricValue(data);
-    // if (datasource.isVariable(String(data.value))) {
-    //   let { [String(data.value)]: var_metric } = datasource.interpolateProps({ [String(data.value)]: data.value });
-    //   console.log("OOO var_metric "+var_metric)
-    //   if (var_metric !== "") { 
-    //     data.value = var_metric
-    //   }      
-    // } else {
-    //   console.log("OOO var_metric "+data.value)
-    // }      
+    setMetricValue(data);     
     onApplyQueryChange({ ...query, metric: data.value });
   };
   const onAggregationChange = (data: any) => {
@@ -552,16 +522,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   //   setTagValue(data);
   //   onApplyQueryChange({ ...query, tagsValues: newTagsValues });
-  // };
-  // const onGroupByChange = (data: any) => {
-  //   setGroupValue(data);
-  //   let selectedGroup: string = QueryPlaceholder.GroupBy;
-
-  //   if (data !== null) {
-  //     selectedGroup = data.value;
-  //   }
-
-  //   onApplyQueryChange({ ...query, groupBy: selectedGroup });
   // };
 
 
@@ -720,22 +680,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          {/* <InlineField label="GROUP BY" labelWidth={20} tooltip="Start typing to see the options">
-            <AsyncSelect
-              className="width-14"
-              isSearchable={true}
-              defaultOptions={false}
-              allowCustomValue={false}
-              isClearable={true}
-              backspaceRemovesValue={true}
-              // loadOptions={getGroupByOptions}
-              value={groupValue}
-              placeholder={QueryPlaceholder.GroupBy}
-              onChange={(data) => {
-                onGroupByChange(data);
-              }}
-            />
-          </InlineField> */}
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="DIMENSIONS" labelWidth={20} grow={true} tooltip="Start typing to see the options">

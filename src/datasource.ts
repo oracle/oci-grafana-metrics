@@ -3,12 +3,9 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-
 import { Observable } from 'rxjs';
 import _,{ isString} from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
-// import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
-
 import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSourceOptions, OCIQuery, OCIResourceCall, QueryPlaceholder } from './types';
 import {
@@ -44,10 +41,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
-
-    // this.backendSrv = getBackendSrv();
-    // this.templateSrv = getTemplateSrv();
-
   }
 
   /**
@@ -304,25 +297,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }  
 
 
-  // targetContainsTemplate(target: any) {
-  //   console.log(target)
-  //   // console.log(target.tenancyOCID)
-
-  //   if (this.templateSrv.containsTemplate(target)) {
-  //     return true;
-  //   }    
-  //   // if (target.tenancyOCID && target.tenancyOCID.length > 0) {
-  //   //   for (let i = 0; i < target.tenancyOCID.length; i++) {
-  //   //     if (this.templateSrv.containsTemplate(target.tenancyOCID[i].filter)) {
-  //   //       return true;
-  //   //     }
-  //   //   }
-  //   // }
-    
-  //   return false;
-  // }  
-
-
  // **************************** Template variables helpers ****************************
 
   /**
@@ -357,11 +331,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * If a custom or constant is in  variables and  includeCustom, default is false.
    * Hence,the varDescriptors list is filtered for a unique set of var names
    */
-  // getVariables2(regex: string, includeCustom: string) {
-  //   const varDescriptors =
-  //     this.getVariableDescriptors(regex, includeCustom) || [];
-  //   return varDescriptors.map((item) => `$${item.name}`);
-  // }
 
   /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
@@ -381,13 +350,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return !!varNames.find((item) => item === varName);
   }
 
-//  appendVariables(options: string, varQueryRegex:string) {
-//     const vars = this.getVariables(varQueryRegex) || [];
-//     vars.forEach(value => {
-//       options.unshift({ value, text: value });
-//     });
-//     return options;
-//   }
 
   // main caller to call resource handler for get call
   async getResource(path: string): Promise<any> {
