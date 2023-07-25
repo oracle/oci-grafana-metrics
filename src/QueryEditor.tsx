@@ -219,24 +219,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
-  // const getMetricOptions = async () => {
-  //   let options: Array<SelectableValue<string>> = [];
-  //   options = addTemplateVariablesToOptions(options)
-  //   console.log("OOO0000 var_metric "+query.metricNames)
-  //   const response = query.metricNames || [];
-  //   console.log("OOO var_metric "+response)
-  //   console.log("OOO111111 var_metric "+response)    
-  //   response.forEach((item: any) => {
-  //     const sv: SelectableValue<string> = {
-  //       label: item,
-  //       value: item,
-  //     };
-  //     console.log("OOO222 var_metric "+sv.value)
-  //     options.push(sv);
-  //   });
-  //   return options;
-  // };
-
   const getMetricOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
@@ -287,33 +269,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
     });
     return options;
   };
-
-  // const getDimensionOptions = () => {
-  //   let options: Array<SelectableValue<string>> = [];
-  //   options = addTemplateVariablesToOptions(options)    
-  //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
-  //     setTimeout(async () => {
-  //       const response = await datasource.getDimensions(
-  //         query.tenancyOCID,
-  //         query.compartmentOCID,
-  //         query.region,
-  //         query.namespace,
-  //         query.metric
-  //       );
-  //       const result = response.map((res: any) => {
-  //         return {
-  //           label: res.key,
-  //           value: res.key,
-  //           options: res.values.map((val: any) => {
-  //             return { label: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
-  //           }),
-  //         };
-  //       });
-  //       options.push(...result);
-  //       resolve(result);
-  //     }, 0);
-  //   });
-  // };
 
   const getDimensionOptions = () => {
     let templateOptions: Array<SelectableValue<string>> = [];
@@ -616,12 +571,35 @@ export const QueryEditor: React.FC<Props> = (props) => {
   }
 
   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
+    if (!query.tenancyOCID) {
+      console.log("query.tenancyOCID is empty");
+      return null;
+    }
     console.log("Legacy compartment is present: " + query.compartment)
-    query.compartmentOCID = query.compartment
-    query.compartmentName = query.compartment
-    setCompartmentValue(query.compartment);
-    setHasLegacyCompartment(true);
-  }
+    datasource.getCompartments(query.tenancyOCID).then(response => {
+      if (response) {
+        response.forEach((item: any) => {
+          if (item.ocid === query.compartment) {
+            onApplyQueryChange(
+              {
+                ...query,
+                compartmentName: item.name,
+                compartmentOCID: item.ocid,
+              },
+              false
+            );            
+            // query.compartmentOCID = query.compartment;
+            // query.compartmentName = item.name;
+          }
+        });
+      }    
+      setCompartmentValue(query.compartment);
+      setHasLegacyCompartment(true);
+    });
+}
+
+
+
 
   return (
     <>
