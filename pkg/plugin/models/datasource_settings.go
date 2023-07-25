@@ -2,9 +2,6 @@ package models
 
 import (
 	"fmt"
-	"os"
-	"os/user"
-	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	jsoniter "github.com/json-iterator/go"
@@ -53,39 +50,8 @@ func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSetti
 		}
 	}
 
-	if d.AuthProvider == constants.OCI_CLI_AUTH_PROVIDER {
-		homeFolder := getHomeFolder()
-
-		if d.ConfigPath == "" || d.ConfigPath == constants.DEFAULT_CONFIG_FILE {
-			d.ConfigPath = path.Join(homeFolder, constants.DEFAULT_CONFIG_DIR_NAME, "config")
-		}
-
-		if d.ConfigProfile == "" {
-			d.ConfigProfile = constants.DEFAULT_PROFILE
-		}
-
-		if d.TenancyName == "" {
-			d.TenancyName = "root"
-		}
-
-		return nil
-	}
-
 	// in case of instance principle auth provider
 	d.ConfigProfile = constants.DEFAULT_INSTANCE_PROFILE
 
 	return nil
-}
-
-func getHomeFolder() string {
-	current, e := user.Current()
-	if e != nil {
-		//Give up and try to return something sensible
-		home := os.Getenv("HOME")
-		if home == "" {
-			home = os.Getenv("USERPROFILE")
-		}
-		return home
-	}
-	return current.HomeDir
 }
