@@ -225,6 +225,7 @@ func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealt
 func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
 
+	// Load secured and non-secured settings
 	TenancySettingsBlock := 0
 	var dat OCISecuredSettings
 	var nonsecdat models.OCIDatasourceSettings
@@ -237,6 +238,7 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 		return nil, fmt.Errorf("can not read settings: %s", err.Error())
 	}
 
+	// merge non secured settings into secured
 	decryptedJSONData := req.DecryptedSecureJSONData
 	transcode(decryptedJSONData, &dat)
 
@@ -254,48 +256,30 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.Profile_4 = nonsecdat.Profile_4
 	dat.Profile_5 = nonsecdat.Profile_5
 
-	log.DefaultLogger.Error(dat.Region_0)
-	log.DefaultLogger.Error(nonsecdat.Region_0)
-
-	log.DefaultLogger.Error(dat.Profile_0)
-	log.DefaultLogger.Error(nonsecdat.Profile_0)
-
 	v := reflect.ValueOf(dat)
 	typeOfS := v.Type()
 	var key string
 
-	backend.Logger.Error("OCILoadSettings", "OCILoadSettings", "Siamo in OCILoadSettings")
-
 	for FieldIndex := 0; FieldIndex < v.NumField(); FieldIndex++ {
-		backend.Logger.Error("OCILoadSettings2", "OCILoadSettings2", typeOfS.Field(FieldIndex).Name)
 		splits := strings.Split(typeOfS.Field(FieldIndex).Name, "_")
 		SettingsBlockIndex, interr := strconv.Atoi(splits[1])
 		if interr != nil {
 			return nil, fmt.Errorf("can not read settings: %s", interr.Error())
 		}
-		backend.Logger.Error("OCILoadSettings3", "OCILoadSettings3", splits[0])
-		backend.Logger.Error("OCILoadSettings4", "OCILoadSettings4", splits[1])
 
 		if SettingsBlockIndex == TenancySettingsBlock {
 			if splits[0] == "Profile" {
-				backend.Logger.Error("asasas", "asasas", v.Field(FieldIndex).Interface())
 				if v.Field(FieldIndex).Interface() != "" {
 					key = fmt.Sprintf("%v", v.Field(FieldIndex).Interface())
-					backend.Logger.Error("key", "key", key)
-
 				} else {
-					backend.Logger.Error("keyelse", "keyelse", v.Field(FieldIndex).Interface())
 					return q, nil
 				}
 			} else {
-
 				switch value := v.Field(FieldIndex).Interface(); strings.ToLower(splits[0]) {
 				case "tenancy":
 					q.tenancyocid[key] = fmt.Sprintf("%v", value)
-					backend.Logger.Error("tenancy", "tenancy", value)
 				case "region":
 					q.region[key] = fmt.Sprintf("%v", value)
-					backend.Logger.Error("region", "region", value)
 				case "user":
 					q.user[key] = fmt.Sprintf("%v", value)
 				case "privkey":

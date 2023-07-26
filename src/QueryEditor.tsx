@@ -109,7 +109,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   }
 
-  // fetch the tenancies from tenancies files, with name as key and ocid as value
+  // fetch the tenancies, with name as key and ocid as value
   const getTenancyOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
@@ -530,35 +530,46 @@ export const QueryEditor: React.FC<Props> = (props) => {
     setHasTenancyDefault(true);
   }
 
+//   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
+//     if (!query.tenancyOCID) {
+//       console.log("query.tenancyOCID is empty");
+//       return null;
+//     }
+//     console.log("Legacy compartment is present: " + query.compartment)
+//     datasource.getCompartments(query.tenancyOCID).then(response => {
+//       if (response) {
+//         response.forEach((item: any) => {
+//           if (item.ocid === query.compartment) {
+//             // onApplyQueryChange(
+//             //   {
+//             //     ...query,
+//             //     compartmentName: item.name,
+//             //     compartmentOCID: item.ocid,
+//             //   },
+//             //   false
+//             // );            
+//             query.compartmentOCID = item.ocid;
+//             query.compartmentName = item.name;
+//           }
+//         });
+//       }    
+//       setCompartmentValue(query.compartment);
+//       setHasLegacyCompartment(true);
+//     });
+// }
+
   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
     if (!query.tenancyOCID) {
       console.log("query.tenancyOCID is empty");
       return null;
-    }
-    console.log("Legacy compartment is present: " + query.compartment)
-    datasource.getCompartments(query.tenancyOCID).then(response => {
-      if (response) {
-        response.forEach((item: any) => {
-          if (item.ocid === query.compartment) {
-            onApplyQueryChange(
-              {
-                ...query,
-                compartmentName: item.name,
-                compartmentOCID: item.ocid,
-              },
-              false
-            );            
-            // query.compartmentOCID = query.compartment;
-            // query.compartmentName = item.name;
-          }
-        });
-      }    
+    } else {
+      console.log("Legacy compartment is present: " + query.compartment)
+      query.compartmentOCID = query.compartment;
+      query.compartmentName = query.compartment;  
       setCompartmentValue(query.compartment);
       setHasLegacyCompartment(true);
-    });
-}
-
-
+    }
+  }
 
 
   return (
