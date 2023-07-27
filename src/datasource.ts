@@ -69,6 +69,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("applyTemplateVariables: before namespace: " + query.namespace)
     console.log("applyTemplateVariables: before resourceGroup: " + query.resourceGroup)
     console.log("applyTemplateVariables: before metric: " + query.metric)
+    if (query.tenancy) {
+      console.log("applyTemplateVariables: before tenancy: " + query.tenancy)
+    }
+    if (query.compartment) {
+      console.log("applyTemplateVariables: before tenancy: " + query.compartment)
+    }
+    if (query.resourcegroup) {
+      console.log("applyTemplateVariables: before tenancy: " + query.resourcegroup)
+    }    
 
     if (query.dimensionValues) {
       for (let i = 0; i < query.dimensionValues.length; i++) {
@@ -87,6 +96,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         query.dimensionValues[i] = templateSrv.replace(query.dimensionValues[i], scopedVars);
       }
     }
+    if (query.tenancy) {
+      query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
+    }
+    if (query.compartment) {
+      query.compartment = templateSrv.replace(query.compartment, scopedVars);
+    }
+    if (query.resourcegroup) {
+      query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
+    }
     
     const queryModel = new QueryModel(query, getTemplateSrv());
     if (queryModel.isQueryReady()) {
@@ -103,7 +121,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       for (let i = 0; i < query.dimensionValues.length; i++) {
         console.log("applyTemplateVariables: after dimvalues: " + query.dimensionValues[i])
       }
-    }    
+    }
+    if (query.tenancy) {
+      console.log("applyTemplateVariables: after tenancy: " + query.tenancy)
+    }
+    if (query.compartment) {
+      console.log("applyTemplateVariables: after tenancy: " + query.compartment)
+    }
+    if (query.resourcegroup) {
+      console.log("applyTemplateVariables: after tenancy: " + query.resourcegroup)
+    }       
 
     return query;
   }
@@ -253,14 +280,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     if (dimensionsQuery) {
       if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(dimensionsQuery[1]);
-        const region = templateSrv.replace(dimensionsQuery[1]);
-        const compartment = templateSrv.replace(dimensionsQuery[2]);
-        const namespace = templateSrv.replace(dimensionsQuery[3]);
-        const metric = templateSrv.replace(dimensionsQuery[4]);
+        const region = templateSrv.replace(dimensionsQuery[2]);
+        const compartment = templateSrv.replace(dimensionsQuery[3]);
+        const namespace = templateSrv.replace(dimensionsQuery[4]);
+        const metric = templateSrv.replace(dimensionsQuery[5]);
         const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
         return dimension_values.flatMap(res => {
           return res.values.map(val => {
-              return { text: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
+              return { text: res.key + ' - ' + val, value: res.key + '="' + val + '"' };
           });
         }); 
       } else {
@@ -272,7 +299,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
         return dimension_values.flatMap(res => {
           return res.values.map(val => {
-              return { text: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
+              return { text: res.key + ' - ' + val, value: res.key + '="' + val + '"' };
           });
         }); 
       }      

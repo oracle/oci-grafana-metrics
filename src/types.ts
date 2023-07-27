@@ -229,6 +229,7 @@ export interface OCIQuery extends DataQuery {
   statistic: string;
   statisticLabel?: string;
   resourceGroup?: string;
+  resourcegroup?: string;
   dimensionValues?: string[];
   tagsValues?: string[];
   groupBy?: string;

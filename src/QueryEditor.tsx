@@ -20,6 +20,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const tmode = datasource.getJsonData().tenancymode;
   // const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
+  const [hasLegacyResourcegroup, setHasLegacyResourcegroup] = useState(false);
   const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
@@ -70,7 +71,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         let val = eachDimension.substring(indexToSplit + 2, eachDimension.length - 1);
 
         initialDimensions.push({
-          label: key + ' > ' + val,
+          label: key + ' - ' + val,
           value: key + '="' + val + '"',
         });
       }
@@ -83,7 +84,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         let val = eachTag.substring(indexToSplit + 1);
 
         initialTags.push({
-          label: key + ' > ' + val,
+          label: key + ' - ' + val,
           value: key + '=' + val,
         });
       }
@@ -299,7 +300,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             label: res.key,
             value: res.key,
             options: res.values.map((val: any) => {
-              return { label: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
+              return { label: res.key + ' - ' + val, value: res.key + '="' + val + '"' };
             }),
           };
         });
@@ -334,7 +335,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //           label: res.key,
   //           value: res.key,
   //           options: res.values.map((val: any) => {
-  //             return { label: res.key + ' > ' + val, value: res.key + '=' + val };
+  //             return { label: res.key + ' - ' + val, value: res.key + '=' + val };
   //           }),
   //         };
   //       });
@@ -583,6 +584,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
       setHasLegacyCompartment(true);
   }
 
+
+  if (query.resourcegroup && !hasLegacyResourcegroup && !query.resourceGroup) {
+    console.log("Legacy resourcegroup is present: " + query.resourcegroup)
+    query.resourceGroup = query.resourcegroup;
+    setResourceGroupValue(query.resourcegroup);
+    setHasLegacyResourcegroup(true);
+}
 
   return (
     <>
