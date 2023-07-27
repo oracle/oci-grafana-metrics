@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -18,8 +18,9 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
-  const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
+  // const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
+  const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
@@ -28,7 +29,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [metricValue, setMetricValue] = useState(query.metric);
   // const [aggregationValue, setaggregationValue] = useState(query.aggregation);
   const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
-  const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);  
+  const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
+  const [hasCalledGetTenancyDefault, setHasCalledGetTenancyDefault] = useState(false);  
   
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
@@ -108,6 +110,17 @@ export const QueryEditor: React.FC<Props> = (props) => {
       });
     return options;
   }
+
+  // Custom input field for Single Tenancy Mode
+  const CustomInput = ({ ...props }) => {
+    useEffect(() => {    
+      if (!hasCalledGetTenancyDefault) {
+        getTenancyDefault();
+        setHasCalledGetTenancyDefault(true);
+      }
+    }, []);
+    return <Input {...props} />;
+  };
 
   // fetch the tenancies, with name as key and ocid as value
   const getTenancyOptions = async () => {
@@ -305,7 +318,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
   
   
-
+  // tags will be used in future release
   // const getTagOptions = () => {
   //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
   //     setTimeout(async () => {
@@ -357,24 +370,15 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onTenancyChange = async (data: any) => {
-    let tname: string;
-    let tvalue: string;
-    if (tmode !== TenancyChoices.multitenancy) {
-      tname = 'DEFAULT/';
-      tvalue = 'DEFAULT/';
-    } else {
-      setTenancyValue(data);
-      tname = data.label
-      tvalue = data.value
-    }
+    setTenancyValue(data);
     onApplyQueryChange(
       {
         ...query,
-        tenancyName: tname,
-        tenancyOCID: tvalue,
+        tenancyName: data.label,
+        tenancyOCID: data.value,
         compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
-            const response = await datasource.getCompartments(tvalue);
+            const response = await datasource.getCompartments(data.value);
             const result = response.map((res: any) => {
               return { label: res.name, value: res.ocid };
             });
@@ -383,7 +387,16 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }),
         compartmentName: undefined,
         compartmentOCID: undefined,
-        regions: await getSubscribedRegionOptions(),
+        // regions: await getSubscribedRegionOptions(),
+        regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
+          setTimeout(async () => {
+            const response = await datasource.getSubscribedRegions(data.value);
+            const result = response.map((res: any) => {
+              return { label: res.name, value: res.ocid };
+            });
+            resolve(result);
+          }, 0);
+        }),
         region: undefined,
         namespace: undefined,
         metric: undefined,
@@ -415,6 +428,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onNamespaceChange = (data: any) => {
+    // tags will be use in future release
     // new Promise<Array<SelectableValue<string>>>(() => {
     //   setTimeout(async () => {
     //     await datasource.getTags(
@@ -441,7 +455,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onResourceGroupChange = (data: any) => {
-    //setRGValue(data);
     let mn: string[] = data.value;
     if (data.label === 'NoResourceGroup') {
       mn = query.metricNamesFromNS || [];
@@ -513,6 +526,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       query.dimensionValues = newDimensionValues;
     }
   };
+  // Tags will be use in future release
   // const onTagChange = (data: any) => {
   //   let newTagsValues: string[] = [];
 
@@ -525,9 +539,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
 
-  if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
-    getTenancyDefault();
-    setHasTenancyDefault(true);
+  if (query.tenancy && !hasLegacyTenancy && !query.tenancyOCID) {
+      console.log("Legacy tenancy is present: " + query.tenancy)
+      query.tenancyOCID = query.tenancy;
+      query.tenancyName = query.tenancy;  
+      setTenancyValue(query.tenancy);
+      setHasLegacyTenancy(true);
   }
 
 //   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
@@ -559,16 +576,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
 // }
 
   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
-    if (!query.tenancyOCID) {
-      console.log("query.tenancyOCID is empty");
-      return null;
-    } else {
       console.log("Legacy compartment is present: " + query.compartment)
       query.compartmentOCID = query.compartment;
       query.compartmentName = query.compartment;  
       setCompartmentValue(query.compartment);
       setHasLegacyCompartment(true);
-    }
   }
 
 
@@ -580,7 +592,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <>
               <InlineField label="TENANCY" labelWidth={20}>
                 <SegmentAsync
-                  className="width-14"
+                  className="width-28"
                   allowCustomValue={false}
                   required={true}
                   loadOptions={getTenancyOptions}
@@ -593,6 +605,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
               </InlineField>
             </>
           )}
+          {tmode === TenancyChoices.single && (
+            <>
+        <InlineField label="TENANCY" labelWidth={20}>
+          <CustomInput className="width-14" value={"DEFAULT/"} readOnly />
+        </InlineField>
+            </>
+          )}          
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="REGION" labelWidth={20}>

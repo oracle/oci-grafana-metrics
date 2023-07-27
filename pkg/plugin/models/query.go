@@ -5,6 +5,7 @@ type QueryModel struct {
 	QueryText         string   `json:"queryText"`
 	TenancyName       string   `json:"tenancyName"`
 	TenancyOCID       string   `json:"tenancyOCID"`
+	TenancyLegacy     string   `json:"tenancy"`
 	CompartmentName   string   `json:"compartmentName"`
 	CompartmentOCID   string   `json:"compartmentOCID"`
 	CompartmentLegacy string   `json:"compartment"`

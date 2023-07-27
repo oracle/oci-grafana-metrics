@@ -38,7 +38,11 @@ export default class QueryModel {
     }
 
     if (this.target.tenancyOCID === QueryPlaceholder.Tenancy) {
-      this.target.tenancyOCID = 'DEFAULT/';
+      if (this.target.tenancy !== '') {
+        this.target.tenancyOCID = this.target.tenancy;
+      } else {
+        this.target.tenancyOCID = 'DEFAULT/';
+      }
     }    
 
     // handle pre query gui panels gracefully, so by default we will have raw editor

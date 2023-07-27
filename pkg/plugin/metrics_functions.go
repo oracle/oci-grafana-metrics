@@ -435,13 +435,22 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	dataPointsWithResourceSerialNo := map[int]models.OCIMetricDataPoints{}
 	dataPoints := []models.OCIMetricDataPoints{}
 	resourceIDsPerTag := map[string]map[string]struct{}{}
-
+	var takey string
 	selectedTags := requestParams.TagsValues
 	selectedDimensions := requestParams.DimensionValues
 	selectedLegendFormat := requestParams.LegendFormat
 	o.logger.Debug("selectedLegendFormat", "selectedLegendFormat", selectedLegendFormat)
 
-	takey := o.GetTenancyAccessKey(tenancyOCID)
+	o.logger.Debug("takey GetMetricDataPoints", "TenancyLegacy ", requestParams.TenancyLegacy)
+
+	if len(tenancyOCID) == 0 {
+		if len(requestParams.TenancyLegacy) != 0 {
+			takey = o.GetTenancyAccessKey(requestParams.TenancyLegacy)
+		}
+	} else {
+		takey = o.GetTenancyAccessKey(tenancyOCID)
+	}
+	o.logger.Debug("takey GetMetricDataPoints", "GetMetricDataPoints ", takey)
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
 		CompartmentId:          common.String(requestParams.CompartmentOCID),
