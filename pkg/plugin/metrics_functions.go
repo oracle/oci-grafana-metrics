@@ -355,11 +355,6 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	var namespaceWithMetricNames map[string][]string
 	namespaceWithMetricNamesList := []models.OCIMetricNamesWithNamespace{}
 
-	// client := oc.GetOciClient(tenancyOCID)
-	// if client == nil {
-	// 	return namespaceWithMetricNamesList
-	// }
-
 	monitoringRequest := monitoring.ListMetricsRequest{
 		CompartmentId:          common.String(compartmentOCID),
 		CompartmentIdInSubtree: common.Bool(false),
@@ -824,6 +819,7 @@ func (o *OCIDatasource) GetTags(
 				resourceIDsPerTag := map[string]map[string]struct{}{}
 				resourceLabels := map[string]map[string]string{}
 
+				// Tags to be implemented in future release
 				// switch constants.OCI_NAMESPACES[namespace] {
 				// case constants.OCI_TARGET_COMPUTE:
 				// 	ccc.SetRegion(sRegion)

@@ -7,7 +7,6 @@ import { Observable } from 'rxjs';
 import _,{ isString} from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
 import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
-import { OCIDataSourceOptions, OCIQuery, OCIResourceCall, QueryPlaceholder } from './types';
 import {
   OCIResourceItem,
   OCINamespaceWithMetricNamesItem,
@@ -16,7 +15,10 @@ import {
   OCIResourceMetadataItem,
 } from './resource.response.parser';
 import {
-  // aggregations,
+  OCIDataSourceOptions,
+  OCIQuery,
+  OCIResourceCall,
+  QueryPlaceholder,
   dimensionQueryRegex,
   namespacesQueryRegex,
   resourcegroupsQueryRegex,
@@ -25,18 +27,12 @@ import {
   tenanciesQueryRegex,
   DEFAULT_TENANCY,
   compartmentsQueryRegex,
-  // dimensionValuesQueryRegex,
-  // removeQuotes,
-  // AUTO,
-} from "./query.options";
-// import _ from 'lodash';
+} from "./types";
 import QueryModel from './query_model';
 
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
-  // private backendSrv: BackendSrv;
-  // private templateSrv: TemplateSrv;
 
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
@@ -457,22 +453,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
 
     if (tenancyOCID === '') {
-      console.log("NS notenancy")
       return [];
     }
     if (region === undefined || region === QueryPlaceholder.Region) {
-      console.log("NS noregion")
       return [];
     }
 
     if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      console.log("NS compartmentOCID")
       compartmentOCID = '';
     }
-
-    console.log("NS2 "+tenancyOCID)
-    console.log("NS2 "+compartmentOCID)
-    console.log("NS2 "+region)
 
     const reqBody: JSON = {
       tenancy: tenancyOCID,
@@ -525,19 +514,12 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return [];
     }
     if (region === undefined || region === QueryPlaceholder.Region) {
-      console.log("RG noregion")
       return [];
     }
 
     if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      console.log("RG compartmentOCID")
       compartmentOCID = '';
-    }
-
-    console.log("RG2 "+tenancyOCID)
-    console.log("RG2 "+compartmentOCID)
-    console.log("RG2 "+region)    
-    console.log("RG2 "+namespace)    
+    } 
 
     if (tenancyOCID === '') {
       return [];
@@ -624,12 +606,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
       compartmentOCID = '';
     }
-
-    console.log("DIM2 "+tenancyOCID)
-    console.log("DIM2 "+compartmentOCID)
-    console.log("DIM2 "+region)    
-    console.log("DIM2 "+namespace)   
-    console.log("DIM2 "+metricName)   
 
     const reqBody: JSON = {
       tenancy: tenancyOCID,
