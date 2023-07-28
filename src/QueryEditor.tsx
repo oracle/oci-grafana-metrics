@@ -40,18 +40,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
       // for metrics
       if (datasource.isVariable(String(query.metric))) {
         let { [String(query.metric)]: var_metric } = datasource.interpolateProps({ [String(query.metric)]: query.metric });
-        console.log("OOO var_metric "+var_metric)
         if (var_metric !== "") { 
           query.metric = var_metric
         }
-      } else {
-        console.log("OOOelse var_metric "+query.metric)
-      } 
-      console.log("OOO changedQuery.queryText "+changedQuery.queryText)       
+      }  
       if (queryModel.isQueryReady()) {
-    
         changedQuery.queryText = queryModel.buildQuery(String(query.metric));
-
         onChange({ ...changedQuery });
         onRunQuery();
       }
