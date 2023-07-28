@@ -140,8 +140,10 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 	var tenancyocid string
 	var tenancyErr error
 
-	backend.Logger.Debug("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy takey: "+takey)
-
+	if len(takey) == 0 {
+		backend.Logger.Warn("client", "GetSubscribedRegions", "invalid takey")
+		return nil
+	}
 	if tenancymode == "multitenancy" {
 		if len(takey) <= 0 || takey == NoTenancy {
 			o.logger.Error("Unable to get Multi-tenancy OCID")
@@ -438,14 +440,28 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	o.logger.Debug("takey GetMetricDataPoints", "TenancyLegacy ", requestParams.TenancyLegacy)
 
+	o.logger.Debug("GetMetricDataPoints", "o.settings.TenancyMode ", o.settings.TenancyMode)
+
 	if len(tenancyOCID) == 0 {
-		if len(requestParams.TenancyLegacy) != 0 {
+		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode != "single" {
 			takey = o.GetTenancyAccessKey(requestParams.TenancyLegacy)
 		}
+		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode == "single" {
+			takey = o.GetTenancyAccessKey("DEFAULT/")
+		}
 	} else {
-		takey = o.GetTenancyAccessKey(tenancyOCID)
+		if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
+			takey = o.GetTenancyAccessKey("DEFAULT/")
+		} else {
+			takey = o.GetTenancyAccessKey(tenancyOCID)
+		}
 	}
 	o.logger.Debug("takey GetMetricDataPoints", "GetMetricDataPoints ", takey)
+
+	if len(takey) == 0 {
+		backend.Logger.Warn("client", "GetMetricDataPoints", "invalid takey")
+		return nil, nil
+	}
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
 		CompartmentId:          common.String(requestParams.CompartmentOCID),
@@ -977,7 +993,7 @@ func (o *OCIDatasource) GetResourceGroups(
 			Namespace: common.String(namespace),
 		},
 	}
-
+	// piopiopio
 	if len(compartmentOCID) == 0 {
 		monitoringRequest.CompartmentId = common.String(tenancyOCID)
 		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
@@ -1089,6 +1105,11 @@ func (o *OCIDatasource) GetDimensions(
 	var metricDimensions map[string][]string
 	metricDimensionsList := []models.OCIMetricDimensions{}
 	takey := o.GetTenancyAccessKey(tenancyOCID)
+
+	if len(takey) == 0 {
+		backend.Logger.Warn("client", "GetDimensions", "invalid takey")
+		return nil
+	}
 
 	monitoringRequest := monitoring.ListMetricsRequest{
 		CompartmentId:          common.String(compartmentOCID),

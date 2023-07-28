@@ -153,9 +153,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   async metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
     const templateSrv = getTemplateSrv();
-    const tmode = this.getJsonData().tenancymode;
-    console.log("uga "+tmode)
-    console.log("ciao "+this.jsonData.tenancymode)
+    // const tmode = this.getJsonData().tenancymode;
 
     const tenancyQuery = query.match(tenanciesQueryRegex);
     if (tenancyQuery) {
@@ -167,7 +165,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     const regionQuery = query.match(regionsQueryRegex);
     if (regionQuery) {
-      if (tmode === "multitenancy") {
+      if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(regionQuery[1]);
         const regions = await this.getSubscribedRegions(tenancy);
         return regions.map(n => {

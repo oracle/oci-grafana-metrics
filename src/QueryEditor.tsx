@@ -408,16 +408,27 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
-    onApplyQueryChange(
-      {
-        ...query,
-        compartmentName: data.label,
-        compartmentOCID: data.value,
-        namespace: undefined,
-        metric: undefined,
-      },
-      false
-    );
+    if (query.compartment && query.compartment !== QueryPlaceholder.CompartmentLegacy && data.value === query.compartment){
+      onApplyQueryChange(
+        {
+          ...query,
+          compartmentName: data.label,
+          compartmentOCID: data.value,
+        },
+        false
+      );
+    } else {
+      onApplyQueryChange(
+        {
+          ...query,
+          compartmentName: data.label,
+          compartmentOCID: data.value,
+          namespace: undefined,
+          metric: undefined,
+        },
+        false
+      );
+    }
   };
 
   const onRegionChange = (data: SelectableValue) => {
@@ -540,7 +551,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
 
-  if (query.tenancy && !hasLegacyTenancy && !query.tenancyOCID) {
+  if (query.tenancy && !hasLegacyTenancy && !query.tenancyOCID && query.tenancy !== QueryPlaceholder.TenancyLegacy) {
       console.log("Legacy tenancy is present: " + query.tenancy)
       query.tenancyOCID = query.tenancy;
       query.tenancyName = query.tenancy;  
@@ -548,44 +559,55 @@ export const QueryEditor: React.FC<Props> = (props) => {
       setHasLegacyTenancy(true);
   }
 
-//   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
-//     if (!query.tenancyOCID) {
-//       console.log("query.tenancyOCID is empty");
-//       return null;
-//     }
-//     console.log("Legacy compartment is present: " + query.compartment)
-//     datasource.getCompartments(query.tenancyOCID).then(response => {
-//       if (response) {
-//         response.forEach((item: any) => {
-//           if (item.ocid === query.compartment) {
-//             // onApplyQueryChange(
-//             //   {
-//             //     ...query,
-//             //     compartmentName: item.name,
-//             //     compartmentOCID: item.ocid,
-//             //   },
-//             //   false
-//             // );            
-//             query.compartmentOCID = item.ocid;
-//             query.compartmentName = item.name;
-//           }
-//         });
-//       }    
-//       setCompartmentValue(query.compartment);
-//       setHasLegacyCompartment(true);
-//     });
-// }
-
-  if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
-      console.log("Legacy compartment is present: " + query.compartment)
-      query.compartmentOCID = query.compartment;
-      query.compartmentName = query.compartment;  
-      setCompartmentValue(query.compartment);
+  if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID && query.compartment !== QueryPlaceholder.CompartmentLegacy) {
+    if (!query.tenancyOCID) {
+      console.log("query.tenancyOCID is empty");
+      return null;
+    }
+    console.log("Legacy compartment is present: " + query.compartment)
+    datasource.getCompartments(query.tenancyOCID).then(response => {
+      if (response) {
+        let found = false;
+        response.forEach((item: any) => {
+          if (!found && item.ocid === query.compartment) {
+            console.log("query.getCompartments is there "+item.name);
+            console.log("query.getCompartments is there "+item.ocid);
+            // setCompartmentValue(item);
+            found = true; 
+            query.compartmentOCID = item.ocid;
+            query.compartmentName = item.name;
+          } else if (!found) {
+            query.compartmentName = query.compartment;
+            query.compartmentOCID = query.compartment;             
+          }
+          // onApplyQueryChange(
+          //   {
+          //     ...query,
+          //     compartmentName: item.name,
+          //     compartmentOCID: item.ocid,
+          //   },
+          //   false
+          // );            
+        });
+      } else {
+          query.compartmentOCID = query.compartment;
+          query.compartmentName = query.compartment;    
+      }
+      setCompartmentValue(query.compartmentName);
       setHasLegacyCompartment(true);
-  }
+    });
+}
+
+  // if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
+  //     console.log("Legacy compartment is present: " + query.compartment)
+  //     query.compartmentOCID = query.compartment;
+  //     query.compartmentName = query.compartment;  
+  //     setCompartmentValue(query.compartment);
+  //     setHasLegacyCompartment(true);
+  // }
 
 
-  if (query.resourcegroup && !hasLegacyResourcegroup && !query.resourceGroup) {
+  if (query.resourcegroup && !hasLegacyResourcegroup && !query.resourceGroup && query.resourcegroup !== QueryPlaceholder.ResourceGroupLegacy) {
     console.log("Legacy resourcegroup is present: " + query.resourcegroup)
     query.resourceGroup = query.resourcegroup;
     setResourceGroupValue(query.resourcegroup);

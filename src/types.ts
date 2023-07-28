@@ -177,8 +177,11 @@ export enum QueryPlaceholder {
   Interval = 'select interval',
   Dimensions = 'select dimensions (optional)',
   ResourceGroup = 'select resourcegroup (optional)',
+  ResourceGroupLegacy = 'select resource group',
   Tags = 'select resource tags (optional)',
   GroupBy = 'select option (optional)',
+  CompartmentLegacy = 'select compartment',
+  TenancyLegacy = 'select tenancy',
 }
 
 export interface DimensionPart {
