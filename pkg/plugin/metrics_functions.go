@@ -993,7 +993,7 @@ func (o *OCIDatasource) GetResourceGroups(
 			Namespace: common.String(namespace),
 		},
 	}
-	// piopiopio
+
 	if len(compartmentOCID) == 0 {
 		monitoringRequest.CompartmentId = common.String(tenancyOCID)
 		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
