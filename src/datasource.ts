@@ -6,7 +6,7 @@
 import { Observable } from 'rxjs';
 import _,{ isString} from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
-import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import {
   OCIResourceItem,
   OCINamespaceWithMetricNamesItem,
@@ -34,7 +34,7 @@ import QueryModel from './query_model';
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
+  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
   }
@@ -321,29 +321,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
  // **************************** Template variables helpers ****************************
 
   /**
-   * Get all template variable descriptors
-   */
-  getVariableDescriptors(regex: string, includeCustom = true) {
-    const vars = this.templateSrv.getVariables() || [];
-
-    if (regex) {
-      let regexVars = vars.filter((item) => _.isString(item.name) && item.name.match(regex) !== null);
-      if (includeCustom) {
-        const custom = vars.filter(
-          (item) => item.type === "custom" || item.type === "constant"
-        );
-        regexVars = regexVars.concat(custom);
-      }
-      const uniqueRegexVarsMap = new Map();
-      regexVars.forEach((varObj) =>
-        uniqueRegexVarsMap.set(varObj.name, varObj)
-      );
-      return Array.from(uniqueRegexVarsMap.values());
-    }
-    return vars;
-  }
-
-  /**
    * List all variable names optionally filtered by regex or/and type
    * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
    *
@@ -352,14 +329,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * If a custom or constant is in  variables and  includeCustom, default is false.
    * Hence,the varDescriptors list is filtered for a unique set of var names
    */
-
-  /**
-   * @param varName valid varName contains '$'. Example: '$dimensionKey'
-   * Returns an array with variable values or empty array
-   */
-  getVariableValue(varName: string, scopedVars = {}) {
-    return this.templateSrv.replace(varName, scopedVars) || varName;
-  }
 
   /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'

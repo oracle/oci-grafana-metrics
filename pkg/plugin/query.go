@@ -137,13 +137,6 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				if k == "resource_name" && len(name) == 0 {
 					name = v
 				}
-				// if k != "resource_name" {
-				// 	dl[k] = v
-				// } else {
-				// 	if len(name) == 0 {
-				// 		name = v
-				// 	}
-				// }
 			}
 		}
 		frame.Fields = append(frame.Fields,
