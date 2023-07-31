@@ -2,9 +2,6 @@ package models
 
 import (
 	"fmt"
-	"os"
-	"os/user"
-	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	jsoniter "github.com/json-iterator/go"
@@ -14,16 +11,13 @@ import (
 
 // OCIDatasourceSettings holds the datasource configuration information for OCI
 type OCIDatasourceSettings struct {
-	AuthProvider         string `json:"authProvider"`
-	ConfigPath           string `json:"configPath"`
-	ConfigProfile        string `json:"configProfile"`
-	TenancyMode          string `json:"tenancymode"`
-	MultiTenancyMode     string `json:"multiTenancyMode"`
-	MultiTenancyFile     string `json:"multiTenancyFile"`
-	TenancyName          string `json:"tenancyName,omitempty"`
-	EnableCMDB           bool   `json:"enableCMDB"`
-	EnableCMDBUploadFile bool   `json:"enableCMDBUploadFile"`
-	Environment          string `json:"environment"`
+	AuthProvider     string `json:"authProvider"`
+	ConfigProfile    string `json:"configProfile"`
+	TenancyMode      string `json:"tenancymode"`
+	MultiTenancyMode string `json:"multiTenancyMode"`
+	MultiTenancyFile string `json:"multiTenancyFile"`
+	TenancyName      string `json:"tenancyName,omitempty"`
+	Environment      string `json:"environment"`
 
 	Profile_0 string `json:"profile0,omitempty"`
 	Region_0  string `json:"region0,omitempty"`
@@ -53,39 +47,8 @@ func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSetti
 		}
 	}
 
-	if d.AuthProvider == constants.OCI_CLI_AUTH_PROVIDER {
-		homeFolder := getHomeFolder()
-
-		if d.ConfigPath == "" || d.ConfigPath == constants.DEFAULT_CONFIG_FILE {
-			d.ConfigPath = path.Join(homeFolder, constants.DEFAULT_CONFIG_DIR_NAME, "config")
-		}
-
-		if d.ConfigProfile == "" {
-			d.ConfigProfile = constants.DEFAULT_PROFILE
-		}
-
-		if d.TenancyName == "" {
-			d.TenancyName = "root"
-		}
-
-		return nil
-	}
-
 	// in case of instance principle auth provider
 	d.ConfigProfile = constants.DEFAULT_INSTANCE_PROFILE
 
 	return nil
-}
-
-func getHomeFolder() string {
-	current, e := user.Current()
-	if e != nil {
-		//Give up and try to return something sensible
-		home := os.Getenv("HOME")
-		if home == "" {
-			home = os.Getenv("USERPROFILE")
-		}
-		return home
-	}
-	return current.HomeDir
 }

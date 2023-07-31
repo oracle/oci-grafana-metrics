@@ -36,19 +36,21 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	}
 
 	metricsDataRequest := models.MetricsDataRequest{
-		TenancyOCID:     qm.TenancyOCID,
-		CompartmentOCID: qm.CompartmentOCID,
-		CompartmentName: qm.CompartmentName,
-		Region:          qm.Region,
-		Namespace:       qm.Namespace,
-		QueryText:       qm.QueryText,
-		Interval:        qm.Interval[1 : len(qm.Interval)-1],
-		ResourceGroup:   qm.ResourceGroup,
-		DimensionValues: qm.DimensionValues,
-		LegendFormat:    qm.LegendFormat,
-		TagsValues:      qm.TagsValues,
-		StartTime:       query.TimeRange.From.UTC(),
-		EndTime:         query.TimeRange.To.UTC(),
+		TenancyOCID:       qm.TenancyOCID,
+		TenancyLegacy:     qm.TenancyLegacy,
+		CompartmentOCID:   qm.CompartmentOCID,
+		CompartmentName:   qm.CompartmentName,
+		CompartmentLegacy: qm.CompartmentLegacy,
+		Region:            qm.Region,
+		Namespace:         qm.Namespace,
+		QueryText:         qm.QueryText,
+		Interval:          qm.Interval[1 : len(qm.Interval)-1],
+		ResourceGroup:     qm.ResourceGroup,
+		DimensionValues:   qm.DimensionValues,
+		LegendFormat:      qm.LegendFormat,
+		TagsValues:        qm.TagsValues,
+		StartTime:         query.TimeRange.From.UTC(),
+		EndTime:           query.TimeRange.To.UTC(),
 	}
 
 	// create data frame response
@@ -76,7 +78,26 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
 			}
 			dl = data.Labels{}
-			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
+			// legacy support
+			var TheTenancy string
+			var TheCompartment string
+
+			if len(qm.TenancyOCID) == 0 {
+				if len(qm.TenancyLegacy) != 0 {
+					TheTenancy = qm.TenancyLegacy
+				}
+			} else {
+				TheTenancy = qm.TenancyOCID
+			}
+			if len(qm.CompartmentLegacy) == 0 {
+				if len(qm.CompartmentLegacy) != 0 {
+					TheCompartment = qm.CompartmentLegacy
+				}
+			} else {
+				TheCompartment = qm.CompartmentLegacy
+			}
+
+			dimensions := ocidx.GetDimensions(ctx, TheTenancy, TheCompartment, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
 			FoundDimensionMap := make(map[string][]string)
 			var index int
@@ -116,13 +137,6 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				if k == "resource_name" && len(name) == 0 {
 					name = v
 				}
-				// if k != "resource_name" {
-				// 	dl[k] = v
-				// } else {
-				// 	if len(name) == 0 {
-				// 		name = v
-				// 	}
-				// }
 			}
 		}
 		frame.Fields = append(frame.Fields,

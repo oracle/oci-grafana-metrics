@@ -1,3 +1,8 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+*/
+
 import { OCIQuery, QueryPlaceholder, AggregationOptions, IntervalOptions } from './types';
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
@@ -33,7 +38,11 @@ export default class QueryModel {
     }
 
     if (this.target.tenancyOCID === QueryPlaceholder.Tenancy) {
-      this.target.tenancyOCID = 'DEFAULT/';
+      if (this.target.tenancy !== '') {
+        this.target.tenancyOCID = this.target.tenancy;
+      } else {
+        this.target.tenancyOCID = 'DEFAULT/';
+      }
     }    
 
     // handle pre query gui panels gracefully, so by default we will have raw editor
@@ -43,7 +52,7 @@ export default class QueryModel {
       this.target.queryText =
         incomingQuery.queryText || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
-      this.target.queryText = incomingQuery.queryText || this.buildQuery();
+      this.target.queryText = incomingQuery.queryText || this.buildQuery(String(this.target.metric));
     }
   }
 
@@ -60,10 +69,14 @@ export default class QueryModel {
 
     return true;
   }
+  
 
-  buildQuery() {
-    let queryText = this.target.metric;
+  buildQuery(queryText: string) {
+    // let queryText = this.target.metric;     
 
+    if (this.target.interval === QueryPlaceholder.Interval) {
+      this.target.interval = IntervalOptions[0].value;
+    }   
     // for default interval
     if (this.target.interval === QueryPlaceholder.Interval) {
       this.target.interval = IntervalOptions[0].value;

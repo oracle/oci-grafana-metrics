@@ -1,3 +1,8 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+*/
+
 import React, { PureComponent } from 'react';
 import { Input, Select, InlineField, FieldSet, InlineSwitch, TextArea } from '@grafana/ui';
 import {
@@ -11,11 +16,8 @@ import { OCIDataSourceOptions } from './types';
 import {
   AuthProviders,
   regions,
-  // MultiTenancyChoices,
   TenancyChoices,
   AuthProviderOptions,
-  // MultiTenancyChoiceOptions,
-  // MultitenancymodeOptions,
   TenancyChoiceOptions,
 } from './config.options';
 

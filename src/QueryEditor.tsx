@@ -1,4 +1,9 @@
-import React, { useState } from 'react';
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+*/
+
+import React, { useEffect, useState } from 'react';
 import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -13,8 +18,10 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
-  console.log(tmode)
-  const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
+  // const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
+  const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
+  const [hasLegacyResourcegroup, setHasLegacyResourcegroup] = useState(false);
+  const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
@@ -24,14 +31,21 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // const [aggregationValue, setaggregationValue] = useState(query.aggregation);
   const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
   const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
-
+  const [hasCalledGetTenancyDefault, setHasCalledGetTenancyDefault] = useState(false);  
+  
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
-    if (runQuery) {
+    if (runQuery) {        
       const queryModel = new QueryModel(changedQuery, getTemplateSrv());
+      // for metrics
+      if (datasource.isVariable(String(query.metric))) {
+        let { [String(query.metric)]: var_metric } = datasource.interpolateProps({ [String(query.metric)]: query.metric });
+        if (var_metric !== "") { 
+          query.metric = var_metric
+        }
+      }  
       if (queryModel.isQueryReady()) {
-        changedQuery.queryText = queryModel.buildQuery();
-
+        changedQuery.queryText = queryModel.buildQuery(String(query.metric));
         onChange({ ...changedQuery });
         onRunQuery();
       }
@@ -51,7 +65,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         let val = eachDimension.substring(indexToSplit + 2, eachDimension.length - 1);
 
         initialDimensions.push({
-          label: key + ' > ' + val,
+          label: key + ' - ' + val,
           value: key + '="' + val + '"',
         });
       }
@@ -64,7 +78,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         let val = eachTag.substring(indexToSplit + 1);
 
         initialTags.push({
-          label: key + ' > ' + val,
+          label: key + ' - ' + val,
           value: key + '=' + val,
         });
       }
@@ -78,7 +92,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
   // const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
-  // const [groupValue, setGroupValue] = useState<Array<SelectableValue<string>>>([]); 
 
   // Appends all available template variables to options used by dropdowns
   const addTemplateVariablesToOptions = (options: Array<SelectableValue<string>>) => {
@@ -93,7 +106,18 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   }
 
-  // fetch the tenancies from tenancies files, with name as key and ocid as value
+  // Custom input field for Single Tenancy Mode
+  const CustomInput = ({ ...props }) => {
+    useEffect(() => {    
+      if (!hasCalledGetTenancyDefault) {
+        getTenancyDefault();
+        setHasCalledGetTenancyDefault(true);
+      }
+    }, []);
+    return <Input {...props} />;
+  };
+
+  // fetch the tenancies, with name as key and ocid as value
   const getTenancyOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
@@ -159,6 +183,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const getNamespaceOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
+    if (query.compartment && !query.compartmentOCID) {
+      console.log("Legacy compartment is present: " + query.compartment)
+      query.compartmentOCID = query.compartment
+      query.compartmentName = query.compartment
+    }    
     const response = await datasource.getNamespacesWithMetricNames(
       query.tenancyOCID,
       query.compartmentOCID,
@@ -200,14 +229,27 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const getMetricOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
-    const response = query.metricNames || [];
-    response.forEach((item: any) => {
-      const sv: SelectableValue<string> = {
-        label: item,
-        value: item,
-      };
-      options.push(sv);
-    });
+  //   console.log("OOO0000 var_metric "+query.metricNames)
+    // const response = query.metricNames || [];
+    // console.log("OOO var_metric "+response)
+    const response = await datasource.getResourceGroupsWithMetricNames(
+      query.tenancyOCID,
+      query.compartmentOCID,
+      query.region,
+      query.namespace
+    );
+    if (response) {
+      response.forEach((item: any) => {
+        item.metric_names.forEach((ii: any) => {
+          const sv: SelectableValue<string> = {
+            label: ii,
+            value: ii,
+          };
+          console.log("OOO111111 var_metric "+ii)    
+          options.push(sv);
+        });
+      });
+    }
     return options;
   };
 
@@ -236,6 +278,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const getDimensionOptions = () => {
+    let templateOptions: Array<SelectableValue<string>> = [];
+    templateOptions = addTemplateVariablesToOptions(templateOptions);
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource.getDimensions(
@@ -250,14 +294,26 @@ export const QueryEditor: React.FC<Props> = (props) => {
             label: res.key,
             value: res.key,
             options: res.values.map((val: any) => {
-              return { label: res.key + ' > ' + val, value: res.key + '="' + val + '"' };
+              return { label: res.key + ' - ' + val, value: res.key + '="' + val + '"' };
             }),
           };
+        });
+        templateOptions.forEach((option) => {
+          console.log("templateOption label "+option.label)
+          console.log("templateOption value "+option.value)
+          result.push({
+            label: option.label,
+            value: option.value,
+            options: [{ label: option.label, value: option.value }]
+          });
         });
         resolve(result);
       }, 0);
     });
   };
+  
+  
+  // tags will be used in future release
   // const getTagOptions = () => {
   //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
   //     setTimeout(async () => {
@@ -273,28 +329,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //           label: res.key,
   //           value: res.key,
   //           options: res.values.map((val: any) => {
-  //             return { label: res.key + ' > ' + val, value: res.key + '=' + val };
+  //             return { label: res.key + ' - ' + val, value: res.key + '=' + val };
   //           }),
-  //         };
-  //       });
-  //       resolve(result);
-  //     }, 0);
-  //   });
-  // };
-  // const getGroupByOptions = () => {
-  //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
-  //     setTimeout(async () => {
-  //       const response = await datasource.getDimensions(
-  //         query.tenancyOCID,
-  //         query.compartmentOCID,
-  //         query.region,
-  //         query.namespace,
-  //         query.metric
-  //       );
-  //       const result = response.map((res: any) => {
-  //         return {
-  //           label: res.key,
-  //           value: res.key,
   //         };
   //       });
   //       resolve(result);
@@ -329,24 +365,15 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onTenancyChange = async (data: any) => {
-    let tname: string;
-    let tvalue: string;
-    if (tmode !== TenancyChoices.multitenancy) {
-      tname = 'DEFAULT/';
-      tvalue = 'DEFAULT/';
-    } else {
-      setTenancyValue(data);
-      tname = data.label
-      tvalue = data.value
-    }
+    setTenancyValue(data);
     onApplyQueryChange(
       {
         ...query,
-        tenancyName: tname,
-        tenancyOCID: tvalue,
+        tenancyName: data.label,
+        tenancyOCID: data.value,
         compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
-            const response = await datasource.getCompartments(tvalue);
+            const response = await datasource.getCompartments(data.value);
             const result = response.map((res: any) => {
               return { label: res.name, value: res.ocid };
             });
@@ -355,7 +382,16 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }),
         compartmentName: undefined,
         compartmentOCID: undefined,
-        regions: await getSubscribedRegionOptions(),
+        // regions: await getSubscribedRegionOptions(),
+        regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
+          setTimeout(async () => {
+            const response = await datasource.getSubscribedRegions(data.value);
+            const result = response.map((res: any) => {
+              return { label: res.name, value: res.ocid };
+            });
+            resolve(result);
+          }, 0);
+        }),
         region: undefined,
         namespace: undefined,
         metric: undefined,
@@ -366,30 +402,39 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
-    onApplyQueryChange(
-      {
-        ...query,
-        compartmentName: data.label,
-        compartmentOCID: data.value,
-        namespace: undefined,
-        metric: undefined,
-      },
-      false
-    );
+    if (query.compartment && query.compartment !== QueryPlaceholder.CompartmentLegacy && data.value === query.compartment){
+      onApplyQueryChange(
+        {
+          ...query,
+          compartmentName: data.label,
+          compartmentOCID: data.value,
+        },
+        false
+      );
+    } else {
+      onApplyQueryChange(
+        {
+          ...query,
+          compartmentName: data.label,
+          compartmentOCID: data.value,
+          namespace: undefined,
+          metric: undefined,
+        },
+        false
+      );
+    }
   };
 
   const onRegionChange = (data: SelectableValue) => {
-    // eslint-disable-next-line no-debugger
-    debugger;
-    // insert the value into the options (custom value is enabled)
     if (query.regions && data.__isNew__) {
       query.regions = [...query.regions, { label: data.label, value: data.value }]
     }
-    setRegionValue(data.value);
+    setRegionValue(data.value);   
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
 
   const onNamespaceChange = (data: any) => {
+    // tags will be use in future release
     // new Promise<Array<SelectableValue<string>>>(() => {
     //   setTimeout(async () => {
     //     await datasource.getTags(
@@ -401,7 +446,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     //     );
     //   }, 0);
     // });
-    setNamespaceValue(data);
+    setNamespaceValue(data);  
     onApplyQueryChange(
       {
         ...query,
@@ -416,7 +461,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onResourceGroupChange = (data: any) => {
-    //setRGValue(data);
     let mn: string[] = data.value;
     if (data.label === 'NoResourceGroup') {
       mn = query.metricNamesFromNS || [];
@@ -427,7 +471,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onMetricChange = (data: any) => {
-    setMetricValue(data);
+    setMetricValue(data);     
     onApplyQueryChange({ ...query, metric: data.value });
   };
   const onAggregationChange = (data: any) => {
@@ -488,6 +532,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       query.dimensionValues = newDimensionValues;
     }
   };
+  // Tags will be use in future release
   // const onTagChange = (data: any) => {
   //   let newTagsValues: string[] = [];
 
@@ -498,22 +543,70 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //   setTagValue(data);
   //   onApplyQueryChange({ ...query, tagsValues: newTagsValues });
   // };
-  // const onGroupByChange = (data: any) => {
-  //   setGroupValue(data);
-  //   let selectedGroup: string = QueryPlaceholder.GroupBy;
-
-  //   if (data !== null) {
-  //     selectedGroup = data.value;
-  //   }
-
-  //   onApplyQueryChange({ ...query, groupBy: selectedGroup });
-  // };
 
 
-  if (tmode !== TenancyChoices.multitenancy && !hasTenancyDefault) {
-    getTenancyDefault();
-    setHasTenancyDefault(true);
+  if (query.tenancy && !hasLegacyTenancy && !query.tenancyOCID && query.tenancy !== QueryPlaceholder.TenancyLegacy) {
+      console.log("Legacy tenancy is present: " + query.tenancy)
+      query.tenancyOCID = query.tenancy;
+      query.tenancyName = query.tenancy;  
+      setTenancyValue(query.tenancy);
+      setHasLegacyTenancy(true);
   }
+
+  if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID && query.compartment !== QueryPlaceholder.CompartmentLegacy) {
+    if (!query.tenancyOCID) {
+      console.log("query.tenancyOCID is empty");
+      return null;
+    }
+    console.log("Legacy compartment is present: " + query.compartment)
+    datasource.getCompartments(query.tenancyOCID).then(response => {
+      if (response) {
+        let found = false;
+        response.forEach((item: any) => {
+          if (!found && item.ocid === query.compartment) {
+            console.log("query.getCompartments is there "+item.name);
+            console.log("query.getCompartments is there "+item.ocid);
+            // setCompartmentValue(item);
+            found = true; 
+            query.compartmentOCID = item.ocid;
+            query.compartmentName = item.name;
+          } else if (!found) {
+            query.compartmentName = query.compartment;
+            query.compartmentOCID = query.compartment;             
+          }
+          // onApplyQueryChange(
+          //   {
+          //     ...query,
+          //     compartmentName: item.name,
+          //     compartmentOCID: item.ocid,
+          //   },
+          //   false
+          // );            
+        });
+      } else {
+          query.compartmentOCID = query.compartment;
+          query.compartmentName = query.compartment;    
+      }
+      setCompartmentValue(query.compartmentName);
+      setHasLegacyCompartment(true);
+    });
+}
+
+  // if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
+  //     console.log("Legacy compartment is present: " + query.compartment)
+  //     query.compartmentOCID = query.compartment;
+  //     query.compartmentName = query.compartment;  
+  //     setCompartmentValue(query.compartment);
+  //     setHasLegacyCompartment(true);
+  // }
+
+
+  if (query.resourcegroup && !hasLegacyResourcegroup && !query.resourceGroup && query.resourcegroup !== QueryPlaceholder.ResourceGroupLegacy) {
+    console.log("Legacy resourcegroup is present: " + query.resourcegroup)
+    query.resourceGroup = query.resourcegroup;
+    setResourceGroupValue(query.resourcegroup);
+    setHasLegacyResourcegroup(true);
+}
 
   return (
     <>
@@ -523,7 +616,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <>
               <InlineField label="TENANCY" labelWidth={20}>
                 <SegmentAsync
-                  className="width-14"
+                  className="width-28"
                   allowCustomValue={false}
                   required={true}
                   loadOptions={getTenancyOptions}
@@ -536,6 +629,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
               </InlineField>
             </>
           )}
+          {tmode === TenancyChoices.single && (
+            <>
+        <InlineField label="TENANCY" labelWidth={20}>
+          <CustomInput className="width-14" value={"DEFAULT/"} readOnly />
+        </InlineField>
+            </>
+          )}          
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="REGION" labelWidth={20}>
@@ -634,22 +734,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          {/* <InlineField label="GROUP BY" labelWidth={20} tooltip="Start typing to see the options">
-            <AsyncSelect
-              className="width-14"
-              isSearchable={true}
-              defaultOptions={false}
-              allowCustomValue={false}
-              isClearable={true}
-              backspaceRemovesValue={true}
-              // loadOptions={getGroupByOptions}
-              value={groupValue}
-              placeholder={QueryPlaceholder.GroupBy}
-              onChange={(data) => {
-                onGroupByChange(data);
-              }}
-            />
-          </InlineField> */}
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="DIMENSIONS" labelWidth={20} grow={true} tooltip="Start typing to see the options">
@@ -689,3 +773,4 @@ export const QueryEditor: React.FC<Props> = (props) => {
     </>
   );
 };
+

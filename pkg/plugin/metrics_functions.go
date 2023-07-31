@@ -140,8 +140,10 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 	var tenancyocid string
 	var tenancyErr error
 
-	backend.Logger.Debug("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy takey: "+takey)
-
+	if len(takey) == 0 {
+		backend.Logger.Warn("client", "GetSubscribedRegions", "invalid takey")
+		return nil
+	}
 	if tenancymode == "multitenancy" {
 		if len(takey) <= 0 || takey == NoTenancy {
 			o.logger.Error("Unable to get Multi-tenancy OCID")
@@ -309,12 +311,12 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		OCID: tenancyocid,
 	})
 
-	if len(compartmentList) > 1 {
-		compartmentList = append(compartmentList, models.OCIResource{
-			Name: constants.ALL_COMPARTMENT,
-			OCID: "",
-		})
-	}
+	// if len(compartmentList) > 1 {
+	// 	compartmentList = append(compartmentList, models.OCIResource{
+	// 		Name: constants.ALL_COMPARTMENT,
+	// 		OCID: "",
+	// 	})
+	// }
 
 	// sorting based on compartment name
 	sort.SliceStable(compartmentList, func(i, j int) bool {
@@ -354,11 +356,6 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	// calling the api if not present in cache
 	var namespaceWithMetricNames map[string][]string
 	namespaceWithMetricNamesList := []models.OCIMetricNamesWithNamespace{}
-
-	// client := oc.GetOciClient(tenancyOCID)
-	// if client == nil {
-	// 	return namespaceWithMetricNamesList
-	// }
 
 	monitoringRequest := monitoring.ListMetricsRequest{
 		CompartmentId:          common.String(compartmentOCID),
@@ -435,13 +432,36 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	dataPointsWithResourceSerialNo := map[int]models.OCIMetricDataPoints{}
 	dataPoints := []models.OCIMetricDataPoints{}
 	resourceIDsPerTag := map[string]map[string]struct{}{}
-
+	var takey string
 	selectedTags := requestParams.TagsValues
 	selectedDimensions := requestParams.DimensionValues
 	selectedLegendFormat := requestParams.LegendFormat
 	o.logger.Debug("selectedLegendFormat", "selectedLegendFormat", selectedLegendFormat)
 
-	takey := o.GetTenancyAccessKey(tenancyOCID)
+	o.logger.Debug("takey GetMetricDataPoints", "TenancyLegacy ", requestParams.TenancyLegacy)
+
+	o.logger.Debug("GetMetricDataPoints", "o.settings.TenancyMode ", o.settings.TenancyMode)
+
+	if len(tenancyOCID) == 0 {
+		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode != "single" {
+			takey = o.GetTenancyAccessKey(requestParams.TenancyLegacy)
+		}
+		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode == "single" {
+			takey = o.GetTenancyAccessKey("DEFAULT/")
+		}
+	} else {
+		if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
+			takey = o.GetTenancyAccessKey("DEFAULT/")
+		} else {
+			takey = o.GetTenancyAccessKey(tenancyOCID)
+		}
+	}
+	o.logger.Debug("takey GetMetricDataPoints", "GetMetricDataPoints ", takey)
+
+	if len(takey) == 0 {
+		backend.Logger.Warn("client", "GetMetricDataPoints", "invalid takey")
+		return nil, nil
+	}
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
 		CompartmentId:          common.String(requestParams.CompartmentOCID),
@@ -456,13 +476,26 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	// to search for all copartments
 	if len(requestParams.CompartmentOCID) == 0 {
-		metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
-		metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
+		if len(requestParams.CompartmentLegacy) == 0 {
+			o.logger.Debug("takey GetMetricDataPoints", "Compat if ", common.String(requestParams.TenancyOCID))
+			metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
+			metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
+		} else {
+			o.logger.Debug("takey GetMetricDataPoints", "Compat else ", common.String(requestParams.CompartmentLegacy))
+			o.logger.Debug("Query is using CompartmentLegacy", "CompartmentLegacy ", requestParams.CompartmentLegacy)
+			metricsDataRequest.CompartmentId = common.String(requestParams.CompartmentLegacy)
+			requestParams.CompartmentOCID = requestParams.CompartmentLegacy
+		}
 	}
 
+	if len(requestParams.ResourceGroup) == 0 && len(requestParams.ResourceGroupLegacy) != 0 {
+		requestParams.ResourceGroup = requestParams.ResourceGroupLegacy
+	}
+
+	o.logger.Debug("rg GetMetricDataPoints", "RGRGRGRG ", common.String(requestParams.ResourceGroup))
 	// adding the resource group when provided
 	if len(requestParams.ResourceGroup) != 0 {
-		if requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_GROUP {
+		if requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER_LEGACY && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_GROUP {
 			metricsDataRequest.SummarizeMetricsDataDetails.ResourceGroup = &requestParams.ResourceGroup
 		}
 	}
@@ -587,14 +620,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 						continue
 					}
 
-					// adjustment for previous non-existance values
-					// when the time comes in later data points
-					// dataValuesWithTime[t] = []float64{0.0}
-					// for i := 2; i < resourcesFetched; i++ {
-					// 	dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
-					// }
-					// dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
-
 					// adjustment for previous non-existance values with the immediate previous value
 					// when the time comes in later data points
 					dataValuesWithTime[t] = []float64{previousValue}
@@ -634,23 +659,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 				UniqueDataID: uniqueDataID,
 				Labels:       labelsToAdd,
 			}
-
-			// // adding cmdb data as labels
-			// for ocid, cmdbData := range oc.cmdbData[tenancyName] {
-			// 	if ocid != uniqueDataID {
-			// 		// when there is no data for the resource ocid
-			// 		continue
-			// 	}
-
-			// 	dp := dataPointsWithResourceSerialNo[resourcesFetched-1]
-
-			// 	// adding to the existing labels
-			// 	for k, v := range cmdbData {
-			// 		dp.Labels[k] = v
-			// 	}
-
-			// 	dataPointsWithResourceSerialNo[resourcesFetched-1] = dp
-			// }
 		}
 
 		return true
@@ -827,6 +835,7 @@ func (o *OCIDatasource) GetTags(
 				resourceIDsPerTag := map[string]map[string]struct{}{}
 				resourceLabels := map[string]map[string]string{}
 
+				// Tags to be implemented in future release
 				// switch constants.OCI_NAMESPACES[namespace] {
 				// case constants.OCI_TARGET_COMPUTE:
 				// 	ccc.SetRegion(sRegion)
@@ -984,7 +993,7 @@ func (o *OCIDatasource) GetResourceGroups(
 			Namespace: common.String(namespace),
 		},
 	}
-
+	// piopiopio
 	if len(compartmentOCID) == 0 {
 		monitoringRequest.CompartmentId = common.String(tenancyOCID)
 		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)
@@ -1015,18 +1024,40 @@ func (o *OCIDatasource) GetResourceGroups(
 		)
 	}
 
-	for k, v := range metricResourceGroups {
-		metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
-			ResourceGroup: k,
-			MetricNames:   v,
-		})
+	reqDetails := monitoring.ListMetricsDetails{}
+	reqDetails.Namespace = common.String(namespace)
+	reqDetails.GroupBy = []string{"resourceGroup", "name"}
+
+	// retrieve metric list for template var
+	items, err := o.getListMetrics(ctx, region, compartmentOCID, reqDetails, takey)
+	if err != nil {
+		backend.Logger.Debug("client", "GetResourceGroups", "Error retrieving metric list under compartment '"+compartmentOCID+"'")
+		return nil
 	}
 
-	if len(metricResourceGroupsList) > 0 {
+	if len(metricResourceGroups) == 0 {
+		var arca []string
+		for _, item := range items {
+			alfa := *(item.Name)
+			arca = append(arca, alfa)
+		}
 		metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
 			ResourceGroup: constants.DEFAULT_RESOURCE_GROUP,
-			MetricNames:   []string{},
+			MetricNames:   arca,
 		})
+	} else {
+		for k, v := range metricResourceGroups {
+			metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
+				ResourceGroup: k,
+				MetricNames:   v,
+			})
+		}
+		if len(metricResourceGroupsList) > 0 {
+			metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
+				ResourceGroup: constants.DEFAULT_RESOURCE_GROUP,
+				MetricNames:   []string{},
+			})
+		}
 	}
 
 	// saving into the cache
@@ -1074,6 +1105,11 @@ func (o *OCIDatasource) GetDimensions(
 	var metricDimensions map[string][]string
 	metricDimensionsList := []models.OCIMetricDimensions{}
 	takey := o.GetTenancyAccessKey(tenancyOCID)
+
+	if len(takey) == 0 {
+		backend.Logger.Warn("client", "GetDimensions", "invalid takey")
+		return nil
+	}
 
 	monitoringRequest := monitoring.ListMetricsRequest{
 		CompartmentId:          common.String(compartmentOCID),
@@ -1126,4 +1162,33 @@ func (o *OCIDatasource) GetDimensions(
 	o.cache.Wait()
 
 	return metricDimensionsList
+}
+
+func (o *OCIDatasource) getListMetrics(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails, takey string) ([]monitoring.Metric, error) {
+	var items []monitoring.Metric
+	var page *string
+
+	pageNumber := 0
+	for {
+		reg := common.StringToRegion(region)
+		o.tenancyAccess[takey].monitoringClient.SetRegion(string(reg))
+		res, err := o.tenancyAccess[takey].monitoringClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
+			CompartmentId:      common.String(compartment),
+			ListMetricsDetails: metricDetails,
+			Page:               page,
+		})
+
+		if err != nil {
+			return nil, errors.Wrap(err, "list metrics failed")
+		}
+		items = append(items, res.Items...)
+		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
+		if res.OpcNextPage == nil || pageNumber >= MaxPagesToFetch {
+			break
+		}
+
+		page = res.OpcNextPage
+		pageNumber++
+	}
+	return items, nil
 }

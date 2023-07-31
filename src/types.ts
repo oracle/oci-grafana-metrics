@@ -1,15 +1,11 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+*/
+
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-// export interface OCIQuery extends DataQuery {
-//   multiplier: number;
-//   queryType: string;
-//   region: string;
-//   compartment: string;
-//   tenancy: string;
-//   namespace: string
-//   resourcegroup: string;  
-// }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}
 
@@ -26,24 +22,6 @@ export interface OCIConfigSec {
   tenancyOcid?: string;
   fingerprint?: string;
   apiKey?: string;
-}
-
-
-export enum Protocol {
-  NATIVE = 'native',
-  HTTP = 'http',
-}
-
-export enum Format {
-  TIMESERIES = 0,
-  TABLE = 1,
-  LOGS = 2,
-}
-
-//#region Query
-export enum QueryType {
-  SQL = 'sql',
-  Builder = 'builder',
 }
 
 
@@ -165,10 +143,18 @@ export type Filter = NullFilter | BooleanFilter | NumberFilter | DateFilter | St
 //#endregion
 
 export enum DefaultOCIOptions {
-  ConfigPath = '~/.oci/config',
-  MultiTenanciesFile = '~/.oci/tenancies',
   ConfigProfile = 'DEFAULT',
 }
+
+export const DEFAULT_TENANCY = "DEFAULT/";
+export const compartmentsQueryRegex = /^compartments\(\s*(\".+\"|\'.+\'|\$\w+)\s*\)|^compartments\(\)\s*/;
+export const regionsQueryRegex = /^regions\(\s*(\".+\"|\'.+\'|\$\w+)\s*\)|^regions\(\)\s*/;
+export const tenanciesQueryRegex = /^tenancies\(\)\s*/;
+export const namespacesQueryRegex = /^namespaces\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*(?:,\s*(\".+\"|\'.+\'|\$\w+)\s*)?\)/;
+export const resourcegroupsQueryRegex = /^resourcegroups\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*(?:,\s*(\".+\"|\'.+\'|\$\w+)\s*)?\)/;
+export const metricsQueryRegex = /^metrics\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*(?:,\s*(\".+\"|\'.+\'|\$\w+)\s*)?\)/;
+export const dimensionQueryRegex = /^dimensions\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*(?:,\s*(\".+\"|\'.+\'|\$\w+)\s*)?\)/;
+export const windowsAndResolutionRegex = /^[0-9]+[mhs]$/;
 
 export enum OCIResourceCall {
   Tenancies = 'tenancies',
@@ -191,8 +177,11 @@ export enum QueryPlaceholder {
   Interval = 'select interval',
   Dimensions = 'select dimensions (optional)',
   ResourceGroup = 'select resourcegroup (optional)',
+  ResourceGroupLegacy = 'select resource group',
   Tags = 'select resource tags (optional)',
   GroupBy = 'select option (optional)',
+  CompartmentLegacy = 'select compartment',
+  TenancyLegacy = 'select tenancy',
 }
 
 export interface DimensionPart {
@@ -235,10 +224,12 @@ export interface OCIQuery extends DataQuery {
   //hide: boolean;
   tenancyName: string;
   tenancyOCID: string;
+  tenancy: string;
   tenancymode: string;
   compartments?: any;
   compartmentName?: string;
   compartmentOCID?: string;
+  compartment?: string; // for legacy compatibility
   regions?: any;
   region?: string;
   namespace?: string;
@@ -251,6 +242,7 @@ export interface OCIQuery extends DataQuery {
   statistic: string;
   statisticLabel?: string;
   resourceGroup?: string;
+  resourcegroup?: string;
   dimensionValues?: string[];
   tagsValues?: string[];
   groupBy?: string;
@@ -272,9 +264,6 @@ export interface OCIDataSourceOptions extends DataSourceJsonData {
   multiTenancyFile?: string; // Default is ~/.oci/tenancies, if enabled
   configPath?: string; // Config file path. Default is ~/.oci/config
   configProfile?: string; // Config profile name, as specified in ~/.oci/config. Default is DEFAULT
-  enableCMDB?: boolean; // Choice to enable oracel cmdb datasource mapping
-  enableCMDBUploadFile?: boolean; // Choice to enable user to upload customer mapping file
-  cmdbFileContent: string; // CMDB file content as json string
 
   addon1: boolean;
   addon2: boolean;

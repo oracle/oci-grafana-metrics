@@ -72,8 +72,6 @@ func (ocidx *OCIDatasource) GetRegionsHandler(rw http.ResponseWriter, req *http.
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
-
-	// regions := ocidx.clients.GetSubscribedRegions(req.Context(), rr.Tenancy)
 	regions := ocidx.GetSubscribedRegions(req.Context(), rr.Tenancy)
 
 	writeResponse(rw, regions)
@@ -91,8 +89,6 @@ func (ocidx *OCIDatasource) GetCompartmentsHandler(rw http.ResponseWriter, req *
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
-
-	// compartments := ocidx.clients.GetCompartments(req.Context(), rr.Tenancy)
 	compartments := ocidx.GetCompartments(req.Context(), rr.Tenancy)
 
 	writeResponse(rw, compartments)

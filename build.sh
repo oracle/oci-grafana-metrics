@@ -13,6 +13,11 @@ rm ./oci-metrics-datasource.zip
 rm ./plugin.tar
 # yarn create @grafana/plugin
 yarn run build
+if [ $? -ne 0 ]; then
+    echo "yarn returned error"
+    exit 1
+fi
+
 mage --debug -v
 
 cp LICENSE.txt ./dist/LICENSE

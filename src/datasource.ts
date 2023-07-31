@@ -1,10 +1,12 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+*/
+
 import { Observable } from 'rxjs';
 import _,{ isString} from 'lodash';
 import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
-// import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
-
-import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
-import { OCIDataSourceOptions, OCIQuery, OCIResourceCall, QueryPlaceholder } from './types';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import {
   OCIResourceItem,
   OCINamespaceWithMetricNamesItem,
@@ -13,33 +15,28 @@ import {
   OCIResourceMetadataItem,
 } from './resource.response.parser';
 import {
-  // aggregations,
-  // dimensionKeysQueryRegex,
+  OCIDataSourceOptions,
+  OCIQuery,
+  OCIResourceCall,
+  QueryPlaceholder,
+  dimensionQueryRegex,
   namespacesQueryRegex,
-  // resourcegroupsQueryRegex,
-  // metricsQueryRegex,
+  resourcegroupsQueryRegex,
+  metricsQueryRegex,
   regionsQueryRegex,
   tenanciesQueryRegex,
   DEFAULT_TENANCY,
   compartmentsQueryRegex,
-  // dimensionValuesQueryRegex,
-  // removeQuotes,
-  // AUTO,
-} from "./constants";
-// import _ from 'lodash';
+} from "./types";
+import QueryModel from './query_model';
+
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
-  // private backendSrv: BackendSrv;
-  // private templateSrv: TemplateSrv;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
+  constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
-
-    // this.backendSrv = getBackendSrv();
-    // this.templateSrv = getTemplateSrv();
-
   }
 
   /**
@@ -66,14 +63,71 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     console.log("applyTemplateVariables: before compartmentOCID: " + query.compartmentOCID)
     console.log("applyTemplateVariables: before tenancyOCID: " + query.tenancyOCID)
     console.log("applyTemplateVariables: before namespace: " + query.namespace)
+    console.log("applyTemplateVariables: before resourceGroup: " + query.resourceGroup)
+    console.log("applyTemplateVariables: before metric: " + query.metric)
+    if (query.tenancy) {
+      console.log("applyTemplateVariables: before tenancy: " + query.tenancy)
+    }
+    if (query.compartment) {
+      console.log("applyTemplateVariables: before tenancy: " + query.compartment)
+    }
+    if (query.resourcegroup) {
+      console.log("applyTemplateVariables: before tenancy: " + query.resourcegroup)
+    }    
+
+    if (query.dimensionValues) {
+      for (let i = 0; i < query.dimensionValues.length; i++) {
+        console.log("applyTemplateVariables: before dimvalues: " + query.dimensionValues[i])
+      }
+    }     
+
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
     query.compartmentOCID = templateSrv.replace(query.compartmentOCID, scopedVars);
     query.namespace = templateSrv.replace(query.namespace, scopedVars);
+    query.resourceGroup = templateSrv.replace(query.resourceGroup, scopedVars);
+    query.metric = templateSrv.replace(query.metric, scopedVars);
+    if (query.dimensionValues) {
+      for (let i = 0; i < query.dimensionValues.length; i++) {
+        query.dimensionValues[i] = templateSrv.replace(query.dimensionValues[i], scopedVars);
+      }
+    }
+    if (query.tenancy) {
+      query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
+    }
+    if (query.compartment) {
+      query.compartment = templateSrv.replace(query.compartment, scopedVars);
+    }
+    if (query.resourcegroup) {
+      query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
+    }
+    
+    const queryModel = new QueryModel(query, getTemplateSrv());
+    if (queryModel.isQueryReady()) {
+      query.queryText = queryModel.buildQuery(String(query.metric));
+    }
+    
     console.log("applyTemplateVariables: after region: " + query.region)
     console.log("applyTemplateVariables: after compartmentOCID: " + query.compartmentOCID)
     console.log("applyTemplateVariables: after tenancyOCID: " + query.tenancyOCID)
     console.log("applyTemplateVariables: after namespace: " + query.namespace)
+    console.log("applyTemplateVariables: after resourceGroup: " + query.resourceGroup)
+    console.log("applyTemplateVariables: after metric: " + query.metric)
+    if (query.dimensionValues) {
+      for (let i = 0; i < query.dimensionValues.length; i++) {
+        console.log("applyTemplateVariables: after dimvalues: " + query.dimensionValues[i])
+      }
+    }
+    if (query.tenancy) {
+      console.log("applyTemplateVariables: after tenancy: " + query.tenancy)
+    }
+    if (query.compartment) {
+      console.log("applyTemplateVariables: after tenancy: " + query.compartment)
+    }
+    if (query.resourcegroup) {
+      console.log("applyTemplateVariables: after tenancy: " + query.resourcegroup)
+    }       
+
     return query;
   }
 
@@ -95,132 +149,11 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   //  * Example:
   //  * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
   //  */
-  // templateMetricQuery(query: OCIQuery,varString: string) {
-
-
-
-
-
-  //   let resourcegroupQuery = varString.match(resourcegroupsQueryRegex);
-  //   if (resourcegroupQuery) {
-  //     if (this.tenancymode === "multitenancy") {
-  //       let target = {
-  //         tenancy: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
-  //         region: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
-  //         compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
-  //         namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[4])),
-  //       };
-  //       return this.getResourceGroups(target).catch((err) => {
-  //         throw new Error("Unable to get resourcegroups: " + err);
-  //       });
-  //     } else {
-  //       let target = {
-  //         tenancy: DEFAULT_TENANCY,
-  //         region: removeQuotes(this.getVariableValue(resourcegroupQuery[1])),
-  //         compartment: removeQuotes(this.getVariableValue(resourcegroupQuery[2])),
-  //         namespace: removeQuotes(this.getVariableValue(resourcegroupQuery[3])),
-  //       };
-  //       return this.getResourceGroups(target).catch((err) => {
-  //         throw new Error("Unable to get resourcegroups: " + err);
-  //       });        
-  //     }
-  //   }
-
-  //   let metricQuery = varString.match(metricsQueryRegex);
-  //   if (metricQuery) {
-  //     if (this.tenancymode === "multitenancy") {
-  //       let target = {
-  //         tenancy: removeQuotes(this.getVariableValue(metricQuery[1])),
-  //         region: removeQuotes(this.getVariableValue(metricQuery[2])),
-  //         compartment: removeQuotes(this.getVariableValue(metricQuery[3])),
-  //         namespace: removeQuotes(this.getVariableValue(metricQuery[4])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[5])),
-  //       };
-  //       return this.metricFindQuery(target).catch((err) => {
-  //         throw new Error("Unable to get metrics: " + err);
-  //       });
-  //     } else {
-  //       let target = {
-  //         tenancy: DEFAULT_TENANCY,
-  //         region: removeQuotes(this.getVariableValue(metricQuery[1])),
-  //         compartment: removeQuotes(this.getVariableValue(metricQuery[2])),
-  //         namespace: removeQuotes(this.getVariableValue(metricQuery[3])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(metricQuery[4])),
-  //       };
-  //       return this.metricFindQuery(target).catch((err) => {
-  //         throw new Error("Unable to get metrics: " + err);
-  //       });        
-  //     }  
-  //   }
-
-  //   let dimensionsQuery = varString.match(dimensionKeysQueryRegex);
-  //   if (dimensionsQuery) {
-  //     if (this.tenancymode === "multitenancy") {
-  //       let target = {
-  //         tenancy: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
-  //         region: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
-  //         compartment: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
-  //         namespace: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
-  //         metric: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[6])),
-  //       };
-  //       return this.getDimensionKeys(target).catch((err) => {
-  //         throw new Error("Unable to get dimensions: " + err);
-  //       });
-  //     } else {
-  //       let target = {
-  //         tenancy: DEFAULT_TENANCY,
-  //         region: removeQuotes(this.getVariableValue(dimensionsQuery[1])),
-  //         compartment: removeQuotes(this.getVariableValue(dimensionsQuery[2])),
-  //         namespace: removeQuotes(this.getVariableValue(dimensionsQuery[3])),
-  //         metric: removeQuotes(this.getVariableValue(dimensionsQuery[4])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionsQuery[5])),
-  //       };
-  //       return this.getDimensionKeys(target).catch((err) => {
-  //         throw new Error("Unable to get dimensions: " + err);
-  //       });        
-  //     }      
-  //   }
-
-  //   let dimensionOptionsQuery = varString.match(dimensionValuesQueryRegex);
-  //   if (dimensionOptionsQuery) {
-  //     if (this.tenancymode === "multitenancy") {
-  //       let target = {
-  //         tenancy: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
-  //         region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
-  //         compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
-  //         namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
-  //         metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[5])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[7])),
-  //       };
-  //       let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[6]));
-  //       return this.getDimensionValues(target, dimensionKey).catch((err) => {
-  //         throw new Error("Unable to get dimension options: " + err);
-  //       });
-  //     } else {
-  //       let target = {
-  //         tenancy: DEFAULT_TENANCY,
-  //         region: removeQuotes(this.getVariableValue(dimensionOptionsQuery[1])),
-  //         compartment: removeQuotes(this.getVariableValue(dimensionOptionsQuery[2])),
-  //         namespace: removeQuotes(this.getVariableValue(dimensionOptionsQuery[3])),
-  //         metric: removeQuotes(this.getVariableValue(dimensionOptionsQuery[4])),
-  //         resourcegroup: removeQuotes(this.getVariableValue(dimensionOptionsQuery[6])),
-  //       };
-  //       let dimensionKey = removeQuotes(this.getVariableValue(dimensionOptionsQuery[5]));        
-  //       return this.getDimensionValues(target, dimensionKey).catch((err) => {
-  //         throw new Error("Unable to get dimension options: " + err);
-  //       });        
-  //     }
-  //   }
-
-  //   throw new Error("Unable to parse templating string");
-  // }
+  // metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
 
   async metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
     const templateSrv = getTemplateSrv();
-    const tmode = this.getJsonData().tenancymode;
-    console.log("uga "+tmode)
-    console.log("ciao "+this.jsonData.tenancymode)
+    // const tmode = this.getJsonData().tenancymode;
 
     const tenancyQuery = query.match(tenanciesQueryRegex);
     if (tenancyQuery) {
@@ -232,7 +165,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     const regionQuery = query.match(regionsQueryRegex);
     if (regionQuery) {
-      if (tmode === "multitenancy") {
+      if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(regionQuery[1]);
         const regions = await this.getSubscribedRegions(tenancy);
         return regions.map(n => {
@@ -284,70 +217,87 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }
     }
 
+    let resourcegroupQuery = query.match(resourcegroupsQueryRegex);
+    if (resourcegroupQuery) {
+      if (this.jsonData.tenancymode === "multitenancy") {
+        const tenancy = templateSrv.replace(resourcegroupQuery[1]);
+        const region = templateSrv.replace(resourcegroupQuery[2]);
+        const compartment = templateSrv.replace(resourcegroupQuery[3]);
+        const namespace = templateSrv.replace(resourcegroupQuery[4]);
+        const resource_group = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        return resource_group.map(n => {
+          return { text: n.resource_group, value: n.resource_group };
+        });
+      } else {
+        const tenancy = DEFAULT_TENANCY;
+        const region = templateSrv.replace(resourcegroupQuery[1]);
+        const compartment = templateSrv.replace(resourcegroupQuery[2]);
+        const namespace = templateSrv.replace(resourcegroupQuery[3]);
+        const resource_group = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        return resource_group.map(n => {
+          return { text: n.resource_group, value: n.resource_group };
+        });     
+      }
+    }
 
-    // const namedQueryQueryQuery = query.match(/^named_query_queries\(([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
-    // if (namedQueryQueryQuery) {
-    //   const region = templateSrv.replace(namedQueryQueryQuery[1]);
-    //   const pattern = templateSrv.replace(namedQueryQueryQuery[2], {}, 'regex');
-    //   let workGroup = namedQueryQueryQuery[3];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const namedQueryQueries = await this.getNamedQueryQueries(region, pattern, workGroup);
-    //   return namedQueryQueries.map(n => {
-    //     return { text: n, value: n };
-    //   });
-    // }
+    const metricQuery = query.match(metricsQueryRegex);
+    if (metricQuery) {
+      if (this.jsonData.tenancymode === "multitenancy") {
+        const tenancy = templateSrv.replace(metricQuery[1]);
+        const region = templateSrv.replace(metricQuery[2]);
+        const compartment = templateSrv.replace(metricQuery[3]);
+        const namespace = templateSrv.replace(metricQuery[4]);
+        // const resource_group = templateSrv.replace(metricQuery[4]);
+        const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
+        return metric_names.flatMap(n => {
+          return n.metric_names.map(name => {
+            console.log("metric_names "+name)
+            return { text: name, value: name };
+          });
+        });        
+      } else {
+        const tenancy = DEFAULT_TENANCY;
+        const region = templateSrv.replace(metricQuery[1]);
+        const compartment = templateSrv.replace(metricQuery[2]);
+        const namespace = templateSrv.replace(metricQuery[3]);
+        // const resource_group = templateSrv.replace(metricQuery[4]);
+        const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace); 
+        return metric_names.flatMap(n => {
+          return n.metric_names.map(name => {
+            return { text: name, value: name };
+          });
+        });       
+      }  
+    }    
 
-    // const queryExecutionIdsQuery = query.match(/^query_execution_ids\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
-    // if (queryExecutionIdsQuery) {
-    //   const region = templateSrv.replace(queryExecutionIdsQuery[1]);
-    //   const limit = parseInt(templateSrv.replace(queryExecutionIdsQuery[2]), 10);
-    //   const pattern = templateSrv.replace(queryExecutionIdsQuery[3], {}, 'regex');
-    //   let workGroup = queryExecutionIdsQuery[4];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const to = new Date(parseInt(templateSrv.replace('$__to'), 10)).toISOString();
-
-    //   const queryExecutions = await this.getQueryExecutions(region, limit, pattern, workGroup, to);
-    //   return queryExecutions.map(n => {
-    //     const id = n.QueryExecutionId;
-    //     return { text: id, value: id };
-    //   });
-    // }
-
-    // const queryExecutionIdsByNameQuery = query.match(
-    //   /^query_execution_ids_by_name\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/
-    // );
-    // if (queryExecutionIdsByNameQuery) {
-    //   const region = templateSrv.replace(queryExecutionIdsByNameQuery[1]);
-    //   const limit = parseInt(templateSrv.replace(queryExecutionIdsByNameQuery[2]), 10);
-    //   const pattern = templateSrv.replace(queryExecutionIdsByNameQuery[3], {}, 'regex');
-    //   let workGroup = queryExecutionIdsByNameQuery[4];
-    //   if (workGroup) {
-    //     workGroup = workGroup.substr(1); //remove the comma
-    //     workGroup = workGroup.trim();
-    //   } else {
-    //     workGroup = '';
-    //   }
-    //   workGroup = templateSrv.replace(workGroup);
-    //   const to = new Date(parseInt(templateSrv.replace('$__to'), 10)).toISOString();
-
-    //   const queryExecutionsByName = await this.getQueryExecutionsByName(region, limit, pattern, workGroup, to);
-    //   return queryExecutionsByName.map(n => {
-    //     const id = n.QueryExecutionId;
-    //     return { text: id, value: id };
-    //   });
-    // }
+    const dimensionsQuery = query.match(dimensionQueryRegex);
+    if (dimensionsQuery) {
+      if (this.jsonData.tenancymode === "multitenancy") {
+        const tenancy = templateSrv.replace(dimensionsQuery[1]);
+        const region = templateSrv.replace(dimensionsQuery[2]);
+        const compartment = templateSrv.replace(dimensionsQuery[3]);
+        const namespace = templateSrv.replace(dimensionsQuery[4]);
+        const metric = templateSrv.replace(dimensionsQuery[5]);
+        const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
+        return dimension_values.flatMap(res => {
+          return res.values.map(val => {
+              return { text: res.key + ' - ' + val, value: res.key + '="' + val + '"' };
+          });
+        }); 
+      } else {
+        const tenancy = DEFAULT_TENANCY;
+        const region = templateSrv.replace(dimensionsQuery[1]);
+        const compartment = templateSrv.replace(dimensionsQuery[2]);
+        const namespace = templateSrv.replace(dimensionsQuery[3]);
+        const metric = templateSrv.replace(dimensionsQuery[4]);
+        const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
+        return dimension_values.flatMap(res => {
+          return res.values.map(val => {
+              return { text: res.key + ' - ' + val, value: res.key + '="' + val + '"' };
+          });
+        }); 
+      }      
+    } 
 
     return [];
   }
@@ -368,49 +318,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }  
 
 
-  // targetContainsTemplate(target: any) {
-  //   console.log(target)
-  //   // console.log(target.tenancyOCID)
-
-  //   if (this.templateSrv.containsTemplate(target)) {
-  //     return true;
-  //   }    
-  //   // if (target.tenancyOCID && target.tenancyOCID.length > 0) {
-  //   //   for (let i = 0; i < target.tenancyOCID.length; i++) {
-  //   //     if (this.templateSrv.containsTemplate(target.tenancyOCID[i].filter)) {
-  //   //       return true;
-  //   //     }
-  //   //   }
-  //   // }
-    
-  //   return false;
-  // }  
-
-
  // **************************** Template variables helpers ****************************
-
-  /**
-   * Get all template variable descriptors
-   */
-  getVariableDescriptors(regex: string, includeCustom = true) {
-    const vars = this.templateSrv.getVariables() || [];
-
-    if (regex) {
-      let regexVars = vars.filter((item) => _.isString(item.name) && item.name.match(regex) !== null);
-      if (includeCustom) {
-        const custom = vars.filter(
-          (item) => item.type === "custom" || item.type === "constant"
-        );
-        regexVars = regexVars.concat(custom);
-      }
-      const uniqueRegexVarsMap = new Map();
-      regexVars.forEach((varObj) =>
-        uniqueRegexVarsMap.set(varObj.name, varObj)
-      );
-      return Array.from(uniqueRegexVarsMap.values());
-    }
-    return vars;
-  }
 
   /**
    * List all variable names optionally filtered by regex or/and type
@@ -421,19 +329,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * If a custom or constant is in  variables and  includeCustom, default is false.
    * Hence,the varDescriptors list is filtered for a unique set of var names
    */
-  // getVariables2(regex: string, includeCustom: string) {
-  //   const varDescriptors =
-  //     this.getVariableDescriptors(regex, includeCustom) || [];
-  //   return varDescriptors.map((item) => `$${item.name}`);
-  // }
-
-  /**
-   * @param varName valid varName contains '$'. Example: '$dimensionKey'
-   * Returns an array with variable values or empty array
-   */
-  getVariableValue(varName: string, scopedVars = {}) {
-    return this.templateSrv.replace(varName, scopedVars) || varName;
-  }
 
   /**
    * @param varName valid varName contains '$'. Example: '$dimensionKey'
@@ -445,13 +340,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return !!varNames.find((item) => item === varName);
   }
 
-//  appendVariables(options: string, varQueryRegex:string) {
-//     const vars = this.getVariables(varQueryRegex) || [];
-//     vars.forEach(value => {
-//       options.unshift({ value, text: value });
-//     });
-//     return options;
-//   }
 
   // main caller to call resource handler for get call
   async getResource(path: string): Promise<any> {
@@ -472,14 +360,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("region vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("region tenancyOCID "+tenancyOCID)
     }
-  
     if (tenancyOCID === '') {
       return [];
     }
@@ -490,16 +374,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseRegions(response);
     });
   }
+
   async getCompartments(tenancyOCID: string): Promise<OCIResourceItem[]> {
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("COMP vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("COMP tenancyOCID "+tenancyOCID)
-    }    
+    }   
     if (tenancyOCID === '') {
       return [];
     }
@@ -510,66 +392,43 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseCompartments(response);
     });
   }
+
   async getNamespacesWithMetricNames(
     tenancyOCID: string,
     compartmentOCID: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
-    let { tenancyOCID: var_tenancy, region: var_region, compartmentOCID: var_compartment } = this.interpolateProps({ tenancyOCID, region, compartmentOCID });
-    console.log("NS")
-    console.log("NS "+tenancyOCID)
-    console.log("NS "+compartmentOCID)
-    console.log("NS "+region)
-    console.log("NS "+var_region)
-    console.log("NS "+var_tenancy)
-    console.log("NS "+var_compartment)
     if (this.isVariable(tenancyOCID)) {
       let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
-      console.log("NS vartenancy "+var_tenancy)
       if (var_tenancy !== "") { 
         tenancyOCID = var_tenancy
       }      
-    } else {
-      console.log("NS tenancyOCID "+tenancyOCID)
     }
 
     if (this.isVariable(compartmentOCID)) {
       let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
-      console.log("NS vartenancy "+var_compartment)
       if (var_compartment !== "") { 
         compartmentOCID = var_compartment
       }      
-    } else {
-      console.log("NS compartmentOCID "+compartmentOCID)
     }
 
     if (this.isVariable(region)) {
       let { region: var_region} = this.interpolateProps({region});
-      console.log("NS vartenancy "+var_region)
       if (var_region !== "") { 
         region = var_region
       }      
-    } else {
-      console.log("NS region "+region)
     }
 
     if (tenancyOCID === '') {
-      console.log("NS notenancy")
       return [];
     }
     if (region === undefined || region === QueryPlaceholder.Region) {
-      console.log("NS noregion")
       return [];
     }
 
     if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      console.log("NS compartmentOCID")
       compartmentOCID = '';
     }
-
-    console.log("NS2 "+tenancyOCID)
-    console.log("NS2 "+compartmentOCID)
-    console.log("NS2 "+region)
 
     const reqBody: JSON = {
       tenancy: tenancyOCID,
@@ -580,12 +439,55 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseNamespacesWithMetricNames(response);
     });
   }
+
+
   async getResourceGroupsWithMetricNames(
     tenancyOCID: any,
     compartmentOCID: any,
     region: any,
     namespace: any
   ): Promise<OCIResourceGroupWithMetricNamesItem[]> {
+
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    }
+
+    if (this.isVariable(compartmentOCID)) {
+      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+      if (var_compartment !== "") { 
+        compartmentOCID = var_compartment
+      }      
+    }
+
+    if (this.isVariable(region)) {
+      let { region: var_region} = this.interpolateProps({region});
+      if (var_region !== "") { 
+        region = var_region
+      }      
+    }
+
+    if (this.isVariable(namespace)) {
+      let { namespace: var_namespace} = this.interpolateProps({namespace});
+      if (var_namespace !== "") { 
+        namespace = var_namespace
+      }      
+    }    
+
+    if (tenancyOCID === '') {
+      console.log("RG notenancy")
+      return [];
+    }
+    if (region === undefined || region === QueryPlaceholder.Region) {
+      return [];
+    }
+
+    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
+      compartmentOCID = '';
+    } 
+
     if (tenancyOCID === '') {
       return [];
     }
@@ -610,6 +512,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseResourceGroupWithMetricNames(response);
     });
   }
+
   async getDimensions(
     tenancyOCID: any,
     compartmentOCID: any,
@@ -617,6 +520,41 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     namespace: any,
     metricName: any
   ): Promise<OCIResourceMetadataItem[]> {
+
+    if (this.isVariable(tenancyOCID)) {
+      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+      if (var_tenancy !== "") { 
+        tenancyOCID = var_tenancy
+      }      
+    }
+
+    if (this.isVariable(compartmentOCID)) {
+      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+      if (var_compartment !== "") { 
+        compartmentOCID = var_compartment
+      }      
+    }
+
+    if (this.isVariable(region)) {
+      let { region: var_region} = this.interpolateProps({region});
+      if (var_region !== "") { 
+        region = var_region
+      }      
+    }
+
+    if (this.isVariable(namespace)) {
+      let { namespace: var_namespace} = this.interpolateProps({namespace});
+      if (var_namespace !== "") { 
+        namespace = var_namespace
+      }      
+    }
+
+    if (this.isVariable(metricName)) {
+      let { metricName: var_metric} = this.interpolateProps({metricName});
+      if (var_metric !== "") { 
+        metricName = var_metric
+      }      
+    }       
 
     if (tenancyOCID === '') {
       return [];
