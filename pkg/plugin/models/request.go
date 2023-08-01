@@ -4,8 +4,8 @@ import "time"
 
 // MetricsDataRequest - binds the values for metrics query
 type MetricsDataRequest struct {
-	TenancyOCID         string
-	TenancyLegacy       string
+	TenancyOCID string
+	// TenancyLegacy       string
 	CompartmentOCID     string
 	CompartmentName     string
 	CompartmentLegacy   string

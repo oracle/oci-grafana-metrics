@@ -438,24 +438,31 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	selectedLegendFormat := requestParams.LegendFormat
 	o.logger.Debug("selectedLegendFormat", "selectedLegendFormat", selectedLegendFormat)
 
-	o.logger.Debug("takey GetMetricDataPoints", "TenancyLegacy ", requestParams.TenancyLegacy)
+	// o.logger.Debug("takey GetMetricDataPoints", "TenancyLegacy ", requestParams.TenancyLegacy)
 
 	o.logger.Debug("GetMetricDataPoints", "o.settings.TenancyMode ", o.settings.TenancyMode)
 
-	if len(tenancyOCID) == 0 {
-		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode != "single" {
-			takey = o.GetTenancyAccessKey(requestParams.TenancyLegacy)
-		}
-		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode == "single" {
-			takey = o.GetTenancyAccessKey("DEFAULT/")
-		}
+	// if len(tenancyOCID) == 0 {
+	// 	if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode != "single" {
+	// 		takey = o.GetTenancyAccessKey(requestParams.TenancyLegacy)
+	// 	}
+	// 	if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode == "single" {
+	// 		takey = o.GetTenancyAccessKey("DEFAULT/")
+	// 	}
+	// } else {
+	// 	if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
+	// 		takey = o.GetTenancyAccessKey("DEFAULT/")
+	// 	} else {
+	// 		takey = o.GetTenancyAccessKey(tenancyOCID)
+	// 	}
+	// }
+
+	if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
+		takey = o.GetTenancyAccessKey("DEFAULT/")
 	} else {
-		if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
-			takey = o.GetTenancyAccessKey("DEFAULT/")
-		} else {
-			takey = o.GetTenancyAccessKey(tenancyOCID)
-		}
+		takey = o.GetTenancyAccessKey(tenancyOCID)
 	}
+
 	o.logger.Debug("takey GetMetricDataPoints", "GetMetricDataPoints ", takey)
 
 	if len(takey) == 0 {

@@ -176,12 +176,10 @@ export enum QueryPlaceholder {
   Aggregation = 'select aggregation',
   Interval = 'select interval',
   Dimensions = 'select dimensions (optional)',
-  ResourceGroup = 'select resourcegroup (optional)',
-  ResourceGroupLegacy = 'select resource group',
+  ResourceGroup = 'select resource group',
   Tags = 'select resource tags (optional)',
   GroupBy = 'select option (optional)',
   CompartmentLegacy = 'select compartment',
-  TenancyLegacy = 'select tenancy',
 }
 
 export interface DimensionPart {
@@ -223,7 +221,7 @@ export interface OCIQuery extends DataQuery {
   rawQuery: boolean;
   //hide: boolean;
   tenancyName: string;
-  tenancyOCID: string;
+  // tenancyOCID: string;
   tenancy: string;
   tenancymode: string;
   compartments?: any;
@@ -241,7 +239,7 @@ export interface OCIQuery extends DataQuery {
   legendFormat?: string;
   statistic: string;
   statisticLabel?: string;
-  resourceGroup?: string;
+  // resourceGroup?: string;
   resourcegroup?: string;
   dimensionValues?: string[];
   tagsValues?: string[];

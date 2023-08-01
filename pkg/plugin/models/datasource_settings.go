@@ -11,13 +11,11 @@ import (
 
 // OCIDatasourceSettings holds the datasource configuration information for OCI
 type OCIDatasourceSettings struct {
-	AuthProvider     string `json:"authProvider"`
-	ConfigProfile    string `json:"configProfile"`
-	TenancyMode      string `json:"tenancymode"`
-	MultiTenancyMode string `json:"multiTenancyMode"`
-	MultiTenancyFile string `json:"multiTenancyFile"`
-	TenancyName      string `json:"tenancyName,omitempty"`
-	Environment      string `json:"environment"`
+	AuthProvider  string `json:"authProvider"`
+	ConfigProfile string `json:"configProfile"`
+	TenancyMode   string `json:"tenancymode"`
+	TenancyName   string `json:"tenancyName,omitempty"`
+	Environment   string `json:"environment"`
 
 	Profile_0 string `json:"profile0,omitempty"`
 	Region_0  string `json:"region0,omitempty"`

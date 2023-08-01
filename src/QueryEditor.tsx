@@ -20,13 +20,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const tmode = datasource.getJsonData().tenancymode;
   // const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
-  const [hasLegacyResourcegroup, setHasLegacyResourcegroup] = useState(false);
-  const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
+  // const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
   const [namespaceValue, setNamespaceValue] = useState(query.namespace);
-  const [resourceGroupValue, setResourceGroupValue] = useState(query.resourceGroup);
+  const [resourcegroupValue, setResourceGroupValue] = useState(query.resourcegroup);
   const [metricValue, setMetricValue] = useState(query.metric);
   // const [aggregationValue, setaggregationValue] = useState(query.aggregation);
   const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
@@ -139,7 +138,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     // if (query.namespace !== undefined) {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
-      const response = await datasource.getCompartments(query.tenancyOCID);
+      const response = await datasource.getCompartments(query.tenancy);
       if (response) {
         response.forEach((item: any) => {
           const sv: SelectableValue<string> = {
@@ -162,7 +161,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     // if (query.namespace !== undefined) {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
-      const response = await datasource.getSubscribedRegions(query.tenancyOCID);
+      const response = await datasource.getSubscribedRegions(query.tenancy);
       if (response) {
         response.forEach((item: string) => {
           const sv: SelectableValue<string> = {
@@ -189,7 +188,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       query.compartmentName = query.compartment
     }    
     const response = await datasource.getNamespacesWithMetricNames(
-      query.tenancyOCID,
+      query.tenancy,
       query.compartmentOCID,
       query.region
     );
@@ -209,7 +208,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
     const response = await datasource.getResourceGroupsWithMetricNames(
-      query.tenancyOCID,
+      query.tenancy,
       query.compartmentOCID,
       query.region,
       query.namespace
@@ -233,7 +232,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     // const response = query.metricNames || [];
     // console.log("OOO var_metric "+response)
     const response = await datasource.getResourceGroupsWithMetricNames(
-      query.tenancyOCID,
+      query.tenancy,
       query.compartmentOCID,
       query.region,
       query.namespace
@@ -283,7 +282,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource.getDimensions(
-          query.tenancyOCID,
+          query.tenancy,
           query.compartmentOCID,
           query.region,
           query.namespace,
@@ -318,7 +317,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //   return new Promise<Array<SelectableValue<string>>>((resolve) => {
   //     setTimeout(async () => {
   //       const response = await datasource.getTags(
-  //         query.tenancyOCID,
+  //         query.tenancy,
   //         query.compartmentOCID,
   //         query.compartmentName,
   //         query.region,
@@ -348,7 +347,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       {
         ...query,
         tenancyName: tname,
-        tenancyOCID: tvalue,
+        tenancy: tvalue,
         compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
             const response = await datasource.getCompartments(tvalue);
@@ -370,7 +369,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       {
         ...query,
         tenancyName: data.label,
-        tenancyOCID: data.value,
+        tenancy: data.value,
         compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
             const response = await datasource.getCompartments(data.value);
@@ -438,7 +437,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     // new Promise<Array<SelectableValue<string>>>(() => {
     //   setTimeout(async () => {
     //     await datasource.getTags(
-    //       query.tenancyOCID,
+    //       query.tenancy,
     //       query.compartmentOCID,
     //       query.compartmentName,
     //       query.region,
@@ -453,7 +452,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         namespace: data.label,
         metricNames: data.value,
         metricNamesFromNS: data.value,
-        resourceGroup: undefined,
+        resourcegroup: undefined,
         metric: undefined,
       },
       false
@@ -467,7 +466,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     }
     setResourceGroupValue(data);
 
-    onApplyQueryChange({ ...query, resourceGroup: data.label, metricNames: mn, metric: undefined }, false);
+    onApplyQueryChange({ ...query, resourcegroup: data.label, metricNames: mn, metric: undefined }, false);
   };
 
   const onMetricChange = (data: any) => {
@@ -545,21 +544,21 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
 
-  if (query.tenancy && !hasLegacyTenancy && !query.tenancyOCID && query.tenancy !== QueryPlaceholder.TenancyLegacy) {
-      console.log("Legacy tenancy is present: " + query.tenancy)
-      query.tenancyOCID = query.tenancy;
-      query.tenancyName = query.tenancy;  
-      setTenancyValue(query.tenancy);
-      setHasLegacyTenancy(true);
-  }
+  // if (query.tenancy && !hasLegacyTenancy && !query.tenancy && query.tenancy !== QueryPlaceholder.TenancyLegacy) {
+  //     console.log("Legacy tenancy is present: " + query.tenancy)
+  //     query.tenancy = query.tenancy;
+  //     query.tenancyName = query.tenancy;  
+  //     setTenancyValue(query.tenancy);
+  //     setHasLegacyTenancy(true);
+  // }
 
   if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID && query.compartment !== QueryPlaceholder.CompartmentLegacy) {
-    if (!query.tenancyOCID) {
-      console.log("query.tenancyOCID is empty");
+    if (!query.tenancy) {
+      console.log("query.tenancy is empty");
       return null;
     }
     console.log("Legacy compartment is present: " + query.compartment)
-    datasource.getCompartments(query.tenancyOCID).then(response => {
+    datasource.getCompartments(query.tenancy).then(response => {
       if (response) {
         let found = false;
         response.forEach((item: any) => {
@@ -600,13 +599,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //     setHasLegacyCompartment(true);
   // }
 
-
-  if (query.resourcegroup && !hasLegacyResourcegroup && !query.resourceGroup && query.resourcegroup !== QueryPlaceholder.ResourceGroupLegacy) {
-    console.log("Legacy resourcegroup is present: " + query.resourcegroup)
-    query.resourceGroup = query.resourcegroup;
-    setResourceGroupValue(query.resourcegroup);
-    setHasLegacyResourcegroup(true);
-}
 
   return (
     <>
@@ -685,7 +677,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
               allowCustomValue={false}
               required={false}
               loadOptions={getResourceGroupOptions}
-              value={resourceGroupValue}
+              value={resourcegroupValue}
               placeholder={QueryPlaceholder.ResourceGroup}
               onChange={(data) => {
                 onResourceGroupChange(data);

@@ -36,8 +36,8 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	}
 
 	metricsDataRequest := models.MetricsDataRequest{
-		TenancyOCID:       qm.TenancyOCID,
-		TenancyLegacy:     qm.TenancyLegacy,
+		TenancyOCID: qm.TenancyOCID,
+		// TenancyLegacy:     qm.TenancyLegacy,
 		CompartmentOCID:   qm.CompartmentOCID,
 		CompartmentName:   qm.CompartmentName,
 		CompartmentLegacy: qm.CompartmentLegacy,
@@ -79,16 +79,8 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 			}
 			dl = data.Labels{}
 			// legacy support
-			var TheTenancy string
 			var TheCompartment string
 
-			if len(qm.TenancyOCID) == 0 {
-				if len(qm.TenancyLegacy) != 0 {
-					TheTenancy = qm.TenancyLegacy
-				}
-			} else {
-				TheTenancy = qm.TenancyOCID
-			}
 			if len(qm.CompartmentLegacy) == 0 {
 				if len(qm.CompartmentLegacy) != 0 {
 					TheCompartment = qm.CompartmentLegacy
@@ -97,7 +89,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				TheCompartment = qm.CompartmentLegacy
 			}
 
-			dimensions := ocidx.GetDimensions(ctx, TheTenancy, TheCompartment, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
+			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, TheCompartment, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
 			FoundDimensionMap := make(map[string][]string)
 			var index int

@@ -61,9 +61,9 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     const templateSrv = getTemplateSrv();
     console.log("applyTemplateVariables: before region: " + query.region)
     console.log("applyTemplateVariables: before compartmentOCID: " + query.compartmentOCID)
-    console.log("applyTemplateVariables: before tenancyOCID: " + query.tenancyOCID)
+    console.log("applyTemplateVariables: before tenancy: " + query.tenancy)
     console.log("applyTemplateVariables: before namespace: " + query.namespace)
-    console.log("applyTemplateVariables: before resourceGroup: " + query.resourceGroup)
+    console.log("applyTemplateVariables: before resourcegroup: " + query.resourcegroup)
     console.log("applyTemplateVariables: before metric: " + query.metric)
     if (query.tenancy) {
       console.log("applyTemplateVariables: before tenancy: " + query.tenancy)
@@ -82,10 +82,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }     
 
     query.region = templateSrv.replace(query.region, scopedVars);
-    query.tenancyOCID = templateSrv.replace(query.tenancyOCID, scopedVars);
+    query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
     query.compartmentOCID = templateSrv.replace(query.compartmentOCID, scopedVars);
     query.namespace = templateSrv.replace(query.namespace, scopedVars);
-    query.resourceGroup = templateSrv.replace(query.resourceGroup, scopedVars);
+    query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
     query.metric = templateSrv.replace(query.metric, scopedVars);
     if (query.dimensionValues) {
       for (let i = 0; i < query.dimensionValues.length; i++) {
@@ -109,9 +109,9 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     
     console.log("applyTemplateVariables: after region: " + query.region)
     console.log("applyTemplateVariables: after compartmentOCID: " + query.compartmentOCID)
-    console.log("applyTemplateVariables: after tenancyOCID: " + query.tenancyOCID)
+    console.log("applyTemplateVariables: after tenancy: " + query.tenancy)
     console.log("applyTemplateVariables: after namespace: " + query.namespace)
-    console.log("applyTemplateVariables: after resourceGroup: " + query.resourceGroup)
+    console.log("applyTemplateVariables: after resourcegroup: " + query.resourcegroup)
     console.log("applyTemplateVariables: after metric: " + query.metric)
     if (query.dimensionValues) {
       for (let i = 0; i < query.dimensionValues.length; i++) {
@@ -357,36 +357,36 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });
   }
 
-  async getSubscribedRegions(tenancyOCID: string): Promise<string[]> {
-    if (this.isVariable(tenancyOCID)) {
-      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+  async getSubscribedRegions(tenancy: string): Promise<string[]> {
+    if (this.isVariable(tenancy)) {
+      let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
       if (var_tenancy !== "") { 
-        tenancyOCID = var_tenancy
+        tenancy = var_tenancy
       }      
     }
-    if (tenancyOCID === '') {
+    if (tenancy === '') {
       return [];
     }
     const reqBody: JSON = {
-      tenancy: tenancyOCID,
+      tenancy: tenancy,
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Regions, reqBody).then((response) => {
       return new ResponseParser().parseRegions(response);
     });
   }
 
-  async getCompartments(tenancyOCID: string): Promise<OCIResourceItem[]> {
-    if (this.isVariable(tenancyOCID)) {
-      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+  async getCompartments(tenancy: string): Promise<OCIResourceItem[]> {
+    if (this.isVariable(tenancy)) {
+      let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
       if (var_tenancy !== "") { 
-        tenancyOCID = var_tenancy
+        tenancy = var_tenancy
       }      
     }   
-    if (tenancyOCID === '') {
+    if (tenancy === '') {
       return [];
     }
     const reqBody: JSON = {
-      tenancy: tenancyOCID,
+      tenancy: tenancy,
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Compartments, reqBody).then((response) => {
       return new ResponseParser().parseCompartments(response);
@@ -394,14 +394,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
   async getNamespacesWithMetricNames(
-    tenancyOCID: string,
+    tenancy: string,
     compartmentOCID: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
-    if (this.isVariable(tenancyOCID)) {
-      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+    if (this.isVariable(tenancy)) {
+      let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
       if (var_tenancy !== "") { 
-        tenancyOCID = var_tenancy
+        tenancy = var_tenancy
       }      
     }
 
@@ -419,7 +419,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     }
 
-    if (tenancyOCID === '') {
+    if (tenancy === '') {
       return [];
     }
     if (region === undefined || region === QueryPlaceholder.Region) {
@@ -431,7 +431,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
 
     const reqBody: JSON = {
-      tenancy: tenancyOCID,
+      tenancy: tenancy,
       compartment: compartmentOCID,
       region: region,
     } as unknown as JSON;
@@ -442,16 +442,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
 
   async getResourceGroupsWithMetricNames(
-    tenancyOCID: any,
+    tenancy: any,
     compartmentOCID: any,
     region: any,
     namespace: any
   ): Promise<OCIResourceGroupWithMetricNamesItem[]> {
 
-    if (this.isVariable(tenancyOCID)) {
-      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+    if (this.isVariable(tenancy)) {
+      let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
       if (var_tenancy !== "") { 
-        tenancyOCID = var_tenancy
+        tenancy = var_tenancy
       }      
     }
 
@@ -476,7 +476,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     }    
 
-    if (tenancyOCID === '') {
+    if (tenancy === '') {
       console.log("RG notenancy")
       return [];
     }
@@ -488,7 +488,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       compartmentOCID = '';
     } 
 
-    if (tenancyOCID === '') {
+    if (tenancy === '') {
       return [];
     }
     if (region === undefined || namespace === undefined) {
@@ -503,7 +503,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
 
     const reqBody: JSON = {
-      tenancy: tenancyOCID,
+      tenancy: tenancy,
       compartment: compartmentOCID,
       region: region,
       namespace: namespace,
@@ -514,17 +514,17 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
   async getDimensions(
-    tenancyOCID: any,
+    tenancy: any,
     compartmentOCID: any,
     region: any,
     namespace: any,
     metricName: any
   ): Promise<OCIResourceMetadataItem[]> {
 
-    if (this.isVariable(tenancyOCID)) {
-      let { tenancyOCID: var_tenancy} = this.interpolateProps({tenancyOCID});
+    if (this.isVariable(tenancy)) {
+      let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
       if (var_tenancy !== "") { 
-        tenancyOCID = var_tenancy
+        tenancy = var_tenancy
       }      
     }
 
@@ -556,7 +556,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     }       
 
-    if (tenancyOCID === '') {
+    if (tenancy === '') {
       return [];
     }
     if (region === undefined || namespace === undefined || metricName === undefined) {
@@ -575,25 +575,24 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
 
     const reqBody: JSON = {
-      tenancy: tenancyOCID,
+      tenancy: tenancy,
       compartment: compartmentOCID,
       region: region,
       namespace: namespace,
       metric_name: metricName,
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Dimensions, reqBody).then((response) => {
-      console.log("DO OK")
       return new ResponseParser().parseDimensions(response);
     });
   }
   async getTags(
-    tenancyOCID: any,
+    tenancy: any,
     compartmentOCID: any,
     compartmentName: any,
     region: any,
     namespace: any
   ): Promise<OCIResourceMetadataItem[]> {
-    if (tenancyOCID === '') {
+    if (tenancy === '') {
       return [];
     }
     if (region === undefined || namespace === undefined) {
@@ -611,7 +610,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
 
     const reqBody: JSON = {
-      tenancy: tenancyOCID,
+      tenancy: tenancy,
       compartment: compartmentOCID,
       compartment_name: compartmentName,
       region: region,
