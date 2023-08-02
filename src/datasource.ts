@@ -251,7 +251,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
         return metric_names.flatMap(n => {
           return n.metric_names.map(name => {
-            console.log("metric_names "+name)
             return { text: name, value: name };
           });
         });        
@@ -477,7 +476,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }    
 
     if (tenancy === '') {
-      console.log("RG notenancy")
       return [];
     }
     if (region === undefined || region === QueryPlaceholder.Region) {

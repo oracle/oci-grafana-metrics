@@ -463,8 +463,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		takey = o.GetTenancyAccessKey(tenancyOCID)
 	}
 
-	o.logger.Debug("takey GetMetricDataPoints", "GetMetricDataPoints ", takey)
-
 	if len(takey) == 0 {
 		backend.Logger.Warn("client", "GetMetricDataPoints", "invalid takey")
 		return nil, nil
@@ -495,9 +493,9 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		}
 	}
 
-	if len(requestParams.ResourceGroup) == 0 && len(requestParams.ResourceGroupLegacy) != 0 {
-		requestParams.ResourceGroup = requestParams.ResourceGroupLegacy
-	}
+	// if len(requestParams.ResourceGroup) == 0 && len(requestParams.ResourceGroupLegacy) != 0 {
+	// 	requestParams.ResourceGroup = requestParams.ResourceGroupLegacy
+	// }
 
 	o.logger.Debug("rg GetMetricDataPoints", "RGRGRGRG ", common.String(requestParams.ResourceGroup))
 	// adding the resource group when provided

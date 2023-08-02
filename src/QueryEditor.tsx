@@ -228,9 +228,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const getMetricOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
-  //   console.log("OOO0000 var_metric "+query.metricNames)
-    // const response = query.metricNames || [];
-    // console.log("OOO var_metric "+response)
     const response = await datasource.getResourceGroupsWithMetricNames(
       query.tenancy,
       query.compartmentOCID,
@@ -244,7 +241,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
             label: ii,
             value: ii,
           };
-          console.log("OOO111111 var_metric "+ii)    
           options.push(sv);
         });
       });
@@ -482,7 +478,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
   const onLegendFormatChange = (data: any) => {
     setLegendFormatValue(data);
-    console.log("onLegendFormatChange "+data)
     onApplyQueryChange({ ...query, legendFormat: data });
     };
   const onDimensionChange = (data: any) => {

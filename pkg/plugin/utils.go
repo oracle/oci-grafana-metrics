@@ -1,3 +1,8 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+ */
+
 package plugin
 
 import (
@@ -596,8 +601,6 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 				for key, dimension := range dimensions {
 					if key == placeholderLabel {
 						for _, value := range dimension {
-							o.logger.Debug("key Generated metric key", "key", key)
-							o.logger.Debug("key Generated metric value", "value", value)
 							o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
 							metricLabel = re.ReplaceAllString(metricLabel, value)
 							o.logger.Debug("metricLabel after", "metricLabel", metricLabel)

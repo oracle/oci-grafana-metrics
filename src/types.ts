@@ -169,7 +169,7 @@ export enum OCIResourceCall {
 
 export enum QueryPlaceholder {
   Tenancy = 'select tenancy',
-  Compartment = 'select compartment (optional)',
+  Compartment = 'select compartment',
   Region = 'select region',
   Namespace = 'select namespace',
   Metric = 'select metric',
