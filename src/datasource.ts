@@ -60,7 +60,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
     console.log("applyTemplateVariables: before region: " + query.region)
-    console.log("applyTemplateVariables: before compartmentOCID: " + query.compartmentOCID)
+    console.log("applyTemplateVariables: before compartment: " + query.compartment)
     console.log("applyTemplateVariables: before tenancy: " + query.tenancy)
     console.log("applyTemplateVariables: before namespace: " + query.namespace)
     console.log("applyTemplateVariables: before resourcegroup: " + query.resourcegroup)
@@ -83,7 +83,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
-    query.compartmentOCID = templateSrv.replace(query.compartmentOCID, scopedVars);
+    query.compartment = templateSrv.replace(query.compartment, scopedVars);
     query.namespace = templateSrv.replace(query.namespace, scopedVars);
     query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
     query.metric = templateSrv.replace(query.metric, scopedVars);
@@ -108,7 +108,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
     
     console.log("applyTemplateVariables: after region: " + query.region)
-    console.log("applyTemplateVariables: after compartmentOCID: " + query.compartmentOCID)
+    console.log("applyTemplateVariables: after compartment: " + query.compartment)
     console.log("applyTemplateVariables: after tenancy: " + query.tenancy)
     console.log("applyTemplateVariables: after namespace: " + query.namespace)
     console.log("applyTemplateVariables: after resourcegroup: " + query.resourcegroup)
@@ -394,7 +394,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   async getNamespacesWithMetricNames(
     tenancy: string,
-    compartmentOCID: any,
+    compartment: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
     if (this.isVariable(tenancy)) {
@@ -404,10 +404,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     }
 
-    if (this.isVariable(compartmentOCID)) {
-      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+    if (this.isVariable(compartment)) {
+      let { compartment: var_compartment} = this.interpolateProps({compartment});
       if (var_compartment !== "") { 
-        compartmentOCID = var_compartment
+        compartment = var_compartment
       }      
     }
 
@@ -425,13 +425,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return [];
     }
 
-    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      compartmentOCID = '';
+    if (compartment === undefined || compartment === QueryPlaceholder.Compartment) {
+      compartment = '';
     }
 
     const reqBody: JSON = {
       tenancy: tenancy,
-      compartment: compartmentOCID,
+      compartment: compartment,
       region: region,
     } as unknown as JSON;
     return this.postResource(OCIResourceCall.Namespaces, reqBody).then((response) => {
@@ -442,7 +442,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   async getResourceGroupsWithMetricNames(
     tenancy: any,
-    compartmentOCID: any,
+    compartment: any,
     region: any,
     namespace: any
   ): Promise<OCIResourceGroupWithMetricNamesItem[]> {
@@ -454,10 +454,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     }
 
-    if (this.isVariable(compartmentOCID)) {
-      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+    if (this.isVariable(compartment)) {
+      let { compartment: var_compartment} = this.interpolateProps({compartment});
       if (var_compartment !== "") { 
-        compartmentOCID = var_compartment
+        compartment = var_compartment
       }      
     }
 
@@ -482,8 +482,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return [];
     }
 
-    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      compartmentOCID = '';
+    if (compartment === undefined || compartment === QueryPlaceholder.Compartment) {
+      compartment = '';
     } 
 
     if (tenancy === '') {
@@ -496,13 +496,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return [];
     }
 
-    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      compartmentOCID = '';
+    if (compartment === undefined || compartment === QueryPlaceholder.Compartment) {
+      compartment = '';
     }
 
     const reqBody: JSON = {
       tenancy: tenancy,
-      compartment: compartmentOCID,
+      compartment: compartment,
       region: region,
       namespace: namespace,
     } as unknown as JSON;
@@ -513,7 +513,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   async getDimensions(
     tenancy: any,
-    compartmentOCID: any,
+    compartment: any,
     region: any,
     namespace: any,
     metricName: any
@@ -526,10 +526,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     }
 
-    if (this.isVariable(compartmentOCID)) {
-      let { compartmentOCID: var_compartment} = this.interpolateProps({compartmentOCID});
+    if (this.isVariable(compartment)) {
+      let { compartment: var_compartment} = this.interpolateProps({compartment});
       if (var_compartment !== "") { 
-        compartmentOCID = var_compartment
+        compartment = var_compartment
       }      
     }
 
@@ -568,13 +568,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return [];
     }
 
-    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      compartmentOCID = '';
+    if (compartment === undefined || compartment === QueryPlaceholder.Compartment) {
+      compartment = '';
     }
 
     const reqBody: JSON = {
       tenancy: tenancy,
-      compartment: compartmentOCID,
+      compartment: compartment,
       region: region,
       namespace: namespace,
       metric_name: metricName,
@@ -585,7 +585,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
   async getTags(
     tenancy: any,
-    compartmentOCID: any,
+    compartment: any,
     compartmentName: any,
     region: any,
     namespace: any
@@ -600,8 +600,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return [];
     }
 
-    if (compartmentOCID === undefined || compartmentOCID === QueryPlaceholder.Compartment) {
-      compartmentOCID = '';
+    if (compartment === undefined || compartment === QueryPlaceholder.Compartment) {
+      compartment = '';
     }
     if (compartmentName === undefined) {
       compartmentName = '';
@@ -609,7 +609,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     const reqBody: JSON = {
       tenancy: tenancy,
-      compartment: compartmentOCID,
+      compartment: compartment,
       compartment_name: compartmentName,
       region: region,
       namespace: namespace,

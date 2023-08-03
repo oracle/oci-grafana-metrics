@@ -1,3 +1,6 @@
+// Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+// Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
 package plugin
 
 import (
@@ -36,21 +39,19 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	}
 
 	metricsDataRequest := models.MetricsDataRequest{
-		TenancyOCID: qm.TenancyOCID,
-		// TenancyLegacy:     qm.TenancyLegacy,
-		CompartmentOCID:   qm.CompartmentOCID,
-		CompartmentName:   qm.CompartmentName,
-		CompartmentLegacy: qm.CompartmentLegacy,
-		Region:            qm.Region,
-		Namespace:         qm.Namespace,
-		QueryText:         qm.QueryText,
-		Interval:          qm.Interval[1 : len(qm.Interval)-1],
-		ResourceGroup:     qm.ResourceGroup,
-		DimensionValues:   qm.DimensionValues,
-		LegendFormat:      qm.LegendFormat,
-		TagsValues:        qm.TagsValues,
-		StartTime:         query.TimeRange.From.UTC(),
-		EndTime:           query.TimeRange.To.UTC(),
+		TenancyOCID:     qm.TenancyOCID,
+		CompartmentOCID: qm.CompartmentOCID,
+		CompartmentName: qm.CompartmentName,
+		Region:          qm.Region,
+		Namespace:       qm.Namespace,
+		QueryText:       qm.QueryText,
+		Interval:        qm.Interval[1 : len(qm.Interval)-1],
+		ResourceGroup:   qm.ResourceGroup,
+		DimensionValues: qm.DimensionValues,
+		LegendFormat:    qm.LegendFormat,
+		TagsValues:      qm.TagsValues,
+		StartTime:       query.TimeRange.From.UTC(),
+		EndTime:         query.TimeRange.To.UTC(),
 	}
 
 	// create data frame response
@@ -78,18 +79,8 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
 			}
 			dl = data.Labels{}
-			// legacy support
-			var TheCompartment string
 
-			if len(qm.CompartmentLegacy) == 0 {
-				if len(qm.CompartmentLegacy) != 0 {
-					TheCompartment = qm.CompartmentLegacy
-				}
-			} else {
-				TheCompartment = qm.CompartmentLegacy
-			}
-
-			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, TheCompartment, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
+			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
 			FoundDimensionMap := make(map[string][]string)
 			var index int

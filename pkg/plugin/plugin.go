@@ -300,57 +300,6 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 
 func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req backend.DataSourceInstanceSettings) error {
 
-	// TEST statements
-	var dat OCISecuredSettings
-	decryptedJSONData := req.DecryptedSecureJSONData
-	transcode(decryptedJSONData, &dat)
-	log.DefaultLogger.Error(environment)
-	log.DefaultLogger.Error(tenancymode)
-
-	log.DefaultLogger.Error(dat.Tenancy_0)
-	log.DefaultLogger.Error(dat.Tenancy_1)
-	log.DefaultLogger.Error(dat.Tenancy_2)
-	log.DefaultLogger.Error(dat.Tenancy_3)
-	log.DefaultLogger.Error(dat.Tenancy_4)
-	log.DefaultLogger.Error(dat.Tenancy_5)
-
-	log.DefaultLogger.Error(dat.Region_0)
-	log.DefaultLogger.Error(dat.Region_1)
-	log.DefaultLogger.Error(dat.Region_2)
-	log.DefaultLogger.Error(dat.Region_3)
-	log.DefaultLogger.Error(dat.Region_4)
-	log.DefaultLogger.Error(dat.Region_5)
-
-	log.DefaultLogger.Error(dat.User_0)
-	log.DefaultLogger.Error(dat.User_1)
-	log.DefaultLogger.Error(dat.User_2)
-	log.DefaultLogger.Error(dat.User_3)
-	log.DefaultLogger.Error(dat.User_4)
-	log.DefaultLogger.Error(dat.User_5)
-
-	log.DefaultLogger.Error(dat.Profile_0)
-	log.DefaultLogger.Error(dat.Profile_1)
-	log.DefaultLogger.Error(dat.Profile_2)
-	log.DefaultLogger.Error(dat.Profile_3)
-	log.DefaultLogger.Error(dat.Profile_4)
-	log.DefaultLogger.Error(dat.Profile_5)
-
-	log.DefaultLogger.Error(dat.Fingerprint_0)
-	log.DefaultLogger.Error(dat.Fingerprint_1)
-	log.DefaultLogger.Error(dat.Fingerprint_2)
-	log.DefaultLogger.Error(dat.Fingerprint_3)
-	log.DefaultLogger.Error(dat.Fingerprint_4)
-	log.DefaultLogger.Error(dat.Fingerprint_5)
-
-	log.DefaultLogger.Error(dat.Privkey_0)
-	log.DefaultLogger.Error(dat.Privkey_1)
-	log.DefaultLogger.Error(dat.Privkey_2)
-	log.DefaultLogger.Error(dat.Privkey_3)
-	log.DefaultLogger.Error(dat.Privkey_4)
-	log.DefaultLogger.Error(dat.Privkey_5)
-
-	// end test statements
-
 	switch environment {
 	case "local":
 		log.DefaultLogger.Error("User Principals siamo qui")
@@ -364,7 +313,6 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			// test if PEM key is valid
 			block, _ := pem.Decode([]byte(q.privkey[key]))
 			if block == nil {
-				o.logger.Error("Private Key cannot be validated: " + key)
 				return errors.New("error with Private Key")
 			}
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])

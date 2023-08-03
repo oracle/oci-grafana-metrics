@@ -479,25 +479,12 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		},
 	}
 
-	// to search for all copartments
+	// to search for all compartments
 	if len(requestParams.CompartmentOCID) == 0 {
-		if len(requestParams.CompartmentLegacy) == 0 {
-			o.logger.Debug("takey GetMetricDataPoints", "Compat if ", common.String(requestParams.TenancyOCID))
-			metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
-			metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
-		} else {
-			o.logger.Debug("takey GetMetricDataPoints", "Compat else ", common.String(requestParams.CompartmentLegacy))
-			o.logger.Debug("Query is using CompartmentLegacy", "CompartmentLegacy ", requestParams.CompartmentLegacy)
-			metricsDataRequest.CompartmentId = common.String(requestParams.CompartmentLegacy)
-			requestParams.CompartmentOCID = requestParams.CompartmentLegacy
-		}
+		metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
+		metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
 	}
 
-	// if len(requestParams.ResourceGroup) == 0 && len(requestParams.ResourceGroupLegacy) != 0 {
-	// 	requestParams.ResourceGroup = requestParams.ResourceGroupLegacy
-	// }
-
-	o.logger.Debug("rg GetMetricDataPoints", "RGRGRGRG ", common.String(requestParams.ResourceGroup))
 	// adding the resource group when provided
 	if len(requestParams.ResourceGroup) != 0 {
 		if requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER_LEGACY && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_GROUP {

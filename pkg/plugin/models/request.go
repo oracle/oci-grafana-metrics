@@ -6,14 +6,14 @@ import "time"
 type MetricsDataRequest struct {
 	TenancyOCID string
 	// TenancyLegacy       string
-	CompartmentOCID   string
-	CompartmentName   string
-	CompartmentLegacy string
-	Region            string
-	Namespace         string
-	QueryText         string
-	Interval          string
-	ResourceGroup     string
+	CompartmentOCID string
+	CompartmentName string
+	// CompartmentLegacy string
+	Region        string
+	Namespace     string
+	QueryText     string
+	Interval      string
+	ResourceGroup string
 	// ResourceGroupLegacy string
 	LegendFormat    string
 	DimensionValues []string

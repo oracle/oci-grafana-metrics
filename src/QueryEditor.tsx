@@ -18,9 +18,8 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
-  // const [hasTenancyDefault, setHasTenancyDefault] = useState(false);
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
-  // const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
+  const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
@@ -134,8 +133,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const getCompartmentOptions = async () => {
-    // const existingCompartmentsResponse = query.compartments;
-    // if (query.namespace !== undefined) {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
       const response = await datasource.getCompartments(query.tenancy);
@@ -149,16 +146,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
         });
       }
       return options;
-    // }
-    // if (existingCompartmentsResponse) {
-    //   return (existingCompartmentsResponse);
-    // }
-    // return [];
   };
 
   const getSubscribedRegionOptions = async () => {
-    // const existingRegionsResponse = query.regions;
-    // if (query.namespace !== undefined) {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
       const response = await datasource.getSubscribedRegions(query.tenancy);
@@ -172,24 +162,19 @@ export const QueryEditor: React.FC<Props> = (props) => {
         });
       }
       return options;
-    // }
-    // if (existingRegionsResponse) {
-    //   return (existingRegionsResponse);
-    // }
-    // return [];
   };
 
   const getNamespaceOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
-    if (query.compartment && !query.compartmentOCID) {
-      console.log("Legacy compartment is present: " + query.compartment)
-      query.compartmentOCID = query.compartment
-      query.compartmentName = query.compartment
-    }    
+    // if (query.compartment && !query.compartmentOCID) {
+    //   console.log("Legacy compartment is present: " + query.compartment)
+    //   query.compartmentOCID = query.compartment
+    //   query.compartmentName = query.compartment
+    // }    
     const response = await datasource.getNamespacesWithMetricNames(
       query.tenancy,
-      query.compartmentOCID,
+      query.compartment,
       query.region
     );
     if (response) {
@@ -209,7 +194,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     options = addTemplateVariablesToOptions(options)
     const response = await datasource.getResourceGroupsWithMetricNames(
       query.tenancy,
-      query.compartmentOCID,
+      query.compartment,
       query.region,
       query.namespace
     );
@@ -230,7 +215,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     options = addTemplateVariablesToOptions(options)
     const response = await datasource.getResourceGroupsWithMetricNames(
       query.tenancy,
-      query.compartmentOCID,
+      query.compartment,
       query.region,
       query.namespace
     );
@@ -279,7 +264,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       setTimeout(async () => {
         const response = await datasource.getDimensions(
           query.tenancy,
-          query.compartmentOCID,
+          query.compartment,
           query.region,
           query.namespace,
           query.metric
@@ -314,7 +299,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //     setTimeout(async () => {
   //       const response = await datasource.getTags(
   //         query.tenancy,
-  //         query.compartmentOCID,
+  //         query.compartment,
   //         query.compartmentName,
   //         query.region,
   //         query.namespace
@@ -376,7 +361,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
           }, 0);
         }),
         compartmentName: undefined,
-        compartmentOCID: undefined,
+        compartment: undefined,
         // regions: await getSubscribedRegionOptions(),
         regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
           setTimeout(async () => {
@@ -397,27 +382,16 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
-    if (query.compartment && query.compartment !== QueryPlaceholder.CompartmentLegacy && data.value === query.compartment){
-      onApplyQueryChange(
-        {
-          ...query,
-          compartmentName: data.label,
-          compartmentOCID: data.value,
-        },
-        false
-      );
-    } else {
-      onApplyQueryChange(
-        {
-          ...query,
-          compartmentName: data.label,
-          compartmentOCID: data.value,
-          namespace: undefined,
-          metric: undefined,
-        },
-        false
-      );
-    }
+    onApplyQueryChange(
+      {
+        ...query,
+        compartmentName: data.label,
+        compartment: data.value,
+        namespace: undefined,
+        metric: undefined,
+      },
+      false
+    );
   };
 
   const onRegionChange = (data: SelectableValue) => {
@@ -434,7 +408,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     //   setTimeout(async () => {
     //     await datasource.getTags(
     //       query.tenancy,
-    //       query.compartmentOCID,
+    //       query.compartment,
     //       query.compartmentName,
     //       query.region,
     //       data.label
@@ -539,15 +513,14 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
 
-  // if (query.tenancy && !hasLegacyTenancy && !query.tenancy && query.tenancy !== QueryPlaceholder.TenancyLegacy) {
-  //     console.log("Legacy tenancy is present: " + query.tenancy)
-  //     query.tenancy = query.tenancy;
-  //     query.tenancyName = query.tenancy;  
-  //     setTenancyValue(query.tenancy);
-  //     setHasLegacyTenancy(true);
-  // }
+  if (query.tenancy && !hasLegacyTenancy && !query.tenancyName) {
+      console.log("Legacy tenancy is present: " + query.tenancy)
+      query.tenancyName = query.tenancy;  
+      setTenancyValue(query.tenancy);
+      setHasLegacyTenancy(true);
+  }
 
-  if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID && query.compartment !== QueryPlaceholder.CompartmentLegacy) {
+  if (!query.compartmentName && query.compartment && !hasLegacyCompartment) {
     if (!query.tenancy) {
       console.log("query.tenancy is empty");
       return null;
@@ -562,37 +535,18 @@ export const QueryEditor: React.FC<Props> = (props) => {
             console.log("query.getCompartments is there "+item.ocid);
             // setCompartmentValue(item);
             found = true; 
-            query.compartmentOCID = item.ocid;
             query.compartmentName = item.name;
           } else if (!found) {
             query.compartmentName = query.compartment;
-            query.compartmentOCID = query.compartment;             
-          }
-          // onApplyQueryChange(
-          //   {
-          //     ...query,
-          //     compartmentName: item.name,
-          //     compartmentOCID: item.ocid,
-          //   },
-          //   false
-          // );            
+          }           
         });
       } else {
-          query.compartmentOCID = query.compartment;
           query.compartmentName = query.compartment;    
       }
       setCompartmentValue(query.compartmentName);
       setHasLegacyCompartment(true);
     });
 }
-
-  // if (query.compartment && !hasLegacyCompartment && !query.compartmentOCID) {
-  //     console.log("Legacy compartment is present: " + query.compartment)
-  //     query.compartmentOCID = query.compartment;
-  //     query.compartmentName = query.compartment;  
-  //     setCompartmentValue(query.compartment);
-  //     setHasLegacyCompartment(true);
-  // }
 
 
   return (
@@ -603,7 +557,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <>
               <InlineField label="TENANCY" labelWidth={20}>
                 <SegmentAsync
-                  className="width-28"
+                  className="width-42"
                   allowCustomValue={false}
                   required={true}
                   loadOptions={getTenancyOptions}

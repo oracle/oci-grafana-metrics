@@ -18,10 +18,8 @@ export default class QueryModel {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    // this.target.tenancyOCID = incomingQuery.tenancyOCID || QueryPlaceholder.Tenancy;
     this.target.tenancy = incomingQuery.tenancy || QueryPlaceholder.Tenancy;
-    // this.target.compartmentOCID = incomingQuery.compartmentOCID || QueryPlaceholder.Compartment;
-    this.target.compartmentOCID = incomingQuery.compartmentOCID || '';
+    this.target.compartment = incomingQuery.compartment || '';
     this.target.region = incomingQuery.region || QueryPlaceholder.Region;
     this.target.namespace = incomingQuery.namespace || QueryPlaceholder.Namespace;
     this.target.metric = incomingQuery.metric || QueryPlaceholder.Metric;
@@ -37,14 +35,6 @@ export default class QueryModel {
     if (this.target.resourcegroup === QueryPlaceholder.ResourceGroup) {
       this.target.resourcegroup = '';
     }
-
-    // if (this.target.tenancyOCID === QueryPlaceholder.Tenancy) {
-    //   if (this.target.tenancy !== '') {
-    //     this.target.tenancyOCID = this.target.tenancy;
-    //   } else {
-    //     this.target.tenancyOCID = 'DEFAULT/';
-    //   }
-    // }    
 
     if (this.target.tenancy === QueryPlaceholder.Tenancy) {
         this.target.tenancy = 'DEFAULT/';

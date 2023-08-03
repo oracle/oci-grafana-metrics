@@ -179,7 +179,6 @@ export enum QueryPlaceholder {
   ResourceGroup = 'select resource group',
   Tags = 'select resource tags (optional)',
   GroupBy = 'select option (optional)',
-  CompartmentLegacy = 'select compartment',
 }
 
 export interface DimensionPart {
@@ -226,7 +225,7 @@ export interface OCIQuery extends DataQuery {
   tenancymode: string;
   compartments?: any;
   compartmentName?: string;
-  compartmentOCID?: string;
+  // compartmentOCID?: string;
   compartment?: string; // for legacy compatibility
   regions?: any;
   region?: string;
@@ -239,7 +238,6 @@ export interface OCIQuery extends DataQuery {
   legendFormat?: string;
   statistic: string;
   statisticLabel?: string;
-  // resourceGroup?: string;
   resourcegroup?: string;
   dimensionValues?: string[];
   tagsValues?: string[];
