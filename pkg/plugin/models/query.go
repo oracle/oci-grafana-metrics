@@ -1,15 +1,17 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+ */
+
 package models
 
 // QueryModel ...
 type QueryModel struct {
-	QueryText   string `json:"queryText"`
-	TenancyName string `json:"tenancyName"`
-	TenancyOCID string `json:"tenancy"`
-	// TenancyLegacy       string   `json:"tenancy"`
-	CompartmentName string `json:"compartmentName"`
-	// CompartmentOCID   string   `json:"compartmentOCID"`
-	CompartmentOCID string `json:"compartment"`
-	// CompartmentLegacy string   `json:"compartment"`
+	QueryText       string   `json:"queryText"`
+	TenancyName     string   `json:"tenancyName"`
+	TenancyOCID     string   `json:"tenancy"`
+	CompartmentName string   `json:"compartmentName"`
+	CompartmentOCID string   `json:"compartment"`
 	Region          string   `json:"region"`
 	Namespace       string   `json:"namespace"`
 	Metric          string   `json:"metric"`

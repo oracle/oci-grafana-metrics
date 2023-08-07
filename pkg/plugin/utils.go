@@ -588,7 +588,6 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 			placeholderLabel := matches[labelIndex]
 			re := regexp.MustCompile(placeholderStr)
-			o.logger.Debug("generateCustomMetricLabel ", "placeholderLabel", placeholderLabel)
 
 			// If this placeholder is the {metric} placeholder then replace the
 			// placeholder string with the metric name

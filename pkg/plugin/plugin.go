@@ -302,7 +302,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 	switch environment {
 	case "local":
-		log.DefaultLogger.Error("User Principals siamo qui")
+		log.DefaultLogger.Debug("Configuring using User Principals")
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
@@ -346,6 +346,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		return nil
 
 	case "OCI Instance":
+		log.DefaultLogger.Debug("Configuring using Instance Principal")
 		var configProvider common.ConfigurationProvider
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {

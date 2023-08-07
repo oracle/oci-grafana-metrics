@@ -512,7 +512,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   //   onApplyQueryChange({ ...query, tagsValues: newTagsValues });
   // };
 
-
+  // set tenancyName in case dashboard was created with version 4.x
   if (query.tenancy && !hasLegacyTenancy && !query.tenancyName) {
       console.log("Legacy tenancy is present: " + query.tenancy)
       query.tenancyName = query.tenancy;  
@@ -520,6 +520,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       setHasLegacyTenancy(true);
   }
 
+  // set compartmentName in case dashboard was created with version 4.x
   if (!query.compartmentName && query.compartment && !hasLegacyCompartment) {
     if (!query.tenancy) {
       console.log("query.tenancy is empty");
@@ -531,9 +532,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
         let found = false;
         response.forEach((item: any) => {
           if (!found && item.ocid === query.compartment) {
-            console.log("query.getCompartments is there "+item.name);
-            console.log("query.getCompartments is there "+item.ocid);
-            // setCompartmentValue(item);
             found = true; 
             query.compartmentName = item.name;
           } else if (!found) {
