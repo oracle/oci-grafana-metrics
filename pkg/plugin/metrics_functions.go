@@ -30,15 +30,15 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	var testResult bool
 	var errAllComp error
 
-	// tenv := o.settings.Environment
-	// tmode := o.settings.TenancyMode
+	tenv := o.settings.Environment
+	tmode := o.settings.TenancyMode
 
 	for key, _ := range o.tenancyAccess {
 		testResult = false
 
-		// if tmode == "multitenancy" && tenv == "oci-instance" {
-		// 	return errors.New("Multitenancy mode using instance principals is not implemented yet.")
-		// }
+		if tmode == "multitenancy" && tenv == "OCI Instance" {
+			return errors.New("Multitenancy mode using instance principals is not implemented yet.")
+		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
 		if tenancyErr != nil {
 			return errors.Wrap(tenancyErr, "error fetching TenancyOCID")
@@ -205,8 +205,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 	var tenancyocid string
 	var tenancyErr error
-	backend.Logger.Debug("client", "GetCompartmentstakey", "fetching the subscribed region for tenancy takey: "+takey)
-	backend.Logger.Debug("client", "GetCompartmentstakey", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
 	tenancymode := o.settings.TenancyMode
 
 	region, regErr := o.tenancyAccess[takey].config.Region()
@@ -231,8 +229,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 	}
 
-	backend.Logger.Debug("client", "GetCompartmentstakey2", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
-
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyocid, "cs"}, "-")
 	if cachedCompartments, found := o.cache.Get(cacheKey); found {
@@ -248,7 +244,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		backend.Logger.Debug("client", "GetCompartments", "error in GetTenancy")
 		return nil
 	}
-	backend.Logger.Debug("client", "GetCompartmentstakey3", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
 
 	compartments := map[string]string{}
 
@@ -280,8 +275,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 			break
 		}
 	}
-
-	backend.Logger.Debug("client", "GetCompartmentstakey4", "fetching the subscribed region for tenancy tenancyOCID: "+*resp.Name)
 
 	compartments[tenancyocid] = *resp.Name //tenancy name
 
@@ -326,8 +319,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	// saving in the cache
 	o.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
 	o.cache.Wait()
-
-	backend.Logger.Debug("client", "GetCompartmentstakey5", "fetching the subscribed region for tenancy tenancyOCID: "+*resp.Name)
 
 	return compartmentList
 }
@@ -435,27 +426,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	var takey string
 	selectedTags := requestParams.TagsValues
 	selectedDimensions := requestParams.DimensionValues
-	selectedLegendFormat := requestParams.LegendFormat
-	o.logger.Debug("selectedLegendFormat", "selectedLegendFormat", selectedLegendFormat)
-
-	// o.logger.Debug("takey GetMetricDataPoints", "TenancyLegacy ", requestParams.TenancyLegacy)
-
-	o.logger.Debug("GetMetricDataPoints", "o.settings.TenancyMode ", o.settings.TenancyMode)
-
-	// if len(tenancyOCID) == 0 {
-	// 	if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode != "single" {
-	// 		takey = o.GetTenancyAccessKey(requestParams.TenancyLegacy)
-	// 	}
-	// 	if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode == "single" {
-	// 		takey = o.GetTenancyAccessKey("DEFAULT/")
-	// 	}
-	// } else {
-	// 	if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
-	// 		takey = o.GetTenancyAccessKey("DEFAULT/")
-	// 	} else {
-	// 		takey = o.GetTenancyAccessKey(tenancyOCID)
-	// 	}
-	// }
 
 	if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
 		takey = o.GetTenancyAccessKey("DEFAULT/")
