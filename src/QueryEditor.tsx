@@ -516,7 +516,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   // set compartmentName in case dashboard was created with version 4.x
   if (!query.compartmentName && query.compartment && !hasLegacyCompartment) {
-    if (!query.tenancy) {
+    if (!query.tenancy && tmode === TenancyChoices.multitenancy) {
       console.log("query.tenancy is empty");
       return null;
     }

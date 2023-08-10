@@ -85,14 +85,31 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 			FoundDimensionMap := make(map[string][]string)
 			var index int
 
-			// convert dimension in a go map
+			// // convert dimension in a go map
+			// for _, dimension := range dimensions {
+			// 	key := dimension.Key
+			// 	ocidx.logger.Debug("KEY DIM", "key", key)
+			// 	for _, vall := range dimension.Values {
+			// 		OriginalDimensionMap[key] = dimension.Values
+			// 		ocidx.logger.Debug("ALL DIM", "dim", vall)
+			// 	}
+			// }
+
+			// Convert dimensions into a Go map
 			for _, dimension := range dimensions {
 				key := dimension.Key
 				ocidx.logger.Debug("KEY DIM", "key", key)
+
+				// Create a new slice for each key in the map
+				var values []string
+
 				for _, vall := range dimension.Values {
-					OriginalDimensionMap[key] = dimension.Values
+					values = append(values, vall)
 					ocidx.logger.Debug("ALL DIM", "dim", vall)
 				}
+
+				// Assign the values slice to the map key
+				OriginalDimensionMap[key] = values
 			}
 
 			//Search for resourceID and mark the position if found
