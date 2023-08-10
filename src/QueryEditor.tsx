@@ -166,12 +166,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const getNamespaceOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
-    options = addTemplateVariablesToOptions(options)
-    // if (query.compartment && !query.compartmentOCID) {
-    //   console.log("Legacy compartment is present: " + query.compartment)
-    //   query.compartmentOCID = query.compartment
-    //   query.compartmentName = query.compartment
-    // }    
+    options = addTemplateVariablesToOptions(options) 
     const response = await datasource.getNamespacesWithMetricNames(
       query.tenancy,
       query.compartment,
@@ -514,7 +509,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   // set tenancyName in case dashboard was created with version 4.x
   if (query.tenancy && !hasLegacyTenancy && !query.tenancyName) {
-      console.log("Legacy tenancy is present: " + query.tenancy)
       query.tenancyName = query.tenancy;  
       setTenancyValue(query.tenancy);
       setHasLegacyTenancy(true);
@@ -526,7 +520,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
       console.log("query.tenancy is empty");
       return null;
     }
-    console.log("Legacy compartment is present: " + query.compartment)
     datasource.getCompartments(query.tenancy).then(response => {
       if (response) {
         let found = false;

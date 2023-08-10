@@ -137,7 +137,6 @@ func NewOCIDatasourceConstructor() *OCIDatasource {
 
 func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	backend.Logger.Debug("plugin", "NewOCIDatasource", settings.ID)
-	// var ts GrafanaCommonRequest
 
 	o := NewOCIDatasourceConstructor()
 	dsSettings := &models.OCIDatasourceSettings{}
@@ -148,8 +147,8 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	}
 	o.settings = dsSettings
 
-	backend.Logger.Error("plugin", "dsSettings.Environment", "dsSettings.Environment: "+dsSettings.Environment)
-	backend.Logger.Error("plugin", "dsSettings.TenancyMode", "dsSettings.TenancyMode: "+dsSettings.TenancyMode)
+	backend.Logger.Debug("plugin", "dsSettings.Environment", "dsSettings.Environment: "+dsSettings.Environment)
+	backend.Logger.Debug("plugin", "dsSettings.TenancyMode", "dsSettings.TenancyMode: "+dsSettings.TenancyMode)
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(dsSettings.Environment, dsSettings.TenancyMode, settings)
@@ -173,10 +172,6 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	mux := http.NewServeMux()
 	o.registerRoutes(mux)
 	o.CallResourceHandler = httpadapter.New(mux)
-
-	// if err := json.Unmarshal(settings.JSONData, &ts); err != nil {
-	// 	return nil, errors.New("can not read settings")
-	// }
 
 	return o, nil
 }
@@ -308,7 +303,6 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			return errors.New("Error Loading config settings")
 		}
 		for key, _ := range q.tenancyocid {
-			log.DefaultLogger.Error("Key: " + key)
 			var configProvider common.ConfigurationProvider
 			// test if PEM key is valid
 			block, _ := pem.Decode([]byte(q.privkey[key]))

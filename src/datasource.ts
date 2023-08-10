@@ -335,7 +335,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
   isVariable(varName: string) {
     const varNames = this.getVariables() || [];
-    console.log('variabili '+ varNames)
     return !!varNames.find((item) => item === varName);
   }
 
