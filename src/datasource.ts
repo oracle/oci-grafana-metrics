@@ -58,28 +58,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * @param {ScopedVars} scopedVars Scoped variables
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
-    const templateSrv = getTemplateSrv();
-    console.log("applyTemplateVariables: before region: " + query.region)
-    console.log("applyTemplateVariables: before compartment: " + query.compartment)
-    console.log("applyTemplateVariables: before tenancy: " + query.tenancy)
-    console.log("applyTemplateVariables: before namespace: " + query.namespace)
-    console.log("applyTemplateVariables: before resourcegroup: " + query.resourcegroup)
-    console.log("applyTemplateVariables: before metric: " + query.metric)
-    if (query.tenancy) {
-      console.log("applyTemplateVariables: before tenancy: " + query.tenancy)
-    }
-    if (query.compartment) {
-      console.log("applyTemplateVariables: before tenancy: " + query.compartment)
-    }
-    if (query.resourcegroup) {
-      console.log("applyTemplateVariables: before tenancy: " + query.resourcegroup)
-    }    
-
-    if (query.dimensionValues) {
-      for (let i = 0; i < query.dimensionValues.length; i++) {
-        console.log("applyTemplateVariables: before dimvalues: " + query.dimensionValues[i])
-      }
-    }     
+    const templateSrv = getTemplateSrv();  
 
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
@@ -106,28 +85,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     if (queryModel.isQueryReady()) {
       query.queryText = queryModel.buildQuery(String(query.metric));
     }
-    
-    console.log("applyTemplateVariables: after region: " + query.region)
-    console.log("applyTemplateVariables: after compartment: " + query.compartment)
-    console.log("applyTemplateVariables: after tenancy: " + query.tenancy)
-    console.log("applyTemplateVariables: after namespace: " + query.namespace)
-    console.log("applyTemplateVariables: after resourcegroup: " + query.resourcegroup)
-    console.log("applyTemplateVariables: after metric: " + query.metric)
-    if (query.dimensionValues) {
-      for (let i = 0; i < query.dimensionValues.length; i++) {
-        console.log("applyTemplateVariables: after dimvalues: " + query.dimensionValues[i])
-      }
-    }
-    if (query.tenancy) {
-      console.log("applyTemplateVariables: after tenancy: " + query.tenancy)
-    }
-    if (query.compartment) {
-      console.log("applyTemplateVariables: after tenancy: " + query.compartment)
-    }
-    if (query.resourcegroup) {
-      console.log("applyTemplateVariables: after tenancy: " + query.resourcegroup)
-    }       
-
+     
     return query;
   }
 
