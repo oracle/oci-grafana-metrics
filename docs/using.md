@@ -57,6 +57,11 @@ Click the save icon to save your graph.
 
 At this stage, if the **metrics** pull-down menu is not properly populating with options, you may need to navigate back to the OCI console and add an additional matching rule to your Dynamic Group stating: `matching_rule = “ANY {instance.compartment.id = ‘${var.compartment_ocid}’}”`. After doing so, restart the Grafana server as the **sudo** user run `systemctl restart grafana-server` and reload the Grafana console. 
 
+## New Dimension selector in Version 5 of the plugin.
+
+Version 5 of Grafana metrics plugins introduces a new selector for the dimensions which encompass dimension key and dimension value. If you are transitioning a dashboard created with previous version of the plugin which is making use of the dimensions, then you need to releslect the dimensions using the new selector and save the dashboard.
+
+
 ## Templating 
 
 Templating provides the ability to dynamically switch the contents of graphs as seen in the example below. 
@@ -106,9 +111,13 @@ If you are using **Version 4** or older of the plugin, repeat the process for th
 
 All of the metrics plugin template variables only support a singleton value with the exception of the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
 
-The final list of variables should look like this: 
+The final list of variables should look like this (**Plugin v4** and below): 
 
 ![Metrics dashboard variables screenshot](images/metrics-dashboard-variables-screenshot.png)
+
+The final list of variables should look like this (**Plugin v5** and above): 
+
+![Metrics dashboard variables screenshot](images/template-single.png)
 
 In order for these variables to be available to be dynamically changed in your query, edit your existing query, and under **metrics** select the newly created variables for **region**, **compartment**, **namespace**, and **metric** as seen in the image below. 
 
@@ -159,9 +168,13 @@ In Multitenancy mode, it is recommended to click the 'save template variable sta
 
 All of the metrics plugin template variables only support a singleton value except the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
 
-The final list of variables should look like this:
+The final list of variables should look like this (**Plugin v4** and below):
 
 ![Metrics dashboard variables screenshot](images/MultiTenancyVarSetup.png)
+
+The final list of variables should look like this (**Plugin v5** and above): 
+
+![Metrics dashboard variables screenshot](images/template-multi.png)
 
 ### Windows and Resolution
 
