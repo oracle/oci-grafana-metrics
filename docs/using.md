@@ -2,6 +2,12 @@
 
 Here are a few tools for you to explore after installing and configuring the Oracle Cloud Infrastructure Data Source for Grafana. Refer to [this page](https://docs.cloud.oracle.com/iaas/Content/Monitoring/Concepts/monitoringoverview.htm) for more information about how to use the Monitoring Service. 
 
+## Migrate to Version 5.x 
+Version 5 of the plugin generally maintains backward compatibility with previous versions. In general, Dashboards do not need to be modified, with a couple of exceptions:
+
+- Dashboards that are set up to use one or more dimension template variables need to be modified by removing the dimensionsKey variable and using the new dimension variable that contains both key and value.
+- Dashboards that are set up to use dimension key and dimension value must be modified to make use of the new dimension field.
+
 ## Multitenancy support
 
 This version of the OCI plugin includes multitenancy support. That means that the plugin is able to query different tenancies as they are configured in the .oci/config file. Instance principals are not yet supported to operate in multitenancy mode.
@@ -25,21 +31,26 @@ The query editor can be used to create graphs of your Oracle Cloud Infrastructur
 
 On the Grafana Home Dashboard and click **New Dashboard**.
 
-![Screen Shot 2018-12-17 at 3.26.01 PM](images/Screen%20Shot%202018-12-17%20at%203.26.01%20PM.png)
+For **Grafana 8**:
+![Grafana 8 choose](images/plugin8-add.png)
 
-Choose **Graph** from the list of available dashboard types.
+For **Grafana 10**:
+![Grafana 10 choose](images/plugin-add.png)
 
-![Screen Shot 2018-12-17 at 3.26.18 PM](images/Screen%20Shot%202018-12-17%20at%203.26.18%20PM.png)
+For **Grafana 8** add a new panel:
+![Grafana 8 choose](images/plugin8-select.png)
 
-Click **Panel Title** and then **Edit** to add metrics to the dashboard.![Screen Shot 2018-12-17 at 3.26.26 PM](images/Screen%20Shot%202018-12-17%20at%203.26.26%20PM.png)
+For **Grafana 10** choose the datasource to add the new panel:
+![Grafana 10 choose](images/plugin-select.png)
+
 
 If you are using a Data Source configured in **single** mode then choose the appropriate **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options.
 
-![Metrics Query Editor - single mode](images/MetricsPlugin-QueryEditor-Screenshot.png)
+![Metrics Query Editor - single mode](images/novar-single.png)
 
 If you are using a Data Source configured in **multitenancy** mode then choose the appropriate **Tenancy**, **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options. In **multitenancy** mode you can also combine two queries retrieving data from different datasources as in the following example:
 
-![Metrics Query Editor - multitenancy mode](images/Screenshot_20221206_134237.png)
+![Metrics Query Editor - multitenancy mode](images/novar-multi.png)
 
 
 Click the save icon to save your graph.
@@ -68,7 +79,20 @@ The page will load a preview of values available for that variable. Scroll down 
 
 ![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
 
-Repeat the process for the following OCI variables: 
+If you are using **Version 5** or newer of the plugin, repeat the process for the following OCI variables: 
+
+| Name            | Query                                                                     |
+| --------------- | ------------------------------------------------------------------------- |
+| region          | `regions()`                                                               |
+| compartment     | `compartments()`                                                          |
+| namespace       | `namespaces($region,$compartment)`                                        |
+| resourcegroup   | `resourcegroups($region, $compartment, $namespace)`                                        |
+| metric          | `metrics($region,$compartment, $namespace, $resourcegroup)`                                |
+| dimension    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup)`                     |
+
+
+
+If you are using **Version 4** or older of the plugin, repeat the process for the following OCI variables: 
 
 | Name            | Query                                                                     |
 | --------------- | ------------------------------------------------------------------------- |
@@ -105,8 +129,7 @@ The page will load a preview of values available for that variable. Scroll down 
 
 ![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
 
-Repeat the process for the following OCI variables:
-
+If you are using **Version 5** or newer of the plugin, repeat the process for the following OCI variables: 
 
 | Name           | Query                                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------------------- |
@@ -116,8 +139,21 @@ Repeat the process for the following OCI variables:
 | namespace      | `namespaces($tenancy,$region,$compartment)`                                                       |
 | resourcegroup  | `resourcegroups($tenancy,$region, $compartment, $namespace)`                                      |
 | metric         | `metrics($tenancy,$region,$compartment, $namespace, $resourcegroup)`                              |
+| dimension   | `dimensions($tenancy,$region, $compartment, $namespace, $metric, $resourcegroup)`                 |
+
+
+If you are using **Version 4** or older of the plugin, repeat the process for the following OCI variables: 
+
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| tenancy        | `tenancies()`                                                                                     |
+| region         | `regions($tenancy)`                                                                               |
+| compartment    | `compartments($tenancy)`                                                                  |
+| namespace      | `namespaces($tenancy,$region,$compartment)`                                                       |
+| resourcegroup  | `resourcegroups($tenancy,$region, $compartment, $namespace)`                                      |
+| metric         | `metrics($tenancy,$region,$compartment, $namespace, $resourcegroup)`                              |
 | dimensionKey   | `dimensions($tenancy,$region, $compartment, $namespace, $metric, $resourcegroup)`                 |
 | dimensionValue | `dimensionOptions($tenancy,$region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
+
 
 In Multitenancy mode, it is recommended to click the 'save template variable state' radio button when saving a dashboard using template variables.
 
