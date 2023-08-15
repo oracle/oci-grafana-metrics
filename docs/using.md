@@ -34,15 +34,21 @@ On the Grafana Home Dashboard and click **New Dashboard**.
 For **Grafana 8**:
 ![Grafana 8 choose](images/plugin8-add.png)
 
-For **Grafana 10**:
-![Grafana 10 choose](images/plugin-add.png)
+For **Grafana 9** and **Grafana 10**:
+![Grafana 9 choose](images/grafana9-add.png)
 
-For **Grafana 8** add a new panel:
+After **New Dashboard**, you then can add a **New Panel** or a **Visualization** depending on your Grafana version.
+
+In **Grafana 8** add a new panel:
 ![Grafana 8 choose](images/plugin8-select.png)
 
-For **Grafana 10** choose the datasource to add the new panel:
-![Grafana 10 choose](images/plugin-select.png)
+In **Grafana 9** add a visualization:
+![Grafana 9 choose](images/grafana9-set.png)
 
+In **Grafana 10** first choose the datasource to add Visualization:
+![Grafana 10 choose](images/plugin-select.png)
+and then add the new panel:
+![Grafana 10 choose](images/plugin-add.png)
 
 If you are using a Data Source configured in **single** mode then choose the appropriate **Region**, **Compartment**, **Namespace**, **Metric**, and **Dimension** from the list of available options.
 
