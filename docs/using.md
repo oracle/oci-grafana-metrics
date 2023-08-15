@@ -5,8 +5,8 @@ Here are a few tools for you to explore after installing and configuring the Ora
 ## Migrate to Version 5.x 
 Version 5 of the plugin generally maintains backward compatibility with previous versions. In general, Dashboards do not need to be modified, with a couple of exceptions:
 
-- Dashboards that are set up to use one or more dimension template variables need to be modified by removing the dimensionsKey variable and using the new dimension variable that contains both key and value.
-- Dashboards that are set up to use dimension key and dimension value must be modified to make use of the new dimension field.
+- Dashboards that are set up to use one or more dimension template variables need to be modified by removing the dimensionsKey variable and using the new dimension variable that contains both key and value.See [**Templating**](#templating) for further details.
+- Dashboards that are set up to use dimension key and dimension value must be modified to make use of the new dimension field. See [**here**](#new-dimension-selector-in-version-5-of-the-plugin) for further details.
 
 ## Multitenancy support
 
@@ -59,7 +59,14 @@ At this stage, if the **metrics** pull-down menu is not properly populating with
 
 ## New Dimension selector in Version 5 of the plugin.
 
-Version 5 of Grafana metrics plugins introduces a new selector for the dimensions which encompass dimension key and dimension value. If you are transitioning a dashboard created with previous version of the plugin which is making use of the dimensions, then you need to releslect the dimensions using the new selector and save the dashboard.
+Version 5 of Grafana metrics plugins introduces a new selector for the dimensions which encompass dimension key and dimension value. If you are transitioning a dashboard created with previous version of the plugin which is making use of the dimensions, then you need to re-select the dimensions using the new selector and save the dashboard.
+
+Use the new selector and start type the dimension label you want to add:
+![Add Dimension](images/dim-first.png)
+
+When you will find the dimension you want to add, then click on its label and select the key:
+![Set Dimension](images/dim-second.png)
+
 
 
 ## Templating 
@@ -70,7 +77,7 @@ Templating provides the ability to dynamically switch the contents of graphs as 
 
 In order to configure templating, click on the gear icon in the upper right corner of the dashboard creation page from the previous step. This will take you to the **Settings** page. Click the **Variables** tab and then click the **Add variable** button. 
 
-![Screen Shot 2019-01-11 at 3.10.49 PM](images/Screen%20Shot%202019-01-11%20at%203.10.49%20PM.png)
+![Add Variable](images/template-add.png)
 
 ### Templating in Single Tenancy Mode
 
@@ -78,11 +85,11 @@ If the datasource is configured in **single** tenancy mode then use the followin
 
 Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions()`. 
 
-![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
+![Template Set](images/template-set.png)
 
 The page will load a preview of values available for that variable. Scroll down and click **Add** to create a template variable for regions. 
 
-![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
+![Template Apply](images/template-apply.png)
 
 If you are using **Version 5** or newer of the plugin, repeat the process for the following OCI variables: 
 
@@ -94,7 +101,6 @@ If you are using **Version 5** or newer of the plugin, repeat the process for th
 | resourcegroup   | `resourcegroups($region, $compartment, $namespace)`                                        |
 | metric          | `metrics($region,$compartment, $namespace, $resourcegroup)`                                |
 | dimension    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup)`                     |
-
 
 
 If you are using **Version 4** or older of the plugin, repeat the process for the following OCI variables: 
@@ -109,7 +115,8 @@ If you are using **Version 4** or older of the plugin, repeat the process for th
 | dimensionKey    | `dimensions($region, $compartment, $namespace, $metric, $resourcegroup)`                     |
 | dimensionValue  | `dimensionOptions($region,$compartment,$namespace,$metric,$dimensionKey,$resourcegroup)` |
 
-All of the metrics plugin template variables only support a singleton value with the exception of the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
+All of the metrics plugin template variables only support a singleton value except the dimension options template variable. For the dimension options template variable, the Multi-value can be choosen selecting the variable name as lable and key in the multiselector dropdown, as shown here:
+![Dimension template](images/DimSearch.png)
 
 The final list of variables should look like this (**Plugin v4** and below): 
 
@@ -132,11 +139,11 @@ With the plugin configured to operate with multitenancy support, add the **tenan
 
 Add the **region** variable to this page. Give the variable the name `region`, choose **OCI** from the list of data sources, and for **Query** enter `regions($tenancy)`.
 
-![Screen Shot 2019-01-11 at 3.00.28 PM](images/Screen%20Shot%202019-01-11%20at%203.00.28%20PM.png)
+![Template Set](images/template-set.png)
 
 The page will load a preview of values available for that variable. Scroll down and click **Add** to create a template variable for regions.
 
-![Screen Shot 2019-01-13 at 11.11.50 AM](images/Screen%20Shot%202019-01-13%20at%2011.11.50%20AM.png)
+![Template Apply](images/template-apply.png)
 
 If you are using **Version 5** or newer of the plugin, repeat the process for the following OCI variables: 
 
@@ -152,7 +159,7 @@ If you are using **Version 5** or newer of the plugin, repeat the process for th
 
 
 If you are using **Version 4** or older of the plugin, repeat the process for the following OCI variables: 
-
+| Name           | Query                                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------------------- |
 | tenancy        | `tenancies()`                                                                                     |
 | region         | `regions($tenancy)`                                                                               |
@@ -166,7 +173,8 @@ If you are using **Version 4** or older of the plugin, repeat the process for th
 
 In Multitenancy mode, it is recommended to click the 'save template variable state' radio button when saving a dashboard using template variables.
 
-All of the metrics plugin template variables only support a singleton value except the dimension options template variable. For the dimension options template variable, the Multi-value radio button in the template variable configuration can be enabled and a user can select multiple dimension values to use within the query. The metric plugin runs the defined query once for each dimension value selected for the dimension options template variable.
+All of the metrics plugin template variables only support a singleton value except the dimension options template variable. For the dimension options template variable, the Multi-value can be choosen selecting the variable name as lable and key in the multiselector dropdown, as shown here:
+![Dimension template](images/DimSearch.png)
 
 The final list of variables should look like this (**Plugin v4** and below):
 
