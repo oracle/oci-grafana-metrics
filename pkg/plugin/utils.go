@@ -1,3 +1,8 @@
+/*
+** Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+ */
+
 package plugin
 
 import (
@@ -288,19 +293,21 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 
 	var takey string
 	tenancymode := o.settings.TenancyMode
-	_, ok := o.tenancyAccess[tenancyOCID]
-	if ok {
-		backend.Logger.Debug("GetTenancyAccessKey", "GetTenancyAccessKey", "valid takey: "+tenancyOCID)
-	} else {
-		backend.Logger.Debug("GetTenancyAccessKey", "GetTenancyAccessKey", "Invalid takey: "+tenancyOCID)
-		return ""
-	}
 
 	if tenancymode == "multitenancy" {
 		takey = tenancyOCID
 	} else {
 		takey = SingleTenancyKey
 	}
+
+	_, ok := o.tenancyAccess[takey]
+	if ok {
+		backend.Logger.Debug("GetTenancyAccessKey", "GetTenancyAccessKey", "valid takey: "+takey)
+	} else {
+		backend.Logger.Debug("GetTenancyAccessKey", "GetTenancyAccessKey", "Invalid takey: "+takey)
+		return ""
+	}
+
 	return takey
 }
 
@@ -583,7 +590,6 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 			placeholderLabel := matches[labelIndex]
 			re := regexp.MustCompile(placeholderStr)
-			o.logger.Debug("generateCustomMetricLabel ", "placeholderLabel", placeholderLabel)
 
 			// If this placeholder is the {metric} placeholder then replace the
 			// placeholder string with the metric name
@@ -596,8 +602,6 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 				for key, dimension := range dimensions {
 					if key == placeholderLabel {
 						for _, value := range dimension {
-							o.logger.Debug("key Generated metric key", "key", key)
-							o.logger.Debug("key Generated metric value", "value", value)
 							o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
 							metricLabel = re.ReplaceAllString(metricLabel, value)
 							o.logger.Debug("metricLabel after", "metricLabel", metricLabel)

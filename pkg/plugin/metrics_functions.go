@@ -30,15 +30,15 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	var testResult bool
 	var errAllComp error
 
-	// tenv := o.settings.Environment
-	// tmode := o.settings.TenancyMode
+	tenv := o.settings.Environment
+	tmode := o.settings.TenancyMode
 
 	for key, _ := range o.tenancyAccess {
 		testResult = false
 
-		// if tmode == "multitenancy" && tenv == "oci-instance" {
-		// 	return errors.New("Multitenancy mode using instance principals is not implemented yet.")
-		// }
+		if tmode == "multitenancy" && tenv == "OCI Instance" {
+			return errors.New("Multitenancy mode using instance principals is not implemented yet.")
+		}
 		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
 		if tenancyErr != nil {
 			return errors.Wrap(tenancyErr, "error fetching TenancyOCID")
@@ -205,8 +205,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 	var tenancyocid string
 	var tenancyErr error
-	backend.Logger.Debug("client", "GetCompartmentstakey", "fetching the subscribed region for tenancy takey: "+takey)
-	backend.Logger.Debug("client", "GetCompartmentstakey", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
 	tenancymode := o.settings.TenancyMode
 
 	region, regErr := o.tenancyAccess[takey].config.Region()
@@ -231,8 +229,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		}
 	}
 
-	backend.Logger.Debug("client", "GetCompartmentstakey2", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
-
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyocid, "cs"}, "-")
 	if cachedCompartments, found := o.cache.Get(cacheKey); found {
@@ -248,7 +244,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		backend.Logger.Debug("client", "GetCompartments", "error in GetTenancy")
 		return nil
 	}
-	backend.Logger.Debug("client", "GetCompartmentstakey3", "fetching the subscribed region for tenancy tenancyOCID: "+tenancyOCID)
 
 	compartments := map[string]string{}
 
@@ -280,8 +275,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 			break
 		}
 	}
-
-	backend.Logger.Debug("client", "GetCompartmentstakey4", "fetching the subscribed region for tenancy tenancyOCID: "+*resp.Name)
 
 	compartments[tenancyocid] = *resp.Name //tenancy name
 
@@ -326,8 +319,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	// saving in the cache
 	o.cache.SetWithTTL(cacheKey, compartmentList, 1, 15*time.Minute)
 	o.cache.Wait()
-
-	backend.Logger.Debug("client", "GetCompartmentstakey5", "fetching the subscribed region for tenancy tenancyOCID: "+*resp.Name)
 
 	return compartmentList
 }
@@ -435,28 +426,12 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	var takey string
 	selectedTags := requestParams.TagsValues
 	selectedDimensions := requestParams.DimensionValues
-	selectedLegendFormat := requestParams.LegendFormat
-	o.logger.Debug("selectedLegendFormat", "selectedLegendFormat", selectedLegendFormat)
 
-	o.logger.Debug("takey GetMetricDataPoints", "TenancyLegacy ", requestParams.TenancyLegacy)
-
-	o.logger.Debug("GetMetricDataPoints", "o.settings.TenancyMode ", o.settings.TenancyMode)
-
-	if len(tenancyOCID) == 0 {
-		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode != "single" {
-			takey = o.GetTenancyAccessKey(requestParams.TenancyLegacy)
-		}
-		if len(requestParams.TenancyLegacy) != 0 && o.settings.TenancyMode == "single" {
-			takey = o.GetTenancyAccessKey("DEFAULT/")
-		}
+	if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
+		takey = o.GetTenancyAccessKey("DEFAULT/")
 	} else {
-		if tenancyOCID == "select tenancy" && o.settings.TenancyMode == "single" {
-			takey = o.GetTenancyAccessKey("DEFAULT/")
-		} else {
-			takey = o.GetTenancyAccessKey(tenancyOCID)
-		}
+		takey = o.GetTenancyAccessKey(tenancyOCID)
 	}
-	o.logger.Debug("takey GetMetricDataPoints", "GetMetricDataPoints ", takey)
 
 	if len(takey) == 0 {
 		backend.Logger.Warn("client", "GetMetricDataPoints", "invalid takey")
@@ -474,25 +449,12 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		},
 	}
 
-	// to search for all copartments
+	// to search for all compartments
 	if len(requestParams.CompartmentOCID) == 0 {
-		if len(requestParams.CompartmentLegacy) == 0 {
-			o.logger.Debug("takey GetMetricDataPoints", "Compat if ", common.String(requestParams.TenancyOCID))
-			metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
-			metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
-		} else {
-			o.logger.Debug("takey GetMetricDataPoints", "Compat else ", common.String(requestParams.CompartmentLegacy))
-			o.logger.Debug("Query is using CompartmentLegacy", "CompartmentLegacy ", requestParams.CompartmentLegacy)
-			metricsDataRequest.CompartmentId = common.String(requestParams.CompartmentLegacy)
-			requestParams.CompartmentOCID = requestParams.CompartmentLegacy
-		}
+		metricsDataRequest.CompartmentId = common.String(requestParams.TenancyOCID)
+		metricsDataRequest.CompartmentIdInSubtree = common.Bool(true)
 	}
 
-	if len(requestParams.ResourceGroup) == 0 && len(requestParams.ResourceGroupLegacy) != 0 {
-		requestParams.ResourceGroup = requestParams.ResourceGroupLegacy
-	}
-
-	o.logger.Debug("rg GetMetricDataPoints", "RGRGRGRG ", common.String(requestParams.ResourceGroup))
 	// adding the resource group when provided
 	if len(requestParams.ResourceGroup) != 0 {
 		if requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_PLACEHOLDER_LEGACY && requestParams.ResourceGroup != constants.DEFAULT_RESOURCE_GROUP {
@@ -976,9 +938,12 @@ func (o *OCIDatasource) GetResourceGroups(
 
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, "rgs"}, "-")
+
 	if cachedResourceGroups, found := o.cache.Get(cacheKey); found {
-		backend.Logger.Warn("client", "GetResourceGroups", "getting the data from cache")
-		return cachedResourceGroups.([]models.OCIMetricNamesWithResourceGroup)
+		if rg, ok := cachedResourceGroups.([]models.OCIMetricNamesWithResourceGroup); ok {
+			backend.Logger.Warn("client", "GetResourceGroups", "getting the data from cache")
+			return rg
+		}
 	}
 
 	var metricResourceGroups map[string][]string
@@ -993,7 +958,7 @@ func (o *OCIDatasource) GetResourceGroups(
 			Namespace: common.String(namespace),
 		},
 	}
-	// piopiopio
+
 	if len(compartmentOCID) == 0 {
 		monitoringRequest.CompartmentId = common.String(tenancyOCID)
 		monitoringRequest.CompartmentIdInSubtree = common.Bool(true)

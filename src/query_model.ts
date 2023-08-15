@@ -18,32 +18,27 @@ export default class QueryModel {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    this.target.tenancyOCID = incomingQuery.tenancyOCID || QueryPlaceholder.Tenancy;
-    // this.target.compartmentOCID = incomingQuery.compartmentOCID || QueryPlaceholder.Compartment;
-    this.target.compartmentOCID = incomingQuery.compartmentOCID || '';
+    this.target.tenancy = incomingQuery.tenancy || QueryPlaceholder.Tenancy;
+    this.target.compartment = incomingQuery.compartment || '';
     this.target.region = incomingQuery.region || QueryPlaceholder.Region;
     this.target.namespace = incomingQuery.namespace || QueryPlaceholder.Namespace;
     this.target.metric = incomingQuery.metric || QueryPlaceholder.Metric;
     this.target.statistic = incomingQuery.statistic || QueryPlaceholder.Aggregation;
     this.target.interval = incomingQuery.interval || QueryPlaceholder.Interval;
-    this.target.resourceGroup = incomingQuery.resourceGroup || QueryPlaceholder.ResourceGroup;
+    this.target.resourcegroup = incomingQuery.resourcegroup || QueryPlaceholder.ResourceGroup;
     this.target.dimensionValues = incomingQuery.dimensionValues || [];
     this.target.tagsValues = incomingQuery.tagsValues || [];
     this.target.groupBy = incomingQuery.groupBy || QueryPlaceholder.GroupBy;
 
     this.target.hide = incomingQuery.hide ?? false;
 
-    if (this.target.resourceGroup === QueryPlaceholder.ResourceGroup) {
-      this.target.resourceGroup = '';
+    if (this.target.resourcegroup === QueryPlaceholder.ResourceGroup) {
+      this.target.resourcegroup = '';
     }
 
-    if (this.target.tenancyOCID === QueryPlaceholder.Tenancy) {
-      if (this.target.tenancy !== '') {
-        this.target.tenancyOCID = this.target.tenancy;
-      } else {
-        this.target.tenancyOCID = 'DEFAULT/';
-      }
-    }    
+    if (this.target.tenancy === QueryPlaceholder.Tenancy) {
+        this.target.tenancy = 'DEFAULT/';
+    }   
 
     // handle pre query gui panels gracefully, so by default we will have raw editor
     this.target.rawQuery = incomingQuery.rawQuery ?? true;
@@ -59,7 +54,7 @@ export default class QueryModel {
   isQueryReady() {
     // check if the query is ready to be built
     if (
-      this.target.tenancyOCID === QueryPlaceholder.Tenancy ||
+      this.target.tenancy === QueryPlaceholder.Tenancy ||
       this.target.region === QueryPlaceholder.Region ||
       this.target.namespace === QueryPlaceholder.Namespace ||
       this.target.metric === QueryPlaceholder.Metric

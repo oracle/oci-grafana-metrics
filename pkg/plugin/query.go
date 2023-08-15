@@ -1,3 +1,6 @@
+// Copyright © 2023 Oracle and/or its affiliates. All rights reserved.
+// Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
 package plugin
 
 import (
@@ -36,21 +39,19 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	}
 
 	metricsDataRequest := models.MetricsDataRequest{
-		TenancyOCID:       qm.TenancyOCID,
-		TenancyLegacy:     qm.TenancyLegacy,
-		CompartmentOCID:   qm.CompartmentOCID,
-		CompartmentName:   qm.CompartmentName,
-		CompartmentLegacy: qm.CompartmentLegacy,
-		Region:            qm.Region,
-		Namespace:         qm.Namespace,
-		QueryText:         qm.QueryText,
-		Interval:          qm.Interval[1 : len(qm.Interval)-1],
-		ResourceGroup:     qm.ResourceGroup,
-		DimensionValues:   qm.DimensionValues,
-		LegendFormat:      qm.LegendFormat,
-		TagsValues:        qm.TagsValues,
-		StartTime:         query.TimeRange.From.UTC(),
-		EndTime:           query.TimeRange.To.UTC(),
+		TenancyOCID:     qm.TenancyOCID,
+		CompartmentOCID: qm.CompartmentOCID,
+		CompartmentName: qm.CompartmentName,
+		Region:          qm.Region,
+		Namespace:       qm.Namespace,
+		QueryText:       qm.QueryText,
+		Interval:        qm.Interval[1 : len(qm.Interval)-1],
+		ResourceGroup:   qm.ResourceGroup,
+		DimensionValues: qm.DimensionValues,
+		LegendFormat:    qm.LegendFormat,
+		TagsValues:      qm.TagsValues,
+		StartTime:       query.TimeRange.From.UTC(),
+		EndTime:         query.TimeRange.To.UTC(),
 	}
 
 	// create data frame response
@@ -78,38 +79,27 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
 			}
 			dl = data.Labels{}
-			// legacy support
-			var TheTenancy string
-			var TheCompartment string
 
-			if len(qm.TenancyOCID) == 0 {
-				if len(qm.TenancyLegacy) != 0 {
-					TheTenancy = qm.TenancyLegacy
-				}
-			} else {
-				TheTenancy = qm.TenancyOCID
-			}
-			if len(qm.CompartmentLegacy) == 0 {
-				if len(qm.CompartmentLegacy) != 0 {
-					TheCompartment = qm.CompartmentLegacy
-				}
-			} else {
-				TheCompartment = qm.CompartmentLegacy
-			}
-
-			dimensions := ocidx.GetDimensions(ctx, TheTenancy, TheCompartment, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
+			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
 			FoundDimensionMap := make(map[string][]string)
 			var index int
 
-			// convert dimension in a go map
+			// Convert dimensions into a Go map
 			for _, dimension := range dimensions {
 				key := dimension.Key
 				ocidx.logger.Debug("KEY DIM", "key", key)
+
+				// Create a new slice for each key in the map
+				var values []string
+
 				for _, vall := range dimension.Values {
-					OriginalDimensionMap[key] = dimension.Values
+					values = append(values, vall)
 					ocidx.logger.Debug("ALL DIM", "dim", vall)
 				}
+
+				// Assign the values slice to the map key
+				OriginalDimensionMap[key] = values
 			}
 
 			//Search for resourceID and mark the position if found
