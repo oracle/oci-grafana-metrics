@@ -68,31 +68,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
         )}
             <br></br>
 
-{/* Instance Principals  */}
-        {options.jsonData.environment === AuthProviders.OCI_INSTANCE && (
-          <>
-      <FieldSet label="Instance Principals Connection Details">
-        <InlineField
-          label="Default Region"
-          labelWidth={28}
-          tooltip="Specify the default Region for the tenancy"
-        >
-          <Select
-            className="width-30"
-            options={regions.map((region) => ({
-              label: region,
-              value: region,
-              }))}
-            defaultValue={options.jsonData.environment}
-            onChange={(option) => {
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')(option);
-            }}
-          />
-        </InlineField>
-        </FieldSet>
-        </>
-        )}
-
 
 {/* User Principals - Default tenancy */}
   {options.jsonData.environment === AuthProviders.OCI_USER && (
