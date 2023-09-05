@@ -158,7 +158,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
 
 {/* User Principals - Multitenancy Tenancy 1*/}
-        {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.environment === AuthProviders.OCI_USER &&(
+        {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.environment === AuthProviders.OCI_USER && (
           <>                          
       <FieldSet label="Tenancy-1 Connection Details">
       <InlineField
