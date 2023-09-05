@@ -123,7 +123,7 @@ This Configuration screen will appear:
 
 ![Datasource Empty](images/datasource_conf_empty.png)
 
-For **Environment** choose **local** and then choose between **single** or **multitenancy** as **Tenancy mode**. Please note that with **Grafana Cloud** the **OCI instance** **Environment** option is not supported. 
+For **Authentication Provider** choose **OCI User** and then choose between **single** or **multitenancy** as **Tenancy mode**. Please note that with **Grafana Cloud** the **OCI instance** **Environment** option is not supported. 
 
 You can then choose between two different modes as **Tenancy mode**:
 

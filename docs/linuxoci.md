@@ -76,11 +76,9 @@ Choose **oracle-oci-datasource** as your data source type.
 
 ![Screen Shot 2018-12-17 at 3.24.24 PM](images/Screen%20Shot%202018-12-17%20at%203.24.17%20PM.png)
 
-For **Environment** choose **OCI Instance** (please note that **multitenancy** mode is not yet supported with **OCI Instance** as **Environment**).
+For **Authentication Provider** choose **OCI Instance** (please note that **multitenancy** mode is not yet supported with **OCI Instance** as **Authentication Provider**).
 
-You can then fill in your **Default Region**.
-
-![Screen Shot 2018-12-17 at 3.25.33 PM](images/Screenshot_20221206_094100.png)
+![Instance Principals](images/instance_principals.png)
 
 Click **Save & Test** to return to the home dashboard.
 

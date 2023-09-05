@@ -142,7 +142,7 @@ This Configuration screen will appear:
 
 ![Datasource Empty](images/datasource_conf_empty.png)
 
-For **Environment** choose **local** and then choose between **single** or **multitenancy** as **Tenancy mode**.
+For **Authentication Provider** choose **OCI User** and then choose between **single** or **multitenancy** as **Tenancy mode**.
 You can then choose between two different modes as **Tenancy mode**:
 
 * **single**: to use a single specific Tenancy
