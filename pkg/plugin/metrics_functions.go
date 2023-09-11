@@ -28,7 +28,6 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 
 	var reg common.Region
 	var testResult bool
-	var errAllComp error
 
 	tenv := o.settings.Environment
 	tmode := o.settings.TenancyMode
@@ -87,7 +86,6 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 					testResult = true
 					break
 				} else {
-					errAllComp = err
 					backend.Logger.Debug(key, "SKIPPED", status)
 				}
 			}
@@ -95,7 +93,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 				continue
 			} else {
 				backend.Logger.Debug(key, "FAILED", "listMetrics failed in each compartment")
-				return errors.Wrap(errAllComp, fmt.Sprintf("listMetrics failed in each Compartments in profile %s", key))
+				return fmt.Errorf("listMetrics failed in each Compartments in profile %v", key)
 			}
 		}
 

@@ -153,7 +153,7 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(dsSettings.Environment, dsSettings.TenancyMode, settings)
 		if err != nil {
-			return nil, errors.New("broken environment")
+			return nil, err
 		}
 	}
 
@@ -206,7 +206,6 @@ func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealt
 		hRes.Status = backend.HealthStatusError
 		hRes.Message = err.Error()
 		backend.Logger.Error("plugin", "CheckHealth", err)
-
 		return hRes, nil
 	}
 
