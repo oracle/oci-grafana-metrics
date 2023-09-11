@@ -306,7 +306,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			// test if PEM key is valid
 			block, _ := pem.Decode([]byte(q.privkey[key]))
 			if block == nil {
-				return errors.New("error with Private Key")
+				return errors.New("Invalid Private Key")
 			}
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 
