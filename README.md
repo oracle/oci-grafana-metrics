@@ -11,7 +11,7 @@ If you are running Grafana on a machine instance in Oracle Cloud, use the Instan
 If you are running Grafana anywhere else you'll need to get the necessary provider and resource settings, as described in this section [Getting OCI Configuration values](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md#getting-oci-configuration-values)
   
 
-Latest plugin version 5.X.X(available on [Grafana Marketplace](https://grafana.com/grafana/plugins/oci-metrics-datasource/)) is compatible with **Grafana 10**. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
+Latest plugin version 5.X.X (available on [Grafana Marketplace](https://grafana.com/grafana/plugins/oci-metrics-datasource/)) is compatible with **Grafana 10**. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
   
 Breaking changes:
 - In case you are migrating from a previous version (3.x.x or below) of the OCI Metrics Grafana Plugin and are not using Instance Principals (Environment not set as OCI instance), please refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/migration.md) because you will have to reconfigure the plugin setup
