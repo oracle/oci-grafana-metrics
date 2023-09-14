@@ -11,16 +11,18 @@ If you are running Grafana on a machine instance in Oracle Cloud, use the Instan
 If you are running Grafana anywhere else you'll need to get the necessary provider and resource settings, as described in this section [Getting OCI Configuration values](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md#getting-oci-configuration-values)
   
 
-Latest plugin version 4.X.X(available on [Grafana Marketplace](https://grafana.com/grafana/plugins/oci-metrics-datasource/)) is compatible with Grafana 8**. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
+Latest plugin version 5.X.X (available on [Grafana Marketplace](https://grafana.com/grafana/plugins/oci-metrics-datasource/)) is compatible with **Grafana 10**.
   
-Breaking change! In case you are migrating from a previous version (3.x.x or below) of the OCI Metrics Grafana Plugin and are not using Instance Principals (Environment not set as OCI instance), please refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/migration.md) because you will have to reconfigure the plugin setup
+**Breaking changes:**
+- In case you are migrating from a previous version (3.x.x or below) of the OCI Metrics Grafana Plugin and are not using Instance Principals (Environment not set as OCI instance), please refer to the [**Migration Instructions for Grafana OCI Metrics Data Source Settings (User Principals and Single Tenancy mode only)**](https://github.com/oracle/oci-grafana-metrics/blob/master/docs/migration.md) because you will have to reconfigure the plugin setup
+- In case you are migrating from a previous version (4.x.x or below) of the OCI Metrics Grafana Plugin to version 5.x.x and your dashboard is using **dimensions** in its selectors or as its template variables, please refer to [this section](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/using.md#migrate-to-version-5.x) to modify your dashboard accordingly to the new **dimensions** selector. 
 
-Oracle Cloud Infrastructure Metrics plugin is *datasource with backend* type of plugin Grafana. Hereafter referred to as OCI Metrics plugin. 
+Oracle Cloud Infrastructure Metrics plugin is *datasource with backend* type of Grafana plugin. Hereafter referred to as OCI Metrics plugin. 
 
 ## Installation
-*We highly recommend to use Grafana 8.x.x with plugin version 4.x.x .*
-In order to simplify the installation process, we created detailed guides for you to follow. 
+Please refers to the following **compatibility matrix** to choose plugin version accordingly to your Grafana installation: [Compatibility Matrix](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/compatmatrix.md)
 
+In order to simplify the installation process, we created detailed guides for you to follow. 
 
 * Install Grafana and the OCI Metrics plugin on a Linux host using [this document](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/linux.md).
 
@@ -77,7 +79,6 @@ Please refer to the [docs folder in this repo](https://github.com/oracle/oci-gra
 ## Help
 
   
-
 Issues and questions about this plugin can be posted [as an issue in this GitHub repository](https://github.com/oracle/oci-grafana-plugin/issues)
 
   
@@ -92,7 +93,6 @@ This project welcomes contributions from the community. Before submitting a pull
 ## Security
 
   
-
 Please consult the [security guide](https://github.com/oracle/oci-grafana-metrics/blob/master/SECURITY.md) for our responsible security
 
 vulnerability disclosure process.
@@ -102,11 +102,9 @@ vulnerability disclosure process.
 ## License
 
   
-
-Copyright (c) 2021 Oracle and/or its affiliates.
+Copyright (c) 2023 Oracle and/or its affiliates.
 
   
-
 Released under the Universal Permissive License v1.0 as shown at
 
 <https://oss.oracle.com/licenses/upl/>.
