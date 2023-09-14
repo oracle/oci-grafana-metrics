@@ -20,7 +20,7 @@ Latest plugin version 5.X.X (available on [Grafana Marketplace](https://grafana.
 Oracle Cloud Infrastructure Metrics plugin is *datasource with backend* type of Grafana plugin. Hereafter referred to as OCI Metrics plugin. 
 
 ## Installation
-Please refers to the following **compatibility matrix** to choose pluiigin version accordingly to your Grafana installation: [Compatibility Matrix](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/compatmatrix.md)
+Please refers to the following **compatibility matrix** to choose plugin version accordingly to your Grafana installation: [Compatibility Matrix](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/compatmatrix.md)
 
 In order to simplify the installation process, we created detailed guides for you to follow. 
 
