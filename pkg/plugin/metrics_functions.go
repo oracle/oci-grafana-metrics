@@ -937,12 +937,12 @@ func (o *OCIDatasource) GetResourceGroups(
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, "rgs"}, "-")
 
-	if cachedResourceGroups, found := o.cache.Get(cacheKey); found {
-		if rg, ok := cachedResourceGroups.([]models.OCIMetricNamesWithResourceGroup); ok {
-			backend.Logger.Warn("client", "GetResourceGroups", "getting the data from cache")
-			return rg
-		}
-	}
+	// if cachedResourceGroups, found := o.cache.Get(cacheKey); found {
+	// 	if rg, ok := cachedResourceGroups.([]models.OCIMetricNamesWithResourceGroup); ok {
+	// 		backend.Logger.Warn("client", "GetResourceGroups", "getting the data from cache")
+	// 		return rg
+	// 	}
+	// }
 
 	var metricResourceGroups map[string][]string
 	metricResourceGroupsList := []models.OCIMetricNamesWithResourceGroup{}

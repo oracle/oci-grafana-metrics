@@ -147,10 +147,10 @@ func listMetricsMetadataPerRegion(
 	req monitoring.ListMetricsRequest) map[string][]string {
 
 	backend.Logger.Debug("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
-	if cachedMetricsData, found := ci.Get(cacheKey); found {
-		backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
-		return cachedMetricsData.(map[string][]string)
-	}
+	// if cachedMetricsData, found := ci.Get(cacheKey); found {
+	// 	backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
+	// 	return cachedMetricsData.(map[string][]string)
+	// }
 
 	fetchedMetricDetails := listMetrics(ctx, mClient, req)
 

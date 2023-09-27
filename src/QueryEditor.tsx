@@ -217,6 +217,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     if (response) {
       response.forEach((item: any) => {
         item.metric_names.forEach((ii: any) => {
+          console.log("label_ii: "+ii)
           const sv: SelectableValue<string> = {
             label: ii,
             value: ii,
