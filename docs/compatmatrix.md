@@ -17,7 +17,7 @@ Please refer to the table below for details on which OCI Metrics Plugin version 
 | 2.2.x                     | 7.3.0 - 7.5.x                |
 | 3.0.x                     | 8.0.0 - 8.4.x                |
 | 4.0.x                     | 8.5.0 - 9.5.x                |
-| 5.0.0                     | 8.6.0 - Latest               |
+| 5.0.0                     | 8.6.x - Latest               |
 
 
 > Note: This compatibility matrix is subject to change with future releases. Always refer to the official documentation for the most up-to-date information on compatibility.

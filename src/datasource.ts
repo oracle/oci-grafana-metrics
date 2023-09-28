@@ -205,7 +205,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const region = templateSrv.replace(metricQuery[2]);
         const compartment = templateSrv.replace(metricQuery[3]);
         const namespace = templateSrv.replace(metricQuery[4]);
-        // const resource_group = templateSrv.replace(metricQuery[4]);
+        // const resourcegroup = templateSrv.replace(metricQuery[4]);
         const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
         return metric_names.flatMap(n => {
           return n.metric_names.map(name => {
@@ -432,6 +432,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }      
     }    
 
+
     if (tenancy === '') {
       return [];
     }
@@ -443,19 +444,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       compartment = '';
     } 
 
-    if (tenancy === '') {
-      return [];
-    }
-    if (region === undefined || namespace === undefined) {
-      return [];
-    }
     if (region === QueryPlaceholder.Region || namespace === QueryPlaceholder.Namespace) {
       return [];
     }
 
-    if (compartment === undefined || compartment === QueryPlaceholder.Compartment) {
-      compartment = '';
-    }
 
     const reqBody: JSON = {
       tenancy: tenancy,

@@ -1015,12 +1015,6 @@ func (o *OCIDatasource) GetResourceGroups(
 				MetricNames:   v,
 			})
 		}
-		if len(metricResourceGroupsList) > 0 {
-			metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
-				ResourceGroup: constants.DEFAULT_RESOURCE_GROUP,
-				MetricNames:   []string{},
-			})
-		}
 	}
 
 	// saving into the cache
