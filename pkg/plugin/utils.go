@@ -72,7 +72,7 @@ func listMetricsMetadataFromAllRegion(
 	req monitoring.ListMetricsRequest,
 	regions []string) map[string][]string {
 
-	backend.Logger.Debug("client.utils", "listMetricsMetadataFromAllRegion", "Data fetch start by calling list metrics API from all subscribed regions")
+	backend.Logger.Error("client.utils", "listMetricsMetadataFromAllRegion", "Data fetch start by calling list metrics API from all subscribed regions")
 
 	var metricsMetadata map[string][]string
 	var allRegionsData sync.Map
@@ -146,7 +146,7 @@ func listMetricsMetadataPerRegion(
 	mClient monitoring.MonitoringClient,
 	req monitoring.ListMetricsRequest) map[string][]string {
 
-	backend.Logger.Debug("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
+	backend.Logger.Error("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
 	if cachedMetricsData, found := ci.Get(cacheKey); found {
 		backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
 		return cachedMetricsData.(map[string][]string)
@@ -302,9 +302,9 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 
 	_, ok := o.tenancyAccess[takey]
 	if ok {
-		backend.Logger.Debug("GetTenancyAccessKey", "GetTenancyAccessKey", "valid takey: "+takey)
+		backend.Logger.Error("GetTenancyAccessKey", "Valid takey", takey)
 	} else {
-		backend.Logger.Debug("GetTenancyAccessKey", "GetTenancyAccessKey", "Invalid takey: "+takey)
+		backend.Logger.Error("GetTenancyAccessKey", "Invalid takey", takey)
 		return ""
 	}
 
@@ -314,7 +314,7 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 // till here
 
 func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string][]string, map[string]map[string]struct{}) {
-	backend.Logger.Debug("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
+	backend.Logger.Error("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
 
 	// holds key: value1, value2, for UI
 	resourceTags := map[string][]string{}
@@ -406,7 +406,7 @@ func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (m
 }
 
 func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string]map[string]struct{}, map[string]map[string]struct{}) {
-	backend.Logger.Debug("client.utils", "collectResourceTags", "Fetching the tags from the oci call response")
+	backend.Logger.Error("client.utils", "collectResourceTags", "Fetching the tags from the oci call response")
 
 	// holds key: map of values, for UI
 	resourceTags := map[string]map[string]struct{}{}
@@ -490,7 +490,7 @@ func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) 
 }
 
 func convertToArray(input map[string]map[string]struct{}) map[string][]string {
-	backend.Logger.Debug("client.utils", "convertToArray", "Converting to array")
+	backend.Logger.Error("client.utils", "convertToArray", "Converting to array")
 
 	output := map[string][]string{}
 

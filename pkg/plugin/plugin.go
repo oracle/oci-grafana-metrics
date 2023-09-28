@@ -136,7 +136,7 @@ func NewOCIDatasourceConstructor() *OCIDatasource {
 }
 
 func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	backend.Logger.Debug("plugin", "NewOCIDatasource", settings.ID)
+	backend.Logger.Error("plugin", "NewOCIDatasource", settings.ID)
 
 	o := NewOCIDatasourceConstructor()
 	dsSettings := &models.OCIDatasourceSettings{}
@@ -147,8 +147,8 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	}
 	o.settings = dsSettings
 
-	backend.Logger.Debug("plugin", "dsSettings.Environment", "dsSettings.Environment: "+dsSettings.Environment)
-	backend.Logger.Debug("plugin", "dsSettings.TenancyMode", "dsSettings.TenancyMode: "+dsSettings.TenancyMode)
+	backend.Logger.Error("plugin", "dsSettings.Environment", "dsSettings.Environment: "+dsSettings.Environment)
+	backend.Logger.Error("plugin", "dsSettings.TenancyMode", "dsSettings.TenancyMode: "+dsSettings.TenancyMode)
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(dsSettings.Environment, dsSettings.TenancyMode, settings)
@@ -177,7 +177,7 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 }
 
 func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	backend.Logger.Debug("plugin", "QueryData", req.PluginContext.DataSourceInstanceSettings.Name)
+	backend.Logger.Error("plugin", "QueryData", req.PluginContext.DataSourceInstanceSettings.Name)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -198,7 +198,7 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	backend.Logger.Debug("plugin", "CheckHealth", req.PluginContext.PluginID)
+	backend.Logger.Error("plugin", "CheckHealth", req.PluginContext.PluginID)
 
 	hRes := &backend.CheckHealthResult{}
 
@@ -314,7 +314,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			mrp := clientRetryPolicy()
 			monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
-				backend.Logger.Error("Error with config:" + key)
+				backend.Logger.Error("getConfigProvider", "Error with config", key)
 				return errors.New("error with client")
 			}
 			monitoringClient.Configuration.RetryPolicy = &mrp
@@ -347,7 +347,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
-			backend.Logger.Error("Error with config:" + SingleTenancyKey)
+			backend.Logger.Error("getConfigProvider", "Error with config", SingleTenancyKey)
 			return errors.New("error with client")
 		}
 		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)

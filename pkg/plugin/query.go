@@ -14,7 +14,7 @@ import (
 )
 
 func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	backend.Logger.Debug("plugin.query", "query", "query initiated for "+query.RefID)
+	backend.Logger.Error("plugin.query", "query", "query initiated for "+query.RefID)
 
 	// Creating the Data response for query
 	response := backend.DataResponse{}
