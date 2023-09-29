@@ -84,7 +84,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <Input
           className="width-30"
           readOnly
-          value={options.jsonData.profile0 || "DEFAULT"}
+          value={options.jsonData.profile0}
         />
       </InlineField>
       <InlineField
