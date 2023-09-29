@@ -51,7 +51,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		o.tenancyAccess[key].monitoringClient.SetRegion(string(reg))
 
 		// Test Tenancy OCID first
-		backend.Logger.Error(key, "Testing Tenancy OCID", tenancyocid)
+		backend.Logger.Debug("TestConnectivity", "Config Key", key, "Testing Tenancy OCID", tenancyocid)
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: &tenancyocid,
 		}
@@ -59,40 +59,44 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		var status int
 		res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
 		if err != nil {
-			backend.Logger.Error(key, "SKIPPED", err)
+			backend.Logger.Debug("TestConnectivity", "Config Key", key, "SKIPPED", err)
 		} else {
 			status = res.RawResponse.StatusCode
 		}
 		if status >= 200 && status < 300 {
-			backend.Logger.Error(key, "OK", status)
+			backend.Logger.Debug("TestConnectivity", "Config Key", key, "OK", status)
 		} else {
-			backend.Logger.Error(key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
+			backend.Logger.Debug("TestConnectivity", "Config Key", key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
 			comparts := o.GetCompartments(ctx, tenancyocid)
+			if comparts == nil {
+				backend.Logger.Debug("TestConnectivity", "Config Key", key, "error", "could not read compartments")
+				return fmt.Errorf("TestConnectivity failed: cannot read Compartments in profile %v", key)
+			}
 
 			for _, v := range comparts {
 				tocid := v.OCID
-				backend.Logger.Error(key, "Testing", tocid)
+				backend.Logger.Debug("TestConnectivity", "Config Key", key, "Testing", tocid)
 				listMetrics := monitoring.ListMetricsRequest{
 					CompartmentId: common.String(tocid),
 				}
 
 				res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
 				if err != nil {
-					backend.Logger.Error(key, "FAILED", err)
+					backend.Logger.Debug("TestConnectivity", "Config Key", key, "SKIPPED", err)
 				}
 				status := res.RawResponse.StatusCode
 				if status >= 200 && status < 300 {
-					backend.Logger.Error(key, "OK", status)
+					backend.Logger.Debug("TestConnectivity", "Config Key", key, "OK", status)
 					testResult = true
 					break
 				} else {
-					backend.Logger.Error(key, "SKIPPED", status)
+					backend.Logger.Debug("TestConnectivity", "Config Key", key, "SKIPPED", status)
 				}
 			}
 			if testResult {
 				continue
 			} else {
-				backend.Logger.Error(key, "FAILED", "listMetrics failed in each compartment")
+				backend.Logger.Debug("TestConnectivity", "Config Key", key, "FAILED", "listMetrics failed in each compartment")
 				return fmt.Errorf("listMetrics failed in each Compartments in profile %v", key)
 			}
 		}
