@@ -32,6 +32,10 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	tenv := o.settings.Environment
 	tmode := o.settings.TenancyMode
 
+	if len(o.tenancyAccess) == 0 {
+		return fmt.Errorf("TestConnectivity failed: cannot read o.tenancyAccess")
+	}
+
 	for key, _ := range o.tenancyAccess {
 		testResult = false
 

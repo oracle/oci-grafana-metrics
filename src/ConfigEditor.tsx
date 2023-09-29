@@ -28,6 +28,9 @@ interface State {}
 export class ConfigEditor extends PureComponent<Props, State> {
   render() {
     const { options } = this.props;
+    if (!options.jsonData.profile0) {
+      options.jsonData.profile0 = "DEFAULT";
+    }  
     return (
       <FieldSet label="Connection Details">
         <InlineField
@@ -81,7 +84,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <Input
           className="width-30"
           readOnly
-          value={'DEFAULT'}
+          value={options.jsonData.profile0 || "DEFAULT"}
         />
       </InlineField>
       <InlineField
