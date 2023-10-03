@@ -26,11 +26,22 @@ interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions>
 interface State {}
 
 export class ConfigEditor extends PureComponent<Props, State> {
+  componentDidMount() {
+    const { options, onOptionsChange } = this.props;
+    const { jsonData } = options;
+
+    if (!jsonData.profile0) {
+      onOptionsChange({
+        ...options,
+        jsonData: {
+          ...jsonData,
+          profile0: "DEFAULT",
+        },
+      });
+    }
+  }  
   render() {
     const { options } = this.props;
-    if (!options.jsonData.profile0) {
-      options.jsonData.profile0 = "DEFAULT";
-    }  
     return (
       <FieldSet label="Connection Details">
         <InlineField
