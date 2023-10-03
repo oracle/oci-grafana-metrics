@@ -303,10 +303,16 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		for key, _ := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
+			if tenancymode != "multitenancy" {
+				if key != "DEFAULT" {
+					backend.Logger.Error("Single Tenancy mode detected, skipping additional profile", "profile", key)
+					continue
+				}
+			}
 			// test if PEM key is valid
 			block, _ := pem.Decode([]byte(q.privkey[key]))
 			if block == nil {
-				return errors.New("Invalid Private Key")
+				return errors.New("Invalid Private Key in profile " + key)
 			}
 			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 
