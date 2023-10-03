@@ -78,6 +78,11 @@ func (ocidx *OCIDatasource) GetRegionsHandler(rw http.ResponseWriter, req *http.
 		return
 	}
 	regions := ocidx.GetSubscribedRegions(req.Context(), rr.Tenancy)
+	if regions == nil {
+		backend.Logger.Error("plugin.resource_handler", "GetSubscribedRegions", "Could not read regions")
+		respondWithError(rw, http.StatusBadRequest, "Could not read regions", nil)
+		return
+	}
 
 	writeResponse(rw, regions)
 }
@@ -95,6 +100,11 @@ func (ocidx *OCIDatasource) GetCompartmentsHandler(rw http.ResponseWriter, req *
 		return
 	}
 	compartments := ocidx.GetCompartments(req.Context(), rr.Tenancy)
+	if compartments == nil {
+		backend.Logger.Error("plugin.resource_handler", "GetCompartmentsHandler", "Could not read compartments")
+		respondWithError(rw, http.StatusBadRequest, "Could not read compartments", nil)
+		return
+	}
 
 	writeResponse(rw, compartments)
 }

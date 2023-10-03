@@ -45,11 +45,22 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * @param {string} query Query
    * @param {ScopedVars} scopedVars Scoped variables
    */
-
   query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
     return super.query(options);
   }
 
+
+  /**
+   * Filters disabled/hidden queries
+   *
+   * @param {string} query Query
+   */
+  filterQuery(query: OCIQuery): boolean {
+    if (query.hide) {
+      return false;
+    }
+    return true;
+  }
 
   /**
    * Override to apply template variables
