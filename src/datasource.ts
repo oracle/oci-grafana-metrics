@@ -3,9 +3,8 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import { Observable } from 'rxjs';
 import _,{ isString} from 'lodash';
-import { DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse, ScopedVars, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import {
   OCIResourceItem,
@@ -37,16 +36,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
-  }
-
-  /**
-   * Override to apply template variables
-   *
-   * @param {string} query Query
-   * @param {ScopedVars} scopedVars Scoped variables
-   */
-  query(options: DataQueryRequest<OCIQuery>): Observable<DataQueryResponse> {
-    return super.query(options);
   }
 
 
