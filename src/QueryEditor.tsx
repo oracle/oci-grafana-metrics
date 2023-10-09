@@ -359,9 +359,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onRegionChange = (data: SelectableValue) => {
-    if (query.regions && data.__isNew__) {
-      query.regions = [...query.regions, { label: data.label, value: data.value }]
-    }
     setRegionValue(data.value);   
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
