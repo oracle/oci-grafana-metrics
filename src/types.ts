@@ -87,10 +87,8 @@ export interface OCIQuery extends DataQuery {
   tenancyName: string;
   tenancy: string;
   tenancymode: string;
-  compartments?: any;
   compartmentName?: string;
   compartment?: string;
-  regions?: any;
   region?: string;
   namespace?: string;
   metricNames?: string[];

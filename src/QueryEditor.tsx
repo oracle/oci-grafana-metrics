@@ -313,18 +313,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
 
   const getTenancyDefault = async () => {
-    let tname: string;
-    let tvalue: string;
-    tname = 'DEFAULT/';
-    tvalue = 'DEFAULT/';
-    onApplyQueryChange(
-      {
-        ...query,
-        tenancyName: tname,
-        tenancy: tvalue,
-      },
-      false
-    );
+    const tname = 'DEFAULT/';
+    const tvalue = 'DEFAULT/';
+    onApplyQueryChange({ ...query, tenancyName: tname, tenancy: tvalue }, false);
   };
 
   const onTenancyChange = async (data: any) => {
