@@ -313,28 +313,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
 
   const getTenancyDefault = async () => {
-    let tname: string;
-    let tvalue: string;
-    tname = 'DEFAULT/';
-    tvalue = 'DEFAULT/';
-    onApplyQueryChange(
-      {
-        ...query,
-        tenancyName: tname,
-        tenancy: tvalue,
-        compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
-          setTimeout(async () => {
-            const response = await datasource.getCompartments(tvalue);
-            const result = response.map((res: any) => {
-              return { label: res.name, value: res.ocid };
-            });
-            resolve(result);
-          }, 0);
-        }),
-        regions: await getSubscribedRegionOptions(),
-      },
-      false
-    );
+    const tname = 'DEFAULT/';
+    const tvalue = 'DEFAULT/';
+    onApplyQueryChange({ ...query, tenancyName: tname, tenancy: tvalue }, false);
   };
 
   const onTenancyChange = async (data: any) => {
@@ -344,27 +325,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
         ...query,
         tenancyName: data.label,
         tenancy: data.value,
-        compartments: new Promise<Array<SelectableValue<string>>>((resolve) => {
-          setTimeout(async () => {
-            const response = await datasource.getCompartments(data.value);
-            const result = response.map((res: any) => {
-              return { label: res.name, value: res.ocid };
-            });
-            resolve(result);
-          }, 0);
-        }),
         compartmentName: undefined,
         compartment: undefined,
-        // regions: await getSubscribedRegionOptions(),
-        regions: new Promise<Array<SelectableValue<string>>>((resolve) => {
-          setTimeout(async () => {
-            const response = await datasource.getSubscribedRegions(data.value);
-            const result = response.map((res: any) => {
-              return { label: res.name, value: res.ocid };
-            });
-            resolve(result);
-          }, 0);
-        }),
         region: undefined,
         namespace: undefined,
         metric: undefined,
@@ -388,9 +350,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   };
 
   const onRegionChange = (data: SelectableValue) => {
-    if (query.regions && data.__isNew__) {
-      query.regions = [...query.regions, { label: data.label, value: data.value }]
-    }
     setRegionValue(data.value);   
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };

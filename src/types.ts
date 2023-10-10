@@ -83,14 +83,11 @@ export const GroupOptions = [
 export interface OCIQuery extends DataQuery {
   queryText?: string;
   rawQuery: boolean;
-  //hide: boolean;
   tenancyName: string;
   tenancy: string;
   tenancymode: string;
-  compartments?: any;
   compartmentName?: string;
   compartment?: string;
-  regions?: any;
   region?: string;
   namespace?: string;
   metricNames?: string[];
