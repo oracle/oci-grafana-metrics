@@ -11,7 +11,12 @@ fi
 rm -rf ./oci-metrics-datasource
 rm ./oci-metrics-datasource.zip 
 rm ./plugin.tar
-./node_modules/.bin/grunt
+# yarn create @grafana/plugin
+yarn run build
+if [ $? -ne 0 ]; then
+    echo "yarn returned error"
+    exit 1
+fi
 
 mage --debug -v
 
