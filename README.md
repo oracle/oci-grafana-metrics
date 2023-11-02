@@ -86,7 +86,7 @@ Issues and questions about this plugin can be posted [as an issue in this GitHub
 ## Contributing
 
 
-This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](https://github.com/oracle/oci-grafana-metrics/blob/master/CONTRIBUTING.md)
+This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
 
   
 
