@@ -10,6 +10,10 @@ import { DataQuery } from '@grafana/schema';
 export enum DefaultOCIOptions {
   ConfigProfile = 'DEFAULT',
 }
+export enum QueryEditorMode {
+  Code = 'code',
+  Builder = 'builder',
+}
 
 export const DEFAULT_TENANCY = "DEFAULT/";
 export const compartmentsQueryRegex = /^compartments\(\s*(\".+\"|\'.+\'|\$\w+)\s*\)|^compartments\(\)\s*/;

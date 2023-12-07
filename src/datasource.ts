@@ -37,7 +37,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
   }
-
+ 
 
   /**
    * Filters disabled/hidden queries
@@ -100,6 +100,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }, {} as T);
   }
 
+
+  isEditorMode(options?: any): boolean {
+    return !options.targets[0].rawQuery;
+  }
   // // **************************** Template variable helpers ****************************
 
   // /**

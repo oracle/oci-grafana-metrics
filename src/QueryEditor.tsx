@@ -4,7 +4,7 @@
 */
 
 import React, { useEffect, useState } from 'react';
-import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input, TextArea, RadioButtonGroup } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
@@ -18,8 +18,11 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
+  const pureQuery = query.rawQuery;
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
   const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
+  const [queryValue, setQueryValue] = useState(query.queryText);
+  const [queryRawValue, setQueryRawValue] = useState(query.rawQuery);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
@@ -335,6 +338,17 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
+  const onRawQueryChange = (data: boolean) => {
+    setQueryRawValue(data);   
+    onApplyQueryChange({ ...query, rawQuery: data }, false);
+  };
+  
+
+  const onQueryTextChange = (data: any) => {
+    setQueryValue(data.value);   
+    onApplyQueryChange({ ...query, queryText: data.value }, true);
+  };
+
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
     onApplyQueryChange(
@@ -349,7 +363,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
-  const onRegionChange = (data: SelectableValue) => {
+  const onRegionChange = (data: any) => {
     setRegionValue(data.value);   
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
@@ -496,11 +510,39 @@ export const QueryEditor: React.FC<Props> = (props) => {
     });
 }
 
+const editorModes = [
+  { label: 'Builder', value: true },
+  { label: 'Code', value: false },
+];
 
-  return (
+  return (        
     <>
       <FieldSet>
         <InlineFieldRow>
+        <div data-testid={'QueryEditorModeToggle'}>
+          <RadioButtonGroup options={editorModes} size="sm" value={queryRawValue} onChange={(data) => { onRawQueryChange(data);}} />
+        </div>
+        {pureQuery === true && (
+            <>
+              <InlineField
+                      label="Private Key"
+                      labelWidth={28}
+                      tooltip="Private Key"
+                    >
+                      <TextArea
+                        type="text"
+                        className="width-30"
+                        cols={20}
+                        rows={4}
+                        maxLength={4096}
+                        value={queryValue}
+                        onChange={(data) => {
+                          onQueryTextChange(data);
+                        }}
+                        />
+              </InlineField>
+            </>
+          )}
           {tmode === TenancyChoices.multitenancy && (
             <>
               <InlineField label="TENANCY" labelWidth={20}>
