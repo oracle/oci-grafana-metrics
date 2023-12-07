@@ -33,6 +33,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
   const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
   const [hasCalledGetTenancyDefault, setHasCalledGetTenancyDefault] = useState(false);  
+  const editorModes = [
+    { label: 'Raw Query', value: true },
+    { label: 'Builder', value: false },
+  ];  
   
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
@@ -342,11 +346,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
     setQueryRawValue(data);   
     onApplyQueryChange({ ...query, rawQuery: data }, false);
   };
-  
 
   const onQueryTextChange = (data: any) => {
     setQueryValue(data.value);   
-    onApplyQueryChange({ ...query, queryText: data.value }, true);
+    onApplyQueryChange({ ...query, queryText: data.value }, false);
   };
 
   const onCompartmentChange = (data: any) => {
@@ -510,39 +513,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
     });
 }
 
-const editorModes = [
-  { label: 'Builder', value: true },
-  { label: 'Code', value: false },
-];
-
   return (        
     <>
       <FieldSet>
         <InlineFieldRow>
-        <div data-testid={'QueryEditorModeToggle'}>
-          <RadioButtonGroup options={editorModes} size="sm" value={queryRawValue} onChange={(data) => { onRawQueryChange(data);}} />
-        </div>
-        {pureQuery === true && (
-            <>
-              <InlineField
-                      label="Private Key"
-                      labelWidth={28}
-                      tooltip="Private Key"
-                    >
-                      <TextArea
-                        type="text"
-                        className="width-30"
-                        cols={20}
-                        rows={4}
-                        maxLength={4096}
-                        value={queryValue}
-                        onChange={(data) => {
-                          onQueryTextChange(data);
-                        }}
-                        />
-              </InlineField>
-            </>
-          )}
           {tmode === TenancyChoices.multitenancy && (
             <>
               <InlineField label="TENANCY" labelWidth={20}>
@@ -566,8 +540,11 @@ const editorModes = [
           <CustomInput className="width-14" value={"DEFAULT/"} readOnly />
         </InlineField>
             </>
-          )}          
-        </InlineFieldRow>
+          )}
+        <div data-testid={'QueryEditorModeToggle'}>
+          <RadioButtonGroup options={editorModes} size="sm" value={queryRawValue} onChange={(data) => { onRawQueryChange(data);}} />
+        </div>              
+        </InlineFieldRow>   
         <InlineFieldRow>
           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
@@ -623,6 +600,8 @@ const editorModes = [
               }}
             />
           </InlineField>
+          {pureQuery !== true && (
+          <>          
           <InlineField label="METRIC" labelWidth={20}>
             <SegmentAsync
               className="width-14"
@@ -636,7 +615,34 @@ const editorModes = [
               }}
             />
           </InlineField>
+          </>
+          )}          
         </InlineFieldRow>
+        {pureQuery === true && (
+            <>
+            <InlineFieldRow>
+              <InlineField
+                      label="Raw Query"
+                      labelWidth={20}
+                      tooltip="type metric raw query"
+                    >
+                      <TextArea
+                        type="text"
+                        className="width-70"
+                        cols={70}
+                        rows={6}
+                        maxLength={16535}
+                        value={queryValue}
+                        onChange={(data) => {
+                          onQueryTextChange(data);
+                        }}
+                        />
+              </InlineField>
+            </InlineFieldRow>              
+            </>
+          )}
+        {pureQuery !== true && (
+          <>                     
         <InlineFieldRow>
           <InlineField label="AGGREGATION" labelWidth={20}>
             <SegmentAsync
@@ -699,7 +705,9 @@ const editorModes = [
                 />
               </> 
           </InlineField>
-        </InlineFieldRow>  
+        </InlineFieldRow>
+        </>
+       )} 
       </FieldSet>
     </>
   );
