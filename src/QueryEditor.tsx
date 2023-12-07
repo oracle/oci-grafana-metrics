@@ -20,6 +20,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const tmode = datasource.getJsonData().tenancymode;
   const pureQuery = query.rawQuery;
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
+  const [hasLegacyRawValue, setHasLegacyRawValue] = useState(false);
   const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
   const [queryValue, setQueryValue] = useState(query.queryText);
   const [queryRawValue, setQueryRawValue] = useState(query.rawQuery);
@@ -511,6 +512,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
       setCompartmentValue(query.compartmentName);
       setHasLegacyCompartment(true);
     });
+}
+
+  // set queryRawValue in case dashboard was created with version <= 5.0.0
+  if (query.rawQuery === undefined && !hasLegacyRawValue) {
+    setQueryRawValue(false);
+    setHasLegacyRawValue(true);    
 }
 
   return (        
