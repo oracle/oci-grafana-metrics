@@ -51,7 +51,14 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }
       }  
       if (queryModel.isQueryReady()) {
-        changedQuery.queryText = queryModel.buildQuery(String(query.metric));
+        if (pureQuery){
+          console.log("questa e' una query : "+query.queryText)
+          changedQuery.queryText = queryModel.buildQuery(String(query.queryText));
+        } else {
+          console.log("questa e' una metric : "+query.metric)
+          changedQuery.queryText = queryModel.buildQuery(String(query.metric));
+        }
+        
         onChange({ ...changedQuery });
         onRunQuery();
       }
@@ -348,11 +355,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, rawQuery: data }, false);
   };
 
-  const onQueryTextChange = (data: any) => {
-    setQueryValue(data.value);   
-    onApplyQueryChange({ ...query, queryText: data.value }, false);
-  };
-
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
     onApplyQueryChange(
@@ -408,6 +410,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
     onApplyQueryChange({ ...query, resourcegroup: data.label, metricNames: mn, metric: undefined }, false);
   };
+
+  const onQueryTextChange = (data: any) => {
+    setQueryValue(data);
+    console.log("onQueryTextChange "+data)
+    onApplyQueryChange({ ...query, queryText: data });
+  };
+
 
   const onMetricChange = (data: any) => {
     setMetricValue(data);     
@@ -613,7 +622,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
-              required={true}
+              required={false}
               loadOptions={getMetricOptions}
               value={metricValue}
               placeholder={QueryPlaceholder.Metric}
@@ -640,9 +649,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
                         rows={6}
                         maxLength={16535}
                         value={queryValue}
-                        onChange={(data) => {
-                          onQueryTextChange(data);
-                        }}
+                        // defaultValue={queryValue}
+                        // onChange={(event) => {
+                        //   onQueryTextChange(event.target);
+                        // }}
+                        onBlur={(event) => {
+                          onQueryTextChange(event.target.value);
+                        }}  
                         />
               </InlineField>
             </InlineFieldRow>              
@@ -655,7 +668,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
-              required={true}
+              required={false}
               loadOptions={getAggregationOptions}
               value={query.statisticLabel || AggregationOptions[0].label}
               placeholder={QueryPlaceholder.Aggregation}
@@ -668,7 +681,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
-              required={true}
+              required={false}
               loadOptions={getIntervalOptions}
               // value={query.intervalLabel || IntervalOptions[0].label}
               value={intervalValue}

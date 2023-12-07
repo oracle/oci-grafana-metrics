@@ -57,6 +57,8 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	// create data frame response
 	frame := data.NewFrame("response").SetMeta(&data.FrameMeta{ExecutedQueryString: qm.QueryText})
 
+	ocidx.logger.Debug("qm.QueryText", "key", qm.QueryText)
+
 	times, metricDataValues := ocidx.GetMetricDataPoints(ctx, metricsDataRequest, qm.TenancyOCID)
 
 	// plotting the x axis with time as unit

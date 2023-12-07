@@ -41,7 +41,7 @@ export default class QueryModel {
     }   
 
     // handle pre query gui panels gracefully, so by default we will have raw editor
-    this.target.rawQuery = incomingQuery.rawQuery ?? true;
+    // this.target.rawQuery = incomingQuery.rawQuery ?? true;
 
     if (this.target.rawQuery) {
       this.target.queryText =
@@ -56,8 +56,8 @@ export default class QueryModel {
     if (
       this.target.tenancy === QueryPlaceholder.Tenancy ||
       this.target.region === QueryPlaceholder.Region ||
-      this.target.namespace === QueryPlaceholder.Namespace ||
-      this.target.metric === QueryPlaceholder.Metric
+      this.target.namespace === QueryPlaceholder.Namespace
+      // this.target.metric === QueryPlaceholder.Metric
     ) {
       return false;
     }
@@ -76,7 +76,7 @@ export default class QueryModel {
     if (this.target.interval === QueryPlaceholder.Interval) {
       this.target.interval = IntervalOptions[0].value;
     }
-    queryText += this.target.interval;
+    // queryText += this.target.interval;
 
     // for dimensions
     let dimensionParams = '{';
@@ -105,7 +105,7 @@ export default class QueryModel {
       this.target.statistic = AggregationOptions[0].value;
     }
 
-    queryText += '.' + this.target.statistic;
+    // queryText += '.' + this.target.statistic;
 
     return queryText;
   }
