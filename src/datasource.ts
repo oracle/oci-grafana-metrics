@@ -109,9 +109,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
 
-  isEditorMode(options?: any): boolean {
-    return !options.targets[0].rawQuery;
-  }
   // // **************************** Template variable helpers ****************************
 
   // /**
