@@ -281,7 +281,8 @@ Toggle the Raw Query/Builder selector, and switch to Raw Query to enter editor m
 For now, only the following fields can be updated in the query editor mode,
 1. Metric
 2. Window
-3. Aggregation 
+3. Aggregation
+4. Dimensions
 
 All other fields must be selected using the drop-downs.
 
