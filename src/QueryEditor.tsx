@@ -368,7 +368,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
-  const onRegionChange = (data: any) => {
+  const onRegionChange = (data: SelectableValue) => {
     setRegionValue(data.value);   
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
@@ -557,9 +557,16 @@ export const QueryEditor: React.FC<Props> = (props) => {
         </InlineField>
             </>
           )}
-        <div data-testid={'QueryEditorModeToggle'}>
-          <RadioButtonGroup options={editorModes} size="sm" value={queryRawValue} onChange={(data) => { onRawQueryChange(data);}} />
-        </div>              
+        <InlineField grow={true} className='container text-right'>
+          <RadioButtonGroup
+            options={editorModes}
+            size="sm"
+            value={queryRawValue}
+            onChange={(data) => {
+              onRawQueryChange(data);
+            }}
+          />
+        </InlineField>             
         </InlineFieldRow>   
         <InlineFieldRow>
           <InlineField label="REGION" labelWidth={20}>
@@ -644,9 +651,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
                     >
                       <TextArea
                         type="text"
-                        className="width-70"
-                        cols={70}
-                        rows={6}
+                        // className="width-70"
+                        cols={80}
+                        rows={4}
                         maxLength={16535}
                         defaultValue={queryValue}
                         onBlur={(event) => {
