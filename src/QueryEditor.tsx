@@ -648,11 +648,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
                         cols={70}
                         rows={6}
                         maxLength={16535}
-                        value={queryValue}
-                        // defaultValue={queryValue}
-                        // onChange={(event) => {
-                        //   onQueryTextChange(event.target);
-                        // }}
+                        defaultValue={queryValue}
                         onBlur={(event) => {
                           onQueryTextChange(event.target.value);
                         }}  
@@ -713,6 +709,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
             </>
           </InlineField>
         </InlineFieldRow>
+          </>
+            )}         
           <InlineFieldRow>
             <InlineField label="LEGEND FORMAT" labelWidth={20} grow={true}>
               <>             
@@ -726,8 +724,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
               </> 
           </InlineField>
         </InlineFieldRow>
-        </>
-       )} 
+
       </FieldSet>
     </>
   );

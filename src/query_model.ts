@@ -30,8 +30,6 @@ export default class QueryModel {
     this.target.tagsValues = incomingQuery.tagsValues || [];
     this.target.groupBy = incomingQuery.groupBy || QueryPlaceholder.GroupBy;
     this.target.queryTextRaw = incomingQuery.queryTextRaw || '';
-
-
     this.target.hide = incomingQuery.hide ?? true;
 
     if (this.target.resourcegroup === QueryPlaceholder.ResourceGroup) {
@@ -42,10 +40,10 @@ export default class QueryModel {
         this.target.tenancy = 'DEFAULT/';
     }   
 
-    // handle pre query gui panels gracefully, so by default we will have raw editor
+    // handle pre query gui panels gracefully, so by default we will NOT have raw editor. Here we are using this logic: Query builder: true, Raw Editor: false
     this.target.rawQuery = incomingQuery.rawQuery ?? true;
 
-    if (this.target.rawQuery) {
+    if (this.target.rawQuery === false) {
       this.target.queryText =
         incomingQuery.queryTextRaw || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
