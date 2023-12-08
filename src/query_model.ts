@@ -30,7 +30,7 @@ export default class QueryModel {
     this.target.tagsValues = incomingQuery.tagsValues || [];
     this.target.groupBy = incomingQuery.groupBy || QueryPlaceholder.GroupBy;
     this.target.queryTextRaw = incomingQuery.queryTextRaw || '';
-    this.target.hide = incomingQuery.hide ?? true;
+    this.target.hide = incomingQuery.hide ?? false;
 
     if (this.target.resourcegroup === QueryPlaceholder.ResourceGroup) {
       this.target.resourcegroup = '';
