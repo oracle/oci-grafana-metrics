@@ -274,8 +274,9 @@ Now, variables can be used in  window and resolution drop downs
 
 #### MQL editor
 
-Click the pencil icon to  add or edit the query in editor mode
+Toggle the Raw Query/Builder selector, and switch to Raw Query to enter editor mode:
 
+![Raw Query toggle](images/RawQuery.png)
 
 For now, only the following fields can be updated in the query editor mode,
 1. Metric
@@ -283,7 +284,6 @@ For now, only the following fields can be updated in the query editor mode,
 3. Aggregation 
 
 All other fields must be selected using the drop-downs.
-Use the pencil icon to toggle the editor mode.
 
 Example:
 Try pasting this ```AllRequests[1m].max()```

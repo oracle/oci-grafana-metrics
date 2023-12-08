@@ -638,7 +638,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <>
             <InlineFieldRow>
               <InlineField
-                      label="Raw Query"
+                      label="RAW QUERY"
                       labelWidth={20}
                       tooltip="type metric raw query"
                     >
