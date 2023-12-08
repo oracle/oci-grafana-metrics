@@ -57,8 +57,6 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	// create data frame response
 	frame := data.NewFrame("response").SetMeta(&data.FrameMeta{ExecutedQueryString: qm.QueryText})
 
-	ocidx.logger.Debug("qm.QueryText", "key", qm.QueryText)
-
 	times, metricDataValues := ocidx.GetMetricDataPoints(ctx, metricsDataRequest, qm.TenancyOCID)
 
 	// plotting the x axis with time as unit
@@ -90,14 +88,12 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 			// Convert dimensions into a Go map
 			for _, dimension := range dimensions {
 				key := dimension.Key
-				ocidx.logger.Debug("KEY DIM", "key", key)
 
 				// Create a new slice for each key in the map
 				var values []string
 
 				for _, vall := range dimension.Values {
 					values = append(values, vall)
-					ocidx.logger.Debug("ALL DIM", "dim", vall)
 				}
 
 				// Assign the values slice to the map key
