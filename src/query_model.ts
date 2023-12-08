@@ -29,8 +29,10 @@ export default class QueryModel {
     this.target.dimensionValues = incomingQuery.dimensionValues || [];
     this.target.tagsValues = incomingQuery.tagsValues || [];
     this.target.groupBy = incomingQuery.groupBy || QueryPlaceholder.GroupBy;
+    this.target.queryTextRaw = incomingQuery.queryTextRaw || '';
 
-    this.target.hide = incomingQuery.hide ?? false;
+
+    this.target.hide = incomingQuery.hide ?? true;
 
     if (this.target.resourcegroup === QueryPlaceholder.ResourceGroup) {
       this.target.resourcegroup = '';
@@ -41,11 +43,11 @@ export default class QueryModel {
     }   
 
     // handle pre query gui panels gracefully, so by default we will have raw editor
-    // this.target.rawQuery = incomingQuery.rawQuery ?? true;
+    this.target.rawQuery = incomingQuery.rawQuery ?? false;
 
     if (this.target.rawQuery) {
       this.target.queryText =
-        incomingQuery.queryText || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
+        incomingQuery.queryTextRaw || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
       this.target.queryText = incomingQuery.queryText || this.buildQuery(String(this.target.metric));
     }
@@ -56,8 +58,8 @@ export default class QueryModel {
     if (
       this.target.tenancy === QueryPlaceholder.Tenancy ||
       this.target.region === QueryPlaceholder.Region ||
-      this.target.namespace === QueryPlaceholder.Namespace
-      // this.target.metric === QueryPlaceholder.Metric
+      this.target.namespace === QueryPlaceholder.Namespace ||
+      (this.target.metric === QueryPlaceholder.Metric && this.target.queryTextRaw === '')
     ) {
       return false;
     }
@@ -69,43 +71,45 @@ export default class QueryModel {
   buildQuery(queryText: string) {
     // let queryText = this.target.metric;     
 
-    if (this.target.interval === QueryPlaceholder.Interval) {
-      this.target.interval = IntervalOptions[0].value;
-    }   
-    // for default interval
-    if (this.target.interval === QueryPlaceholder.Interval) {
-      this.target.interval = IntervalOptions[0].value;
-    }
-    // queryText += this.target.interval;
+    if (this.target.queryTextRaw !== '' && this.target.rawQuery === false) {
+      queryText = String(this.target.queryTextRaw);
+    }  else {
+      // for default interval
+      if (this.target.interval === QueryPlaceholder.Interval) {
+        this.target.interval = IntervalOptions[0].value;
+      }
+      queryText += this.target.interval;
 
-    // for dimensions
-    let dimensionParams = '{';
-    let noOfDimensions = this.target.dimensionValues?.length ?? 0;
-    if (noOfDimensions !== 0) {
-      this.target.dimensionValues?.forEach((dv) => {
-        dimensionParams += dv;
-        noOfDimensions--;
+      // for dimensions
+      let dimensionParams = '{';
+      let noOfDimensions = this.target.dimensionValues?.length ?? 0;
+      if (noOfDimensions !== 0) {
+        this.target.dimensionValues?.forEach((dv) => {
+          dimensionParams += dv;
+          noOfDimensions--;
 
-        if (noOfDimensions !== 0) {
-          dimensionParams += ',';
-        }
-      });
-      dimensionParams += '}';
+          if (noOfDimensions !== 0) {
+            dimensionParams += ',';
+          }
+        });
+        dimensionParams += '}';
 
-      queryText += dimensionParams;
-    }
+        queryText += dimensionParams;
+      }
 
-    // for groupBy option
-    if (this.target.groupBy !== QueryPlaceholder.GroupBy) {
-      queryText += '.groupBy(' + this.target.groupBy + ')';
-    }
+      // for groupBy option
+      if (this.target.groupBy !== QueryPlaceholder.GroupBy) {
+        queryText += '.groupBy(' + this.target.groupBy + ')';
+      }
 
-    // for default statistics
-    if (this.target.statistic === QueryPlaceholder.Aggregation) {
-      this.target.statistic = AggregationOptions[0].value;
-    }
+      // for default statistics
+      if (this.target.statistic === QueryPlaceholder.Aggregation) {
+        this.target.statistic = AggregationOptions[0].value;
+      }
 
-    // queryText += '.' + this.target.statistic;
+      queryText += '.' + this.target.statistic;
+      } 
+
 
     return queryText;
   }

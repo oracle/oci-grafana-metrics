@@ -82,6 +82,7 @@ export const GroupOptions = [
 
 export interface OCIQuery extends DataQuery {
   queryText?: string;
+  queryTextRaw?: string;
   rawQuery: boolean;
   tenancyName: string;
   tenancy: string;

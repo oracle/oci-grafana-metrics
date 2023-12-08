@@ -22,7 +22,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
   const [hasLegacyRawValue, setHasLegacyRawValue] = useState(false);
   const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
-  const [queryValue, setQueryValue] = useState(query.queryText);
+  const [queryValue, setQueryValue] = useState(query.queryTextRaw);
   const [queryRawValue, setQueryRawValue] = useState(query.rawQuery);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
@@ -35,8 +35,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
   const [hasCalledGetTenancyDefault, setHasCalledGetTenancyDefault] = useState(false);  
   const editorModes = [
-    { label: 'Raw Query', value: true },
-    { label: 'Builder', value: false },
+    { label: 'Raw Query', value: false },
+    { label: 'Builder', value: true },
   ];  
   
 
@@ -51,9 +51,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }
       }  
       if (queryModel.isQueryReady()) {
-        if (pureQuery){
-          console.log("questa e' una query : "+query.queryText)
-          changedQuery.queryText = queryModel.buildQuery(String(query.queryText));
+        if (query.rawQuery === false){
+          console.log("questa e' una query : "+query.queryTextRaw)
+          changedQuery.queryText = queryModel.buildQuery(String(query.queryTextRaw));
         } else {
           console.log("questa e' una metric : "+query.metric)
           changedQuery.queryText = queryModel.buildQuery(String(query.metric));
@@ -414,7 +414,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const onQueryTextChange = (data: any) => {
     setQueryValue(data);
     console.log("onQueryTextChange "+data)
-    onApplyQueryChange({ ...query, queryText: data });
+    onApplyQueryChange({ ...query, queryTextRaw: data });
   };
 
 
@@ -432,7 +432,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const onLegendFormatChange = (data: any) => {
     setLegendFormatValue(data);
     onApplyQueryChange({ ...query, legendFormat: data });
-    };
+  };
   const onDimensionChange = (data: any) => {
     const existingDVs = query.dimensionValues || [];
     let newDimensionValues: string[] = [];
@@ -525,7 +525,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   // set queryRawValue in case dashboard was created with version <= 5.0.0
   if (query.rawQuery === undefined && !hasLegacyRawValue) {
-    setQueryRawValue(false);
+    setQueryRawValue(true);
     setHasLegacyRawValue(true);    
 }
 
@@ -616,7 +616,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          {pureQuery !== true && (
+          {pureQuery === true && (
           <>          
           <InlineField label="METRIC" labelWidth={20}>
             <SegmentAsync
@@ -634,7 +634,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
           </>
           )}          
         </InlineFieldRow>
-        {pureQuery === true && (
+        {pureQuery === false && (
             <>
             <InlineFieldRow>
               <InlineField
@@ -661,7 +661,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             </InlineFieldRow>              
             </>
           )}
-        {pureQuery !== true && (
+        {pureQuery === true && (
           <>                     
         <InlineFieldRow>
           <InlineField label="AGGREGATION" labelWidth={20}>
