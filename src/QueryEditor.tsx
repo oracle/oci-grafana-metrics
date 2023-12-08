@@ -18,7 +18,6 @@ type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
-  const pureQuery = query.rawQuery;
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
   const [hasLegacyRawValue, setHasLegacyRawValue] = useState(false);
   const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
@@ -525,6 +524,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   // set queryRawValue in case dashboard was created with version <= 5.0.0
   if (query.rawQuery === undefined && !hasLegacyRawValue) {
+    console.log("UNDEFINED")
     setQueryRawValue(true);
     setHasLegacyRawValue(true);    
 }
@@ -616,7 +616,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
-          {pureQuery === true && (
+          {query.rawQuery !== false && (
           <>          
           <InlineField label="METRIC" labelWidth={20}>
             <SegmentAsync
@@ -634,7 +634,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
           </>
           )}          
         </InlineFieldRow>
-        {pureQuery === false && (
+        {query.rawQuery === false && (
             <>
             <InlineFieldRow>
               <InlineField
@@ -661,7 +661,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             </InlineFieldRow>              
             </>
           )}
-        {pureQuery === true && (
+        {query.rawQuery !== false && (
           <>                     
         <InlineFieldRow>
           <InlineField label="AGGREGATION" labelWidth={20}>

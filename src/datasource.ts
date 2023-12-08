@@ -59,8 +59,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
-    console.log("queryText "+query.queryText)
-
 
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
@@ -68,7 +66,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     query.namespace = templateSrv.replace(query.namespace, scopedVars);
     query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
     query.metric = templateSrv.replace(query.metric, scopedVars);
-    // query.queryText = templateSrv.replace(query.queryText, scopedVars);
 
     if (query.dimensionValues) {
       for (let i = 0; i < query.dimensionValues.length; i++) {
@@ -87,8 +84,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     
     const queryModel = new QueryModel(query, getTemplateSrv());
     if (queryModel.isQueryReady()) {
-      if (query.rawQuery === false) {
-        console.log("query.queryText "+query.queryText)
+      if (query.rawQuery === false && query.queryTextRaw !== '') {
+        console.log("query.queryText "+query.queryTextRaw)
         query.queryText = queryModel.buildQuery(String(query.queryTextRaw));
       } else {
         console.log("query.metric "+query.metric)

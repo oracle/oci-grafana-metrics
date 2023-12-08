@@ -43,7 +43,7 @@ export default class QueryModel {
     }   
 
     // handle pre query gui panels gracefully, so by default we will have raw editor
-    this.target.rawQuery = incomingQuery.rawQuery ?? false;
+    this.target.rawQuery = incomingQuery.rawQuery ?? true;
 
     if (this.target.rawQuery) {
       this.target.queryText =
@@ -68,8 +68,7 @@ export default class QueryModel {
   }
   
 
-  buildQuery(queryText: string) {
-    // let queryText = this.target.metric;     
+  buildQuery(queryText: string) { 
 
     if (this.target.queryTextRaw !== '' && this.target.rawQuery === false) {
       queryText = String(this.target.queryTextRaw);
