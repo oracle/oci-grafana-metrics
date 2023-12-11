@@ -82,42 +82,29 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
-			FoundDimensionMap := make(map[string][]string)
-			var index int
 
 			// Convert dimensions into a Go map
 			for _, dimension := range dimensions {
 				key := dimension.Key
+				ocidx.logger.Debug("dimension.Key", "dimension.Key", dimension.Key)
 
 				// Create a new slice for each key in the map
 				var values []string
 
 				for _, vall := range dimension.Values {
 					values = append(values, vall)
-				}
+					if key == "resourceId" {
+						ocidx.logger.Debug("resourceId OriginalDimensionMap", "resourceId OriginalDimensionMap", vall)
 
+					}
+
+				}
 				// Assign the values slice to the map key
 				OriginalDimensionMap[key] = values
 			}
 
-			//Search for resourceID and mark the position if found
-			for _, value := range OriginalDimensionMap {
-				for i, v := range value {
-					if v == metricDataValue.UniqueDataID {
-						index = i
-						break
-					}
-				}
-			}
-
-			// Create a new map containing only the dimensions for the found resourceID
-			for key, value := range OriginalDimensionMap {
-				if len(value) > index {
-					FoundDimensionMap[key] = []string{value[index]}
-				}
-			}
-
-			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, FoundDimensionMap)
+			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, OriginalDimensionMap, metricDataValue.UniqueDataID)
+			ocidx.logger.Debug("metricDataValue.name", "metricDataValue.name", name)
 
 		} else {
 			for k, v := range metricDataValue.Labels {

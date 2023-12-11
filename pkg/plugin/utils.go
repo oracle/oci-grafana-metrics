@@ -567,7 +567,7 @@ of these placeholders will be unchanged. Note that placeholder labels are treate
 as case sensitive.
 */
 func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
-	dimensions map[string][]string) string {
+	dimensions map[string][]string, UniqueDataID string) string {
 	o.logger.Debug("generateCustomMetricLabel ", "legendFormat", legendFormat)
 	o.logger.Debug("generateCustomMetricLabel ", "metricName", metricName)
 
@@ -599,16 +599,59 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 				// Check whether there is a dimension name for the metric that matches
 				// the placeholder label. If there is then replace the placeholder with
 				// the value of the dimension
-				for key, dimension := range dimensions {
-					if key == placeholderLabel {
-						for _, value := range dimension {
+				// values, ok := dimensions[placeholderLabel]
+				// if !ok {
+				// 	o.logger.Debug("placeholderLabel non si trova", "placeholderLabel", placeholderLabel)
+				// 	return ""
+				// }
+
+				resourceValues, ok := dimensions["resourceId"]
+				if !ok {
+					return ""
+				}
+				keyValues, ok := dimensions[placeholderLabel]
+				if !ok {
+					return ""
+				}
+				for i, rv := range resourceValues {
+					o.logger.Debug("rv", "rv", rv)
+					if rv == UniqueDataID || strings.ToLower(rv) == UniqueDataID {
+						sublabel := []string{keyValues[i]}
+						for _, s_sublabel := range sublabel {
+							o.logger.Debug("s_sublabel", "s_sublabel", s_sublabel)
 							o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
-							metricLabel = re.ReplaceAllString(metricLabel, value)
+							metricLabel = re.ReplaceAllString(metricLabel, s_sublabel)
 							o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
 						}
 
 					}
 				}
+
+				for _, ro := range keyValues {
+					o.logger.Debug("ro", "ro", ro)
+				}
+				// for _, v := range values {
+				// 	o.logger.Debug("stampo la v", "v", v)
+				// 	if v == UniqueDataID {
+				// 		o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
+				// 		metricLabel = re.ReplaceAllString(metricLabel, v)
+				// 		o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
+				// 	}
+				// }
+
+				// for key, dimension := range dimensions {
+				// 	o.logger.Debug("dimensions key", "dimensions key", key)
+				// 	o.logger.Debug("placeholderLabel", "placeholderLabel", placeholderLabel)
+
+				// 	if key == placeholderLabel {
+				// 		for _, value := range dimension {
+				// 			o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
+				// 			metricLabel = re.ReplaceAllString(metricLabel, value)
+				// 			o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
+				// 		}
+
+				// 	}
+				// }
 
 			}
 		}
