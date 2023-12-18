@@ -507,7 +507,7 @@ func convertToArray(input map[string]map[string]struct{}) map[string][]string {
 	return output
 }
 
-func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (string, string, string, bool) {
+func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, bool) {
 	monitorID := ""
 
 	// getting the resource unique ID
@@ -517,10 +517,15 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (stri
 		if !found {
 			resourceID, found = dimensions["name"]
 			if !found {
-				// as only one key and value pair will be present based on group by key selection
-				for _, v := range dimensions {
-					resourceID = v
+				if strings.HasPrefix(metric, "node_") && resourceID == "" {
+					resourceID = dimensions["host"]
+				} else {
+					// as only one key and value pair will be present based on group by key selection
+					for _, v := range dimensions {
+						resourceID = v
+					}
 				}
+
 			}
 		}
 	}

@@ -76,7 +76,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				ocidx.logger.Debug("UniqueDataID", "No valid ResourceID found")
 				continue
 			} else {
-				ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
+				ocidx.logger.Debug("UniqueDataID found", "UniqueDataID", metricDataValue.UniqueDataID)
 			}
 			dl = data.Labels{}
 			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
@@ -85,16 +85,12 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 			// Convert dimensions into a Go map
 			for _, dimension := range dimensions {
 				key := dimension.Key
-				ocidx.logger.Debug("dimension.Key", "dimension.Key", dimension.Key)
 
 				// Create a new slice for each key in the map
 				var values []string
 
 				for _, vall := range dimension.Values {
 					values = append(values, vall)
-					if key == "resourceId" {
-						ocidx.logger.Debug("resourceId OriginalDimensionMap", "resourceId OriginalDimensionMap", vall)
-					}
 				}
 				// Assign the values slice to the map key
 				OriginalDimensionMap[key] = values
