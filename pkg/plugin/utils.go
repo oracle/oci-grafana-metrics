@@ -515,9 +515,12 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (stri
 	if !found {
 		resourceID, found = dimensions["ResourceId"]
 		if !found {
-			// as only one key and value pair will be present based on group by key selection
-			for _, v := range dimensions {
-				resourceID = v
+			resourceID, found = dimensions["name"]
+			if !found {
+				// as only one key and value pair will be present based on group by key selection
+				for _, v := range dimensions {
+					resourceID = v
+				}
 			}
 		}
 	}
@@ -596,62 +599,43 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 			if placeholderLabel == "metric" {
 				metricLabel = re.ReplaceAllString(metricLabel, metricName)
 			} else {
-				// Check whether there is a dimension name for the metric that matches
-				// the placeholder label. If there is then replace the placeholder with
-				// the value of the dimension
-				// values, ok := dimensions[placeholderLabel]
-				// if !ok {
-				// 	o.logger.Debug("placeholderLabel non si trova", "placeholderLabel", placeholderLabel)
-				// 	return ""
-				// }
 
-				resourceValues, ok := dimensions["resourceId"]
+				var resourceValues []string
+				var ok bool
+
+				// Check whether there is a resourceID dimension for the metric.
+				// That will be the aggregator for labeling process.
+				// If not found then labeling will not be possible
+				resourceValues, ok = dimensions["resourceId"]
+				if !ok {
+					resourceValues, ok = dimensions["resourceID"]
+				}
+				if !ok {
+					resourceValues, ok = dimensions[placeholderLabel]
+				}
 				if !ok {
 					return ""
 				}
+
+				// Check whether there is a dimension name for the metric that matches
+				// the placeholder label. If there is then replace the placeholder with
+				// the value of the dimension
 				keyValues, ok := dimensions[placeholderLabel]
 				if !ok {
 					return ""
 				}
+
 				for i, rv := range resourceValues {
-					o.logger.Debug("rv", "rv", rv)
-					if rv == UniqueDataID || strings.ToLower(rv) == UniqueDataID {
-						sublabel := []string{keyValues[i]}
-						for _, s_sublabel := range sublabel {
-							o.logger.Debug("s_sublabel", "s_sublabel", s_sublabel)
-							o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
-							metricLabel = re.ReplaceAllString(metricLabel, s_sublabel)
-							o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
-						}
-
+					// Check whether UniqueDataID matches any resourceID
+					if rv != UniqueDataID && strings.ToLower(rv) != UniqueDataID {
+						continue
 					}
+					sublabel := keyValues[i]
+					o.logger.Debug("s_sublabel", "s_sublabel", sublabel)
+					o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
+					metricLabel = re.ReplaceAllString(metricLabel, sublabel)
+					o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
 				}
-
-				for _, ro := range keyValues {
-					o.logger.Debug("ro", "ro", ro)
-				}
-				// for _, v := range values {
-				// 	o.logger.Debug("stampo la v", "v", v)
-				// 	if v == UniqueDataID {
-				// 		o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
-				// 		metricLabel = re.ReplaceAllString(metricLabel, v)
-				// 		o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
-				// 	}
-				// }
-
-				// for key, dimension := range dimensions {
-				// 	o.logger.Debug("dimensions key", "dimensions key", key)
-				// 	o.logger.Debug("placeholderLabel", "placeholderLabel", placeholderLabel)
-
-				// 	if key == placeholderLabel {
-				// 		for _, value := range dimension {
-				// 			o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
-				// 			metricLabel = re.ReplaceAllString(metricLabel, value)
-				// 			o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
-				// 		}
-
-				// 	}
-				// }
 
 			}
 		}
