@@ -525,15 +525,28 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 
 	// If resourceID is still empty, check for special conditions
 	if resourceID == "" {
-		// Define a map for special conditions
+		// // Define a map for special conditions
 		specialConditions := map[string]string{
-			"node_": "host",
-			// Add more conditions here as needed
+			"node_":      "host",
+			"container_": "container",
+			"kube_":      "", // We will fill this in dynamically
+			// 	Add more conditions here as needed
 		}
 
 		// Check each condition
 		for prefix, dimension := range specialConditions {
 			if strings.HasPrefix(metric, prefix) {
+				// for kube metrics use the second string after _
+				if prefix == "kube_" {
+					split := strings.SplitN(metric, "_", 3)
+					if len(split) > 2 {
+						dimension = split[1]
+						// job does exception
+						if dimension == "job" {
+							dimension = "job_name"
+						}
+					}
+				}
 				resourceID = dimensions[dimension]
 				break
 			}
