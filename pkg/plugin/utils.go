@@ -507,17 +507,56 @@ func convertToArray(input map[string]map[string]struct{}) map[string][]string {
 	return output
 }
 
-func getUniqueIdsForLabels(namespace string, dimensions map[string]string) (string, string, string, bool) {
+func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, bool) {
 	monitorID := ""
+	var resourceID string // Declare resourceID
+	var found bool
 
-	// getting the resource unique ID
-	resourceID, found := dimensions["resourceId"]
-	if !found {
-		resourceID, found = dimensions["ResourceId"]
-		if !found {
-			// as only one key and value pair will be present based on group by key selection
+	// Define a list of keys to search in dimensions
+	keys := []string{"resourceId", "ResourceId", "name"}
+
+	// Iterate over the keys
+	for _, key := range keys {
+		resourceID, found = dimensions[key]
+		if found {
+			break
+		}
+	}
+
+	// If resourceID is still empty, check for special conditions
+	if resourceID == "" {
+		// // Define a map for special conditions
+		specialConditions := map[string]string{
+			"node_":      "host",
+			"container_": "container",
+			"kube_":      "", // We will fill this in dynamically
+			// 	Add more conditions here as needed
+		}
+
+		// Check each condition
+		for prefix, dimension := range specialConditions {
+			if strings.HasPrefix(metric, prefix) {
+				// for kube metrics use the second string after _
+				if prefix == "kube_" {
+					split := strings.SplitN(metric, "_", 3)
+					if len(split) > 2 {
+						dimension = split[1]
+						// job does exception
+						if dimension == "job" {
+							dimension = "job_name"
+						}
+					}
+				}
+				resourceID = dimensions[dimension]
+				break
+			}
+		}
+
+		// If no special condition was met, default to the first value in dimensions
+		if resourceID == "" {
 			for _, v := range dimensions {
 				resourceID = v
+				break
 			}
 		}
 	}
@@ -567,7 +606,7 @@ of these placeholders will be unchanged. Note that placeholder labels are treate
 as case sensitive.
 */
 func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
-	dimensions map[string][]string) string {
+	dimensions map[string][]string, UniqueDataID string) string {
 	o.logger.Debug("generateCustomMetricLabel ", "legendFormat", legendFormat)
 	o.logger.Debug("generateCustomMetricLabel ", "metricName", metricName)
 
@@ -596,18 +635,42 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 			if placeholderLabel == "metric" {
 				metricLabel = re.ReplaceAllString(metricLabel, metricName)
 			} else {
+
+				var resourceValues []string
+				var ok bool
+
+				// Check whether there is a resourceID dimension for the metric.
+				// That will be the aggregator for labeling process.
+				// If not found then labeling will not be possible
+				resourceValues, ok = dimensions["resourceId"]
+				if !ok {
+					resourceValues, ok = dimensions["resourceID"]
+				}
+				if !ok {
+					resourceValues, ok = dimensions[placeholderLabel]
+				}
+				if !ok {
+					return ""
+				}
+
 				// Check whether there is a dimension name for the metric that matches
 				// the placeholder label. If there is then replace the placeholder with
 				// the value of the dimension
-				for key, dimension := range dimensions {
-					if key == placeholderLabel {
-						for _, value := range dimension {
-							o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
-							metricLabel = re.ReplaceAllString(metricLabel, value)
-							o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
-						}
+				keyValues, ok := dimensions[placeholderLabel]
+				if !ok {
+					return ""
+				}
 
+				for i, rv := range resourceValues {
+					// Check whether UniqueDataID matches any resourceID
+					if rv != UniqueDataID && strings.ToLower(rv) != UniqueDataID {
+						continue
 					}
+					sublabel := keyValues[i]
+					o.logger.Debug("s_sublabel", "s_sublabel", sublabel)
+					o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
+					metricLabel = re.ReplaceAllString(metricLabel, sublabel)
+					o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
 				}
 
 			}

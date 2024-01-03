@@ -4,7 +4,7 @@
 */
 
 import React, { useEffect, useState } from 'react';
-import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, FieldSet, SegmentAsync, AsyncMultiSelect, Input, TextArea, RadioButtonGroup } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { OCIDataSource } from './datasource';
@@ -19,7 +19,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
   const [hasLegacyCompartment, setHasLegacyCompartment] = useState(false);
+  const [hasLegacyRawValue, setHasLegacyRawValue] = useState(false);
   const [hasLegacyTenancy, setHasLegacyTenancy] = useState(false);
+  const [queryValue, setQueryValue] = useState(query.queryTextRaw);
+  const [queryRawValue, setQueryRawValue] = useState(query.rawQuery);
   const [tenancyValue, setTenancyValue] = useState(query.tenancyName);
   const [regionValue, setRegionValue] = useState(query.region);
   const [compartmentValue, setCompartmentValue] = useState(query.compartmentName);
@@ -30,6 +33,10 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [intervalValue, setIntervalValue] = useState(query.intervalLabel);
   const [legendFormatValue, setLegendFormatValue] = useState(query.legendFormat);
   const [hasCalledGetTenancyDefault, setHasCalledGetTenancyDefault] = useState(false);  
+  const editorModes = [
+    { label: 'Raw Query', value: false },
+    { label: 'Builder', value: true },
+  ];  
   
 
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
@@ -43,7 +50,14 @@ export const QueryEditor: React.FC<Props> = (props) => {
         }
       }  
       if (queryModel.isQueryReady()) {
-        changedQuery.queryText = queryModel.buildQuery(String(query.metric));
+        if (query.rawQuery === false){
+          console.log("questa e' una query : "+query.queryTextRaw)
+          changedQuery.queryText = queryModel.buildQuery(String(query.queryTextRaw));
+        } else {
+          console.log("questa e' una metric : "+query.metric)
+          changedQuery.queryText = queryModel.buildQuery(String(query.metric));
+        }
+        
         onChange({ ...changedQuery });
         onRunQuery();
       }
@@ -335,6 +349,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
+  const onRawQueryChange = (data: boolean) => {
+    setQueryRawValue(data);   
+    onApplyQueryChange({ ...query, rawQuery: data }, false);
+  };
+
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
     onApplyQueryChange(
@@ -391,6 +410,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     onApplyQueryChange({ ...query, resourcegroup: data.label, metricNames: mn, metric: undefined }, false);
   };
 
+  const onQueryTextChange = (data: any) => {
+    setQueryValue(data);
+    console.log("onQueryTextChange "+data)
+    onApplyQueryChange({ ...query, queryTextRaw: data });
+  };
+
+
   const onMetricChange = (data: any) => {
     setMetricValue(data);     
     onApplyQueryChange({ ...query, metric: data.value });
@@ -405,7 +431,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const onLegendFormatChange = (data: any) => {
     setLegendFormatValue(data);
     onApplyQueryChange({ ...query, legendFormat: data });
-    };
+  };
   const onDimensionChange = (data: any) => {
     const existingDVs = query.dimensionValues || [];
     let newDimensionValues: string[] = [];
@@ -496,8 +522,14 @@ export const QueryEditor: React.FC<Props> = (props) => {
     });
 }
 
+  // set queryRawValue in case dashboard was created with version <= 5.0.0
+  if (query.rawQuery === undefined && !hasLegacyRawValue) {
+    console.log("UNDEFINED")
+    setQueryRawValue(true);
+    setHasLegacyRawValue(true);    
+}
 
-  return (
+  return (        
     <>
       <FieldSet>
         <InlineFieldRow>
@@ -524,8 +556,18 @@ export const QueryEditor: React.FC<Props> = (props) => {
           <CustomInput className="width-14" value={"DEFAULT/"} readOnly />
         </InlineField>
             </>
-          )}          
-        </InlineFieldRow>
+          )}
+        <InlineField grow={true} className='container text-right'>
+          <RadioButtonGroup
+            options={editorModes}
+            size="sm"
+            value={queryRawValue}
+            onChange={(data) => {
+              onRawQueryChange(data);
+            }}
+          />
+        </InlineField>             
+        </InlineFieldRow>   
         <InlineFieldRow>
           <InlineField label="REGION" labelWidth={20}>
             <SegmentAsync
@@ -581,11 +623,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
+          {query.rawQuery !== false && (
+          <>          
           <InlineField label="METRIC" labelWidth={20}>
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
-              required={true}
+              required={false}
               loadOptions={getMetricOptions}
               value={metricValue}
               placeholder={QueryPlaceholder.Metric}
@@ -594,13 +638,40 @@ export const QueryEditor: React.FC<Props> = (props) => {
               }}
             />
           </InlineField>
+          </>
+          )}          
         </InlineFieldRow>
+        {query.rawQuery === false && (
+            <>
+            <InlineFieldRow>
+              <InlineField
+                      label="RAW QUERY"
+                      labelWidth={20}
+                      tooltip="type metric raw query"
+                    >
+                      <TextArea
+                        type="text"
+                        // className="width-70"
+                        cols={80}
+                        rows={4}
+                        maxLength={16535}
+                        defaultValue={queryValue}
+                        onBlur={(event) => {
+                          onQueryTextChange(event.target.value);
+                        }}  
+                        />
+              </InlineField>
+            </InlineFieldRow>              
+            </>
+          )}
+        {query.rawQuery !== false && (
+          <>                     
         <InlineFieldRow>
           <InlineField label="AGGREGATION" labelWidth={20}>
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
-              required={true}
+              required={false}
               loadOptions={getAggregationOptions}
               value={query.statisticLabel || AggregationOptions[0].label}
               placeholder={QueryPlaceholder.Aggregation}
@@ -613,7 +684,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
             <SegmentAsync
               className="width-14"
               allowCustomValue={false}
-              required={true}
+              required={false}
               loadOptions={getIntervalOptions}
               // value={query.intervalLabel || IntervalOptions[0].label}
               value={intervalValue}
@@ -645,6 +716,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
             </>
           </InlineField>
         </InlineFieldRow>
+          </>
+            )}         
           <InlineFieldRow>
             <InlineField label="LEGEND FORMAT" labelWidth={20} grow={true}>
               <>             
@@ -657,7 +730,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
                 />
               </> 
           </InlineField>
-        </InlineFieldRow>  
+        </InlineFieldRow>
+
       </FieldSet>
     </>
   );

@@ -548,7 +548,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		for _, metricDataItem := range metricData.dataPoints {
 			found := false
 
-			uniqueDataID, resourceDisplayName, extraUniqueID, rIDPresent := getUniqueIdsForLabels(requestParams.Namespace, metricDataItem.Dimensions)
+			uniqueDataID, resourceDisplayName, extraUniqueID, rIDPresent := getUniqueIdsForLabels(requestParams.Namespace, metricDataItem.Dimensions, requestParams.QueryText)
 
 			if rIDPresent {
 				for _, selectedTag := range selectedTags {

@@ -76,50 +76,31 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				ocidx.logger.Debug("UniqueDataID", "No valid ResourceID found")
 				continue
 			} else {
-				ocidx.logger.Debug("UniqueDataID", "UniqueDataID", metricDataValue.UniqueDataID)
+				ocidx.logger.Debug("UniqueDataID found", "UniqueDataID", metricDataValue.UniqueDataID)
 			}
 			dl = data.Labels{}
-
 			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
 			OriginalDimensionMap := make(map[string][]string)
-			FoundDimensionMap := make(map[string][]string)
-			var index int
 
 			// Convert dimensions into a Go map
 			for _, dimension := range dimensions {
 				key := dimension.Key
-				ocidx.logger.Debug("KEY DIM", "key", key)
 
 				// Create a new slice for each key in the map
 				var values []string
 
 				for _, vall := range dimension.Values {
 					values = append(values, vall)
-					ocidx.logger.Debug("ALL DIM", "dim", vall)
 				}
-
 				// Assign the values slice to the map key
 				OriginalDimensionMap[key] = values
 			}
 
-			//Search for resourceID and mark the position if found
-			for _, value := range OriginalDimensionMap {
-				for i, v := range value {
-					if v == metricDataValue.UniqueDataID {
-						index = i
-						break
-					}
-				}
+			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, OriginalDimensionMap, metricDataValue.UniqueDataID)
+			if name == "" {
+				ocidx.logger.Error("No valid resourceID found in dimensions", "metricDataValue.name", name)
+				name = metricDataValue.UniqueDataID
 			}
-
-			// Create a new map containing only the dimensions for the found resourceID
-			for key, value := range OriginalDimensionMap {
-				if len(value) > index {
-					FoundDimensionMap[key] = []string{value[index]}
-				}
-			}
-
-			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, FoundDimensionMap)
 
 		} else {
 			for k, v := range metricDataValue.Labels {
