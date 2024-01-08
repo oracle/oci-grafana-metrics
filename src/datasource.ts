@@ -85,10 +85,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     const queryModel = new QueryModel(query, getTemplateSrv());
     if (queryModel.isQueryReady()) {
       if (query.rawQuery === false && query.queryTextRaw !== '') {
-        console.log("query.queryText "+query.queryTextRaw)
         query.queryText = queryModel.buildQuery(String(query.queryTextRaw));
       } else {
-        console.log("query.metric "+query.metric)
         query.queryText = queryModel.buildQuery(String(query.metric));
       }
       
