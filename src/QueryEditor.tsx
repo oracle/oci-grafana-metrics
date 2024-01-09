@@ -51,10 +51,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
       }  
       if (queryModel.isQueryReady()) {
         if (query.rawQuery === false){
-          console.log("questa e' una query : "+query.queryTextRaw)
           changedQuery.queryText = queryModel.buildQuery(String(query.queryTextRaw));
         } else {
-          console.log("questa e' una metric : "+query.metric)
           changedQuery.queryText = queryModel.buildQuery(String(query.metric));
         }
         
@@ -412,7 +410,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const onQueryTextChange = (data: any) => {
     setQueryValue(data);
-    console.log("onQueryTextChange "+data)
     onApplyQueryChange({ ...query, queryTextRaw: data });
   };
 
@@ -500,7 +497,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // set compartmentName in case dashboard was created with version 4.x
   if (!query.compartmentName && query.compartment && !hasLegacyCompartment) {
     if (!query.tenancy && tmode === TenancyChoices.multitenancy) {
-      console.log("query.tenancy is empty");
       return null;
     }
     datasource.getCompartments(query.tenancy).then(response => {
@@ -524,7 +520,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   // set queryRawValue in case dashboard was created with version <= 5.0.0
   if (query.rawQuery === undefined && !hasLegacyRawValue) {
-    console.log("UNDEFINED")
     setQueryRawValue(true);
     setHasLegacyRawValue(true);    
 }
