@@ -507,7 +507,11 @@ func convertToArray(input map[string]map[string]struct{}) map[string][]string {
 	return output
 }
 
+/*
+Function exctracts dimensions from a raw query
+*/
 func extractRawDimensions(input string) []string {
+	// catch what is within curly brakets
 	re := regexp.MustCompile(`{([^}]*)}`)
 	matches := re.FindStringSubmatch(input)
 
@@ -515,8 +519,10 @@ func extractRawDimensions(input string) []string {
 		return nil
 	}
 
+	// splits values separated by comma
 	assignments := strings.Split(matches[1], ",")
 	for i, assignment := range assignments {
+		// remove blanks around the operator
 		operatorIndex := regexp.MustCompile(`(=|\!=|\=~|>|<|>=|<=)`).FindStringIndex(assignment)
 		if operatorIndex != nil {
 			assignment = strings.Join([]string{
