@@ -49,6 +49,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 		ResourceGroup:   qm.ResourceGroup,
 		DimensionValues: qm.DimensionValues,
 		LegendFormat:    qm.LegendFormat,
+		RawQuery:        qm.RawQuery,
 		TagsValues:      qm.TagsValues,
 		StartTime:       query.TimeRange.From.UTC(),
 		EndTime:         query.TimeRange.To.UTC(),

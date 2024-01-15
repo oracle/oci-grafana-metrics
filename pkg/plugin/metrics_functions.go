@@ -613,13 +613,13 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 				resourceDisplayName = metricData.resourceLabels[labelKey]["resource_name"]
 			}
 
-			// adding the selected dimensions as labels
-			labelsToAdd := addSelectedValuesLabels(metricData.resourceLabels[labelKey], selectedDimensions)
-
-			// if no dimensions are selected then try to read them from the raw query
-			if len(selectedDimensions) == 0 {
-				rawdimensions := extractRawDimensions(requestParams.QueryText)
-				labelsToAdd = addSelectedValuesLabels(labelsToAdd, rawdimensions)
+			var labelsToAdd map[string]string
+			if requestParams.RawQuery {
+				// adding the selected dimensions as labels if dropdowns are selected
+				labelsToAdd = addSelectedValuesLabels(metricData.resourceLabels[labelKey], selectedDimensions)
+			} else {
+				// adding the all returned dimensions as labels if raw query is selected are selected
+				labelsToAdd = metricDataItem.Dimensions
 			}
 
 			// adding the selected tags as labels

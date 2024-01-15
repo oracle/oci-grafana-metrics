@@ -507,36 +507,6 @@ func convertToArray(input map[string]map[string]struct{}) map[string][]string {
 	return output
 }
 
-/*
-Function exctracts dimensions from a raw query
-*/
-func extractRawDimensions(input string) []string {
-	// catch what is within curly brakets
-	re := regexp.MustCompile(`{([^}]*)}`)
-	matches := re.FindStringSubmatch(input)
-
-	if len(matches) < 2 {
-		return nil
-	}
-
-	// splits values separated by comma
-	assignments := strings.Split(matches[1], ",")
-	for i, assignment := range assignments {
-		// remove blanks around the operator
-		operatorIndex := regexp.MustCompile(`(=|\!=|\=~|>|<|>=|<=)`).FindStringIndex(assignment)
-		if operatorIndex != nil {
-			assignment = strings.Join([]string{
-				strings.TrimSpace(assignment[:operatorIndex[0]]),
-				strings.TrimSpace(assignment[operatorIndex[0]:operatorIndex[1]]),
-				strings.TrimSpace(assignment[operatorIndex[1]:]),
-			}, "")
-		}
-		assignments[i] = assignment
-	}
-
-	return assignments
-}
-
 func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, bool) {
 	monitorID := ""
 	var resourceID string // Declare resourceID
