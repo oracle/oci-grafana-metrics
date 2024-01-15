@@ -517,7 +517,15 @@ func extractRawDimensions(input string) []string {
 
 	assignments := strings.Split(matches[1], ",")
 	for i, assignment := range assignments {
-		assignments[i] = strings.ReplaceAll(strings.TrimSpace(assignment), " ", "")
+		operatorIndex := regexp.MustCompile(`(=|\!=|\=~|>|<|>=|<=)`).FindStringIndex(assignment)
+		if operatorIndex != nil {
+			assignment = strings.Join([]string{
+				strings.TrimSpace(assignment[:operatorIndex[0]]),
+				strings.TrimSpace(assignment[operatorIndex[0]:operatorIndex[1]]),
+				strings.TrimSpace(assignment[operatorIndex[1]:]),
+			}, "")
+		}
+		assignments[i] = assignment
 	}
 
 	return assignments
