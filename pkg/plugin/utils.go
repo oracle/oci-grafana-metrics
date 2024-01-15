@@ -507,6 +507,22 @@ func convertToArray(input map[string]map[string]struct{}) map[string][]string {
 	return output
 }
 
+func extractRawDimensions(input string) []string {
+	re := regexp.MustCompile(`{([^}]*)}`)
+	matches := re.FindStringSubmatch(input)
+
+	if len(matches) < 2 {
+		return nil
+	}
+
+	assignments := strings.Split(matches[1], ",")
+	for i, assignment := range assignments {
+		assignments[i] = strings.ReplaceAll(strings.TrimSpace(assignment), " ", "")
+	}
+
+	return assignments
+}
+
 func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, bool) {
 	monitorID := ""
 	var resourceID string // Declare resourceID
@@ -521,6 +537,11 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 		if found {
 			break
 		}
+	}
+
+	// getting the extra unique id as per namespace
+	if namespace == constants.OCI_NS_APM {
+		resourceID = dimensions["MonitorName"]
 	}
 
 	// If resourceID is still empty, check for special conditions
