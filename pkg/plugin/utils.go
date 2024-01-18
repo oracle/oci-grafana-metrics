@@ -672,6 +672,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 						o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
 						metricLabel = re.ReplaceAllString(metricLabel, sublabel)
 						o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
+						break
 					}
 
 				}

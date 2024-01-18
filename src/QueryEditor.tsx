@@ -48,8 +48,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
         if (var_metric !== "") { 
           query.metric = var_metric
         }
-      }  
+      }
       if (queryModel.isQueryReady()) {
+
         if (query.rawQuery === false){
           changedQuery.queryText = queryModel.buildQuery(String(query.queryTextRaw));
         } else {

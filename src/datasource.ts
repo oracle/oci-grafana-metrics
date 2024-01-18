@@ -92,8 +92,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         query.queryText = queryModel.buildQuery(String(query.metric));
       }
       
-    }
-     
+    }    
     return query;
   }
 
