@@ -48,8 +48,11 @@ export const QueryEditor: React.FC<Props> = (props) => {
         if (var_metric !== "") { 
           query.metric = var_metric
         }
-      }  
+      }
       if (queryModel.isQueryReady()) {
+        console.log("QueryReady")
+        console.log("QueryReady "+query.rawQuery)
+
         if (query.rawQuery === false){
           changedQuery.queryText = queryModel.buildQuery(String(query.queryTextRaw));
         } else {
@@ -60,6 +63,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         onRunQuery();
       }
     } else {
+      console.log("QueryReady NOT READY")
       onChange({ ...changedQuery });
     }
   };
@@ -415,7 +419,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
 
   const onMetricChange = (data: any) => {
+    console.log("ecco la metrics "+data.value)
     setMetricValue(data);     
+    console.log("ecco la metrics due "+data.value)
     onApplyQueryChange({ ...query, metric: data.value });
   };
   const onAggregationChange = (data: any) => {

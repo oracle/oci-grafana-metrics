@@ -58,6 +58,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    * @param {ScopedVars} scopedVars Scoped variables
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
+    console.log("Comincia apply template")
     const templateSrv = getTemplateSrv();
 
     query.region = templateSrv.replace(query.region, scopedVars);
@@ -93,6 +94,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       }
       
     }
+    console.log("Finisce apply template")
      
     return query;
   }
