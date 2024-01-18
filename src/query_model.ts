@@ -53,11 +53,6 @@ export default class QueryModel {
 
   isQueryReady() {
     // check if the query is ready to be built
-    console.log("QueryPlaceholder.Tenancy "+this.target.tenancy)
-    console.log("QueryPlaceholder.Region "+this.target.region)
-    console.log("QueryPlaceholder.Namespace "+this.target.namespace)
-    console.log("QueryPlaceholder.Metric "+this.target.metric)
-    console.log("QueryPlaceholder.queryTextRaw "+this.target.queryTextRaw)
     if (
       this.target.tenancy === QueryPlaceholder.Tenancy ||
       this.target.region === QueryPlaceholder.Region ||
