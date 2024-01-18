@@ -209,12 +209,7 @@ func listMetricsMetadataPerRegion(
 				if k == "region" || k == "imageId" {
 					continue
 				}
-
-				// to sort the final map by dimension keys
-				metadata = append(metadata, k)
 				metadataWithMetricNames[k] = append(metadataWithMetricNames[k], v)
-
-				// metadataWithMetricNames[k] = []string{v}
 			}
 		}
 
@@ -247,8 +242,12 @@ func listMetricsMetadataPerRegion(
 
 	ci.SetWithTTL(cacheKey, sortedMetadataWithMetricNames, 1, 5*time.Minute)
 	ci.Wait()
+	if fetchFor == constants.FETCH_FOR_LABELDIMENSION {
+		return metadataWithMetricNames
+	} else {
+		return sortedMetadataWithMetricNames
 
-	return sortedMetadataWithMetricNames
+	}
 }
 
 // clientRetryPolicy is a helper method that assembles and returns a return policy that is defined to call in every second
@@ -523,6 +522,11 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 		}
 	}
 
+	// getting the extra unique id as per namespace
+	if namespace == constants.OCI_NS_APM {
+		resourceID = dimensions["MonitorName"]
+	}
+
 	// If resourceID is still empty, check for special conditions
 	if resourceID == "" {
 		// // Define a map for special conditions
@@ -663,14 +667,13 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 				for i, rv := range resourceValues {
 					// Check whether UniqueDataID matches any resourceID
-					if rv != UniqueDataID && strings.ToLower(rv) != UniqueDataID {
-						continue
+					if rv == UniqueDataID || strings.ToLower(rv) == UniqueDataID {
+						sublabel := keyValues[i]
+						o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
+						metricLabel = re.ReplaceAllString(metricLabel, sublabel)
+						o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
 					}
-					sublabel := keyValues[i]
-					o.logger.Debug("s_sublabel", "s_sublabel", sublabel)
-					o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
-					metricLabel = re.ReplaceAllString(metricLabel, sublabel)
-					o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
+
 				}
 
 			}

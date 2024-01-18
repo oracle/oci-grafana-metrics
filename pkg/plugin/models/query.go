@@ -15,6 +15,7 @@ type QueryModel struct {
 	Region          string   `json:"region"`
 	Namespace       string   `json:"namespace"`
 	Metric          string   `json:"metric"`
+	RawQuery        bool     `json:"rawQuery"`
 	Interval        string   `json:"interval"`
 	Statistic       string   `json:"statistic"`
 	LegendFormat    string   `json:"legendFormat"`

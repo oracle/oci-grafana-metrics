@@ -18,6 +18,7 @@ type MetricsDataRequest struct {
 	Interval        string
 	ResourceGroup   string
 	LegendFormat    string
+	RawQuery        bool
 	DimensionValues []string
 	TagsValues      []string
 	StartTime       time.Time
