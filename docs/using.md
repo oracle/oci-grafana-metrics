@@ -277,7 +277,7 @@ Now, variables can be used in  window and resolution drop downs
 
 #### MQL editor
 
-Version 5 of the OCI Metrics plugin introduces a new react based MQL editor raw mode. Please note that this new raw query editor is **not** compatible with query editor used in versions up to 3.x of the plugin and cannot be used with v5.0.0 and above of the plugin. If you are migrating an old dashboard using the raw query editor, then you must reconfigure it using the new Raw Query mode as described below.
+Version 5 of the OCI Metrics plugin introduces a new react based MQL editor raw mode. Please note that this new raw query editor is **not compatible with query editor used in versions up to 3.x of the plugin**. If you are migrating an old dashboard created with version 3.x or below of the plugin which is using the raw query editor, you must reconfigure it using the new Raw Query mode as described below.
 
 Toggle the Raw Query/Builder selector, and switch to Raw Query to enter editor mode:
 
