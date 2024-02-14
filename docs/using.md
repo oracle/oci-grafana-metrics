@@ -7,6 +7,7 @@ Version 5 of the plugin generally maintains backward compatibility with previous
 
 - Dashboards that are set up to use one or more dimension template variables need to be modified by removing the dimensionsKey variable and using the new dimension variable that contains both key and value.See [**Templating**](#templating) for further details.
 - Dashboards that are set up to use dimension key and dimension value must be modified to make use of the new dimension field. See [**here**](#new-dimension-selector-in-version-5-of-the-plugin) for further details.
+- Dashboards that are configured in raw mode and are created in version 3 of the plugin must be modified to make use of the new raw mode interoduced in version 5 of the plugin will accept MQL query. See [**here**](#mql-editor) for further details.
 
 ## Multitenancy support
 
@@ -276,11 +277,13 @@ Now, variables can be used in  window and resolution drop downs
 
 #### MQL editor
 
+Version 5 of the OCI Metrics plugin introduces a new react based MQL editor raw mode. Please note that this new raw query editor is **not compatible with query editor used in versions up to 3.x of the plugin**. If you are migrating an old dashboard created with version 3.x or below of the plugin which is using the raw query editor, you must reconfigure it using the new Raw Query mode as described below.
+
 Toggle the Raw Query/Builder selector, and switch to Raw Query to enter editor mode:
 
 ![Raw Query toggle](images/RawQuery.png)
 
-For now, only the following fields can be updated in the query editor mode,
+For now, only the following fields can be updated in the raw query editor mode,
 1. Metric
 2. Window
 3. Aggregation
