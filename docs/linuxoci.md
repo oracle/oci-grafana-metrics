@@ -23,17 +23,13 @@ Next, create a [policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Conc
 
   ![Screen Shot 2018-12-17 at 4.01.47 PM](images/Screen%20Shot%202018-12-17%20at%204.01.47%20PM.png)
 
-## Install Grafana and the OCI Metrics Plugin for Grafana
+## Install Grafana and the OCI Metrics Plugin for Grafana 8 and above
 
-To [install OCI Metrics Plugin](https://grafana.com/grafana/plugins/oci-metrics-datasource/) make sure you are running [Grafana 8**](https://grafana.com/get). Use the [grafana-cli tool](http://docs.grafana.org/plugins/installation/) to install the Oracle Cloud Infrastructure Data Source for Grafana from the command line:
+To [install OCI Metrics Plugin](https://grafana.com/grafana/plugins/oci-metrics-datasource/) make sure you are running [Grafana 8**](https://grafana.com/get) or above. The latest version of the plugin 5.x.x is available on Grafana Catalogue. Go to Administration on main Grafana menu, and choose plugin. Then you can search for oracle and you will find the plugin:
 
-```
-grafana-cli plugins install oci-metrics-datasource
-```
+  ![Search plugin](images/search_plugin.png)
 
-**NOTE** Today the latest version of the plugin 4.x.x is available only with Grafana CLI. We will release it's binary on [its Github repo](https://github.com/oracle/oci-grafana-plugin) very soon.
-
-The plugin will be installed into your Grafana plugins directory, which by default is located at /var/lib/grafana/plugins. [Here is more information on the CLI tool](http://docs.grafana.org/plugins/installation/).
+Click on the metrics plugin to install. The plugin will be installed into your Grafana plugins directory, which by default is located at /var/lib/grafana/plugins. [Here is more information on the CLI tool](http://docs.grafana.org/plugins/installation/).
 
 ### Manual installation for previous Grafana Server versions(<8)
 
