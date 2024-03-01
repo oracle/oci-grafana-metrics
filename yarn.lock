@@ -1525,6 +1525,15 @@
     esquery "^1.4.0"
     jsdoc-type-pratt-parser "~3.1.0"
 
+"@es-joy/jsdoccomment@~0.37.0":
+  version "0.37.1"
+  resolved "https://registry.yarnpkg.com/@es-joy/jsdoccomment/-/jsdoccomment-0.37.1.tgz#fa32a41ba12097452693343e09ad4d26d157aedd"
+  integrity sha512-5vxWJ1gEkEF0yRd0O+uK6dHJf7adrxwQSX8PuRiPfFSAbNLnY0ZJfXaZucoz14Jj2N11xn2DnlEPwWRpYpvRjg==
+  dependencies:
+    comment-parser "1.3.1"
+    esquery "^1.5.0"
+    jsdoc-type-pratt-parser "~4.0.0"
+
 "@eslint-community/eslint-utils@^4.2.0":
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/@eslint-community/eslint-utils/-/eslint-utils-4.4.0.tgz#a23514e8fb9af1269d5f7788aa556798d61c6b59"
@@ -1623,13 +1632,13 @@
   dependencies:
     tslib "^2.4.0"
 
-"@grafana/data@9.5.3":
-  version "9.5.3"
-  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-9.5.3.tgz#2a6930cce1aa1a1f469c510c745cf4cb59158a2d"
-  integrity sha512-JO441E1puweeXO6bSu3QE6a2v5x3ZOyYlcHd66TBo4OOEvaqJOMz8P+uD2B9MKpnN+1VkSo83/MUNuQaQ2yJtA==
+"@grafana/data@9.5.15":
+  version "9.5.15"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-9.5.15.tgz#842ba5cd2ac750be4c9174c47254f4f8de3fe722"
+  integrity sha512-zeVV2dgU1c1TnlshA5mFR5pZDv3KM544V+866LQ4QkL6Ii5GV6UsnuSSGFPEVqwCTQbdu4u6hn3F+blZIItD3A==
   dependencies:
     "@braintree/sanitize-url" "6.0.2"
-    "@grafana/schema" "9.5.3"
+    "@grafana/schema" "9.5.15"
     "@types/d3-interpolate" "^3.0.0"
     d3-interpolate "3.0.1"
     date-fns "2.29.3"
@@ -1660,10 +1669,10 @@
     tslib "2.4.1"
     typescript "4.8.4"
 
-"@grafana/e2e-selectors@9.5.3":
-  version "9.5.3"
-  resolved "https://registry.yarnpkg.com/@grafana/e2e-selectors/-/e2e-selectors-9.5.3.tgz#aef46cfc6617f1fce3d100e8d25e8be8612c2ac9"
-  integrity sha512-aKa8CvUP2Hoe5l+ALhTlqdr3jEk1+/fzP+TEctmUyumqdRSrudF9aIj8Pw5OKQyh3jVrNC0JaSqNjcl0Ovw89w==
+"@grafana/e2e-selectors@9.5.15":
+  version "9.5.15"
+  resolved "https://registry.yarnpkg.com/@grafana/e2e-selectors/-/e2e-selectors-9.5.15.tgz#9986906d744225485c7f5382e60824794818216d"
+  integrity sha512-EGCjNsFzyyv8BDZ9lxif/AlazMmsXiOvvIu9+7ONSv4Wd03a4AM8ARosM3FLPHD4dqPc1+wF6ozssENv0aQsUw==
   dependencies:
     "@grafana/tsconfig" "^1.2.0-rc1"
     tslib "2.5.0"
@@ -1732,15 +1741,15 @@
     ua-parser-js "^1.0.32"
     web-vitals "^3.1.1"
 
-"@grafana/runtime@9.5.3":
-  version "9.5.3"
-  resolved "https://registry.yarnpkg.com/@grafana/runtime/-/runtime-9.5.3.tgz#94c57ce6f84fa0e4512e65771a5f5374b57367d4"
-  integrity sha512-WTBIQuWbj4+Rdp6IEi/k5yTBBfVHuu7Av7oRPFsD1jihUWuwclXdGzX5LDPo8mnnN+9G5Us8IXYWo9fzz8642A==
+"@grafana/runtime@9.5.15":
+  version "9.5.15"
+  resolved "https://registry.yarnpkg.com/@grafana/runtime/-/runtime-9.5.15.tgz#71cbce20101c656d3e070d8b2496e8def6df18ef"
+  integrity sha512-fka8Pfiq4c+8QIElPXC5YbNbD/L1I6hWDeBAAelIUoKgNyVti+HWyP1jDpJTuT+gBkjPlMa7RKStyYCzQXhNOw==
   dependencies:
-    "@grafana/data" "9.5.3"
-    "@grafana/e2e-selectors" "9.5.3"
+    "@grafana/data" "9.5.15"
+    "@grafana/e2e-selectors" "9.5.15"
     "@grafana/faro-web-sdk" "1.0.2"
-    "@grafana/ui" "9.5.3"
+    "@grafana/ui" "9.5.15"
     "@sentry/browser" "6.19.7"
     history "4.10.1"
     lodash "4.17.21"
@@ -1748,10 +1757,10 @@
     systemjs "0.20.19"
     tslib "2.5.0"
 
-"@grafana/schema@9.5.3":
-  version "9.5.3"
-  resolved "https://registry.yarnpkg.com/@grafana/schema/-/schema-9.5.3.tgz#dc873536000adf80287006fd2b35c1c8968e0d15"
-  integrity sha512-Ol0bRg/uI8jGyWfqxFcOJVcJoscpkIIGFt2IXzBgoeXLQLKc23HoUXFq2UEvWAu8heJUQC8Fk7L6i3MUGINq3g==
+"@grafana/schema@9.5.15":
+  version "9.5.15"
+  resolved "https://registry.yarnpkg.com/@grafana/schema/-/schema-9.5.15.tgz#767aa57cc9e1eaa7d6540ece1ca1a27acb4a38df"
+  integrity sha512-uq32n4P1bKoI37KTfNgiNvDCW9TbLbEEVh2LjBRzhhwUeZ7qRus9hX0q1gVN0KqgLpt2cR61wCHIXpGCUc7Zmw==
   dependencies:
     tslib "2.5.0"
 
@@ -1760,17 +1769,17 @@
   resolved "https://registry.yarnpkg.com/@grafana/tsconfig/-/tsconfig-1.2.0-rc1.tgz#10973c978ec95b0ea637511254b5f478bce04de7"
   integrity sha512-+SgQeBQ1pT6D/E3/dEdADqTrlgdIGuexUZ8EU+8KxQFKUeFeU7/3z/ayI2q/wpJ/Kr6WxBBNlrST6aOKia19Ag==
 
-"@grafana/ui@9.5.3":
-  version "9.5.3"
-  resolved "https://registry.yarnpkg.com/@grafana/ui/-/ui-9.5.3.tgz#e99d426a241e2a592eff88ab2a43ebc39ef0e727"
-  integrity sha512-peRa4OXuU+3CzSFAU901sgJ9I//fn5FVKbb1R+P/JwpqPQOsSs0MWoFXqE7FPr8V/bgITuSD71SR0CJlK3todQ==
+"@grafana/ui@9.5.15":
+  version "9.5.15"
+  resolved "https://registry.yarnpkg.com/@grafana/ui/-/ui-9.5.15.tgz#7899141ff8162fe1e791add937aa50c9bd34a512"
+  integrity sha512-rp+QuRrvvOUXbOJvfsl1j68nHafz/8fArT0EvnGVf86GKE9SbdhYcyZZ1gwgeSMLgTeLE+7D9rw3znAl3DDH5A==
   dependencies:
     "@emotion/css" "11.10.6"
     "@emotion/react" "11.10.6"
-    "@grafana/data" "9.5.3"
-    "@grafana/e2e-selectors" "9.5.3"
+    "@grafana/data" "9.5.15"
+    "@grafana/e2e-selectors" "9.5.15"
     "@grafana/faro-web-sdk" "1.0.2"
-    "@grafana/schema" "9.5.3"
+    "@grafana/schema" "9.5.15"
     "@leeoniya/ufuzzy" "1.0.6"
     "@monaco-editor/react" "4.4.6"
     "@popperjs/core" "2.11.6"
@@ -3692,6 +3701,11 @@ arch@^2.2.0:
   resolved "https://registry.yarnpkg.com/arch/-/arch-2.2.0.tgz#1bc47818f305764f23ab3306b0bfc086c5a29d11"
   integrity sha512-Of/R0wqp83cgHozfIYLbBMnej79U/SVGOOyuB3VVFv1NRM/PSFMK12x9KVtiYzJqmnU5WR2qp0Z5rHb7sWGnFQ==
 
+are-docs-informative@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/are-docs-informative/-/are-docs-informative-0.0.2.tgz#387f0e93f5d45280373d387a59d34c96db321963"
+  integrity sha512-ixiS0nLNNG5jNQzgZJNoUpBKdo9yTYZMGJ+QgT2jmjR7G7+QHRCc4v6LQ3NgE7EBJq+o0ams3waJwkrlBom8Ig==
+
 arg@^4.1.0:
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
@@ -5043,11 +5057,6 @@ commander@~2.16.0:
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.16.0.tgz#f16390593996ceb4f3eeb020b31d78528f7f8a50"
   integrity sha512-sVXqklSaotK9at437sFlFpyOcJonxe0yST/AG9DkQKUdIE6IqGIMv4SfAQSKaJbSdVEJYItASCrBiVQHq1HQew==
 
-comment-parser@1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/comment-parser/-/comment-parser-1.1.2.tgz#e5317d7a2ec22b470dcb54a29b25426c30bf39d8"
-  integrity sha512-AOdq0i8ghZudnYv8RUnHrhTgafUGs61Rdz9jemU5x2lnZwAWyOq7vySo626K59e1fVKH1xSRorJwPVRLSWOoAQ==
-
 comment-parser@1.3.1:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/comment-parser/-/comment-parser-1.3.1.tgz#3d7ea3adaf9345594aedee6563f422348f165c1b"
@@ -5628,7 +5637,7 @@ dayjs@^1.10.4:
   resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.8.tgz#4282f139c8c19dd6d0c7bd571e30c2d0ba7698ea"
   integrity sha512-LcgxzFoWMEPO7ggRv1Y2N31hUf2R0Vj7fuy/m+Bg1K8rr+KAs1AEy4y9jd5DXe8pbHgX+srkHNS7TH6Q6ZhYeQ==
 
-debug@4, debug@4.3.4, debug@^4.1.0, debug@^4.1.1, debug@^4.3.1, debug@^4.3.2, debug@^4.3.4:
+debug@4, debug@4.3.4, debug@^4.1.0, debug@^4.1.1, debug@^4.3.2, debug@^4.3.4:
   version "4.3.4"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.4.tgz#1319f6579357f2338d3337d2cdd4914bb5dcc865"
   integrity sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==
@@ -6176,17 +6185,18 @@ eslint-plugin-jsdoc@39.6.2:
     semver "^7.3.8"
     spdx-expression-parse "^3.0.1"
 
-eslint-plugin-jsdoc@^31.6.1:
-  version "31.6.1"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-31.6.1.tgz#98040c801500572fff71c984a097d89946f1e450"
-  integrity sha512-5hCV3u+1VSEUMyfdTl+dpWsioD7tqQr2ILQw+KbXrF42AVxCLO8gnNLR6zDCDjqGGpt79V1sgY0RRchCWuCigg==
+eslint-plugin-jsdoc@^41.1.2:
+  version "41.1.2"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-41.1.2.tgz#41d758a603aa59ae7bc34da88da2ca526466890e"
+  integrity sha512-MePJXdGiPW7AG06CU5GbKzYtKpoHwTq1lKijjq+RwL/cQkZtBZ59Zbv5Ep0RVxSMnq6242249/n+w4XrTZ1Afg==
   dependencies:
-    comment-parser "1.1.2"
-    debug "^4.3.1"
-    jsdoctypeparser "^9.0.0"
-    lodash "^4.17.20"
-    regextras "^0.7.1"
-    semver "^7.3.4"
+    "@es-joy/jsdoccomment" "~0.37.0"
+    are-docs-informative "^0.0.2"
+    comment-parser "1.3.1"
+    debug "^4.3.4"
+    escape-string-regexp "^4.0.0"
+    esquery "^1.5.0"
+    semver "^7.3.8"
     spdx-expression-parse "^3.0.1"
 
 eslint-plugin-node@^8.0.1:
@@ -6449,7 +6459,7 @@ esprima@^4.0.0, esprima@^4.0.1:
   resolved "https://registry.yarnpkg.com/esprima/-/esprima-4.0.1.tgz#13b04cdb3e6c5d19df91ab6987a8695619b0aa71"
   integrity sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==
 
-esquery@^1.4.0, esquery@^1.4.2:
+esquery@^1.4.0, esquery@^1.4.2, esquery@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/esquery/-/esquery-1.5.0.tgz#6ce17738de8577694edd7361c57182ac8cb0db0b"
   integrity sha512-YQLXUplAwJgCydQ78IMJywZCceoqk1oH01OERdSAJc/7U2AylwjhSCLDEtqwg811idIS/9fIU5GjG73IgjKMVg==
@@ -7327,11 +7337,6 @@ grunt-contrib-watch@^1.0.0:
     gaze "^1.1.0"
     lodash "^4.17.10"
     tiny-lr "^1.1.1"
-
-grunt-execute@~0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/grunt-execute/-/grunt-execute-0.2.2.tgz#4e945fe57959cc0de7799083b6b42aed9616350a"
-  integrity sha512-ItW3m0goiHtUoOVl5Q1+WPMPhdLT94m5UwZ+HNGZvI4Oo5axNu5CTMcq2LSfCzdfDVmSDmPh1bJsMl5NKAm4NA==
 
 grunt-known-options@~2.0.0:
   version "2.0.0"
@@ -8587,10 +8592,10 @@ jsdoc-type-pratt-parser@~3.1.0:
   resolved "https://registry.yarnpkg.com/jsdoc-type-pratt-parser/-/jsdoc-type-pratt-parser-3.1.0.tgz#a4a56bdc6e82e5865ffd9febc5b1a227ff28e67e"
   integrity sha512-MgtD0ZiCDk9B+eI73BextfRrVQl0oyzRG8B2BjORts6jbunj4ScKPcyXGTbB6eXL4y9TzxCm6hyeLq/2ASzNdw==
 
-jsdoctypeparser@^9.0.0:
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/jsdoctypeparser/-/jsdoctypeparser-9.0.0.tgz#8c97e2fb69315eb274b0f01377eaa5c940bd7b26"
-  integrity sha512-jrTA2jJIL6/DAEILBEh2/w9QxCuwmvNXIry39Ay/HVfhE3o2yVV0U44blYkqdHA/OKloJEqvJy0xU+GSdE2SIw==
+jsdoc-type-pratt-parser@~4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/jsdoc-type-pratt-parser/-/jsdoc-type-pratt-parser-4.0.0.tgz#136f0571a99c184d84ec84662c45c29ceff71114"
+  integrity sha512-YtOli5Cmzy3q4dP26GraSOeAhqecewG04hoO8DY56CH4KJ9Fvv5qKWUCCo3HZob7esJQHCv6/+bnTy72xZZaVQ==
 
 jsdom@^20.0.0:
   version "20.0.3"
@@ -10736,11 +10741,6 @@ regexpu-core@^5.3.1:
     regjsparser "^0.9.1"
     unicode-match-property-ecmascript "^2.0.0"
     unicode-match-property-value-ecmascript "^2.1.0"
-
-regextras@^0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/regextras/-/regextras-0.7.1.tgz#be95719d5f43f9ef0b9fa07ad89b7c606995a3b2"
-  integrity sha512-9YXf6xtW+qzQ+hcMQXx95MOvfqXFgsKDZodX3qZB0x2n5Z94ioetIITsBtvJbiOyxa/6s9AtyweBLCdPmPko/w==
 
 regjsgen@^0.2.0:
   version "0.2.0"
