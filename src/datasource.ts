@@ -4,7 +4,7 @@
 */
 
 import _,{ isString} from 'lodash';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars, MetricFindValue as GrafanaMetricFindValue } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import {
   OCIResourceItem,
@@ -29,9 +29,14 @@ import {
 } from "./types";
 import QueryModel from './query_model';
 
+interface MetricFindValue extends GrafanaMetricFindValue {
+  ocid?: string; // Aggiungi il simbolo '?' per rendere ocid opzionale
+}
+
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
+  ocidCompartmentStore: Record<string, string> ={}
 
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
@@ -59,34 +64,58 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
+    const formatter = (value: string): string => {
+      // if (typeof value === 'string') {
+      //   return value;
+      // }
+      if (query.compartment) {
+        console.log("value_daje "+value)
+        console.log("ocid_daje "+this.ocidCompartmentStore[value])
+        return this.ocidCompartmentStore[value]
+      } else {
+        return value
+      }
+
+
+      // // Add 'and' before the last element.
+      // if (value.length > 1) {
+      //   return value.slice(0, -1).join(', ') + ' and ' + value[value.length - 1];
+      // }
+    
+      // return value[0];
+    };
+
+    console.log("query.compartment1 "+query.compartment)
 
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
-    query.compartment = templateSrv.replace(query.compartment, scopedVars);
-    query.namespace = templateSrv.replace(query.namespace, scopedVars);
-    query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
-    query.metric = templateSrv.replace(query.metric, scopedVars);
-    query.queryTextRaw = templateSrv.replace(query.queryTextRaw, scopedVars);
+    query.compartment = templateSrv.replace(query.compartment, scopedVars, formatter);
+    query.namespace = templateSrv.replace(query.namespace, scopedVars, formatter);
+    query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars, formatter);
+    query.metric = templateSrv.replace(query.metric, scopedVars, formatter);
+    query.queryTextRaw = templateSrv.replace(query.queryTextRaw, scopedVars, formatter);
 
     if (query.dimensionValues) {
       for (let i = 0; i < query.dimensionValues.length; i++) {
-        query.dimensionValues[i] = templateSrv.replace(query.dimensionValues[i], scopedVars);
+        query.dimensionValues[i] = templateSrv.replace(query.dimensionValues[i], scopedVars, formatter);
       }
     }
     if (query.tenancy) {
       query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
     }
     if (query.compartment) {
-      query.compartment = templateSrv.replace(query.compartment, scopedVars);
+      query.compartment = templateSrv.replace(query.compartment, scopedVars, formatter);
+      console.log("query.compartment3 "+query.compartment)
+
     }
     if (query.resourcegroup) {
-      query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
+      query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars, formatter);
     }
     
     const queryModel = new QueryModel(query, getTemplateSrv());
     if (queryModel.isQueryReady()) {
       if (query.rawQuery === false && query.queryTextRaw !== '') {
-        query.queryTextRaw = templateSrv.replace(query.queryTextRaw, scopedVars);
+        query.queryTextRaw = templateSrv.replace(query.queryTextRaw, scopedVars, formatter);
         query.queryText = queryModel.buildQuery(String(query.queryTextRaw));
       } else {
         query.queryText = queryModel.buildQuery(String(query.metric));
@@ -99,14 +128,21 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
     const templateSrv = getTemplateSrv();
+    const formatter = (value: string): string => {
+      if (this.ocidCompartmentStore[value] !=="") {
+        console.log("value_daje "+value)
+        console.log("ocid_daje "+this.ocidCompartmentStore[value])
+        return this.ocidCompartmentStore[value]
+      }
+    return value
+    }
     return Object.entries(object).reduce((acc, [key, value]) => {
       return {
         ...acc,
-        [key]: value && isString(value) ? templateSrv.replace(value, scopedVars) : value,
+        [key]: value && isString(value) ? templateSrv.replace(value, scopedVars, formatter) : value,
       };
     }, {} as T);
   }
-
 
   // // **************************** Template variable helpers ****************************
 
@@ -151,12 +187,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const tenancy = templateSrv.replace(compartmentQuery[1]);
         const compartments = await this.getCompartments(tenancy);
         return compartments.map(n => {
-          return { text: n.name, value: n.ocid };
+          this.ocidCompartmentStore[n.name]=n.ocid; 
+          return { text: n.name, value: n.name, ocid: n.ocid };
         });
       } else {
         const compartments = await this.getCompartments(DEFAULT_TENANCY);
         return compartments.map(n => {
-          return { text: n.name, value: n.ocid };
+          this.ocidCompartmentStore[n.name]=n.ocid; 
+          return { text: n.name, value: n.name, ocid: n.ocid };
         }); 
       }   
     }    
