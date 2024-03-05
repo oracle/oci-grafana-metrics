@@ -4,7 +4,7 @@
 */
 
 import _,{ isString} from 'lodash';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue as GrafanaMetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import {
   OCIResourceItem,
@@ -28,11 +28,6 @@ import {
   compartmentsQueryRegex,
 } from "./types";
 import QueryModel from './query_model';
-
-interface MetricFindValue extends GrafanaMetricFindValue {
-  ocid?: string; // Aggiungi il simbolo '?' per rendere ocid opzionale
-}
-
 
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
