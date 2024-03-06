@@ -56,8 +56,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     //   return value;
     // }
     if (this.ocidCompartmentStore[value] || this.isVariable(value)) {
-      console.log("value_daje "+value)
-      console.log("ocid_daje "+this.ocidCompartmentStore[value])
       return this.ocidCompartmentStore[value]
     } else {
       return value
@@ -72,8 +70,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
-
-    console.log("query.compartment1 "+query.compartment)
 
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
@@ -93,7 +89,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }
     if (query.compartment) {
       query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);
-      console.log("query.compartment3 "+query.compartment)
     }
     if (query.resourcegroup) {
       query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
