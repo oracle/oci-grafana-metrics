@@ -62,7 +62,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     } else {
       return value
     }
-    // return value[0];
   };
 
   /**
@@ -167,13 +166,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const compartments = await this.getCompartments(tenancy);
         return compartments.map(n => {
           this.ocidCompartmentStore[n.name]=n.ocid; 
-          return { text: n.name, value: n.name, ocid: n.ocid };
+          return { text: n.name, value: n.name };
         });
       } else {
         const compartments = await this.getCompartments(DEFAULT_TENANCY);
         return compartments.map(n => {
           this.ocidCompartmentStore[n.name]=n.ocid; 
-          return { text: n.name, value: n.name, ocid: n.ocid };
+          return { text: n.name, value: n.name };
         }); 
       }   
     }    
@@ -382,7 +381,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     compartment: any,
     region: any
   ): Promise<OCINamespaceWithMetricNamesItem[]> {
-    console.log("namespaccio "+compartment)
     if (this.isVariable(tenancy)) {
       let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
       if (var_tenancy !== "") { 
