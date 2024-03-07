@@ -29,9 +29,9 @@ import {
 } from "./types";
 import QueryModel from './query_model';
 
-
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
+  ocidCompartmentStore: Record<string, string> ={}
 
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
@@ -51,6 +51,17 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return true;
   }
 
+  compartmentFormatter = (value: string): string => {
+    // if (typeof value === 'string') {
+    //   return value;
+    // }
+    if (this.ocidCompartmentStore[value] || this.isVariable(value)) {
+      return this.ocidCompartmentStore[value]
+    } else {
+      return value
+    }
+  };
+
   /**
    * Override to apply template variables
    *
@@ -62,7 +73,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
-    query.compartment = templateSrv.replace(query.compartment, scopedVars);
+    query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);
     query.namespace = templateSrv.replace(query.namespace, scopedVars);
     query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
     query.metric = templateSrv.replace(query.metric, scopedVars);
@@ -77,7 +88,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
     }
     if (query.compartment) {
-      query.compartment = templateSrv.replace(query.compartment, scopedVars);
+      query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);
     }
     if (query.resourcegroup) {
       query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
@@ -107,7 +118,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }, {} as T);
   }
 
-
   // // **************************** Template variable helpers ****************************
 
   // /**
@@ -119,7 +129,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   async metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
     const templateSrv = getTemplateSrv();
-    // const tmode = this.getJsonData().tenancymode;
 
     const tenancyQuery = query.match(tenanciesQueryRegex);
     if (tenancyQuery) {
@@ -151,12 +160,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
         const tenancy = templateSrv.replace(compartmentQuery[1]);
         const compartments = await this.getCompartments(tenancy);
         return compartments.map(n => {
-          return { text: n.name, value: n.ocid };
+          this.ocidCompartmentStore[n.name]=n.ocid; 
+          return { text: n.name, value: n.name };
         });
       } else {
         const compartments = await this.getCompartments(DEFAULT_TENANCY);
         return compartments.map(n => {
-          return { text: n.name, value: n.ocid };
+          this.ocidCompartmentStore[n.name]=n.ocid; 
+          return { text: n.name, value: n.name };
         }); 
       }   
     }    
@@ -167,7 +178,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(namespaceQuery[1]);
         const region = templateSrv.replace(namespaceQuery[2]);
-        const compartment = templateSrv.replace(namespaceQuery[3]);
+        const compartment = templateSrv.replace(namespaceQuery[3], undefined, this.compartmentFormatter);
         const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
         return namespaces.map(n => {
           return { text: n.namespace, value: n.namespace };
@@ -175,7 +186,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       } else {
         const tenancy = DEFAULT_TENANCY;
         const region = templateSrv.replace(namespaceQuery[1]);
-        const compartment = templateSrv.replace(namespaceQuery[2]);
+        const compartment = templateSrv.replace(namespaceQuery[2], undefined, this.compartmentFormatter);
         const namespaces = await this.getNamespacesWithMetricNames(tenancy, compartment, region);
         return namespaces.map(n => {
           return { text: n.namespace, value: n.namespace };
@@ -188,7 +199,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(resourcegroupQuery[1]);
         const region = templateSrv.replace(resourcegroupQuery[2]);
-        const compartment = templateSrv.replace(resourcegroupQuery[3]);
+        const compartment = templateSrv.replace(resourcegroupQuery[3], undefined, this.compartmentFormatter);
         const namespace = templateSrv.replace(resourcegroupQuery[4]);
         const resource_group = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
         return resource_group.map(n => {
@@ -197,7 +208,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       } else {
         const tenancy = DEFAULT_TENANCY;
         const region = templateSrv.replace(resourcegroupQuery[1]);
-        const compartment = templateSrv.replace(resourcegroupQuery[2]);
+        const compartment = templateSrv.replace(resourcegroupQuery[2], undefined, this.compartmentFormatter);
         const namespace = templateSrv.replace(resourcegroupQuery[3]);
         const resource_group = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
         return resource_group.map(n => {
@@ -211,7 +222,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(metricQuery[1]);
         const region = templateSrv.replace(metricQuery[2]);
-        const compartment = templateSrv.replace(metricQuery[3]);
+        const compartment = templateSrv.replace(metricQuery[3], undefined, this.compartmentFormatter);
         const namespace = templateSrv.replace(metricQuery[4]);
         // const resourcegroup = templateSrv.replace(metricQuery[4]);
         const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace);
@@ -223,7 +234,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       } else {
         const tenancy = DEFAULT_TENANCY;
         const region = templateSrv.replace(metricQuery[1]);
-        const compartment = templateSrv.replace(metricQuery[2]);
+        const compartment = templateSrv.replace(metricQuery[2], undefined, this.compartmentFormatter);
         const namespace = templateSrv.replace(metricQuery[3]);
         // const resource_group = templateSrv.replace(metricQuery[4]);
         const metric_names = await this.getResourceGroupsWithMetricNames(tenancy, compartment, region, namespace); 
@@ -240,7 +251,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       if (this.jsonData.tenancymode === "multitenancy") {
         const tenancy = templateSrv.replace(dimensionsQuery[1]);
         const region = templateSrv.replace(dimensionsQuery[2]);
-        const compartment = templateSrv.replace(dimensionsQuery[3]);
+        const compartment = templateSrv.replace(dimensionsQuery[3], undefined, this.compartmentFormatter);
         const namespace = templateSrv.replace(dimensionsQuery[4]);
         const metric = templateSrv.replace(dimensionsQuery[5]);
         const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
@@ -252,7 +263,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       } else {
         const tenancy = DEFAULT_TENANCY;
         const region = templateSrv.replace(dimensionsQuery[1]);
-        const compartment = templateSrv.replace(dimensionsQuery[2]);
+        const compartment = templateSrv.replace(dimensionsQuery[2], undefined, this.compartmentFormatter);
         const namespace = templateSrv.replace(dimensionsQuery[3]);
         const metric = templateSrv.replace(dimensionsQuery[4]);
         const dimension_values = await this.getDimensions(tenancy, compartment, region, namespace, metric);
