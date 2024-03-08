@@ -111,10 +111,18 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
     const templateSrv = getTemplateSrv();
     return Object.entries(object).reduce((acc, [key, value]) => {
-      return {
-        ...acc,
-        [key]: value && isString(value) ? templateSrv.replace(value, scopedVars) : value,
-      };
+      if (key === "compartment"){
+        return {
+          ...acc,
+          [key]: value && isString(value) ? templateSrv.replace(value, scopedVars, this.compartmentFormatter) : value,
+        };        
+      } else {
+        return {
+          ...acc,
+          [key]: value && isString(value) ? templateSrv.replace(value, scopedVars) : value,
+        };
+      }
+
     }, {} as T);
   }
 
