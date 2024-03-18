@@ -55,6 +55,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     const differenceInMs = timestamp2 - timestamp1;
     const differenceInHours = differenceInMs / (1000 * 60 * 60);
   
+    // use limits and defaults specified here: https://docs.oracle.com/en-us/iaas/Content/Monitoring/Reference/mql.htm#Interval
     if (differenceInHours < 6) {
       return "[1m]"; // Less than 6 hours, set to 1 minute interval
     } else if (differenceInHours < 36) {
@@ -155,7 +156,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   //  * Example:
   //  * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
   //  */
-  // metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
 
   async metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
     const templateSrv = getTemplateSrv();

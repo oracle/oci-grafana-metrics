@@ -102,7 +102,6 @@ export default class QueryModel {
       queryText += '.' + this.target.statistic;
       } 
 
-
     return queryText;
   }
 }
