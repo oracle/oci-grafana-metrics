@@ -59,6 +59,7 @@ export const IntervalOptions = [
   { label: '5 minutes', value: '[5m]', description: 'Maximum time range supported: 30 days' },
   { label: '1 hour', value: '[1h]', description: 'Maximum time range supported: 90 days' },
   { label: '1 day', value: '[1d]', description: 'Maximum time range supported: 90 days' },
+  { label: 'Auto', value: 'auto', description: 'Automatic selection of interval accordingly to OCI default' },
 ];
 
 export const AggregationOptions = [

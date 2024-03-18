@@ -51,6 +51,19 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return true;
   }
 
+  setTimeInterval(timestamp1: number, timestamp2: number): string {
+    const differenceInMs = timestamp2 - timestamp1;
+    const differenceInHours = differenceInMs / (1000 * 60 * 60);
+  
+    if (differenceInHours < 6) {
+      return "[1m]"; // Less than 6 hours, set to 1 minute interval
+    } else if (differenceInHours < 36) {
+      return "[5m]"; // Between 6 and 36 hours, set to 5 minute interval
+    } else {
+      return "[1h]"; // More than 36 hours, set to 1 hour interval
+    }
+  }
+
   compartmentFormatter = (value: string): string => {
     // if (typeof value === 'string') {
     //   return value;
@@ -70,7 +83,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
+    console.log("inizioint "+query.interval)
 
+    const inizio = parseInt(getTemplateSrv().replace("${__from}"), 10)
+    const fine  = parseInt(getTemplateSrv().replace("${__to}"), 10)
+    console.log("inizio "+inizio)
+    console.log("fine "+fine)
+    if (query.interval === QueryPlaceholder.Interval || query.interval === "auto"){
+      query.interval = this.setTimeInterval(inizio, fine);
+    }
+    console.log("fineint  "+query.interval)
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
     query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);

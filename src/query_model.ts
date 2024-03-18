@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import { OCIQuery, QueryPlaceholder, AggregationOptions, IntervalOptions } from './types';
+import { OCIQuery, QueryPlaceholder, AggregationOptions } from './types';
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
@@ -64,19 +64,14 @@ export default class QueryModel {
 
     return true;
   }
-  
+
 
   buildQuery(queryText: string) { 
 
     if (this.target.queryTextRaw !== '' && this.target.rawQuery === false) {
       queryText = String(this.target.queryTextRaw);
     }  else {
-      // for default interval
-      if (this.target.interval === QueryPlaceholder.Interval) {
-        this.target.interval = IntervalOptions[0].value;
-      }
       queryText += this.target.interval;
-
       // for dimensions
       let dimensionParams = '{';
       let noOfDimensions = this.target.dimensionValues?.length ?? 0;
