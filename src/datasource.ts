@@ -89,7 +89,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     const TimeEnd  = parseInt(getTemplateSrv().replace("${__to}"), 10)
     console.log("TimeStart "+TimeStart)
     console.log("TimeEnd "+TimeEnd)
-    if (query.interval === QueryPlaceholder.Interval || query.interval === "auto"){
+    if (query.interval === QueryPlaceholder.Interval || query.interval === "auto" || query.interval === undefined){
       query.interval = this.SetAutoInterval(TimeStart, TimeEnd);
     }
     console.log("TimeEndint  "+query.interval)
