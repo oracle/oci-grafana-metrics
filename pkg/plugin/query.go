@@ -58,17 +58,14 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 	// create data frame response
 	frame := data.NewFrame("response").SetMeta(&data.FrameMeta{ExecutedQueryString: qm.QueryText})
-	ocidx.logger.Error("PRIMA", "metricDataValue.name")
 	var err error
 	var metricDataValues []models.OCIMetricDataPoints
 	var times []time.Time
-	ocidx.logger.Error("SECONDA", "qm.Region.name", qm.Region)
 
 	if qm.Region != "" && qm.Region != "select region" {
 		times, metricDataValues, err = ocidx.GetMetricDataPoints(ctx, metricsDataRequest, qm.TenancyOCID)
 	}
 	if err != nil {
-		ocidx.logger.Error("Errorone", "metricDataValue.name", err)
 		response.Error = err
 		return response
 	}
