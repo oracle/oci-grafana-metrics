@@ -191,6 +191,15 @@ The final list of variables should look like this (**Plugin v5** and above):
 
 ![Metrics dashboard variables screenshot](images/template-multi.png)
 
+### Template variable for interval
+
+For intervals, you can use a custom or constant variable. To create a custom, select the variable type as custom. 
+Label(appears as the display name of the variable selected).
+
+Custom variables provide the convenience of using custom intervals for your dashboard. Please note the accepted format for intervals are within squared brackets and must include the time unit (for example [5m] to specify 5 minutes or [2h] for two hours). Following is an example of interval template variable definition:
+![Template variable for interval](images/Interval-Template-Var.png)
+
+
 ### Windows and Resolution
 
 For windows and resolution, you can use a custom or constant variable. To create a custom, select the variable type as custom. 
