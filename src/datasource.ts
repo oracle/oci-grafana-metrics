@@ -56,8 +56,8 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     const differenceInHours = differenceInMs / (1000 * 60 * 60);
   
     // use limits and defaults specified here: https://docs.oracle.com/en-us/iaas/Content/Monitoring/Reference/mql.htm#Interval
-    if (differenceInHours < 6) {
-      return "[1m]"; // Less than 6 hours, set to 1 minute interval
+    if (differenceInHours <= 6) {
+      return "[1m]"; // Equal or Less than 6 hours, set to 1 minute interval
     } else if (differenceInHours < 36) {
       return "[5m]"; // Between 6 and 36 hours, set to 5 minute interval
     } else {
