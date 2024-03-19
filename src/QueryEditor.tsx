@@ -267,6 +267,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const getIntervalOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
+    options = addTemplateVariablesToOptions(options);
     IntervalOptions.forEach((item: any) => {
       const sv: SelectableValue<any> = {
         label: item.label,
