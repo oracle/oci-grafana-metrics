@@ -441,7 +441,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	if len(takey) == 0 {
 		backend.Logger.Warn("client", "GetMetricDataPoints", "invalid takey")
-		return nil, nil, nil
+		return nil, nil, errors.New("Datasource not configured (invalid takey)")
 	}
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
