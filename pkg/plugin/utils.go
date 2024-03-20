@@ -627,7 +627,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 	}
 
 	for _, placeholderStr := range rePlaceholderLabel.FindAllString(metricLabel, -1) {
-		if rePlaceholderLabel.Match([]byte(placeholderStr)) == true {
+		if rePlaceholderLabel.Match([]byte(placeholderStr)) {
 			matches := rePlaceholderLabel.FindStringSubmatch(placeholderStr)
 			labelIndex := rePlaceholderLabel.SubexpIndex("label")
 

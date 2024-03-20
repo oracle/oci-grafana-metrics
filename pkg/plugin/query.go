@@ -100,10 +100,8 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 				// Create a new slice for each key in the map
 				var values []string
+				values = append(values, dimension.Values...)
 
-				for _, vall := range dimension.Values {
-					values = append(values, vall)
-				}
 				// Assign the values slice to the map key
 				OriginalDimensionMap[key] = values
 			}

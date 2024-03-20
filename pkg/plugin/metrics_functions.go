@@ -36,7 +36,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		return fmt.Errorf("TestConnectivity failed: cannot read o.tenancyAccess")
 	}
 
-	for key, _ := range o.tenancyAccess {
+	for key := range o.tenancyAccess {
 		testResult = false
 
 		if tmode == "multitenancy" && tenv == "OCI Instance" {
@@ -118,7 +118,7 @@ func (o *OCIDatasource) GetTenancies(ctx context.Context) []models.OCIResource {
 	backend.Logger.Error("client", "GetTenancies", "fetching the tenancies")
 
 	tenancyList := []models.OCIResource{}
-	for key, _ := range o.tenancyAccess {
+	for key := range o.tenancyAccess {
 		// frame.AppendRow(*(common.String(key)))
 
 		tenancyList = append(tenancyList, models.OCIResource{
@@ -739,15 +739,15 @@ func (o *OCIDatasource) GetTags(
 		}
 	}
 
-	compartments := []models.OCIResource{}
-	if len(compartmentOCID) == 0 {
-		compartments = append(compartments, o.GetCompartments(ctx, tenancyOCID)...)
-	} else {
-		compartments = append(compartments, models.OCIResource{
-			Name: compartmentName,
-			OCID: compartmentOCID,
-		})
-	}
+	// compartments := []models.OCIResource{}
+	// if len(compartmentOCID) == 0 {
+	// 	compartments = append(compartments, o.GetCompartments(ctx, tenancyOCID)...)
+	// } else {
+	// 	compartments = append(compartments, models.OCIResource{
+	// 		Name: compartmentName,
+	// 		OCID: compartmentOCID,
+	// 	})
+	// }
 
 	// var ccc core.ComputeClient
 	// //var vcc core.VirtualNetworkClient
