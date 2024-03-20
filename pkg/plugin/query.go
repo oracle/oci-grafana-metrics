@@ -62,7 +62,9 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 	var metricDataValues []models.OCIMetricDataPoints
 	var times []time.Time
 
-	if qm.Region != "" && qm.Region != "select region" {
+	if (qm.Region != "" && qm.Region != "select region") &&
+		(qm.CompartmentOCID != "" && qm.CompartmentOCID != "select compartment") &&
+		(qm.Namespace != "" && qm.Namespace != "select namespace") {
 		times, metricDataValues, err = ocidx.GetMetricDataPoints(ctx, metricsDataRequest, qm.TenancyOCID)
 	}
 	if err != nil {
