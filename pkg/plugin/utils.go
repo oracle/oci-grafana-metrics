@@ -86,7 +86,7 @@ func listMetricsMetadataFromAllRegion(
 			go func(mc monitoring.MonitoringClient, sRegion string) {
 				defer wg.Done()
 
-				newCacheKey := strings.ReplaceAll(cacheKey, constants.ALL_REGION, subscribedRegion)
+				newCacheKey := strings.ReplaceAll(cacheKey, constants.ALL_REGION, sRegion)
 				metadata := listMetricsMetadataPerRegion(ctx, ci, newCacheKey, fetchFor, mc, req)
 
 				if len(metadata) > 0 {
