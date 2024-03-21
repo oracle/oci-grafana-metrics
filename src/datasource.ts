@@ -84,19 +84,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
-    console.log("IntervalBefore "+query.interval)
 
     const TimeStart = parseInt(getTemplateSrv().replace("${__from}"), 10)
     const TimeEnd  = parseInt(getTemplateSrv().replace("${__to}"), 10)
-    console.log("TimeStart "+TimeStart)
-    console.log("TimeEnd "+TimeEnd)
     if (this.isVariable(query.interval)) {
       query.interval = templateSrv.replace(query.interval, scopedVars);
     }
     if (query.interval === QueryPlaceholder.Interval || query.interval === "auto" || query.interval === undefined){
       query.interval = this.SetAutoInterval(TimeStart, TimeEnd);
     }
-    console.log("IntervalAfter  "+query.interval)
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
     query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);

@@ -35,11 +35,6 @@ const NoTenancy = "NoTenancy"
 var EmptyString string = ""
 var EmptyKeyPass *string = &EmptyString
 
-// var (
-// 	cacheRefreshTime = time.Minute // how often to refresh our compartmentID cache
-// 	re               = regexp.MustCompile(`(?m)\w+Name`)
-// )
-
 type TenancyAccess struct {
 	monitoringClient monitoring.MonitoringClient
 	identityClient   identity.IdentityClient
