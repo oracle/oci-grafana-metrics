@@ -5,6 +5,7 @@ package plugin
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -57,8 +58,19 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 	// create data frame response
 	frame := data.NewFrame("response").SetMeta(&data.FrameMeta{ExecutedQueryString: qm.QueryText})
+	var err error
+	var metricDataValues []models.OCIMetricDataPoints
+	var times []time.Time
 
-	times, metricDataValues := ocidx.GetMetricDataPoints(ctx, metricsDataRequest, qm.TenancyOCID)
+	if (qm.Region != "" && qm.Region != "select region") &&
+		(qm.CompartmentOCID != "" && qm.CompartmentOCID != "select compartment") &&
+		(qm.Namespace != "" && qm.Namespace != "select namespace") {
+		times, metricDataValues, err = ocidx.GetMetricDataPoints(ctx, metricsDataRequest, qm.TenancyOCID)
+	}
+	if err != nil {
+		response.Error = err
+		return response
+	}
 
 	// plotting the x axis with time as unit
 	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
@@ -88,10 +100,8 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 				// Create a new slice for each key in the map
 				var values []string
+				values = append(values, dimension.Values...)
 
-				for _, vall := range dimension.Values {
-					values = append(values, vall)
-				}
 				// Assign the values slice to the map key
 				OriginalDimensionMap[key] = values
 			}

@@ -9,10 +9,8 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -37,11 +35,6 @@ const NoTenancy = "NoTenancy"
 var EmptyString string = ""
 var EmptyKeyPass *string = &EmptyString
 
-var (
-	cacheRefreshTime = time.Minute // how often to refresh our compartmentID cache
-	re               = regexp.MustCompile(`(?m)\w+Name`)
-)
-
 type TenancyAccess struct {
 	monitoringClient monitoring.MonitoringClient
 	identityClient   identity.IdentityClient
@@ -49,10 +42,10 @@ type TenancyAccess struct {
 }
 
 type OCIDatasource struct {
-	tenancyAccess    map[string]*TenancyAccess
-	logger           log.Logger
-	nameToOCID       map[string]string
-	timeCacheUpdated time.Time
+	tenancyAccess map[string]*TenancyAccess
+	logger        log.Logger
+	nameToOCID    map[string]string
+	// timeCacheUpdated time.Time
 	backend.CallResourceHandler
 	// clients  *client.OCIClients
 	settings *models.OCIDatasourceSettings
@@ -301,7 +294,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		if err != nil {
 			return errors.New("Error Loading config settings")
 		}
-		for key, _ := range q.tenancyocid {
+		for key := range q.tenancyocid {
 			var configProvider common.ConfigurationProvider
 			if tenancymode != "multitenancy" {
 				if key != "DEFAULT" {

@@ -86,7 +86,7 @@ func listMetricsMetadataFromAllRegion(
 			go func(mc monitoring.MonitoringClient, sRegion string) {
 				defer wg.Done()
 
-				newCacheKey := strings.ReplaceAll(cacheKey, constants.ALL_REGION, subscribedRegion)
+				newCacheKey := strings.ReplaceAll(cacheKey, constants.ALL_REGION, sRegion)
 				metadata := listMetricsMetadataPerRegion(ctx, ci, newCacheKey, fetchFor, mc, req)
 
 				if len(metadata) > 0 {
@@ -627,7 +627,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 	}
 
 	for _, placeholderStr := range rePlaceholderLabel.FindAllString(metricLabel, -1) {
-		if rePlaceholderLabel.Match([]byte(placeholderStr)) == true {
+		if rePlaceholderLabel.Match([]byte(placeholderStr)) {
 			matches := rePlaceholderLabel.FindStringSubmatch(placeholderStr)
 			labelIndex := rePlaceholderLabel.SubexpIndex("label")
 

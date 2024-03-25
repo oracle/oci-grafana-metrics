@@ -36,7 +36,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		return fmt.Errorf("TestConnectivity failed: cannot read o.tenancyAccess")
 	}
 
-	for key, _ := range o.tenancyAccess {
+	for key := range o.tenancyAccess {
 		testResult = false
 
 		if tmode == "multitenancy" && tenv == "OCI Instance" {
@@ -118,7 +118,7 @@ func (o *OCIDatasource) GetTenancies(ctx context.Context) []models.OCIResource {
 	backend.Logger.Error("client", "GetTenancies", "fetching the tenancies")
 
 	tenancyList := []models.OCIResource{}
-	for key, _ := range o.tenancyAccess {
+	for key := range o.tenancyAccess {
 		// frame.AppendRow(*(common.String(key)))
 
 		tenancyList = append(tenancyList, models.OCIResource{
@@ -421,7 +421,7 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 // Links:
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/MetricData/SummarizeMetricsData
-func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams models.MetricsDataRequest, tenancyOCID string) ([]time.Time, []models.OCIMetricDataPoints) {
+func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams models.MetricsDataRequest, tenancyOCID string) ([]time.Time, []models.OCIMetricDataPoints, error) {
 	backend.Logger.Error("client", "GetMetricDataPoints", "fetching the metrics datapoints under compartment '"+requestParams.CompartmentOCID+"' for query '"+requestParams.QueryText+"'")
 
 	times := []time.Time{}
@@ -441,7 +441,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	if len(takey) == 0 {
 		backend.Logger.Warn("client", "GetMetricDataPoints", "invalid takey")
-		return nil, nil
+		return nil, nil, errors.New("Datasource not configured (invalid takey)")
 	}
 
 	metricsDataRequest := monitoring.SummarizeMetricsDataRequest{
@@ -481,17 +481,18 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 	// fetching the metrics data for specified region in parallel
 	var wg sync.WaitGroup
+	errCh := make(chan error)
 	for _, subscribedRegion := range subscribedRegions {
 		if subscribedRegion != constants.ALL_REGION {
 			wg.Add(1)
-			go func(mc monitoring.MonitoringClient, sRegion string) {
+			go func(mc monitoring.MonitoringClient, sRegion string, errCh chan error) {
 				defer wg.Done()
 
 				mc.SetRegion(sRegion)
 				resp, err := mc.SummarizeMetricsData(ctx, metricsDataRequest)
 				if err != nil {
 					backend.Logger.Error("client", "GetMetricDataPoints", err)
-					return
+					errCh <- err
 				}
 
 				if len(resp.Items) > 0 {
@@ -516,7 +517,14 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 						resourceLabels: rl,
 					})
 				}
-			}(o.tenancyAccess[takey].monitoringClient, subscribedRegion)
+				errCh <- nil
+			}(o.tenancyAccess[takey].monitoringClient, subscribedRegion, errCh)
+			// Receive on the error channel
+			err := <-errCh
+			if err != nil {
+				backend.Logger.Error("client", "GetMetricDataPoints", err)
+				return nil, nil, err
+			}
 		}
 	}
 	wg.Wait()
@@ -686,7 +694,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		dataPoints = append(dataPoints, dp)
 	}
 
-	return times, dataPoints
+	return times, dataPoints, nil
 }
 
 // fetchFromCache will fetch value from cache and if it not present it will fetch via api and store to cache and return
@@ -731,15 +739,15 @@ func (o *OCIDatasource) GetTags(
 		}
 	}
 
-	compartments := []models.OCIResource{}
-	if len(compartmentOCID) == 0 {
-		compartments = append(compartments, o.GetCompartments(ctx, tenancyOCID)...)
-	} else {
-		compartments = append(compartments, models.OCIResource{
-			Name: compartmentName,
-			OCID: compartmentOCID,
-		})
-	}
+	// compartments := []models.OCIResource{}
+	// if len(compartmentOCID) == 0 {
+	// 	compartments = append(compartments, o.GetCompartments(ctx, tenancyOCID)...)
+	// } else {
+	// 	compartments = append(compartments, models.OCIResource{
+	// 		Name: compartmentName,
+	// 		OCID: compartmentOCID,
+	// 	})
+	// }
 
 	// var ccc core.ComputeClient
 	// //var vcc core.VirtualNetworkClient

@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import { OCIQuery, QueryPlaceholder, AggregationOptions, IntervalOptions } from './types';
+import { OCIQuery, QueryPlaceholder, AggregationOptions } from './types';
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
@@ -64,49 +64,44 @@ export default class QueryModel {
 
     return true;
   }
-  
+
 
   buildQuery(queryText: string) { 
-
+    //check if a raw query is being used
     if (this.target.queryTextRaw !== '' && this.target.rawQuery === false) {
       queryText = String(this.target.queryTextRaw);
     }  else {
-      // for default interval
-      if (this.target.interval === QueryPlaceholder.Interval) {
-        this.target.interval = IntervalOptions[0].value;
-      }
+      // if builder mode is used then:
+
+      // add interval
       queryText += this.target.interval;
 
-      // for dimensions
+      // add dimensions
       let dimensionParams = '{';
       let noOfDimensions = this.target.dimensionValues?.length ?? 0;
       if (noOfDimensions !== 0) {
         this.target.dimensionValues?.forEach((dv) => {
           dimensionParams += dv;
           noOfDimensions--;
-
           if (noOfDimensions !== 0) {
             dimensionParams += ',';
           }
         });
         dimensionParams += '}';
-
         queryText += dimensionParams;
       }
 
-      // for groupBy option
+      // add groupBy option
       if (this.target.groupBy !== QueryPlaceholder.GroupBy) {
         queryText += '.groupBy(' + this.target.groupBy + ')';
       }
 
-      // for default statistics
+      // add default statistics
       if (this.target.statistic === QueryPlaceholder.Aggregation) {
         this.target.statistic = AggregationOptions[0].value;
       }
-
       queryText += '.' + this.target.statistic;
       } 
-
 
     return queryText;
   }

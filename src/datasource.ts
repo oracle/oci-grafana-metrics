@@ -51,6 +51,20 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return true;
   }
 
+  SetAutoInterval(timestamp1: number, timestamp2: number): string {
+    const differenceInMs = timestamp2 - timestamp1;
+    const differenceInHours = differenceInMs / (1000 * 60 * 60);
+  
+    // use limits and defaults specified here: https://docs.oracle.com/en-us/iaas/Content/Monitoring/Reference/mql.htm#Interval
+    if (differenceInHours <= 6) {
+      return "[1m]"; // Equal or Less than 6 hours, set to 1 minute interval
+    } else if (differenceInHours < 36) {
+      return "[5m]"; // Between 6 and 36 hours, set to 5 minute interval
+    } else {
+      return "[1h]"; // More than 36 hours, set to 1 hour interval
+    }
+  }
+
   compartmentFormatter = (value: string): string => {
     // if (typeof value === 'string') {
     //   return value;
@@ -71,6 +85,14 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
 
+    const TimeStart = parseInt(getTemplateSrv().replace("${__from}"), 10)
+    const TimeEnd  = parseInt(getTemplateSrv().replace("${__to}"), 10)
+    if (this.isVariable(query.interval)) {
+      query.interval = templateSrv.replace(query.interval, scopedVars);
+    }
+    if (query.interval === QueryPlaceholder.Interval || query.interval === "auto" || query.interval === undefined){
+      query.interval = this.SetAutoInterval(TimeStart, TimeEnd);
+    }
     query.region = templateSrv.replace(query.region, scopedVars);
     query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
     query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);
@@ -110,20 +132,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
 
   interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
     const templateSrv = getTemplateSrv();
-    return Object.entries(object).reduce((acc, [key, value]) => {
-      if (key === "compartment"){
-        return {
-          ...acc,
-          [key]: value && isString(value) ? templateSrv.replace(value, scopedVars, this.compartmentFormatter) : value,
-        };        
+    return Object.entries(object).reduce((acc: any, [key, value]) => {
+      if (value && isString(value)) {
+        const formatter = key === "compartment" ? this.compartmentFormatter : undefined;
+        acc[key] = templateSrv.replace(value, scopedVars, formatter);
       } else {
-        return {
-          ...acc,
-          [key]: value && isString(value) ? templateSrv.replace(value, scopedVars) : value,
-        };
+        acc[key] = value;
       }
-
-    }, {} as T);
+      return acc as T;
+    }, {});
   }
 
   // // **************************** Template variable helpers ****************************
@@ -133,7 +150,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   //  * Example:
   //  * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
   //  */
-  // metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
 
   async metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
     const templateSrv = getTemplateSrv();
