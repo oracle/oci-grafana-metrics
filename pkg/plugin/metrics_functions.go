@@ -702,7 +702,6 @@ func (o *OCIDatasource) fetchFromCache(ctx context.Context, tenancyOCID string, 
 	backend.Logger.Error("client", "fetchFromCache", "fetching from cache")
 
 	labelCacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, suffix}, "-")
-
 	if _, found := o.cache.Get(labelCacheKey); !found {
 		o.GetTags(ctx, tenancyOCID, compartmentOCID, compartmentName, region, namespace)
 	}
