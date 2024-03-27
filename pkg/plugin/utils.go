@@ -98,9 +98,11 @@ func listMetricsMetadataFromAllRegion(
 	wg.Wait()
 
 	allRegionsData.Range(func(key, value interface{}) bool {
+		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Retrieving data for "+fetchFor)
 		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Data got for region-"+key.(string))
 
 		metadataGot := value.(map[string][]string)
+		// backend.Logger.Info("metadataGot", "metadataGot", metadataGot)
 
 		// for first entry
 		if len(metricsMetadata) == 0 {
@@ -133,7 +135,6 @@ func listMetricsMetadataFromAllRegion(
 
 		return true
 	})
-
 	return metricsMetadata
 }
 
@@ -169,6 +170,8 @@ func listMetricsMetadataPerRegion(
 		case constants.FETCH_FOR_RESOURCE_GROUP:
 			if item.ResourceGroup != nil {
 				metadataKey = *item.ResourceGroup
+			} else {
+				metadataKey = constants.DEFAULT_RESOURCE_GROUP
 			}
 		case constants.FETCH_FOR_DIMENSION:
 			for k, v := range item.Dimensions {
