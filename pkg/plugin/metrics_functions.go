@@ -499,17 +499,17 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 					// fetching the resource labels
 					var rl map[string]map[string]string
 
-					cachedResourceLabels := o.fetchFromCache(
-						ctx,
-						requestParams.TenancyOCID,
-						requestParams.CompartmentOCID,
-						requestParams.CompartmentName,
-						sRegion,
-						requestParams.Namespace,
-						"resource_labels",
-					)
+					// cachedResourceLabels := o.fetchFromCache(
+					// 	ctx,
+					// 	requestParams.TenancyOCID,
+					// 	requestParams.CompartmentOCID,
+					// 	requestParams.CompartmentName,
+					// 	sRegion,
+					// 	requestParams.Namespace,
+					// 	"resource_labels",
+					// )
 
-					rl = cachedResourceLabels.(map[string]map[string]string)
+					// rl = cachedResourceLabels.(map[string]map[string]string)
 
 					// storing the data to calculate later
 					allRegionsMetricsDataPoint.Store(sRegion, metricDataBank{
@@ -537,19 +537,19 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		backend.Logger.Info("client", "GetMetricDataPoints", "Metric datapoints got for region-"+regionInUse)
 
 		// get the selected tags
-		if len(selectedTags) != 0 {
-			cachedResourceNamesPerTag := o.fetchFromCache(
-				ctx,
-				requestParams.TenancyOCID,
-				requestParams.CompartmentOCID,
-				requestParams.CompartmentName,
-				regionInUse,
-				requestParams.Namespace,
-				constants.CACHE_KEY_RESOURCE_IDS_PER_TAG,
-			)
+		// if len(selectedTags) != 0 {
+		// 	cachedResourceNamesPerTag := o.fetchFromCache(
+		// 		ctx,
+		// 		requestParams.TenancyOCID,
+		// 		requestParams.CompartmentOCID,
+		// 		requestParams.CompartmentName,
+		// 		regionInUse,
+		// 		requestParams.Namespace,
+		// 		constants.CACHE_KEY_RESOURCE_IDS_PER_TAG,
+		// 	)
 
-			resourceIDsPerTag = cachedResourceNamesPerTag.(map[string]map[string]struct{})
-		}
+		// 	resourceIDsPerTag = cachedResourceNamesPerTag.(map[string]map[string]struct{})
+		// }
 
 		metricData := value.(metricDataBank)
 
