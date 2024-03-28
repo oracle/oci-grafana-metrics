@@ -491,24 +491,6 @@ func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) 
 	return resourceTags, resourceIDsPerTag
 }
 
-func convertToArray(input map[string]map[string]struct{}) map[string][]string {
-	backend.Logger.Error("client.utils", "convertToArray", "Converting to array")
-
-	output := map[string][]string{}
-
-	for key, values := range input {
-		for v := range values {
-			if len(output[key]) == 0 {
-				output[key] = []string{v}
-			} else {
-				output[key] = append(output[key], v)
-			}
-		}
-	}
-
-	return output
-}
-
 func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, bool) {
 	monitorID := ""
 	var resourceID string // Declare resourceID

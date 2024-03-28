@@ -612,10 +612,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 			// for base tenancy
 			splits := strings.Split(tenancyOCID, "/")
 			tenancyName := splits[0]
-			// tenancyName := oc.tenanciesMap[requestParams.TenancyOCID]
-			// if tenancyName == constants.DEFAULT_PROFILE {
-			// 	tenancyName = oc.baseTenancyName
-			// }
 
 			// to get the resource labels
 			labelKey := uniqueDataID + extraUniqueID
@@ -658,10 +654,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		if len(dvs) == resourcesFetched {
 			continue
 		}
-
-		// for i := 0; i < resourcesFetched-len(dvs); i++ {
-		// 	dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
-		// }
 
 		lastValue := dataValuesWithTime[t][len(dataValuesWithTime[t])-1]
 		for i := 0; i < resourcesFetched-len(dvs); i++ {

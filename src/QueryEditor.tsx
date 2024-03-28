@@ -398,7 +398,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
         ...query,
         namespace: data.label,
         metricNames: data.value,
-        metricNamesFromNS: data.value,
+        // metricNamesFromNS: data.value,
         resourcegroup: undefined,
         metric: undefined,
       },
@@ -408,9 +408,9 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
   const onResourceGroupChange = (data: any) => {
     let mn: string[] = data.value;
-    if (data.label === 'NoResourceGroup') {
-      mn = query.metricNamesFromNS || [];
-    }
+    // if (data.label === 'NoResourceGroup') {
+    //   mn = query.metricNamesFromNS || [];
+    // }
     setResourceGroupValue(data);
 
     onApplyQueryChange({ ...query, resourcegroup: data.label, metricNames: mn, metric: undefined }, false);
