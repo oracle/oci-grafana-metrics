@@ -499,6 +499,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 					// fetching the resource labels
 					var rl map[string]map[string]string
 
+					// Tags will be used in future releases
 					// cachedResourceLabels := o.fetchFromCache(
 					// 	ctx,
 					// 	requestParams.TenancyOCID,
@@ -536,6 +537,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 		backend.Logger.Info("client", "GetMetricDataPoints", "Metric datapoints got for region-"+regionInUse)
 
+		// Tags will be used in future releases
 		// get the selected tags
 		// if len(selectedTags) != 0 {
 		// 	cachedResourceNamesPerTag := o.fetchFromCache(
@@ -1008,8 +1010,6 @@ func (o *OCIDatasource) GetResourceGroups(
 			monitoringRequest,
 		)
 	}
-
-	backend.Logger.Info("0a0a0a0a0ametricResourceGroups", "metricResourceGroups", metricResourceGroups)
 
 	if len(metricResourceGroups) == 0 {
 		backend.Logger.Error("client", "GetResourceGroups", "resource groups under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' is empty")
