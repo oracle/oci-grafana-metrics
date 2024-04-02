@@ -346,8 +346,13 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, "nss"}, "-")
 	if cachedMetricNamesWithNamespaces, found := o.cache.Get(cacheKey); found {
-		backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
-		return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
+		// This check avoids the type assertion and potential panic
+		if _, ok := cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace); ok {
+			backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
+			return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
+		} else {
+			backend.Logger.Warn("client.utils", "GetNamespaceWithMetricNames", "cannot use cached data -> "+cacheKey)
+		}
 	}
 
 	// calling the api if not present in cache
@@ -1054,8 +1059,13 @@ func (o *OCIDatasource) GetDimensions(
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, metricName, cacheSubKey}, "-")
 	if cachedDimensions, found := o.cache.Get(cacheKey); found {
-		backend.Logger.Warn("client", "GetDimensions", "getting the data from cache")
-		return cachedDimensions.([]models.OCIMetricDimensions)
+		// This check avoids the type assertion and potential panic
+		if _, ok := cachedDimensions.([]models.OCIMetricDimensions); ok {
+			backend.Logger.Warn("client", "GetDimensions", "getting the data from cache")
+			return cachedDimensions.([]models.OCIMetricDimensions)
+		} else {
+			backend.Logger.Warn("client.utils", "GetDimensions", "cannot use cached data -> "+cacheKey)
+		}
 	}
 
 	var metricDimensions map[string][]string

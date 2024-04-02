@@ -149,8 +149,13 @@ func listMetricsMetadataPerRegion(
 
 	backend.Logger.Error("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
 	if cachedMetricsData, found := ci.Get(cacheKey); found {
-		backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
-		return cachedMetricsData.(map[string][]string)
+		// This check avoids the type assertion and potential panic
+		if _, ok := cachedMetricsData.(map[string][]string); ok {
+			backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
+			return cachedMetricsData.(map[string][]string) // Safe here because of the preceding check
+		} else {
+			backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "cannot use cached data -> "+cacheKey)
+		}
 	}
 
 	fetchedMetricDetails := listMetrics(ctx, mClient, req)
