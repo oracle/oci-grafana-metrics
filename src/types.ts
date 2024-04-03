@@ -93,7 +93,6 @@ export interface OCIQuery extends DataQuery {
   region?: string;
   namespace?: string;
   metricNames?: string[];
-  // metricNamesFromNS?: string[];
   metric?: string;
   interval: string;
   intervalLabel?: string;

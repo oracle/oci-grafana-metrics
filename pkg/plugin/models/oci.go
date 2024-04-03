@@ -37,6 +37,7 @@ type OCIMetricDataPoints struct {
 	MetricName      string
 	ResourceName    string
 	UniqueDataID    string
+	DimensionKey    string
 	DataPoints      []float64
 	Labels          map[string]string
 }
