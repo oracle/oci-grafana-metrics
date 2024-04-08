@@ -102,7 +102,6 @@ func listMetricsMetadataFromAllRegion(
 		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Data got for region-"+key.(string))
 
 		metadataGot := value.(map[string][]string)
-		// backend.Logger.Info("metadataGot", "metadataGot", metadataGot)
 
 		// for first entry
 		if len(metricsMetadata) == 0 {
