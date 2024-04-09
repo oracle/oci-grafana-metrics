@@ -1024,7 +1024,6 @@ func (o *OCIDatasource) GetResourceGroups(
 	// saving into the cache
 	o.cache.SetWithTTL(cacheKey, metricResourceGroupsList, 1, 5*time.Minute)
 	o.cache.Wait()
-	backend.Logger.Info("metricResourceGroupsList", "metricResourceGroupsList", metricResourceGroupsList)
 
 	return metricResourceGroupsList
 }
