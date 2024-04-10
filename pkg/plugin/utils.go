@@ -502,7 +502,7 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 	var dimensionKey string
 
 	// Define a list of keys to search in dimensions
-	keys := []string{"resourceId", "ResourceId", "name"}
+	keys := []string{"resourceId", "ResourceId", "name", "uid"}
 
 	// Iterate over the keys
 	for _, key := range keys {
