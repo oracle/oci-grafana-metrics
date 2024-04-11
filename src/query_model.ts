@@ -4,8 +4,9 @@
 */
 
 import { OCIQuery, QueryPlaceholder, AggregationOptions } from './types';
+// import {SetAutoInterval} from './datasource'
 import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 export default class QueryModel {
   target: OCIQuery;
@@ -47,17 +48,43 @@ export default class QueryModel {
       this.target.queryText =
         incomingQuery.queryTextRaw || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
-      this.target.queryText = incomingQuery.queryText || this.buildQuery(String(this.target.metric));
+      console.log("buildQuery nel Query_model")
+      console.log("incomingQuery.queryText nel Query_model" +incomingQuery.queryText)
+      console.log("this.target.metric nel Query_model" + this.target.metric)
+      if (incomingQuery.queryText === undefined){
+        this.target.queryText = this.buildQuery(String(this.target.metric))
+      }
+      else {
+        this.target.queryText = incomingQuery.queryText
+      }
+      // this.target.queryText = incomingQuery.queryText || this.buildQuery(String(this.target.metric));
+      console.log("this.target.queryText nel Query_model" +this.target.queryText)
+
+    }
+  }
+
+  SetAutoInterval(timestamp1: number, timestamp2: number): string {
+    const differenceInMs = timestamp2 - timestamp1;
+    const differenceInHours = differenceInMs / (1000 * 60 * 60);
+  
+    // use limits and defaults specified here: https://docs.oracle.com/en-us/iaas/Content/Monitoring/Reference/mql.htm#Interval
+    if (differenceInHours <= 6) {
+      return "[1m]"; // Equal or Less than 6 hours, set to 1 minute interval
+    } else if (differenceInHours < 36) {
+      return "[5m]"; // Between 6 and 36 hours, set to 5 minute interval
+    } else {
+      return "[1h]"; // More than 36 hours, set to 1 hour interval
     }
   }
 
   isQueryReady() {
     // check if the query is ready to be built
+    console.log("this.target.metric "+this.target.metric)
     if (
       this.target.tenancy === QueryPlaceholder.Tenancy ||
       this.target.region === QueryPlaceholder.Region ||
       this.target.namespace === QueryPlaceholder.Namespace ||
-      (this.target.metric === QueryPlaceholder.Metric && this.target.queryTextRaw === '')
+      ((this.target.metric === QueryPlaceholder.Metric || this.target.metric === undefined) && this.target.queryTextRaw === '')
     ) {
       return false;
     }
@@ -72,9 +99,22 @@ export default class QueryModel {
       queryText = String(this.target.queryTextRaw);
     }  else {
       // if builder mode is used then:
+      console.log ("0000queryText "+queryText)
+      if (queryText === undefined) {
+        queryText = String(this.target.metric)
+      }
+
 
       // add interval
+      console.log ("this.target.interval "+this.target.interval)
+      if (this.target.interval === QueryPlaceholder.Interval || this.target.interval === "auto" || this.target.interval === undefined){
+        const TimeStart = parseInt(getTemplateSrv().replace("${__from}"), 10)
+        const TimeEnd  = parseInt(getTemplateSrv().replace("${__to}"), 10)
+        this.target.interval = this.SetAutoInterval(TimeStart, TimeEnd);
+      }
       queryText += this.target.interval;
+
+      console.log ("queryText "+queryText)
 
       // add dimensions
       let dimensionParams = '{';
