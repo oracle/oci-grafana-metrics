@@ -4,7 +4,7 @@
   "type": "datasource",
   "metrics": true,
   "annotations": false,
-  "alerting": false,
+  "alerting": true,
   "backend": true,
   "executable": "oci-metrics-plugin",
   "info": {
