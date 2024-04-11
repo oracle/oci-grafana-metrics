@@ -63,6 +63,7 @@ If your tenancy is subscribed to more than one region and you want to query the 
 
 ![All Subscribed Regions](images/all-subscribed-region.png)
 
+Please note that querying using **all-subscribed-region** option can take significantly more time than querying only one region, depending on the number of the subscribed regions. 
 
 Click the save icon to save your graph.
 
