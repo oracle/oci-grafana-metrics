@@ -59,6 +59,11 @@ If you are using a Data Source configured in **multitenancy** mode then choose t
 
 ![Metrics Query Editor - multitenancy mode](images/novar-multi.png)
 
+If your tenancy is subscribed to more than one region and you want to query the same metric in all subscribed regions, you can use the **all-subscribed-region** option as in the following example:
+
+![All Subscribed Regions](images/all-subscribed-region.png)
+
+Please note that querying using **all-subscribed-region** option can take significantly more time than querying only one region, depending on the number of the subscribed regions. 
 
 Click the save icon to save your graph.
 

@@ -105,7 +105,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				// Assign the values slice to the map key
 				OriginalDimensionMap[key] = values
 			}
-			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, OriginalDimensionMap, metricDataValue.UniqueDataID)
+			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, OriginalDimensionMap, metricDataValue.UniqueDataID, metricDataValue.DimensionKey)
 			if name == "" {
 				ocidx.logger.Error("No valid resourceID found in dimensions", "metricDataValue.name", name)
 				name = metricDataValue.UniqueDataID

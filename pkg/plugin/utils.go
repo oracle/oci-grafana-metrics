@@ -98,6 +98,7 @@ func listMetricsMetadataFromAllRegion(
 	wg.Wait()
 
 	allRegionsData.Range(func(key, value interface{}) bool {
+		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Retrieving data for "+fetchFor)
 		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Data got for region-"+key.(string))
 
 		metadataGot := value.(map[string][]string)
@@ -133,7 +134,6 @@ func listMetricsMetadataFromAllRegion(
 
 		return true
 	})
-
 	return metricsMetadata
 }
 
@@ -148,8 +148,13 @@ func listMetricsMetadataPerRegion(
 
 	backend.Logger.Error("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
 	if cachedMetricsData, found := ci.Get(cacheKey); found {
-		backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
-		return cachedMetricsData.(map[string][]string)
+		// This check avoids the type assertion and potential panic
+		if _, ok := cachedMetricsData.(map[string][]string); ok {
+			backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "getting the data from cache -> "+cacheKey)
+			return cachedMetricsData.(map[string][]string) // Safe here because of the preceding check
+		} else {
+			backend.Logger.Warn("client.utils", "listMetricsMetadataPerRegion", "cannot use cached data -> "+cacheKey)
+		}
 	}
 
 	fetchedMetricDetails := listMetrics(ctx, mClient, req)
@@ -169,6 +174,8 @@ func listMetricsMetadataPerRegion(
 		case constants.FETCH_FOR_RESOURCE_GROUP:
 			if item.ResourceGroup != nil {
 				metadataKey = *item.ResourceGroup
+			} else {
+				metadataKey = constants.DEFAULT_RESOURCE_GROUP
 			}
 		case constants.FETCH_FOR_DIMENSION:
 			for k, v := range item.Dimensions {
@@ -488,43 +495,22 @@ func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) 
 	return resourceTags, resourceIDsPerTag
 }
 
-func convertToArray(input map[string]map[string]struct{}) map[string][]string {
-	backend.Logger.Error("client.utils", "convertToArray", "Converting to array")
-
-	output := map[string][]string{}
-
-	for key, values := range input {
-		for v := range values {
-			if len(output[key]) == 0 {
-				output[key] = []string{v}
-			} else {
-				output[key] = append(output[key], v)
-			}
-		}
-	}
-
-	return output
-}
-
-func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, bool) {
+func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, string, bool) {
 	monitorID := ""
 	var resourceID string // Declare resourceID
 	var found bool
+	var dimensionKey string
 
 	// Define a list of keys to search in dimensions
-	keys := []string{"resourceId", "ResourceId", "name"}
+	keys := []string{"resourceId", "ResourceId", "name", "uid"}
 
 	// Iterate over the keys
 	for _, key := range keys {
 		resourceID, found = dimensions[key]
 		if found {
+			dimensionKey = key
 			break
 		}
-	}
-
-	// getting the extra unique id as per namespace
-	if namespace == constants.OCI_NS_APM {
-		resourceID = dimensions["MonitorName"]
 	}
 
 	// If resourceID is still empty, check for special conditions
@@ -552,16 +538,26 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 					}
 				}
 				resourceID = dimensions[dimension]
+				dimensionKey = dimension
 				break
 			}
 		}
 
-		// If no special condition was met, default to the first value in dimensions
 		if resourceID == "" {
-			for _, v := range dimensions {
-				resourceID = v
-				break
+			// getting the extra unique id as per namespace
+			if namespace == constants.OCI_NS_APM {
+				resourceID = dimensions["MonitorName"]
+				monitorID = dimensions["MonitorId"]
+				dimensionKey = "MonitorName"
+			} else {
+				// If no special condition was met, default to the first value in dimensions
+				for _, v := range dimensions {
+					resourceID = v
+					dimensionKey = v
+					break
+				}
 			}
+
 		}
 	}
 
@@ -574,12 +570,7 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 		resourceDisplayName = v
 	}
 
-	// getting the extra unique id as per namespace
-	if namespace == constants.OCI_NS_APM {
-		monitorID = dimensions["MonitorId"]
-	}
-
-	return resourceID, resourceDisplayName, monitorID, found
+	return resourceID, dimensionKey, resourceDisplayName, monitorID, found
 }
 
 func addSelectedValuesLabels(existingLabels map[string]string, selectedValuePairs []string) map[string]string {
@@ -610,9 +601,11 @@ of these placeholders will be unchanged. Note that placeholder labels are treate
 as case sensitive.
 */
 func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
-	dimensions map[string][]string, UniqueDataID string) string {
+	dimensions map[string][]string, UniqueDataID string, DimensionKey string) string {
 	o.logger.Debug("generateCustomMetricLabel ", "legendFormat", legendFormat)
 	o.logger.Debug("generateCustomMetricLabel ", "metricName", metricName)
+	o.logger.Debug("generateCustomMetricLabel ", "UniqueDataID", UniqueDataID)
+	o.logger.Debug("generateCustomMetricLabel ", "DimensionKey", DimensionKey)
 
 	metricLabel := legendFormat
 	// Define a pattern where we are looking for a left curly brace followed by one or
@@ -639,21 +632,16 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 			if placeholderLabel == "metric" {
 				metricLabel = re.ReplaceAllString(metricLabel, metricName)
 			} else {
-
+				o.logger.Debug("generateCustomMetricLabel", "Placeholder", placeholderLabel)
 				var resourceValues []string
 				var ok bool
 
 				// Check whether there is a resourceID dimension for the metric.
 				// That will be the aggregator for labeling process.
 				// If not found then labeling will not be possible
-				resourceValues, ok = dimensions["resourceId"]
+				resourceValues, ok = dimensions[DimensionKey]
 				if !ok {
-					resourceValues, ok = dimensions["resourceID"]
-				}
-				if !ok {
-					resourceValues, ok = dimensions[placeholderLabel]
-				}
-				if !ok {
+					o.logger.Error("generateCustomMetricLabel", "NoResourceID", "No valid resourceID aggregator found: "+DimensionKey)
 					return ""
 				}
 
@@ -662,16 +650,25 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 				// the value of the dimension
 				keyValues, ok := dimensions[placeholderLabel]
 				if !ok {
+					o.logger.Error("generateCustomMetricLabel", "NoDimension", "dimension not found: "+placeholderLabel)
 					return ""
 				}
+				var rangecycle []string
 
-				for i, rv := range resourceValues {
+				// Handling dimension in case of All Regions queries
+				if len(resourceValues) == len(keyValues) {
+					rangecycle = resourceValues
+				} else {
+					rangecycle = keyValues
+				}
+
+				for i, rv := range rangecycle {
 					// Check whether UniqueDataID matches any resourceID
 					if rv == UniqueDataID || strings.ToLower(rv) == UniqueDataID {
 						sublabel := keyValues[i]
-						o.logger.Debug("metricLabel before", "metricLabel", metricLabel)
+						o.logger.Debug("generateCustomMetricLabel", "metricLabelBefore", metricLabel)
 						metricLabel = re.ReplaceAllString(metricLabel, sublabel)
-						o.logger.Debug("metricLabel after", "metricLabel", metricLabel)
+						o.logger.Debug("generateCustomMetricLabel", "metricLabelAfter", metricLabel)
 						break
 					}
 
@@ -680,7 +677,7 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 			}
 		}
 	}
-	o.logger.Debug("Generated metric label", "legendFormat", legendFormat,
+	o.logger.Debug("Generated metric Label", "legendFormat", legendFormat,
 		"metricName", metricName, "metricLabel", metricLabel)
 	return metricLabel
 }

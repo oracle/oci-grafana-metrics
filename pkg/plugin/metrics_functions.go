@@ -346,8 +346,13 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, "nss"}, "-")
 	if cachedMetricNamesWithNamespaces, found := o.cache.Get(cacheKey); found {
-		backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
-		return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
+		// This check avoids the type assertion and potential panic
+		if _, ok := cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace); ok {
+			backend.Logger.Warn("client", "GetNamespaceWithMetricNames", "getting the data from cache")
+			return cachedMetricNamesWithNamespaces.([]models.OCIMetricNamesWithNamespace)
+		} else {
+			backend.Logger.Warn("client.utils", "GetNamespaceWithMetricNames", "cannot use cached data -> "+cacheKey)
+		}
 	}
 
 	// calling the api if not present in cache
@@ -499,17 +504,18 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 					// fetching the resource labels
 					var rl map[string]map[string]string
 
-					cachedResourceLabels := o.fetchFromCache(
-						ctx,
-						requestParams.TenancyOCID,
-						requestParams.CompartmentOCID,
-						requestParams.CompartmentName,
-						sRegion,
-						requestParams.Namespace,
-						"resource_labels",
-					)
+					// Tags will be used in future releases
+					// cachedResourceLabels := o.fetchFromCache(
+					// 	ctx,
+					// 	requestParams.TenancyOCID,
+					// 	requestParams.CompartmentOCID,
+					// 	requestParams.CompartmentName,
+					// 	sRegion,
+					// 	requestParams.Namespace,
+					// 	"resource_labels",
+					// )
 
-					rl = cachedResourceLabels.(map[string]map[string]string)
+					// rl = cachedResourceLabels.(map[string]map[string]string)
 
 					// storing the data to calculate later
 					allRegionsMetricsDataPoint.Store(sRegion, metricDataBank{
@@ -536,27 +542,28 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 
 		backend.Logger.Info("client", "GetMetricDataPoints", "Metric datapoints got for region-"+regionInUse)
 
+		// Tags will be used in future releases
 		// get the selected tags
-		if len(selectedTags) != 0 {
-			cachedResourceNamesPerTag := o.fetchFromCache(
-				ctx,
-				requestParams.TenancyOCID,
-				requestParams.CompartmentOCID,
-				requestParams.CompartmentName,
-				regionInUse,
-				requestParams.Namespace,
-				constants.CACHE_KEY_RESOURCE_IDS_PER_TAG,
-			)
+		// if len(selectedTags) != 0 {
+		// 	cachedResourceNamesPerTag := o.fetchFromCache(
+		// 		ctx,
+		// 		requestParams.TenancyOCID,
+		// 		requestParams.CompartmentOCID,
+		// 		requestParams.CompartmentName,
+		// 		regionInUse,
+		// 		requestParams.Namespace,
+		// 		constants.CACHE_KEY_RESOURCE_IDS_PER_TAG,
+		// 	)
 
-			resourceIDsPerTag = cachedResourceNamesPerTag.(map[string]map[string]struct{})
-		}
+		// 	resourceIDsPerTag = cachedResourceNamesPerTag.(map[string]map[string]struct{})
+		// }
 
 		metricData := value.(metricDataBank)
 
 		for _, metricDataItem := range metricData.dataPoints {
 			found := false
 
-			uniqueDataID, resourceDisplayName, extraUniqueID, rIDPresent := getUniqueIdsForLabels(requestParams.Namespace, metricDataItem.Dimensions, requestParams.QueryText)
+			uniqueDataID, dimensionKey, resourceDisplayName, extraUniqueID, rIDPresent := getUniqueIdsForLabels(requestParams.Namespace, metricDataItem.Dimensions, requestParams.QueryText)
 
 			if rIDPresent {
 				for _, selectedTag := range selectedTags {
@@ -610,10 +617,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 			// for base tenancy
 			splits := strings.Split(tenancyOCID, "/")
 			tenancyName := splits[0]
-			// tenancyName := oc.tenanciesMap[requestParams.TenancyOCID]
-			// if tenancyName == constants.DEFAULT_PROFILE {
-			// 	tenancyName = oc.baseTenancyName
-			// }
 
 			// to get the resource labels
 			labelKey := uniqueDataID + extraUniqueID
@@ -640,6 +643,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 				MetricName:   *metricDataItem.Name,
 				ResourceName: resourceDisplayName,
 				UniqueDataID: uniqueDataID,
+				DimensionKey: dimensionKey,
 				Labels:       labelsToAdd,
 			}
 		}
@@ -656,10 +660,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		if len(dvs) == resourcesFetched {
 			continue
 		}
-
-		// for i := 0; i < resourcesFetched-len(dvs); i++ {
-		// 	dataValuesWithTime[t] = append(dataValuesWithTime[t], 0.0)
-		// }
 
 		lastValue := dataValuesWithTime[t][len(dataValuesWithTime[t])-1]
 		for i := 0; i < resourcesFetched-len(dvs); i++ {
@@ -702,7 +702,6 @@ func (o *OCIDatasource) fetchFromCache(ctx context.Context, tenancyOCID string, 
 	backend.Logger.Error("client", "fetchFromCache", "fetching from cache")
 
 	labelCacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, suffix}, "-")
-
 	if _, found := o.cache.Get(labelCacheKey); !found {
 		o.GetTags(ctx, tenancyOCID, compartmentOCID, compartmentName, region, namespace)
 	}
@@ -1010,27 +1009,9 @@ func (o *OCIDatasource) GetResourceGroups(
 		)
 	}
 
-	reqDetails := monitoring.ListMetricsDetails{}
-	reqDetails.Namespace = common.String(namespace)
-	reqDetails.GroupBy = []string{"resourceGroup", "name"}
-
-	// retrieve metric list for template var
-	items, err := o.getListMetrics(ctx, region, compartmentOCID, reqDetails, takey)
-	if err != nil {
-		backend.Logger.Error("client", "GetResourceGroups", "Error retrieving metric list under compartment '"+compartmentOCID+"'")
-		return nil
-	}
-
 	if len(metricResourceGroups) == 0 {
-		var arca []string
-		for _, item := range items {
-			alfa := *(item.Name)
-			arca = append(arca, alfa)
-		}
-		metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
-			ResourceGroup: constants.DEFAULT_RESOURCE_GROUP,
-			MetricNames:   arca,
-		})
+		backend.Logger.Error("client", "GetResourceGroups", "resource groups under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' is empty")
+		return nil
 	} else {
 		for k, v := range metricResourceGroups {
 			metricResourceGroupsList = append(metricResourceGroupsList, models.OCIMetricNamesWithResourceGroup{
@@ -1078,8 +1059,13 @@ func (o *OCIDatasource) GetDimensions(
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, metricName, cacheSubKey}, "-")
 	if cachedDimensions, found := o.cache.Get(cacheKey); found {
-		backend.Logger.Warn("client", "GetDimensions", "getting the data from cache")
-		return cachedDimensions.([]models.OCIMetricDimensions)
+		// This check avoids the type assertion and potential panic
+		if _, ok := cachedDimensions.([]models.OCIMetricDimensions); ok {
+			backend.Logger.Warn("client", "GetDimensions", "getting the data from cache")
+			return cachedDimensions.([]models.OCIMetricDimensions)
+		} else {
+			backend.Logger.Warn("client.utils", "GetDimensions", "cannot use cached data -> "+cacheKey)
+		}
 	}
 
 	var metricDimensions map[string][]string
@@ -1142,33 +1128,4 @@ func (o *OCIDatasource) GetDimensions(
 	o.cache.Wait()
 
 	return metricDimensionsList
-}
-
-func (o *OCIDatasource) getListMetrics(ctx context.Context, region, compartment string, metricDetails monitoring.ListMetricsDetails, takey string) ([]monitoring.Metric, error) {
-	var items []monitoring.Metric
-	var page *string
-
-	pageNumber := 0
-	for {
-		reg := common.StringToRegion(region)
-		o.tenancyAccess[takey].monitoringClient.SetRegion(string(reg))
-		res, err := o.tenancyAccess[takey].monitoringClient.ListMetrics(ctx, monitoring.ListMetricsRequest{
-			CompartmentId:      common.String(compartment),
-			ListMetricsDetails: metricDetails,
-			Page:               page,
-		})
-
-		if err != nil {
-			return nil, errors.Wrap(err, "list metrics failed")
-		}
-		items = append(items, res.Items...)
-		// Only 0 - n-1  pages are to be fetched, as indexing starts from 0 (for page number
-		if res.OpcNextPage == nil || pageNumber >= MaxPagesToFetch {
-			break
-		}
-
-		page = res.OpcNextPage
-		pageNumber++
-	}
-	return items, nil
 }
