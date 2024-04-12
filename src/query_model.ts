@@ -3,8 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import { OCIQuery, QueryPlaceholder, AggregationOptions } from './types';
-// import {SetAutoInterval} from './datasource'
+import { OCIQuery, QueryPlaceholder, AggregationOptions, SetAutoInterval } from './types';
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
@@ -57,20 +56,6 @@ export default class QueryModel {
     }
   }
 
-  SetAutoInterval(timestamp1: number, timestamp2: number): string {
-    const differenceInMs = timestamp2 - timestamp1;
-    const differenceInHours = differenceInMs / (1000 * 60 * 60);
-  
-    // use limits and defaults specified here: https://docs.oracle.com/en-us/iaas/Content/Monitoring/Reference/mql.htm#Interval
-    if (differenceInHours <= 6) {
-      return "[1m]"; // Equal or Less than 6 hours, set to 1 minute interval
-    } else if (differenceInHours < 36) {
-      return "[5m]"; // Between 6 and 36 hours, set to 5 minute interval
-    } else {
-      return "[1h]"; // More than 36 hours, set to 1 hour interval
-    }
-  }
-
   isQueryReady() {
     // check if the query is ready to be built
     console.log("this.target.metric "+this.target.metric)
@@ -94,20 +79,27 @@ export default class QueryModel {
     }  else {
       // if builder mode is used then:
       // add interval
+      let convertedInterval = ""
       console.log ("this.target.interval "+this.target.interval)
       if (this.target.interval === QueryPlaceholder.Interval || this.target.interval === "auto" || this.target.interval === undefined){
         const TimeStart = parseInt(getTemplateSrv().replace("${__from}"), 10)
         const TimeEnd  = parseInt(getTemplateSrv().replace("${__to}"), 10)
+
         console.log ("TimeStart "+TimeStart)
         console.log ("TimeEnd "+TimeEnd)
-        if (isNaN(TimeStart) || isNaN(TimeEnd)){
-          this.target.interval = "[1m]"
-        } else {
-          this.target.interval = this.SetAutoInterval(TimeStart, TimeEnd);
 
+        if (isNaN(TimeStart) || isNaN(TimeEnd)){
+          convertedInterval = "[1m]"
+        } else {
+          convertedInterval = SetAutoInterval(TimeStart, TimeEnd);
         }
+      } else {
+        convertedInterval = this.target.interval
       }
-      queryText += this.target.interval;
+
+      console.log ("convertedInterval "+convertedInterval)
+
+      queryText += convertedInterval;
 
       console.log ("queryText "+queryText)
 

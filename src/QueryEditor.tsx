@@ -41,10 +41,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
     if (runQuery) {        
       const queryModel = new QueryModel(changedQuery, getTemplateSrv());
-      console.log("0000buildQuery nel Queryeditor "+query.metric)
-      console.log("0011buildQuery nel Queryeditor "+query.namespace)
 
-      console.log("9900buildQuery nel Queryeditor "+changedQuery.metric)
       // for metrics
       if (datasource.isVariable(String(changedQuery.metric))) {
         let { [String(changedQuery.metric)]: var_metric } = datasource.interpolateProps({ [String(changedQuery.metric)]: changedQuery.metric });
@@ -57,7 +54,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
         if (changedQuery.rawQuery === false){
           changedQuery.queryText = queryModel.buildQuery(String(changedQuery.queryTextRaw));
         } else {
-          console.log("buildQuery nel Queryeditor "+changedQuery.metric)
           changedQuery.queryText = queryModel.buildQuery(String(changedQuery.metric));
         }
         
