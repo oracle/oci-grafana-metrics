@@ -50,7 +50,7 @@ export default class QueryModel {
       console.log("buildQuery nel Query_model")
       console.log("incomingQuery.queryText nel Query_model" +incomingQuery.queryText)
       console.log("this.target.metric nel Query_model" + this.target.metric)
-      this.target.queryText = incomingQuery.queryText || this.buildQuery(String(this.target.metric));
+      this.target.queryText = this.buildQuery(String(this.target.metric));
       console.log("this.target.queryText nel Query_model" +this.target.queryText)
 
     }
@@ -79,26 +79,27 @@ export default class QueryModel {
     }  else {
       // if builder mode is used then:
       // add interval
-      let convertedInterval = ""
-      console.log ("this.target.interval "+this.target.interval)
-      if (this.target.interval === QueryPlaceholder.Interval || this.target.interval === "auto" || this.target.interval === undefined){
-        const TimeStart = parseInt(getTemplateSrv().replace("${__from}"), 10)
-        const TimeEnd  = parseInt(getTemplateSrv().replace("${__to}"), 10)
-
-        console.log ("TimeStart "+TimeStart)
-        console.log ("TimeEnd "+TimeEnd)
-
-        if (isNaN(TimeStart) || isNaN(TimeEnd)){
-          convertedInterval = "[1m]"
+      let convertedInterval;
+      try {
+        // Check for special cases or undefined interval
+        if (this.target.interval === QueryPlaceholder.Interval || this.target.interval === "auto" || !this.target.interval) {
+          const timeStart = parseInt(getTemplateSrv().replace("${__from}"), 10);
+          const timeEnd = parseInt(getTemplateSrv().replace("${__to}"), 10);
+      
+          if (isNaN(timeStart) || isNaN(timeEnd)) {
+            convertedInterval = "[1m]"; // Default interval if parsing fails
+          } else {
+            convertedInterval = SetAutoInterval(timeStart, timeEnd); // Use custom function
+          }
         } else {
-          convertedInterval = SetAutoInterval(TimeStart, TimeEnd);
+          convertedInterval = this.target.interval; // Use existing interval for other cases
         }
-      } else {
-        convertedInterval = this.target.interval
+      } catch (error) {
+        convertedInterval = "[1m]"; // Default interval on error
       }
-
-      console.log ("convertedInterval "+convertedInterval)
-
+      
+      console.log("Converted interval:", convertedInterval);
+      
       queryText += convertedInterval;
 
       console.log ("queryText "+queryText)
