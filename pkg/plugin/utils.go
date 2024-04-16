@@ -98,8 +98,8 @@ func listMetricsMetadataFromAllRegion(
 	wg.Wait()
 
 	allRegionsData.Range(func(key, value interface{}) bool {
-		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Retrieving data for "+fetchFor)
-		backend.Logger.Info("client.utils", "listMetricsMetadataPerAllRegion", "Data got for region-"+key.(string))
+		backend.Logger.Debug("client.utils", "listMetricsMetadataPerAllRegion", "Retrieving data for "+fetchFor)
+		backend.Logger.Debug("client.utils", "listMetricsMetadataPerAllRegion", "Data got for region-"+key.(string))
 
 		metadataGot := value.(map[string][]string)
 

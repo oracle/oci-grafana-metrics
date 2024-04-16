@@ -540,7 +540,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	allRegionsMetricsDataPoint.Range(func(key, value interface{}) bool {
 		regionInUse := key.(string)
 
-		backend.Logger.Info("client", "GetMetricDataPoints", "Metric datapoints got for region-"+regionInUse)
+		backend.Logger.Debug("client", "GetMetricDataPoints", "Metric datapoints got for region-"+regionInUse)
 
 		// Tags will be used in future releases
 		// get the selected tags
