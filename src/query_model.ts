@@ -47,18 +47,12 @@ export default class QueryModel {
       this.target.queryText =
         incomingQuery.queryTextRaw || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
-      console.log("buildQuery nel Query_model")
-      console.log("incomingQuery.queryText nel Query_model" +incomingQuery.queryText)
-      console.log("this.target.metric nel Query_model" + this.target.metric)
       this.target.queryText = this.buildQuery(String(this.target.metric));
-      console.log("this.target.queryText nel Query_model" +this.target.queryText)
-
     }
   }
 
   isQueryReady() {
     // check if the query is ready to be built
-    console.log("this.target.metric "+this.target.metric)
     if (
       this.target.tenancy === QueryPlaceholder.Tenancy ||
       this.target.region === QueryPlaceholder.Region ||
@@ -97,12 +91,8 @@ export default class QueryModel {
       } catch (error) {
         convertedInterval = "[1m]"; // Default interval on error
       }
-      
-      console.log("Converted interval:", convertedInterval);
-      
+   
       queryText += convertedInterval;
-
-      console.log ("queryText "+queryText)
 
       // add dimensions
       let dimensionParams = '{';
