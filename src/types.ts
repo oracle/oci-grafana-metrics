@@ -173,3 +173,17 @@ export interface OCISecureJsonData {
 	fingerprint5: string;
 	privkey5: string;
 }
+
+export const SetAutoInterval = (timestamp1: number, timestamp2: number): string => {
+  const differenceInMs = timestamp2 - timestamp1;
+  const differenceInHours = differenceInMs / (1000 * 60 * 60);
+
+  // use limits and defaults specified here: https://docs.oracle.com/en-us/iaas/Content/Monitoring/Reference/mql.htm#Interval
+  if (differenceInHours <= 6) {
+    return "[1m]"; // Equal or Less than 6 hours, set to 1 minute interval
+  } else if (differenceInHours < 36) {
+    return "[5m]"; // Between 6 and 36 hours, set to 5 minute interval
+  } else {
+    return "[1h]"; // More than 36 hours, set to 1 hour interval
+  }
+};

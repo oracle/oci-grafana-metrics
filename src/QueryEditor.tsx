@@ -38,23 +38,23 @@ export const QueryEditor: React.FC<Props> = (props) => {
     { label: 'Builder', value: true },
   ];  
   
-
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
     if (runQuery) {        
       const queryModel = new QueryModel(changedQuery, getTemplateSrv());
+
       // for metrics
-      if (datasource.isVariable(String(query.metric))) {
-        let { [String(query.metric)]: var_metric } = datasource.interpolateProps({ [String(query.metric)]: query.metric });
+      if (datasource.isVariable(String(changedQuery.metric))) {
+        let { [String(changedQuery.metric)]: var_metric } = datasource.interpolateProps({ [String(changedQuery.metric)]: changedQuery.metric });
         if (var_metric !== "" && var_metric !== QueryPlaceholder.Metric) { 
-          query.metric = var_metric
+          changedQuery.metric = var_metric
         }
       }
       if (queryModel.isQueryReady()) {
-
-        if (query.rawQuery === false){
-          changedQuery.queryText = queryModel.buildQuery(String(query.queryTextRaw));
+  
+        if (changedQuery.rawQuery === false){
+          changedQuery.queryText = queryModel.buildQuery(String(changedQuery.queryTextRaw));
         } else {
-          changedQuery.queryText = queryModel.buildQuery(String(query.metric));
+          changedQuery.queryText = queryModel.buildQuery(String(changedQuery.metric));
         }
         
         onChange({ ...changedQuery });
@@ -64,6 +64,7 @@ export const QueryEditor: React.FC<Props> = (props) => {
       onChange({ ...changedQuery });
     }
   };
+
 
   const init = () => {
     let initialDimensions: any = [];
@@ -419,8 +420,8 @@ export const QueryEditor: React.FC<Props> = (props) => {
 
 
   const onMetricChange = (data: any) => {
-    setMetricValue(data);     
-    onApplyQueryChange({ ...query, metric: data.value });
+    setMetricValue(data);
+    onApplyQueryChange({ ...query, metric: data.value }, true);
   };
   const onAggregationChange = (data: any) => {
     onApplyQueryChange({ ...query, statisticLabel: data.label, statistic: data.value });

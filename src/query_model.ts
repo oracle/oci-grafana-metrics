@@ -3,9 +3,9 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import { OCIQuery, QueryPlaceholder, AggregationOptions } from './types';
+import { OCIQuery, QueryPlaceholder, AggregationOptions, SetAutoInterval } from './types';
 import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 export default class QueryModel {
   target: OCIQuery;
@@ -47,7 +47,7 @@ export default class QueryModel {
       this.target.queryText =
         incomingQuery.queryTextRaw || 'metric[interval]{dimensionname="dimensionvalue"}.groupingfunction.statistic';
     } else {
-      this.target.queryText = incomingQuery.queryText || this.buildQuery(String(this.target.metric));
+      this.target.queryText = this.buildQuery(String(this.target.metric));
     }
   }
 
@@ -57,7 +57,7 @@ export default class QueryModel {
       this.target.tenancy === QueryPlaceholder.Tenancy ||
       this.target.region === QueryPlaceholder.Region ||
       this.target.namespace === QueryPlaceholder.Namespace ||
-      (this.target.metric === QueryPlaceholder.Metric && this.target.queryTextRaw === '')
+      ((this.target.metric === QueryPlaceholder.Metric || this.target.metric === undefined) && this.target.queryTextRaw === '')
     ) {
       return false;
     }
@@ -72,9 +72,27 @@ export default class QueryModel {
       queryText = String(this.target.queryTextRaw);
     }  else {
       // if builder mode is used then:
-
       // add interval
-      queryText += this.target.interval;
+      let convertedInterval;
+      try {
+        // Check for special cases or undefined interval
+        if (this.target.interval === QueryPlaceholder.Interval || this.target.interval === "auto" || !this.target.interval) {
+          const timeStart = parseInt(getTemplateSrv().replace("${__from}"), 10);
+          const timeEnd = parseInt(getTemplateSrv().replace("${__to}"), 10);
+      
+          if (isNaN(timeStart) || isNaN(timeEnd)) {
+            convertedInterval = "[1m]"; // Default interval if parsing fails
+          } else {
+            convertedInterval = SetAutoInterval(timeStart, timeEnd); // Use custom function
+          }
+        } else {
+          convertedInterval = this.target.interval; // Use existing interval for other cases
+        }
+      } catch (error) {
+        convertedInterval = "[1m]"; // Default interval on error
+      }
+   
+      queryText += convertedInterval;
 
       // add dimensions
       let dimensionParams = '{';
