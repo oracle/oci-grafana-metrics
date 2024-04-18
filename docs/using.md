@@ -345,3 +345,28 @@ If the user selects a time range
 2. Less than or equal to  30 days and more than 7 days ->   window will be 5m and resolution will be 5 min.
 3. More than 30 days -> a window will be 1h and resolution will be 1 h   
  
+## Alerting
+Version 5.5 of the metrics plugin introduces the Alerting capability.
+For detailed instruction how to work with alerts in Grafana, you may reference to the official documentation available at [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/) web page.
+
+The overall procedure is like the following (in Grafana 10):
+1. Open the dashboard you created earlier
+2. Edit any existing panel.
+3. Click on the Alert tab underneath the panel.
+4. Click on Create alert rule from this panel button.
+5. In Expressions section, in the Threshold expression C, set the threshold
+6. Click on Set as alert condition on Threshold expression C. Your alert should now look as follows:
+![Alert Threshold](images/create-alert-expression.png)
+Expression section showing B &quot;reduce&quot; with Input: A, Function: Last, Mode: Strict, C Threshold with Input: B, Is Above: 15 and Alert Condition enabled indicator
+Expression section showing B "reduce" with Input: A, Function: Last, Mode: Strict, C Threshold with Input: B, Is Above: 15 and Alert Condition enabled indicator
+7. In Set alert evaluation behavior section, click on New folder button and create a new folder to store an evaluation rule.
+8. Then, click on New evaluation group button and create a new evaluation group; choose a name and set the Evaluation interval.
+9. Click Save rule and exit button.
+10. Save the dashboard.
+
+After some time the alert rule evaluates and transitions into Alerting state.
+
+### Known limitations with Alerts
+Please note that Alerting is **not** compatible with custom label function. That means you must remove any custom label in the alert definition window, if any. custom labels can stay in the panels and dashboards, must be removed only in alert definition window.
+If you try to set up an alert with some custom label, you will see this error:
+![Alert Label Error](images/Error-Alert-Label.png)
