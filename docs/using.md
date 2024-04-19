@@ -367,6 +367,22 @@ Expression section showing B "reduce" with Input: A, Function: Last, Mode: Stric
 After some time the alert rule evaluates and transitions into Alerting state.
 
 ### Known limitations with Alerts
+#### Custom Label is incompatible with alert definition
 Please note that Alerting is **not** compatible with custom label function. That means you must remove any custom label in the alert definition window, if any. custom labels can stay in the panels and dashboards, must be removed only in alert definition window.
 If you try to set up an alert with some custom label, you will see this error:
 ![Alert Label Error](images/Error-Alert-Label.png)
+
+Therefore, if you have a panel which is using custom label, you will see an entry like this one when setting alert:
+![Alert Label Error](images/alert-nolabel.png)
+
+Make sure to modify this alert setup removing the Legend Format entry like the following:
+![Alert Label Error](images/alert-label.png)
+
+You do not need to remove Custom Label in the Panel. Only in the alert definition you must remove it.
+
+#### Alerts and AUTO interval setting
+If you are setting up an alert from a panel which uses Auto Interval, this interval will always revert to 1 minute ([1m]). Auto intervals based on Time Range are not supported in alert setting.
+
+#### Alerts and Template vars
+Template variables are not supported in alerts. If you are setting up an alert from a panel which uses template vars, the alert will take the last chosen values.
+Alert setting from panels which are using template variables in raw mode in is not supported. In that case you must rewrite your MQL statement when defyning the alert using explicit expressions without template vars. 
