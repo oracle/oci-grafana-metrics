@@ -204,32 +204,6 @@ Label(appears as the display name of the variable selected).
 Custom variables provide the convenience of using custom intervals for your dashboard. Please note the accepted format for intervals are within squared brackets and must include the time unit (for example [5m] to specify 5 minutes or [2h] for two hours). Following is an example of interval template variable definition:
 ![Template variable for interval](images/Interval-Template-Var.png)
 
-
-### Windows and Resolution
-
-For windows and resolution, you can use a custom or constant variable. To create a custom, select the variable type as custom. 
-Label(appears as the display name of the variable selected)
-  
-Custom variables provide the convenience of selecting a value out of many values. Try replicating the data in the following screenshots for window and resolution.
-
-Custom window variable 
-![Custom variable for window](images/customWIndowVariableCreation.png)
-
-
-Custom resolution variable
-![Custom variable for resolution](images/customResolution%20variable%20creation.png)
-
-Choose the save button to save your dashboard! DO NOT FORGET 
-
-
-
-Now, on the top of the panel, you would see windowLabel and resolutionLabel
-You can select the value for the variables from here  and use them in
-the dropdowns window and resolution  below the panel
-
-![Custom variable window dropdown](images/WithCustomDropDown.png)
-
-In case the plugin is configured to operate with multitenancy support, please make sure you are selecting **region** before **tenancy** and all the other dropdowns.
  
 
 ### Dimensions

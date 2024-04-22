@@ -42,13 +42,6 @@ export const QueryEditor: React.FC<Props> = (props) => {
     if (runQuery) {        
       const queryModel = new QueryModel(changedQuery, getTemplateSrv());
 
-      // for metrics
-      // if (datasource.isVariable(String(changedQuery.metric))) {
-      //   let { [String(changedQuery.metric)]: var_metric } = datasource.interpolateProps({ [String(changedQuery.metric)]: changedQuery.metric });
-      //   if (var_metric !== "" && var_metric !== QueryPlaceholder.Metric) { 
-      //     changedQuery.metric = var_metric
-      //   }
-      // }
       onChange({ ...changedQuery });
 
       if (queryModel.isQueryReady()) {
