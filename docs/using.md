@@ -204,32 +204,6 @@ Label(appears as the display name of the variable selected).
 Custom variables provide the convenience of using custom intervals for your dashboard. Please note the accepted format for intervals are within squared brackets and must include the time unit (for example [5m] to specify 5 minutes or [2h] for two hours). Following is an example of interval template variable definition:
 ![Template variable for interval](images/Interval-Template-Var.png)
 
-
-### Windows and Resolution
-
-For windows and resolution, you can use a custom or constant variable. To create a custom, select the variable type as custom. 
-Label(appears as the display name of the variable selected)
-  
-Custom variables provide the convenience of selecting a value out of many values. Try replicating the data in the following screenshots for window and resolution.
-
-Custom window variable 
-![Custom variable for window](images/customWIndowVariableCreation.png)
-
-
-Custom resolution variable
-![Custom variable for resolution](images/customResolution%20variable%20creation.png)
-
-Choose the save button to save your dashboard! DO NOT FORGET 
-
-
-
-Now, on the top of the panel, you would see windowLabel and resolutionLabel
-You can select the value for the variables from here  and use them in
-the dropdowns window and resolution  below the panel
-
-![Custom variable window dropdown](images/WithCustomDropDown.png)
-
-In case the plugin is configured to operate with multitenancy support, please make sure you are selecting **region** before **tenancy** and all the other dropdowns.
  
 
 ### Dimensions
@@ -345,3 +319,44 @@ If the user selects a time range
 2. Less than or equal to  30 days and more than 7 days ->   window will be 5m and resolution will be 5 min.
 3. More than 30 days -> a window will be 1h and resolution will be 1 h   
  
+## Alerting
+Version 5.5 of the metrics plugin introduces the Alerting capability.
+For detailed instruction how to work with alerts in Grafana, you may reference to the official documentation available at [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/) web page.
+
+The overall procedure is like the following (in Grafana 10):
+1. Open the dashboard you created earlier
+2. Edit any existing panel.
+3. Click on the Alert tab underneath the panel.
+4. Click on Create alert rule from this panel button.
+5. In Expressions section, in the Threshold expression C, set the threshold
+6. Click on Set as alert condition on Threshold expression C. Your alert should now look as follows:
+![Alert Threshold](images/create-alert-expression.png)
+Expression section showing B &quot;reduce&quot; with Input: A, Function: Last, Mode: Strict, C Threshold with Input: B, Is Above: 15 and Alert Condition enabled indicator
+Expression section showing B "reduce" with Input: A, Function: Last, Mode: Strict, C Threshold with Input: B, Is Above: 15 and Alert Condition enabled indicator
+7. In Set alert evaluation behavior section, click on New folder button and create a new folder to store an evaluation rule.
+8. Then, click on New evaluation group button and create a new evaluation group; choose a name and set the Evaluation interval.
+9. Click Save rule and exit button.
+10. Save the dashboard.
+
+After some time the alert rule evaluates and transitions into Alerting state.
+
+### Known limitations with Alerts
+#### Custom Label is incompatible with alert definition
+Please note that Alerting is **not** compatible with custom label function. That means you must remove any custom label in the alert definition window, if any. custom labels can stay in the panels and dashboards, must be removed only in alert definition window.
+If you try to set up an alert with some custom label, you will see this error:
+![Alert Label Error](images/Error-Alert-Label.png)
+
+Therefore, if you have a panel which is using custom label, you will see an entry like this one when setting alert:
+![Alert Label Error](images/alert-nolabel.png)
+
+Make sure to modify this alert setup removing the Legend Format entry like the following:
+![Alert Label Error](images/alert-label.png)
+
+You do not need to remove Custom Label in the Panel. Only in the alert definition you must remove it.
+
+#### Alerts and AUTO interval setting
+If you are setting up an alert from a panel which uses Auto Interval, this interval will always revert to 1 minute ([1m]). Auto intervals based on Time Range are not supported in alert setting.
+
+#### Alerts and Template vars
+Template variables are not supported in alerts. If you are setting up an alert from a panel which uses template vars, the alert will take the last chosen values.
+Alert setting from panels which are using template variables in raw mode in is not supported. In that case you must rewrite your MQL statement when defyning the alert using explicit expressions without template vars. 
