@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/google/flatbuffers v22.9.29+incompatible // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.150.0
+	github.com/grafana/grafana-plugin-sdk-go v0.155.0
 	github.com/hashicorp/go-hclog v1.3.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.5 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
