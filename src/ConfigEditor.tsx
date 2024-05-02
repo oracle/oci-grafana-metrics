@@ -60,7 +60,23 @@ export class ConfigEditor extends PureComponent<Props, State> {
           />
         </InlineField>
 
-        {options.jsonData.environment === AuthProviders.OCI_USER  && (
+        {options.jsonData.environment === AuthProviders.OCI_INSTANCE  && (
+              <>
+      <InlineField
+          label="Tenancy OCI (optional)"
+          labelWidth={28}
+          tooltip="Cross Tenancy"
+        >
+        <Input
+          className="width-30"
+          value={options.jsonData.xtenancy0}
+          onChange={onUpdateDatasourceJsonDataOption(this.props, 'xtenancy0')}
+        />
+      </InlineField>
+            </>
+        )}
+
+      {options.jsonData.environment === AuthProviders.OCI_USER  && (
               <>
         <InlineField              
               label="Tenancy Mode"
@@ -78,7 +94,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               />
             </InlineField>
             </>
-        )}
+        )}        
             <br></br>
 
 

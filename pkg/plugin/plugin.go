@@ -104,6 +104,7 @@ type OCISecuredSettings struct {
 	User_5        string `json:"user5,omitempty"`
 	Fingerprint_5 string `json:"fingerprint5,omitempty"`
 	Privkey_5     string `json:"privkey5,omitempty"`
+	Xtenancy_0    string `json:"xtenancy0,omitempty"`
 }
 
 // NewOCIConfigFile - constructor
@@ -242,6 +243,8 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.Profile_3 = nonsecdat.Profile_3
 	dat.Profile_4 = nonsecdat.Profile_4
 	dat.Profile_5 = nonsecdat.Profile_5
+
+	dat.Xtenancy_0 = nonsecdat.Xtenancy_0
 
 	v := reflect.ValueOf(dat)
 	typeOfS := v.Type()

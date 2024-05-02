@@ -29,8 +29,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	var reg common.Region
 	var testResult bool
 
-	tenv := o.settings.Environment
-	tmode := o.settings.TenancyMode
+	backend.Logger.Error("TestConnectivity", "TENANCY0", o.settings.Xtenancy_0)
 
 	if len(o.tenancyAccess) == 0 {
 		return fmt.Errorf("TestConnectivity failed: cannot read o.tenancyAccess")
@@ -39,10 +38,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	for key := range o.tenancyAccess {
 		testResult = false
 
-		if tmode == "multitenancy" && tenv == "OCI Instance" {
-			return errors.New("Multitenancy mode using instance principals is not implemented yet.")
-		}
-		tenancyocid, tenancyErr := o.tenancyAccess[key].config.TenancyOCID()
+		tenancyocid, tenancyErr := o.FetchTenancyOCID(key)
 		if tenancyErr != nil {
 			return errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 		}
@@ -111,6 +107,41 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 }
 
 /*
+Fetch TenancyOcid function
+*/
+func (o *OCIDatasource) FetchTenancyOCID(takey string) (string, error) {
+	tenv := o.settings.Environment
+	tenancymode := o.settings.TenancyMode
+	xtenancy := o.settings.Xtenancy_0
+	var tenancyocid string
+	var tenancyErr error
+
+	if tenancymode == "multitenancy" && tenv == "OCI Instance" {
+		return "", errors.New("Multitenancy mode using instance principals is not implemented yet.")
+	}
+
+	if tenancymode == "multitenancy" {
+		if len(takey) <= 0 || takey == NoTenancy {
+			o.logger.Error("Unable to get Multi-tenancy OCID")
+			return "", errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+		} else {
+			res := strings.Split(takey, "/")
+			tenancyocid = res[1]
+		}
+	} else {
+		if xtenancy != "" && tenv == "OCI Instance" {
+			tenancyocid = xtenancy
+		} else {
+			tenancyocid, tenancyErr = o.tenancyAccess[takey].config.TenancyOCID()
+			if tenancyErr != nil {
+				return "", errors.Wrap(tenancyErr, "error fetching TenancyOCID")
+			}
+		}
+	}
+	return tenancyocid, nil
+}
+
+/*
 Function generates an array  containing OCI tenancy list in the following format:
 <Label/TenancyOCID>
 */
@@ -142,27 +173,18 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 
 	var subscribedRegions []string
 	takey := o.GetTenancyAccessKey(tenancyOCID)
-	tenancymode := o.settings.TenancyMode
-	var tenancyocid string
-	var tenancyErr error
 
 	if len(takey) == 0 {
 		backend.Logger.Warn("client", "GetSubscribedRegions", "invalid takey")
 		return nil
 	}
-	if tenancymode == "multitenancy" {
-		if len(takey) <= 0 || takey == NoTenancy {
-			o.logger.Error("Unable to get Multi-tenancy OCID")
-			return nil
-		}
-		res := strings.Split(takey, "/")
-		tenancyocid = res[1]
-	} else {
-		tenancyocid, tenancyErr = o.tenancyAccess[takey].config.TenancyOCID()
-		if tenancyErr != nil {
-			return nil
-		}
+
+	tenancyocid, tenancyErr := o.FetchTenancyOCID(takey)
+	if tenancyErr != nil {
+		backend.Logger.Warn("client", "GetSubscribedRegions", tenancyErr)
+		return nil
 	}
+
 	backend.Logger.Error("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy OCID: "+*common.String(tenancyocid))
 
 	req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
@@ -209,9 +231,6 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	backend.Logger.Error("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
-	var tenancyocid string
-	var tenancyErr error
-	tenancymode := o.settings.TenancyMode
 
 	region, regErr := o.tenancyAccess[takey].config.Region()
 	if regErr != nil {
@@ -221,18 +240,10 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 	reg := common.StringToRegion(region)
 	o.tenancyAccess[takey].monitoringClient.SetRegion(string(reg))
 
-	if tenancymode == "multitenancy" {
-		if len(takey) <= 0 || takey == NoTenancy {
-			o.logger.Error("Unable to get Multi-tenancy OCID")
-			return nil
-		}
-		res := strings.Split(takey, "/")
-		tenancyocid = res[1]
-	} else {
-		tenancyocid, tenancyErr = o.tenancyAccess[takey].config.TenancyOCID()
-		if tenancyErr != nil {
-			return nil
-		}
+	tenancyocid, tenancyErr := o.FetchTenancyOCID(takey)
+	if tenancyErr != nil {
+		backend.Logger.Warn("client", "GetSubscribedRegions", tenancyErr)
+		return nil
 	}
 
 	// fetching from cache, if present
