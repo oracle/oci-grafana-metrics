@@ -347,6 +347,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		if err != nil {
 			return errors.New("error with instance principals")
 		}
+		if o.settings.Xtenancy_0 != "" {
+			log.DefaultLogger.Debug("Configuring using Cross Tenancy Instance Principal")
+			tocid, _ := configProvider.TenancyOCID()
+			log.DefaultLogger.Debug("Source Tenancy OCID: " + tocid)
+			log.DefaultLogger.Debug("Target Tenancy OCID: " + o.settings.Xtenancy_0)
+		}
 		monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
 			backend.Logger.Error("getConfigProvider", "Error with config", SingleTenancyKey)

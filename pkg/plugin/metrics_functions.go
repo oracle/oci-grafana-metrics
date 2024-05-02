@@ -29,8 +29,6 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	var reg common.Region
 	var testResult bool
 
-	backend.Logger.Error("TestConnectivity", "TENANCY0", o.settings.Xtenancy_0)
-
 	if len(o.tenancyAccess) == 0 {
 		return fmt.Errorf("TestConnectivity failed: cannot read o.tenancyAccess")
 	}
@@ -130,6 +128,10 @@ func (o *OCIDatasource) FetchTenancyOCID(takey string) (string, error) {
 		}
 	} else {
 		if xtenancy != "" && tenv == "OCI Instance" {
+			o.logger.Debug("Cross Tenancy Instance Principal detected")
+			tocid, _ := o.tenancyAccess[takey].config.TenancyOCID()
+			o.logger.Debug("Source Tenancy OCID: " + tocid)
+			o.logger.Debug("Target Tenancy OCID: " + o.settings.Xtenancy_0)
 			tenancyocid = xtenancy
 		} else {
 			tenancyocid, tenancyErr = o.tenancyAccess[takey].config.TenancyOCID()
