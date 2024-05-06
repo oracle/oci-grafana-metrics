@@ -68,13 +68,17 @@ Click **Add data source**.
 
 ![Screen Shot 2018-12-17 at 3.24.13 PM](images/Screen%20Shot%202018-12-17%20at%203.24.13%20PM.png)
 
-Choose **oracle-oci-datasource** as your data source type.
+Choose **Oracle Cloud Infrastructure Metrics** as your data source type.
 
-![Screen Shot 2018-12-17 at 3.24.24 PM](images/Screen%20Shot%202018-12-17%20at%203.24.17%20PM.png)
+![Plugin](images/choose_plugin.png)
 
 For **Authentication Provider** choose **OCI Instance** (please note that **multitenancy** mode is not yet supported with **OCI Instance** as **Authentication Provider**).
 
-![Instance Principals](images/instance_principals.png)
+![Instance Principals](images/instance_principals2.png)
+
+You do not need to configure the Cross Tenancy OCID, unless you want to use the Cross Tenancy queries using instance principals and AssumeRole capability of OCI, in case you want to redirect metrics queries to another different Tenancy which is allowed to receive queries from an endorsed tenancy.
+When the user provides a custom tenancy OCID, the plugin will use this value instead of the default tenancy taken from the instance to direct metric queries across all plugin functions (dashboard, alert, explore, and test).
+More information on AssumeRole in OCI is available here: https://blogs.oracle.com/cloud-infrastructure/post/cross-tenancy-access-assumerole-in-oci
 
 Click **Save & Test** to return to the home dashboard.
 

@@ -59,13 +59,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
             }}
           />
         </InlineField>
-
         {options.jsonData.environment === AuthProviders.OCI_INSTANCE  && (
               <>
       <InlineField
           label="Cross Tenancy ocid (optional)"
           labelWidth={28}
-          tooltip="AssumeRole compliant Cross Tenancy configuration"
+          tooltip="AssumeRole compliant Cross Tenancy configuration. Do not use if you are not using Cross Tenancy configuration"
         >
         <Input
           className="width-30"
