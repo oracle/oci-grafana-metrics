@@ -104,6 +104,7 @@ type OCISecuredSettings struct {
 	User_5        string `json:"user5,omitempty"`
 	Fingerprint_5 string `json:"fingerprint5,omitempty"`
 	Privkey_5     string `json:"privkey5,omitempty"`
+	Xtenancy_0    string `json:"xtenancy0,omitempty"`
 }
 
 // NewOCIConfigFile - constructor
@@ -243,6 +244,8 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.Profile_4 = nonsecdat.Profile_4
 	dat.Profile_5 = nonsecdat.Profile_5
 
+	dat.Xtenancy_0 = nonsecdat.Xtenancy_0
+
 	v := reflect.ValueOf(dat)
 	typeOfS := v.Type()
 	var key string
@@ -343,6 +346,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		configProvider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
 			return errors.New("error with instance principals")
+		}
+		if o.settings.Xtenancy_0 != "" {
+			log.DefaultLogger.Debug("Configuring using Cross Tenancy Instance Principal")
+			tocid, _ := configProvider.TenancyOCID()
+			log.DefaultLogger.Debug("Source Tenancy OCID: " + tocid)
+			log.DefaultLogger.Debug("Target Tenancy OCID: " + o.settings.Xtenancy_0)
 		}
 		monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {

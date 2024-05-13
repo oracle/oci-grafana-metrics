@@ -114,6 +114,8 @@ export interface OCIDataSourceOptions extends DataSourceJsonData {
   tenancyName: string; // name of the base tenancy
   environment?: string; // oci-cli, oci-instance
   tenancymode?: string; // multi-profile, cross-tenancy-policy
+  xtenancy0: string;
+
 
   addon1: boolean;
   addon2: boolean;
