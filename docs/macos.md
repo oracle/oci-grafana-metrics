@@ -117,6 +117,11 @@ Navigate to the Grafana homepage at http://localhost:3000.
 
 ## Configure Grafana
 
+You can use a manual configuration or a programatic configuration.
+In case you want to use the datasource.yaml based plugin configuration you can refers to this document: [Data source configuration using yaml file](https://github.com/oracle/oci-grafana-plugin/blob/master/docs/datasource_configuration.md)
+
+For Manual installation use the following steps:
+
 ![Screen Shot 2018-12-17 at 3.23.46 PM](images/Screen%20Shot%202018-12-17%20at%203.23.46%20PM.png)
 
 Log in with the default username `admin` and the password `admin`. You will be prompted to change your password. Click **Skip** or **Save** to continue.
