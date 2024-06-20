@@ -56,10 +56,14 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 
 		var status int
 		res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
+		status = res.RawResponse.StatusCode
 		if err != nil {
-			backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", err)
-		} else {
-			status = res.RawResponse.StatusCode
+			if status == 401 {
+				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", err)
+				return fmt.Errorf("TestConnectivity failed: error in profile %v: %v", key, err)
+			} else {
+				backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", err)
+			}
 		}
 		if status >= 200 && status < 300 {
 			backend.Logger.Error("TestConnectivity", "Config Key", key, "OK", status)
