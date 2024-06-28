@@ -66,45 +66,27 @@ If you want to debug golang backend plugin code, follow the steps below:
 
 * In your VSCode from 'Debug' menu call 'Start Debugging'
 
-  
-
 ## Documentation
-
-  
 
 Please refer to the [docs folder in this repo](https://github.com/oracle/oci-grafana-metrics/tree/master/docs)
 
-  
-
 ## Help
-
-  
+ 
 Issues and questions about this plugin can be posted [as an issue in this GitHub repository](https://github.com/oracle/oci-grafana-plugin/issues)
-
-  
 
 ## Contributing
 
-
 This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](https://github.com/oracle/oci-grafana-metrics/tree/master/CONTRIBUTING.md)
-
-  
 
 ## Security
 
-  
 Please consult the [security guide](https://github.com/oracle/oci-grafana-metrics/blob/master/SECURITY.md) for our responsible security
-
 vulnerability disclosure process.
-
-  
-
+ 
 ## License
 
-  
-Copyright (c) 2023 Oracle and/or its affiliates.
+Copyright (c) 2024 Oracle and/or its affiliates.
 
-  
 Released under the Universal Permissive License v1.0 as shown at
 
 <https://oss.oracle.com/licenses/upl/>.
