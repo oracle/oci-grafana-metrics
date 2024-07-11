@@ -6,18 +6,24 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin"
 )
 
 const OCI_PLUGIN_ID = "oci-metrics-datasource"
 
+func wrappedNewOCIDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return plugin.NewOCIDatasource(settings) // forward to original function
+}
+
 func main() {
-	if err := datasource.Manage(OCI_PLUGIN_ID, plugin.NewOCIDatasource, datasource.ManageOpts{}); err != nil {
+	if err := datasource.Manage(OCI_PLUGIN_ID, wrappedNewOCIDatasource, datasource.ManageOpts{}); err != nil {
 		backend.Logger.Error(err.Error())
 		os.Exit(1)
 	}
