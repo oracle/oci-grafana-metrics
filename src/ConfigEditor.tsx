@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useState } from 'react';
 import { Input, Select, InlineField, FieldSet, InlineSwitch, TextArea } from '@grafana/ui';
 import {
   DataSourcePluginOptionsEditorProps,
@@ -11,6 +11,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceSecureJsonDataOption,
+  SelectableValue,
 } from '@grafana/data';
 import { OCIDataSourceOptions } from './types';
 import {
@@ -42,6 +43,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
   }  
   render() {
     const { options } = this.props;
+    const SelectComponent = () => {
+      const [value, setValue] = useState<SelectableValue<number>>();
+
     return (
       <FieldSet label="Connection Details">
         <InlineField
@@ -121,6 +125,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <Select
             className="width-30"
             value={options.jsonData.region0 || ''}
+            allowCustomValue
+            onCreateOption={customValue => {
+              setValue(customValue);
+            }}            
             options={regions.map((region) => ({
               label: region,
               value: region,
@@ -657,5 +665,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
       </FieldSet>
     );
+  };
   }
 }
