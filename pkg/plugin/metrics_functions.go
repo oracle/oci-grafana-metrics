@@ -52,6 +52,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing Tenancy OCID", tenancyocid)
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: &tenancyocid,
+			Limit:         common.Int(25),
 		}
 
 		var status int
@@ -80,6 +81,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing", tocid)
 				listMetrics := monitoring.ListMetricsRequest{
 					CompartmentId: common.String(tocid),
+					Limit:         common.Int(25),
 				}
 
 				res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
