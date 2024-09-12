@@ -11,7 +11,6 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceSecureJsonDataOption,
-  SelectableValue,
 } from '@grafana/data';
 import { OCIDataSourceOptions } from './types';
 import {
@@ -43,8 +42,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
   }  
   render() {
     const { options } = this.props;
-    const SelectComponent = () => {
-      const [value, setValue] = useState<SelectableValue<number>>();
+    const [selectedRegion, setSelectedRegion] = useState('');
+
+    const setValue = (value: string) => {
+      setSelectedRegion(value);
+    };
+
+    // const SelectComponent = () => {
+    //   const [value, setValue] = useState<SelectableValue<number>>();
 
     return (
       <FieldSet label="Connection Details">
@@ -124,7 +129,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.region0 || ''}
+            value={options.jsonData.region0 || selectedRegion || ''}
             allowCustomValue
             onCreateOption={customValue => {
               setValue(customValue);
@@ -665,6 +670,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
       </FieldSet>
     );
-  };
+  // };
   }
 }
