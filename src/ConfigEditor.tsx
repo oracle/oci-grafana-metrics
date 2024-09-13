@@ -42,14 +42,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
   }  
   render() {
     const { options } = this.props;
-    const [selectedRegion, setSelectedRegion] = useState('');
+    // const [selectedRegion, setSelectedRegion] = useState('');
 
-    const setValue = (value: string) => {
-      setSelectedRegion(value);
-    };
-
-    // const SelectComponent = () => {
-    //   const [value, setValue] = useState<SelectableValue<number>>();
+    // const setValue = (value: string) => {
+    //   setSelectedRegion(value);
+    // };
 
     return (
       <FieldSet label="Connection Details">
@@ -129,11 +126,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.region0 || selectedRegion || ''}
-            allowCustomValue
-            onCreateOption={customValue => {
-              setValue(customValue);
-            }}            
+            value={options.jsonData.region0 || ''}
+            // allowCustomValue
+            // onCreateOption={customValue => {
+            //   setValue(customValue);
+            // }}            
             options={regions.map((region) => ({
               label: region,
               value: region,
