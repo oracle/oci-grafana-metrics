@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import React, { PureComponent, useState } from 'react';
+import React, { PureComponent } from 'react';
 import { Input, Select, InlineField, FieldSet, InlineSwitch, TextArea } from '@grafana/ui';
 import {
   DataSourcePluginOptionsEditorProps,
