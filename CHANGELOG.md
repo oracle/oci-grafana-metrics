@@ -1,3 +1,17 @@
+<a name="v6.0.0"></a>
+# [Security Maintenance release (v6.0.0)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.0) - 16 Sep 2024
+
+This release includes:
+
+- security patches
+- React 18 upgrades
+- Support for Grafana 11
+- new regions added
+- golang and typescript libraries updates
+
+[Changes][v6.0.0]
+
+
 <a name="v5.5.1"></a>
 # [Security Maintenance release (v5.5.1)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v5.5.1) - 03 Jul 2024
 
