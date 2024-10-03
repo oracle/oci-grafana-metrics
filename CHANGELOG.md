@@ -1,3 +1,12 @@
+<a name="v6.0.1"></a>
+# [Security Maintenance release (v6.0.1)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.1) - 03 Oct 2024
+
+This release includes:
+
+- security patches
+
+[Changes][v6.0.1]
+
 <a name="v6.0.0"></a>
 # [Security Maintenance release (v6.0.0)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.0) - 16 Sep 2024
 
