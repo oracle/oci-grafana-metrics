@@ -1,7 +1,7 @@
 {
   "name": "oci-metrics-datasource",
   "private": true,
-  "version": "6.0.1",
+  "version": "6.0.2",
   "description": "Oracle Cloud Infrastructure Metrics Data Source for Grafana",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
