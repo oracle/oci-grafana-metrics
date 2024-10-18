@@ -1,7 +1,7 @@
 {
   "name": "oci-metrics-datasource",
   "private": true,
-  "version": "6.0.1",
+  "version": "6.0.2",
   "description": "Oracle Cloud Infrastructure Metrics Data Source for Grafana",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
@@ -71,15 +71,15 @@
     "@apache-arrow/es5-cjs": "^4.0.1",
     "@babel/preset-env": "v7.24.1",
     "@emotion/css": "11.10.6",
-    "@grafana/data": "^10.4.0",
-    "@grafana/runtime": "^10.4.0",
-    "@grafana/ui": "^10.4.0",
+    "@grafana/data": "^10.4.10",
+    "@grafana/runtime": "^10.4.10",
+    "@grafana/ui": "^10.4.10",
     "eslint": "^9.6.0",
     "js-yaml": "^3.13.1",
     "lodash": "^4.17.21",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "@grafana/schema": "^10.4.0",
+    "@grafana/schema": "^10.4.10",
     "tslib": "2.5.3"
   },
   "resolutions": {

@@ -1,3 +1,13 @@
+<a name="v6.0.2"></a>
+# [Security Maintenance release (v6.0.2)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.2) - 14 Oct 2024
+
+This release includes:
+
+- security patches
+- Added new regions
+
+[Changes][v6.0.2]
+
 <a name="v6.0.1"></a>
 # [Security Maintenance release (v6.0.1)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.1) - 03 Oct 2024
 
@@ -451,7 +461,9 @@ Adds more documentation
 
 [Changes][v1.0.1]
 
-
+[v6.0.2]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.1...v6.0.2
+[v6.0.1]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.0...v6.0.1
+[v6.0.0]: https://github.com/oracle/oci-grafana-metrics/compare/v5.5.1...v6.0.0
 [v5.5.1]: https://github.com/oracle/oci-grafana-metrics/compare/v5.5.0...v5.5.1
 [v5.5.0]: https://github.com/oracle/oci-grafana-metrics/compare/v5.5.0-beta-unsigned...v5.5.0
 [v5.5.0-beta-unsigned]: https://github.com/oracle/oci-grafana-metrics/compare/v5.2.0...v5.5.0-beta-unsigned
