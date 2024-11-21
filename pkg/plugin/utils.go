@@ -258,10 +258,10 @@ func listMetricsMetadataPerRegion(
 }
 
 // clientRetryPolicy is a helper method that assembles and returns a return policy that is defined to call in every second
-// to use maximum benefit of TPS limit (which is currently 10)
+// to use maximum benefit of TPS limit (which is currently 15)
 // This retry policy will retry on (409, IncorrectState), (429, TooManyRequests) and any 5XX errors except (501, MethodNotImplemented)
 // The retry behavior is constant with 1s
-// The number of retries is 10
+// The number of retries is 15
 func clientRetryPolicy() common.RetryPolicy {
 	clientRetryOperation := func(r common.OCIOperationResponse) bool {
 		type HTTPStatus struct {
@@ -289,9 +289,9 @@ func clientRetryPolicy() common.RetryPolicy {
 		return false
 	}
 	nextCallAt := func(r common.OCIOperationResponse) time.Duration {
-		return time.Duration(1) * time.Second
+		return time.Duration(3) * time.Second
 	}
-	return common.NewRetryPolicy(uint(10), clientRetryOperation, nextCallAt)
+	return common.NewRetryPolicy(uint(15), clientRetryOperation, nextCallAt)
 }
 
 // Get the tenancy Access Key
