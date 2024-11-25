@@ -24,21 +24,37 @@ import {
   regions,
 } from './regionlist';
 
-interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {}
+interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {
+  onUpdateDatasourceJsonDataOptionSelect: (props: Props, field: string) => (option: SelectableValue<string>) => void;
+}
+
+// interface Props {
+//   options: {
+//     jsonData: {
+//       region0?: string;
+//     };
+//   };
+//   onUpdateDatasourceJsonDataOptionSelect: (props: Props, field: string) => (option: SelectableValue<string>) => void;
+// }
 
 // interface State {}
 interface State {
   regionValue0: SelectableValue<string>;
+  // customOptions: Array<SelectableValue<string>>;
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
+    // Initialize state with a default empty value
+    state: State = {
+      regionValue0: { value: '', label: '' }
+    };
   componentDidMount() {
     const { options, onOptionsChange } = this.props;
     const { jsonData } = options;
     // this.state = {
     //   regionValue0: options.jsonData.region0 || '',
     // };
-
+    
     if (!jsonData.profile0) {
       onOptionsChange({
         ...options,
@@ -50,29 +66,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   }  
 
-  // handleRegionChange = (customValue: any) => {
-  //   this.setState({ regionValue0: customValue });
-  // };
-
-  // handleRegionChange = (option: any) => {
-  //   this.setState({ regionValue0: option.value });
-  // };
   handleRegionChange = (selectedValue: SelectableValue<string>) => {
-    this.setState({ regionValue0: selectedValue });
+    if (selectedValue) {
+      this.setState({ regionValue0: selectedValue });
+    }
   };
-
+  
   render() {
     const { options } = this.props;
-    const regionValue0 = this.state?.regionValue0 || '';
-    // const [selectedRegion, setSelectedRegion] = useState('');
-    // const [regionValue0, setRegionValue0] = useState('');
-
-    // const regionValue0 = (value: string) => {
-    //   setRegionValue0(value);
-    // };
-  
-
-
+    const regionValue0 = this.state.regionValue0 || { value: '', label: '' };
 
     return (
       <FieldSet label="Connection Details">
@@ -152,12 +154,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.region0 || regionValue0.value || ''}
+            value={regionValue0}
             allowCustomValue
-            onCreateOption={customValue => {
-              const newOption: SelectableValue<string> = { label: customValue, value: customValue }; // Option 2: Create SelectableValue on creation
+            onCreateOption={(customRegion0) => {
+              const newOption: SelectableValue<string> = {
+                label: customRegion0,
+                value: customRegion0,
+              };
               this.handleRegionChange(newOption);
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(newOption);
+              this.props.onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(newOption);
             }}
             options={regions.map((region) => ({
               label: region,
@@ -165,6 +170,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               }))}
             defaultValue={options.jsonData.region0}
             onChange={(option) => {
+              // this.handleRegionChange(option);
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(option);
             }}
           />
