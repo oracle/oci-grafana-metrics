@@ -15,13 +15,11 @@ import {
 import { OCIDataSourceOptions } from './types';
 import {
   AuthProviders,
+  regions,
   TenancyChoices,
   AuthProviderOptions,
   TenancyChoiceOptions,
 } from './config.options';
-import {
-  regions,
-} from './regionlist';
 
 interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {}
 
