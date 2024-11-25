@@ -3,7 +3,7 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import React, { PureComponent } from 'react';
+import React, { PureComponent  } from 'react';
 import { Input, Select, InlineField, FieldSet, InlineSwitch, TextArea } from '@grafana/ui';
 import {
   DataSourcePluginOptionsEditorProps,
@@ -11,6 +11,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceSecureJsonDataOption,
+  SelectableValue,
 } from '@grafana/data';
 import { OCIDataSourceOptions } from './types';
 import {
@@ -25,12 +26,18 @@ import {
 
 interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {}
 
-interface State {}
+// interface State {}
+interface State {
+  regionValue0: SelectableValue<string>;
+}
 
 export class ConfigEditor extends PureComponent<Props, State> {
   componentDidMount() {
     const { options, onOptionsChange } = this.props;
     const { jsonData } = options;
+    // this.state = {
+    //   regionValue0: options.jsonData.region0 || '',
+    // };
 
     if (!jsonData.profile0) {
       onOptionsChange({
@@ -42,13 +49,30 @@ export class ConfigEditor extends PureComponent<Props, State> {
       });
     }
   }  
+
+  // handleRegionChange = (customValue: any) => {
+  //   this.setState({ regionValue0: customValue });
+  // };
+
+  // handleRegionChange = (option: any) => {
+  //   this.setState({ regionValue0: option.value });
+  // };
+  handleRegionChange = (selectedValue: SelectableValue<string>) => {
+    this.setState({ regionValue0: selectedValue });
+  };
+
   render() {
     const { options } = this.props;
+    const regionValue0 = this.state?.regionValue0 || '';
     // const [selectedRegion, setSelectedRegion] = useState('');
+    // const [regionValue0, setRegionValue0] = useState('');
 
-    // const setValue = (value: string) => {
-    //   setSelectedRegion(value);
+    // const regionValue0 = (value: string) => {
+    //   setRegionValue0(value);
     // };
+  
+
+
 
     return (
       <FieldSet label="Connection Details">
@@ -128,11 +152,13 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.region0 || ''}
-            // allowCustomValue
-            // onCreateOption={customValue => {
-            //   setValue(customValue);
-            // }}            
+            value={options.jsonData.region0 || regionValue0.value || ''}
+            allowCustomValue
+            onCreateOption={customValue => {
+              const newOption: SelectableValue<string> = { label: customValue, value: customValue }; // Option 2: Create SelectableValue on creation
+              this.handleRegionChange(newOption);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(newOption);
+            }}
             options={regions.map((region) => ({
               label: region,
               value: region,
