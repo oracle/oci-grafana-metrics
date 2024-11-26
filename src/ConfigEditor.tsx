@@ -154,7 +154,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={regionValue0}
+            value={options.jsonData.region0 || regionValue0}
             allowCustomValue
             onCreateOption={(customRegion0) => {
               const newOption: SelectableValue<string> = {
@@ -162,7 +162,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 value: customRegion0,
               };
               this.handleRegionChange(newOption);
-              this.props.onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(newOption);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(newOption);
             }}
             options={regions.map((region) => ({
               label: region,

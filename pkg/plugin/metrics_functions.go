@@ -42,6 +42,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		}
 
 		regio, regErr := o.tenancyAccess[key].config.Region()
+		backend.Logger.Error("TestConnectivity", "regio", key, "FAILED", regio)
 		if regErr != nil {
 			return errors.Wrap(regErr, "error fetching Region")
 		}
@@ -57,15 +58,22 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 
 		var status int
 		res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
-		status = res.RawResponse.StatusCode
+		if res.RawResponse == nil || res.RawResponse.ContentLength == 0 {
+			backend.Logger.Error("TestConnectivity", "Config Key", key, "error", err)
+			return fmt.Errorf("TestConnectivity failed: result is empty %v: %v", key, err)
+		} else {
+			status = res.RawResponse.StatusCode
+		}
+
 		if err != nil {
-			if status == 401 {
+			if res.RawResponse.StatusCode == 401 {
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", err)
 				return fmt.Errorf("TestConnectivity failed: error in profile %v: %v", key, err)
 			} else {
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", err)
 			}
 		}
+
 		if status >= 200 && status < 300 {
 			backend.Logger.Error("TestConnectivity", "Config Key", key, "OK", status)
 		} else {
