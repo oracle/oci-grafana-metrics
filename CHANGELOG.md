@@ -1,3 +1,12 @@
+<a name="v6.0.3"></a>
+# [Security Maintenance release (v6.0.3)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.3) - 26 Nov 2024
+
+This release includes:
+
+- Implement a retry function for SummarizeMetrics operations
+
+[Changes][v6.0.3]
+
 <a name="v6.0.2"></a>
 # [Security Maintenance release (v6.0.2)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.2) - 14 Oct 2024
 
@@ -461,6 +470,7 @@ Adds more documentation
 
 [Changes][v1.0.1]
 
+[v6.0.3]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.2...v6.0.3
 [v6.0.2]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.1...v6.0.2
 [v6.0.1]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.0...v6.0.1
 [v6.0.0]: https://github.com/oracle/oci-grafana-metrics/compare/v5.5.1...v6.0.0
