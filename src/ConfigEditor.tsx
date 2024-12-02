@@ -45,7 +45,6 @@ interface State {
   regionValue3: SelectableValue<string>;
   regionValue4: SelectableValue<string>;
   regionValue5: SelectableValue<string>;
-  regionValue6: SelectableValue<string>;
   dynamicRegion0: string[];
   dynamicRegion1: string[];
   dynamicRegion2: string[];
@@ -63,7 +62,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       regionValue3: { value: '', label: '' },
       regionValue4: { value: '', label: '' },
       regionValue5: { value: '', label: '' },
-      regionValue6: { value: '', label: '' },
       dynamicRegion0: [
         ...regions,
         ...(this.props.options.jsonData.region0
@@ -102,36 +100,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
       ], // Merge static regions and custom region5
     };
 
-  // handleRegionChange = (selectedValue: SelectableValue<string>, regionPosition: number) => {
-  //   if (selectedValue) {
-  //     switch (regionPosition) {
-  //       case 0:
-  //         this.setState({ regionValue0: selectedValue });
-  //         break;
-  //       case 1:
-  //         this.setState({ regionValue1: selectedValue });
-  //         break;
-  //       case 2:
-  //         this.setState({ regionValue2: selectedValue });
-  //         break;
-  //       case 3:
-  //         this.setState({ regionValue3: selectedValue });
-  //         break;
-  //       case 4:
-  //         this.setState({ regionValue4: selectedValue });
-  //         break;
-  //       case 5:
-  //         this.setState({ regionValue5: selectedValue });
-  //         break;
-  //       case 6:
-  //         this.setState({ regionValue6: selectedValue });
-  //         break;
-  //       default:
-  //         // Handle unexpected region positions, e.g., log an error
-  //         console.error(`Unexpected region position: ${regionPosition}`);
-  //     }
-  //   }
-  // };
+    componentDidMount() {
+      const { options, onOptionsChange } = this.props;
+      const { jsonData } = options;
+  
+      if (!jsonData.profile0) {
+        onOptionsChange({
+          ...options,
+          jsonData: {
+            ...jsonData,
+            profile0: "DEFAULT",
+          },
+        });
+      }
+    }  
+  
   
   render() {
     const { options } = this.props;
