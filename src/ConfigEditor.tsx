@@ -39,12 +39,6 @@ interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions>
 
 // interface State {}
 interface State {
-  regionValue0: SelectableValue<string>;
-  regionValue1: SelectableValue<string>;
-  regionValue2: SelectableValue<string>;
-  regionValue3: SelectableValue<string>;
-  regionValue4: SelectableValue<string>;
-  regionValue5: SelectableValue<string>;
   dynamicRegion0: string[];
   dynamicRegion1: string[];
   dynamicRegion2: string[];
@@ -56,12 +50,6 @@ interface State {
 export class ConfigEditor extends PureComponent<Props, State> {
     // Initialize state with a default empty value
     state: State = {
-      regionValue0: { value: '', label: '' },
-      regionValue1: { value: '', label: '' },
-      regionValue2: { value: '', label: '' },
-      regionValue3: { value: '', label: '' },
-      regionValue4: { value: '', label: '' },
-      regionValue5: { value: '', label: '' },
       dynamicRegion0: [
         ...regions,
         ...(this.props.options.jsonData.region0
@@ -118,14 +106,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
   
   render() {
     const { options } = this.props;
-    // const regionValue0 = this.state.regionValue0 || { value: '', label: '' };
-    // const regionValue1 = this.state.regionValue1 || { value: '', label: '' };
-    // const regionValue2 = this.state.regionValue2 || { value: '', label: '' };
-    // const regionValue3 = this.state.regionValue3 || { value: '', label: '' };
-    // const regionValue4 = this.state.regionValue4 || { value: '', label: '' };
-    // const regionValue5 = this.state.regionValue5 || { value: '', label: '' };
-    // const regionValue6 = this.state.regionValue6 || { value: '', label: '' };
-
 
     return (
       <FieldSet label="Connection Details">
@@ -208,7 +188,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             value={
               this.props.options.jsonData.region0
                 ? { label: this.props.options.jsonData.region0, value: this.props.options.jsonData.region0 }
-                : this.state.regionValue0
+                : undefined
             }
             allowCustomValue
             onCreateOption={(customRegion0) => {
@@ -316,7 +296,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             value={
               this.props.options.jsonData.region1
                 ? { label: this.props.options.jsonData.region1, value: this.props.options.jsonData.region1 }
-                : this.state.regionValue1
+                : undefined
             }
             allowCustomValue
             onCreateOption={(customRegion1) => {
@@ -433,7 +413,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             value={
               this.props.options.jsonData.region2
                 ? { label: this.props.options.jsonData.region2, value: this.props.options.jsonData.region2 }
-                : this.state.regionValue2
+                : undefined
             }
             allowCustomValue
             onCreateOption={(customRegion2) => {
@@ -550,7 +530,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               value={
                 this.props.options.jsonData.region3
                   ? { label: this.props.options.jsonData.region3, value: this.props.options.jsonData.region3 }
-                  : this.state.regionValue3
+                  : undefined
               }
               allowCustomValue
               onCreateOption={(customRegion3) => {
@@ -667,7 +647,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               value={
                 this.props.options.jsonData.region4
                   ? { label: this.props.options.jsonData.region4, value: this.props.options.jsonData.region4 }
-                  : this.state.regionValue4
+                  : undefined
               }
               allowCustomValue
               onCreateOption={(customRegion4) => {
@@ -784,7 +764,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               value={
                 this.props.options.jsonData.region5
                   ? { label: this.props.options.jsonData.region5, value: this.props.options.jsonData.region5 }
-                  : this.state.regionValue5
+                  : undefined
               }
               allowCustomValue
               onCreateOption={(customRegion5) => {
