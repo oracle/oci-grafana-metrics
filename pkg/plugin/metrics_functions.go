@@ -22,25 +22,35 @@ type metricDataBank struct {
 	resourceLabels map[string]map[string]string
 }
 
-// TestConnectivity Check the OCI data source test request in Grafana's Datasource configuration UI.
+// TestConnectivity checks the OCI data source test request in Grafana's Datasource configuration UI.
+//
+// This function tests the OCI connectivity by iterating over the tenancy access configurations,
+// fetching the tenancy OCID, and testing the monitoring client with the tenancy OCID and compartments.
+//
+// Returns an error if any of the tests fail.
 func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
+	// Log the start of the test
 	backend.Logger.Error("client", "TestConnectivity", "testing the OCI connectivity")
 
 	var reg common.Region
 	var testResult bool
 
+	// Check if the tenancy access configurations are empty
 	if len(o.tenancyAccess) == 0 {
 		return fmt.Errorf("TestConnectivity failed: cannot read o.tenancyAccess")
 	}
 
+	// Iterate over the tenancy access configurations
 	for key := range o.tenancyAccess {
 		testResult = false
 
+		// Fetch the tenancy OCID
 		tenancyocid, tenancyErr := o.FetchTenancyOCID(key)
 		if tenancyErr != nil {
 			return errors.Wrap(tenancyErr, "error fetching TenancyOCID")
 		}
 
+		// Get the region from the tenancy access configuration
 		regio, regErr := o.tenancyAccess[key].config.Region()
 		backend.Logger.Error("TestConnectivity", "regio", key, "FAILED", regio)
 		if regErr != nil {
@@ -49,7 +59,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		reg = common.StringToRegion(regio)
 		o.tenancyAccess[key].monitoringClient.SetRegion(string(reg))
 
-		// Test Tenancy OCID first
+		// Test the tenancy OCID
 		backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing Tenancy OCID", tenancyocid)
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: &tenancyocid,
@@ -65,6 +75,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 			status = res.RawResponse.StatusCode
 		}
 
+		// Handle errors
 		if err != nil {
 			if res.RawResponse.StatusCode == 401 {
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", err)
@@ -74,16 +85,20 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 			}
 		}
 
+		// Check the status code
 		if status >= 200 && status < 300 {
 			backend.Logger.Error("TestConnectivity", "Config Key", key, "OK", status)
 		} else {
 			backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
+
+			// Get the compartments
 			comparts := o.GetCompartments(ctx, tenancyocid)
 			if comparts == nil {
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", "could not read compartments")
 				return fmt.Errorf("TestConnectivity failed: cannot read Compartments in profile %v", key)
 			}
 
+			// Test each compartment
 			for _, v := range comparts {
 				tocid := v.OCID
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing", tocid)
@@ -112,10 +127,8 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 				return fmt.Errorf("listMetrics failed in each Compartments in profile %v", key)
 			}
 		}
-
 	}
 	return nil
-
 }
 
 /*
