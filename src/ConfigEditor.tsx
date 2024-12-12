@@ -28,16 +28,6 @@ interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions>
   onUpdateDatasourceJsonDataOptionSelect: (props: Props, field: string) => (option: SelectableValue<string>) => void;
 }
 
-// interface Props {
-//   options: {
-//     jsonData: {
-//       region0?: string;
-//     };
-//   };
-//   onUpdateDatasourceJsonDataOptionSelect: (props: Props, field: string) => (option: SelectableValue<string>) => void;
-// }
-
-// interface State {}
 interface State {
   dynamicRegion0: string[];
   dynamicRegion1: string[];
@@ -200,7 +190,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
               this.setState((prevState) => ({
                 dynamicRegion0: [...prevState.dynamicRegion0, customRegion0],
               }));                    
-              // this.handleRegionChange(newOption, 0);
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(newOption);
             }}
             options={this.state.dynamicRegion0.map((region) => ({
@@ -848,6 +837,5 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
       </FieldSet>
     );
-  // };
   }
 }
