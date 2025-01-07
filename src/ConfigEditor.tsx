@@ -11,6 +11,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceSecureJsonDataOption,
+  SelectableValue,
 } from '@grafana/data';
 import { OCIDataSourceOptions } from './types';
 import {
@@ -23,32 +24,78 @@ import {
   regions,
 } from './regionlist';
 
-interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {}
+interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {
+  onUpdateDatasourceJsonDataOptionSelect: (props: Props, field: string) => (option: SelectableValue<string>) => void;
+}
 
-interface State {}
+interface State {
+  dynamicRegion0: string[];
+  dynamicRegion1: string[];
+  dynamicRegion2: string[];
+  dynamicRegion3: string[];
+  dynamicRegion4: string[];
+  dynamicRegion5: string[];
+}
 
 export class ConfigEditor extends PureComponent<Props, State> {
-  componentDidMount() {
-    const { options, onOptionsChange } = this.props;
-    const { jsonData } = options;
+    // Initialize state with a default empty value
+    state: State = {
+      dynamicRegion0: [
+        ...regions,
+        ...(this.props.options.jsonData.region0
+          ? [this.props.options.jsonData.region0]
+          : []),
+      ], // Merge static regions and custom region0
+      dynamicRegion1: [
+        ...regions,
+        ...(this.props.options.jsonData.region1
+          ? [this.props.options.jsonData.region1]
+          : []),
+      ], // Merge static regions and custom region1
+      dynamicRegion2: [
+        ...regions,
+        ...(this.props.options.jsonData.region2
+          ? [this.props.options.jsonData.region2]
+          : []),
+      ], // Merge static regions and custom region2
+      dynamicRegion3: [
+        ...regions,
+        ...(this.props.options.jsonData.region3
+          ? [this.props.options.jsonData.region3]
+          : []),
+      ], // Merge static regions and custom region3
+      dynamicRegion4: [
+        ...regions,
+        ...(this.props.options.jsonData.region4
+          ? [this.props.options.jsonData.region4]
+          : []),
+      ], // Merge static regions and custom region4
+      dynamicRegion5: [
+        ...regions,
+        ...(this.props.options.jsonData.region5
+          ? [this.props.options.jsonData.region5]
+          : []),
+      ], // Merge static regions and custom region5
+    };
 
-    if (!jsonData.profile0) {
-      onOptionsChange({
-        ...options,
-        jsonData: {
-          ...jsonData,
-          profile0: "DEFAULT",
-        },
-      });
-    }
-  }  
+    componentDidMount() {
+      const { options, onOptionsChange } = this.props;
+      const { jsonData } = options;
+  
+      if (!jsonData.profile0) {
+        onOptionsChange({
+          ...options,
+          jsonData: {
+            ...jsonData,
+            profile0: "DEFAULT",
+          },
+        });
+      }
+    }  
+  
+  
   render() {
     const { options } = this.props;
-    // const [selectedRegion, setSelectedRegion] = useState('');
-
-    // const setValue = (value: string) => {
-    //   setSelectedRegion(value);
-    // };
 
     return (
       <FieldSet label="Connection Details">
@@ -128,16 +175,32 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.region0 || ''}
-            // allowCustomValue
-            // onCreateOption={customValue => {
-            //   setValue(customValue);
-            // }}            
-            options={regions.map((region) => ({
+            value={
+              this.props.options.jsonData.region0
+                ? { label: this.props.options.jsonData.region0, value: this.props.options.jsonData.region0 }
+                : undefined
+            }
+            allowCustomValue
+            onCreateOption={(customRegion0) => {
+              const newOption: SelectableValue<string> = {
+                label: customRegion0,
+                value: customRegion0,
+              };
+              // Update regions array to include the new option
+              this.setState((prevState) => ({
+                dynamicRegion0: [...prevState.dynamicRegion0, customRegion0],
+              }));                    
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(newOption);
+            }}
+            options={this.state.dynamicRegion0.map((region) => ({
               label: region,
               value: region,
-              }))}
-            defaultValue={options.jsonData.region0}
+            }))}
+            defaultValue={
+              this.props.options.jsonData.region0
+                ? { label: this.props.options.jsonData.region0, value: this.props.options.jsonData.region0 }
+                : undefined
+            }
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region0')(option);
             }}
@@ -219,12 +282,33 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.region1 || ''}
-            options={regions.map((region) => ({
+            value={
+              this.props.options.jsonData.region1
+                ? { label: this.props.options.jsonData.region1, value: this.props.options.jsonData.region1 }
+                : undefined
+            }
+            allowCustomValue
+            onCreateOption={(customRegion1) => {
+              const newOption: SelectableValue<string> = {
+                label: customRegion1,
+                value: customRegion1,
+              };
+              // Update regions array to include the new option
+              this.setState((prevState) => ({
+                dynamicRegion1: [...prevState.dynamicRegion1, customRegion1],
+              }));                    
+              // this.handleRegionChange(newOption, 1);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region1')(newOption);
+            }}
+            options={this.state.dynamicRegion1.map((region) => ({
               label: region,
               value: region,
-              }))}
-            defaultValue={options.jsonData.region1}
+            }))}
+            defaultValue={
+              this.props.options.jsonData.region1
+                ? { label: this.props.options.jsonData.region1, value: this.props.options.jsonData.region1 }
+                : undefined
+            }
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region1')(option);
             }}
@@ -315,12 +399,33 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <Select
             className="width-30"
-            value={options.jsonData.region2 || ''}
-            options={regions.map((region) => ({
+            value={
+              this.props.options.jsonData.region2
+                ? { label: this.props.options.jsonData.region2, value: this.props.options.jsonData.region2 }
+                : undefined
+            }
+            allowCustomValue
+            onCreateOption={(customRegion2) => {
+              const newOption: SelectableValue<string> = {
+                label: customRegion2,
+                value: customRegion2,
+              };
+              // Update regions array to include the new option
+              this.setState((prevState) => ({
+                dynamicRegion2: [...prevState.dynamicRegion2, customRegion2],
+              }));                    
+              // this.handleRegionChange(newOption, 2);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region2')(newOption);
+            }}
+            options={this.state.dynamicRegion2.map((region) => ({
               label: region,
               value: region,
-              }))}
-            defaultValue={options.jsonData.region2}
+            }))}
+            defaultValue={
+              this.props.options.jsonData.region2
+                ? { label: this.props.options.jsonData.region2, value: this.props.options.jsonData.region2 }
+                : undefined
+            }
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region2')(option);
             }}
@@ -409,18 +514,39 @@ export class ConfigEditor extends PureComponent<Props, State> {
           labelWidth={28}
           tooltip="Specify the Region"
         >
-          <Select
-            className="width-30"
-            value={options.jsonData.region3 || ''}
-            options={regions.map((region) => ({
-              label: region,
-              value: region,
+            <Select
+              className="width-30"
+              value={
+                this.props.options.jsonData.region3
+                  ? { label: this.props.options.jsonData.region3, value: this.props.options.jsonData.region3 }
+                  : undefined
+              }
+              allowCustomValue
+              onCreateOption={(customRegion3) => {
+                const newOption: SelectableValue<string> = {
+                  label: customRegion3,
+                  value: customRegion3,
+                };
+                // Update regions array to include the new option
+                this.setState((prevState) => ({
+                  dynamicRegion3: [...prevState.dynamicRegion3, customRegion3],
+                }));
+                // this.handleRegionChange(newOption, 3);
+                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region3')(newOption);
+              }}
+              options={this.state.dynamicRegion3.map((region) => ({
+                label: region,
+                value: region,
               }))}
-            defaultValue={options.jsonData.region3}
-            onChange={(option) => {
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region3')(option);
-            }}
-          />
+              defaultValue={
+                this.props.options.jsonData.region3
+                  ? { label: this.props.options.jsonData.region3, value: this.props.options.jsonData.region3 }
+                  : undefined
+              }
+              onChange={(option) => {
+                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region3')(option);
+              }}
+            />
         </InlineField>
         <InlineField
               label="User OCID"
@@ -505,18 +631,39 @@ export class ConfigEditor extends PureComponent<Props, State> {
           labelWidth={28}
           tooltip="Specify the Region"
         >
-          <Select
-            className="width-30"
-            value={options.jsonData.region4 || ''}
-            options={regions.map((region) => ({
-              label: region,
-              value: region,
+            <Select
+              className="width-30"
+              value={
+                this.props.options.jsonData.region4
+                  ? { label: this.props.options.jsonData.region4, value: this.props.options.jsonData.region4 }
+                  : undefined
+              }
+              allowCustomValue
+              onCreateOption={(customRegion4) => {
+                const newOption: SelectableValue<string> = {
+                  label: customRegion4,
+                  value: customRegion4,
+                };
+                // Update regions array to include the new option
+                this.setState((prevState) => ({
+                  dynamicRegion4: [...prevState.dynamicRegion4, customRegion4],
+                }));
+                // this.handleRegionChange(newOption, 4);
+                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(newOption);
+              }}
+              options={this.state.dynamicRegion4.map((region) => ({
+                label: region,
+                value: region,
               }))}
-            defaultValue={options.jsonData.region4}
-            onChange={(option) => {
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(option);
-            }}
-          />
+              defaultValue={
+                this.props.options.jsonData.region4
+                  ? { label: this.props.options.jsonData.region4, value: this.props.options.jsonData.region4 }
+                  : undefined
+              }
+              onChange={(option) => {
+                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(option);
+              }}
+            />
         </InlineField>
         <InlineField
               label="User OCID"
@@ -601,18 +748,39 @@ export class ConfigEditor extends PureComponent<Props, State> {
           labelWidth={28}
           tooltip="Specify the Region"
         >
-          <Select
-            className="width-30"
-            value={options.jsonData.region5 || ''}
-            options={regions.map((region) => ({
-              label: region,
-              value: region,
+            <Select
+              className="width-30"
+              value={
+                this.props.options.jsonData.region5
+                  ? { label: this.props.options.jsonData.region5, value: this.props.options.jsonData.region5 }
+                  : undefined
+              }
+              allowCustomValue
+              onCreateOption={(customRegion5) => {
+                const newOption: SelectableValue<string> = {
+                  label: customRegion5,
+                  value: customRegion5,
+                };
+                // Update regions array to include the new option
+                this.setState((prevState) => ({
+                  dynamicRegion5: [...prevState.dynamicRegion5, customRegion5],
+                }));
+                // this.handleRegionChange(newOption, 5);
+                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(newOption);
+              }}
+              options={this.state.dynamicRegion5.map((region) => ({
+                label: region,
+                value: region,
               }))}
-            defaultValue={options.jsonData.region5}
-            onChange={(option) => {
-              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(option);
-            }}
-          />
+              defaultValue={
+                this.props.options.jsonData.region5
+                  ? { label: this.props.options.jsonData.region5, value: this.props.options.jsonData.region5 }
+                  : undefined
+              }
+              onChange={(option) => {
+                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(option);
+              }}
+            />
         </InlineField>
         <InlineField
               label="User OCID"
@@ -669,6 +837,5 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
       </FieldSet>
     );
-  // };
   }
 }
