@@ -105,6 +105,9 @@ type OCISecuredSettings struct {
 	Fingerprint_5 string `json:"fingerprint5,omitempty"`
 	Privkey_5     string `json:"privkey5,omitempty"`
 	Xtenancy_0    string `json:"xtenancy0,omitempty"`
+
+	AlloyRegion_0 string `json:"alloyregion0,omitempty"`
+	AlloyDomain_0 string `json:"alloydomain0,omitempty"`
 }
 
 // NewOCIConfigFile - constructor
@@ -245,6 +248,14 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.Profile_5 = nonsecdat.Profile_5
 
 	dat.Xtenancy_0 = nonsecdat.Xtenancy_0
+
+	dat.AlloyRegion_0 = nonsecdat.AlloyRegion_0
+
+	backend.Logger.Error("dat.AlloyRegion_0", "profile", dat.AlloyRegion_0)
+	if dat.AlloyRegion_0 != "" {
+		backend.Logger.Error("dat.AlloyDomain_0", "profile", dat.AlloyDomain_0)
+
+	}
 
 	v := reflect.ValueOf(dat)
 	typeOfS := v.Type()

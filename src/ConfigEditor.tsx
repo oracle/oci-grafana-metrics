@@ -169,6 +169,53 @@ export class ConfigEditor extends PureComponent<Props, State> {
         />
       </InlineField>
       <InlineField
+          label="Configure Alloy Region ?"
+          labelWidth={28}
+          tooltip="Configure Alloy Region YES/NO"
+        >
+          <InlineSwitch
+            className="width-30"
+            defaultChecked={options.jsonData && options.jsonData.alloybool0 ? options.jsonData.alloybool0 : false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'alloybool0')}
+          />
+        </InlineField>
+        </FieldSet>    
+      </>
+      )}
+
+  {/* Alloy Region 1 */}
+  {options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.alloybool0 && (
+  <>
+    <InlineField
+            label="Alloy region"
+            labelWidth={28}
+            tooltip="Alloy region."
+          >
+            <Input
+              className="width-30"
+              defaultValue={options.jsonData.alloyregion0}
+              onChange={onUpdateDatasourceJsonDataOption(this.props, 'alloyregion0')}
+            />
+    </InlineField>
+    
+    <InlineField
+      label="Alloy Domain"
+      labelWidth={28}
+      tooltip="Alloy Domain"
+    >
+      <Input
+        placeholder={options.secureJsonFields.alloydomain0 ? 'configured' : ''}
+        className="width-30"
+        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'alloydomain0')}
+      />
+    </InlineField>
+  </>
+  )}
+
+  {/* Commercial Region 1 */}
+  {options.jsonData.environment === AuthProviders.OCI_USER && !options.jsonData?.alloybool0 && (
+  <>
+      <InlineField
           label="Region"
           labelWidth={28}
           tooltip="Specify the Region"
@@ -206,6 +253,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
             }}
           />
         </InlineField>
+        </>
+      )}
+  {/* DEFAULT Conf */}
+  {options.jsonData.environment === AuthProviders.OCI_USER && (
+  <>          
         <InlineField
               label="User OCID"
               labelWidth={28}
@@ -253,11 +305,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 maxLength={4096}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey0')}
                 />
-      </InlineField>
-
-      </FieldSet>
+      </InlineField>       
+      {/* </FieldSet>     */}
       </>
-      )}  
+      )}
 
 
 {/* User Principals - Multitenancy Tenancy 1*/}

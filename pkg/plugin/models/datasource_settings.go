@@ -41,6 +41,8 @@ type OCIDatasourceSettings struct {
 	Region_5  string `json:"region5,omitempty"`
 
 	Xtenancy_0 string `json:"xtenancy0,omitempty"`
+
+	AlloyRegion_0 string `json:"alloyregion0,omitempty"`
 }
 
 func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSettings) error {

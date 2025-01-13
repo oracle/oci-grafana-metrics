@@ -122,6 +122,13 @@ export interface OCIDataSourceOptions extends DataSourceJsonData {
   addon3: boolean;
   addon4: boolean;
 
+  alloybool0: boolean;
+  alloybool1: boolean;
+  alloybool2: boolean;
+  alloybool3: boolean;
+  alloybool4: boolean;
+  alloyregion0: string  
+
 	profile0: string;
 	region0: string;
 
@@ -174,6 +181,8 @@ export interface OCISecureJsonData {
 	user5: string;
 	fingerprint5: string;
 	privkey5: string;
+
+  alloydomain0: string
 }
 
 export const SetAutoInterval = (timestamp1: number, timestamp2: number): string => {
