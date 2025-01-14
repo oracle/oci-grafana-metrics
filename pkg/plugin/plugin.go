@@ -59,6 +59,7 @@ type OCIConfigFile struct {
 	fingerprint map[string]string
 	privkey     map[string]string
 	privkeypass map[string]*string
+	alloydomain map[string]string
 	logger      log.Logger
 }
 
@@ -69,6 +70,8 @@ type OCISecuredSettings struct {
 	User_0        string `json:"user0,omitempty"`
 	Privkey_0     string `json:"privkey0,omitempty"`
 	Fingerprint_0 string `json:"fingerprint0,omitempty"`
+	AlloyRegion_0 string `json:"alloyregion0,omitempty"`
+	Alloydomain_0 string `json:"alloydomain0,omitempty"`
 
 	Profile_1     string `json:"profile1,omitempty"`
 	Tenancy_1     string `json:"tenancy1,omitempty"`
@@ -76,6 +79,8 @@ type OCISecuredSettings struct {
 	User_1        string `json:"user1,omitempty"`
 	Fingerprint_1 string `json:"fingerprint1,omitempty"`
 	Privkey_1     string `json:"privkey1,omitempty"`
+	AlloyRegion_1 string `json:"alloyregion1,omitempty"`
+	Alloydomain_1 string `json:"alloydomain1,omitempty"`
 
 	Profile_2     string `json:"profile2,omitempty"`
 	Tenancy_2     string `json:"tenancy2,omitempty"`
@@ -83,6 +88,8 @@ type OCISecuredSettings struct {
 	User_2        string `json:"user2,omitempty"`
 	Fingerprint_2 string `json:"fingerprint2,omitempty"`
 	Privkey_2     string `json:"privkey2,omitempty"`
+	AlloyRegion_2 string `json:"alloyregion2,omitempty"`
+	Alloydomain_2 string `json:"alloydomain2,omitempty"`
 
 	Profile_3     string `json:"profile3,omitempty"`
 	Tenancy_3     string `json:"tenancy3,omitempty"`
@@ -90,6 +97,8 @@ type OCISecuredSettings struct {
 	User_3        string `json:"user3,omitempty"`
 	Fingerprint_3 string `json:"fingerprint3,omitempty"`
 	Privkey_3     string `json:"privkey3,omitempty"`
+	AlloyRegion_3 string `json:"alloyregion3,omitempty"`
+	Alloydomain_3 string `json:"alloydomain3,omitempty"`
 
 	Profile_4     string `json:"profile4,omitempty"`
 	Tenancy_4     string `json:"tenancy4,omitempty"`
@@ -97,6 +106,8 @@ type OCISecuredSettings struct {
 	User_4        string `json:"user4,omitempty"`
 	Fingerprint_4 string `json:"fingerprint4,omitempty"`
 	Privkey_4     string `json:"privkey4,omitempty"`
+	AlloyRegion_4 string `json:"alloyregion4,omitempty"`
+	Alloydomain_4 string `json:"alloydomain4,omitempty"`
 
 	Profile_5     string `json:"profile5,omitempty"`
 	Tenancy_5     string `json:"tenancy5,omitempty"`
@@ -104,10 +115,10 @@ type OCISecuredSettings struct {
 	User_5        string `json:"user5,omitempty"`
 	Fingerprint_5 string `json:"fingerprint5,omitempty"`
 	Privkey_5     string `json:"privkey5,omitempty"`
-	Xtenancy_0    string `json:"xtenancy0,omitempty"`
+	AlloyRegion_5 string `json:"alloyregion5,omitempty"`
+	Alloydomain_5 string `json:"alloydomain5,omitempty"`
 
-	AlloyRegion_0 string `json:"alloyregion0,omitempty"`
-	AlloyDomain_0 string `json:"alloydomain0,omitempty"`
+	Xtenancy_0 string `json:"xtenancy0,omitempty"`
 }
 
 // NewOCIConfigFile - constructor
@@ -119,6 +130,7 @@ func NewOCIConfigFile() *OCIConfigFile {
 		fingerprint: make(map[string]string),
 		privkey:     make(map[string]string),
 		privkeypass: make(map[string]*string),
+		alloydomain: make(map[string]string),
 		logger:      log.DefaultLogger,
 	}
 }
@@ -250,10 +262,15 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.Xtenancy_0 = nonsecdat.Xtenancy_0
 
 	dat.AlloyRegion_0 = nonsecdat.AlloyRegion_0
+	dat.AlloyRegion_1 = nonsecdat.AlloyRegion_1
+	dat.AlloyRegion_2 = nonsecdat.AlloyRegion_2
+	dat.AlloyRegion_3 = nonsecdat.AlloyRegion_3
+	dat.AlloyRegion_4 = nonsecdat.AlloyRegion_4
+	dat.AlloyRegion_5 = nonsecdat.AlloyRegion_5
 
 	backend.Logger.Error("dat.AlloyRegion_0", "profile", dat.AlloyRegion_0)
 	if dat.AlloyRegion_0 != "" {
-		backend.Logger.Error("dat.AlloyDomain_0", "profile", dat.AlloyDomain_0)
+		backend.Logger.Error("dat.Alloydomain_0", "profile", dat.Alloydomain_0)
 
 	}
 
@@ -285,7 +302,6 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 					} else {
 						q.region[key] = fmt.Sprintf("%v", value)
 					}
-
 				case "user":
 					q.user[key] = fmt.Sprintf("%v", value)
 				case "privkey":
@@ -294,6 +310,8 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 					q.fingerprint[key] = fmt.Sprintf("%v", value)
 				case "privkeypass":
 					q.privkeypass[key] = EmptyKeyPass
+				case "alloydomain":
+					q.alloydomain[key] = fmt.Sprintf("%v", value)
 				}
 			}
 		} else {
@@ -311,12 +329,11 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		log.DefaultLogger.Debug("Configuring using User Principals")
 		log.DefaultLogger.Debug("PerePe aslloyregion0 " + o.settings.AlloyRegion_0)
 
-		// log.DefaultLogger.Debug("PerePe aslloydomain0 " + o.settings.AlloyDomain_0)
-
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
 		}
+		log.DefaultLogger.Debug("PerePe aslloydomain0 " + q.alloydomain["DEFAULT"])
 
 		for key := range q.tenancyocid {
 			log.DefaultLogger.Debug("PerePe q.region0 " + q.region[key])
@@ -355,8 +372,9 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 			if o.settings.AlloyRegion_0 != "" {
 				log.DefaultLogger.Debug("PerePe")
-				host_alloy_telemetry := common.StringToRegion(o.settings.AlloyRegion_0).EndpointForTemplate("telemetry", "https://telemetry."+o.settings.AlloyRegion_0+".sovereigncloud.nz")
-				host_alloy_identity := common.StringToRegion(o.settings.AlloyRegion_0).EndpointForTemplate("identity", "https://identity."+o.settings.AlloyRegion_0+".sovereigncloud.nz")
+				log.DefaultLogger.Debug("PerePe reg: " + q.region[key] + "and dom: " + q.alloydomain[key])
+				host_alloy_telemetry := common.StringToRegion(o.settings.AlloyRegion_0).EndpointForTemplate("telemetry", "https://telemetry."+q.region[key]+"."+q.alloydomain[key])
+				host_alloy_identity := common.StringToRegion(q.region[key]).EndpointForTemplate("identity", "https://identity."+q.region[key]+"."+q.alloydomain[key])
 				monitoringClient.Host = host_alloy_telemetry
 				identityClient.Host = host_alloy_identity
 				log.DefaultLogger.Debug("PerePe monitoringClient.Host DUE " + monitoringClient.Host)

@@ -183,6 +183,11 @@ export interface OCISecureJsonData {
 	privkey5: string;
 
   alloydomain0: string
+  alloydomain1: string
+  alloydomain2: string
+  alloydomain3: string
+  alloydomain4: string
+  alloydomain5: string
 }
 
 export const SetAutoInterval = (timestamp1: number, timestamp2: number): string => {

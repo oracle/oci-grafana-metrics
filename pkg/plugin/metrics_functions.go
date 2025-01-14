@@ -63,7 +63,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing Tenancy OCID", tenancyocid)
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: &tenancyocid,
-			Limit:         common.Int(25),
+			// Limit:         common.Int(25),
 		}
 
 		var status int
@@ -261,13 +261,13 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 
-	region, regErr := o.tenancyAccess[takey].config.Region()
-	if regErr != nil {
-		backend.Logger.Error("client", "GetCompartments", "error retrieving default region")
-		return nil
-	}
-	reg := common.StringToRegion(region)
-	o.tenancyAccess[takey].monitoringClient.SetRegion(string(reg))
+	// region, regErr := o.tenancyAccess[takey].config.Region()
+	// if regErr != nil {
+	// 	backend.Logger.Error("client", "GetCompartments", "error retrieving default region")
+	// 	return nil
+	// }
+	// reg := common.StringToRegion(region)
+	// o.tenancyAccess[takey].monitoringClient.SetRegion(string(reg))
 
 	tenancyocid, tenancyErr := o.FetchTenancyOCID(takey)
 	if tenancyErr != nil {
@@ -427,9 +427,9 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
-		if region != "" {
-			o.tenancyAccess[takey].monitoringClient.SetRegion(region)
-		}
+		// if region != "" {
+		// 	o.tenancyAccess[takey].monitoringClient.SetRegion(region)
+		// }
 		namespaceWithMetricNames = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,
@@ -533,7 +533,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 			go func(mc monitoring.MonitoringClient, sRegion string, errCh chan error) {
 				defer wg.Done()
 
-				mc.SetRegion(sRegion)
+				// mc.SetRegion(sRegion)
 				resp, err := mc.SummarizeMetricsData(ctx, metricsDataRequest)
 				if err != nil {
 					backend.Logger.Error("client", "GetMetricDataPoints", err)
@@ -1035,9 +1035,9 @@ func (o *OCIDatasource) GetResourceGroups(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
-		if region != "" {
-			o.tenancyAccess[takey].monitoringClient.SetRegion(region)
-		}
+		// if region != "" {
+		// 	o.tenancyAccess[takey].monitoringClient.SetRegion(region)
+		// }
 
 		metricResourceGroups = listMetricsMetadataPerRegion(
 			ctx,
@@ -1142,9 +1142,9 @@ func (o *OCIDatasource) GetDimensions(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
-		if region != "" {
-			o.tenancyAccess[takey].monitoringClient.SetRegion(region)
-		}
+		// if region != "" {
+		// 	o.tenancyAccess[takey].monitoringClient.SetRegion(region)
+		// }
 
 		metricDimensions = listMetricsMetadataPerRegion(
 			ctx,
