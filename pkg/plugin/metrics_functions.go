@@ -32,7 +32,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	// Log the start of the test
 	backend.Logger.Error("client", "TestConnectivity", "testing the OCI connectivity")
 
-	var reg common.Region
+	// var reg common.Region
 	var testResult bool
 
 	// Check if the tenancy access configurations are empty
@@ -56,8 +56,8 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		if regErr != nil {
 			return errors.Wrap(regErr, "error fetching Region")
 		}
-		reg = common.StringToRegion(regio)
-		o.tenancyAccess[key].monitoringClient.SetRegion(string(reg))
+		// reg = common.StringToRegion(regio)
+		// o.tenancyAccess[key].monitoringClient.SetRegion(string(reg))
 
 		// Test the tenancy OCID
 		backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing Tenancy OCID", tenancyocid)

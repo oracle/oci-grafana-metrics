@@ -280,7 +280,12 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 				case "tenancy":
 					q.tenancyocid[key] = fmt.Sprintf("%v", value)
 				case "region":
-					q.region[key] = fmt.Sprintf("%v", value)
+					if dat.AlloyRegion_0 != "" && key == "DEFAULT" {
+						q.region[key] = dat.AlloyRegion_0
+					} else {
+						q.region[key] = fmt.Sprintf("%v", value)
+					}
+
 				case "user":
 					q.user[key] = fmt.Sprintf("%v", value)
 				case "privkey":
@@ -304,11 +309,18 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	switch environment {
 	case "local":
 		log.DefaultLogger.Debug("Configuring using User Principals")
+		log.DefaultLogger.Debug("PerePe aslloyregion0 " + o.settings.AlloyRegion_0)
+
+		// log.DefaultLogger.Debug("PerePe aslloydomain0 " + o.settings.AlloyDomain_0)
+
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
 		}
+
 		for key := range q.tenancyocid {
+			log.DefaultLogger.Debug("PerePe q.region0 " + q.region[key])
+
 			var configProvider common.ConfigurationProvider
 			if tenancymode != "multitenancy" {
 				if key != "DEFAULT" {
@@ -331,6 +343,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				return errors.New("error with client")
 			}
 			monitoringClient.Configuration.RetryPolicy = &mrp
+			log.DefaultLogger.Debug("PerePe monitoringClient.Host " + monitoringClient.Host)
 
 			// creating oci identity client
 			irp := clientRetryPolicy()
@@ -339,6 +352,18 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				return errors.New("Error creating identity client")
 			}
 			identityClient.Configuration.RetryPolicy = &irp
+
+			if o.settings.AlloyRegion_0 != "" {
+				log.DefaultLogger.Debug("PerePe")
+				host_alloy_telemetry := common.StringToRegion(o.settings.AlloyRegion_0).EndpointForTemplate("telemetry", "https://telemetry."+o.settings.AlloyRegion_0+".sovereigncloud.nz")
+				host_alloy_identity := common.StringToRegion(o.settings.AlloyRegion_0).EndpointForTemplate("identity", "https://identity."+o.settings.AlloyRegion_0+".sovereigncloud.nz")
+				monitoringClient.Host = host_alloy_telemetry
+				identityClient.Host = host_alloy_identity
+				log.DefaultLogger.Debug("PerePe monitoringClient.Host DUE " + monitoringClient.Host)
+				log.DefaultLogger.Debug("PerePe identityClient.Host DUE " + identityClient.Host)
+
+			}
+
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
 				return errors.New("error with TenancyOCID")
