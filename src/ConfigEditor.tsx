@@ -169,9 +169,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
         />
       </InlineField>
       <InlineField
-          label="Configure Alloy Region ?"
+          label="Dedicated Region"
           labelWidth={28}
-          tooltip="Configure Alloy Region YES/NO"
+          tooltip="Configure Dedicated Region YES/NO (default: NO)"
         >
           <InlineSwitch
             className="width-30"
@@ -187,9 +187,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
   {options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.alloybool0 && (
   <>
     <InlineField
-            label="Alloy region"
+            label="Region"
             labelWidth={28}
-            tooltip="Alloy region."
+            tooltip="Custom Region"
           >
             <Input
               className="width-30"
@@ -199,9 +199,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
     </InlineField>
     
     <InlineField
-      label="Alloy Domain"
+      label="Domain"
       labelWidth={28}
-      tooltip="Alloy Domain"
+      tooltip="Custom Domain"
     >
       <Input
         placeholder={options.secureJsonFields.alloydomain0 ? 'configured' : ''}

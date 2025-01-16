@@ -159,6 +159,10 @@ func listMetricsMetadataPerRegion(
 
 	fetchedMetricDetails := listMetrics(ctx, mClient, req)
 
+	for _, metric := range fetchedMetricDetails {
+		backend.Logger.Error("dio boja %+v\n", metric)
+	}
+
 	metadataWithMetricNames := map[string][]string{}
 	sortedMetadataWithMetricNames := map[string][]string{}
 	metadata := []string{}
