@@ -154,7 +154,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
 {/* User Principals - Default tenancy */}
   {options.jsonData.environment === AuthProviders.OCI_USER && (
-              <>
       <FieldSet label="DEFAULT Connection Details">
 
       <InlineField
@@ -180,7 +179,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
           />
         </InlineField>
         </FieldSet>    
-      </>
       )}
 
   {/* Custom Region 1 */}

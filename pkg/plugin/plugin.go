@@ -59,6 +59,7 @@ type OCIConfigFile struct {
 	fingerprint  map[string]string
 	privkey      map[string]string
 	privkeypass  map[string]*string
+	customregion map[string]string
 	customdomain map[string]string
 	logger       log.Logger
 }
@@ -130,6 +131,7 @@ func NewOCIConfigFile() *OCIConfigFile {
 		fingerprint:  make(map[string]string),
 		privkey:      make(map[string]string),
 		privkeypass:  make(map[string]*string),
+		customregion: make(map[string]string),
 		customdomain: make(map[string]string),
 		logger:       log.DefaultLogger,
 	}
@@ -297,12 +299,6 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 				case "tenancy":
 					q.tenancyocid[key] = fmt.Sprintf("%v", value)
 				case "region":
-					// if dat.CustomRegion_0 != "" && key == "DEFAULT" {
-					// 	q.region[key] = dat.CustomRegion_0
-					// } else {
-					q.region[key] = fmt.Sprintf("%v", value)
-					// }
-				case "customregion":
 					q.region[key] = fmt.Sprintf("%v", value)
 				case "user":
 					q.user[key] = fmt.Sprintf("%v", value)
@@ -312,6 +308,8 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 					q.fingerprint[key] = fmt.Sprintf("%v", value)
 				case "privkeypass":
 					q.privkeypass[key] = EmptyKeyPass
+				case "customregion":
+					q.customregion[key] = fmt.Sprintf("%v", value)
 				case "customdomain":
 					q.customdomain[key] = fmt.Sprintf("%v", value)
 				}
@@ -339,6 +337,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 		for key := range q.tenancyocid {
 			log.DefaultLogger.Debug("PerePe q.region0 " + q.region[key])
+			log.DefaultLogger.Debug("PerePe q.customregion0 " + q.customregion[key])
 
 			var configProvider common.ConfigurationProvider
 			if tenancymode != "multitenancy" {
@@ -352,7 +351,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			if block == nil {
 				return errors.New("Invalid Private Key in profile " + key)
 			}
-			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+			// Override region in Configuration Provider in case a Custom region is configured
+			if q.customregion[key] != "" {
+				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.customregion[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+			} else {
+				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+			}
 
 			// creating oci monitoring client
 			mrp := clientRetryPolicy()
@@ -374,9 +378,9 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 			// Override Identity and Telemetry EndPoint region and domain in case a Custom region is configured
 			if q.customdomain[key] != "" {
-				log.DefaultLogger.Debug("PerePe reg: " + q.region[key] + "and dom: " + q.customdomain[key])
-				host_custom_telemetry := common.StringToRegion(q.region[key]).EndpointForTemplate("telemetry", "https://telemetry."+q.region[key]+"."+q.customdomain[key])
-				host_custom_identity := common.StringToRegion(q.region[key]).EndpointForTemplate("identity", "https://identity."+q.region[key]+"."+q.customdomain[key])
+				log.DefaultLogger.Debug("PerePe reg: " + q.customregion[key] + "and dom: " + q.customdomain[key])
+				host_custom_telemetry := common.StringToRegion(q.customregion[key]).EndpointForTemplate("telemetry", "https://telemetry."+q.customregion[key]+"."+q.customdomain[key])
+				host_custom_identity := common.StringToRegion(q.customregion[key]).EndpointForTemplate("identity", "https://identity."+q.customregion[key]+"."+q.customdomain[key])
 				monitoringClient.Host = host_custom_telemetry
 				identityClient.Host = host_custom_identity
 				log.DefaultLogger.Debug("PerePe monitoringClient.Host After CustomDomain " + monitoringClient.Host)
