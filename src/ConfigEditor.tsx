@@ -175,16 +175,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
         >
           <InlineSwitch
             className="width-30"
-            defaultChecked={options.jsonData && options.jsonData.alloybool0 ? options.jsonData.alloybool0 : false}
-            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'alloybool0')}
+            defaultChecked={options.jsonData && options.jsonData.customregionbool0 ? options.jsonData.customregionbool0 : false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'customregionbool0')}
           />
         </InlineField>
         </FieldSet>    
       </>
       )}
 
-  {/* Alloy Region 1 */}
-  {options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.alloybool0 && (
+  {/* Custom Region 1 */}
+  {options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.customregionbool0 && (
   <>
     <InlineField
             label="Region"
@@ -213,7 +213,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   )}
 
   {/* Commercial Region 1 */}
-  {options.jsonData.environment === AuthProviders.OCI_USER && !options.jsonData?.alloybool0 && (
+  {options.jsonData.environment === AuthProviders.OCI_USER && !options.jsonData?.customregionbool0 && (
   <>
       <InlineField
           label="Region"
