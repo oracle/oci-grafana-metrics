@@ -193,8 +193,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
           >
             <Input
               className="width-30"
-              defaultValue={options.jsonData.alloyregion0}
-              onChange={onUpdateDatasourceJsonDataOption(this.props, 'alloyregion0')}
+              defaultValue={options.jsonData.customregion0}
+              onChange={onUpdateDatasourceJsonDataOption(this.props, 'customregion0')}
             />
     </InlineField>
     
@@ -204,9 +204,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
       tooltip="Custom Domain"
     >
       <Input
-        placeholder={options.secureJsonFields.alloydomain0 ? 'configured' : ''}
+        placeholder={options.secureJsonFields.customdomain0 ? 'configured' : ''}
         className="width-30"
-        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'alloydomain0')}
+        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'customdomain0')}
       />
     </InlineField>
   </>
