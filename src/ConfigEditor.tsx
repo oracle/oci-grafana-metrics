@@ -181,7 +181,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         </FieldSet>    
       )}
 
-  {/* Custom Region 1 */}
+  {/* Custom Region 0 */}
   {options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.customregionbool0 && (
   <>
     <InlineField
@@ -210,7 +210,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   </>
   )}
 
-  {/* Commercial Region 1 */}
+  {/* Commercial Region 0 */}
   {options.jsonData.environment === AuthProviders.OCI_USER && !options.jsonData?.customregionbool0 && (
   <>
       <InlineField
@@ -309,9 +309,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
       )}
 
 
+
+
 {/* User Principals - Multitenancy Tenancy 1*/}
         {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.environment === AuthProviders.OCI_USER && (
-          <>                          
       <FieldSet label="Tenancy-1 Connection Details">
       <InlineField
               label="Config Profile Name"
@@ -324,6 +325,52 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile1')}
               />
       </InlineField>
+      <InlineField
+          label="Dedicated Region"
+          labelWidth={28}
+          tooltip="Configure Dedicated Region YES/NO (default: NO)"
+        >
+          <InlineSwitch
+            className="width-30"
+            defaultChecked={options.jsonData && options.jsonData.customregionbool1 ? options.jsonData.customregionbool1 : false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'customregionbool1')}
+          />
+        </InlineField>
+        </FieldSet>    
+      )}
+
+  {/* Custom Region 1 */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.customregionbool1 && (
+  <>
+    <InlineField
+            label="Region"
+            labelWidth={28}
+            tooltip="Custom Region"
+          >
+            <Input
+              className="width-30"
+              defaultValue={options.jsonData.customregion1}
+              onChange={onUpdateDatasourceJsonDataOption(this.props, 'customregion1')}
+            />
+    </InlineField>
+    
+    <InlineField
+      label="Domain"
+      labelWidth={28}
+      tooltip="Custom Domain"
+    >
+      <Input
+        placeholder={options.secureJsonFields.customdomain1 ? 'configured' : ''}
+        className="width-30"
+        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'customdomain1')}
+      />
+    </InlineField>
+  </>
+  )}
+
+  {/* Commercial Region 1 */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.environment === AuthProviders.OCI_USER && !options.jsonData?.customregionbool1 && (
+  <>
       <InlineField
           label="Region"
           labelWidth={28}
@@ -361,8 +408,13 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={(option) => {
               onUpdateDatasourceJsonDataOptionSelect(this.props, 'region1')(option);
             }}
-          />
+          />      
         </InlineField>
+        </>
+      )}
+  {/* DEFAULT Conf */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.environment === AuthProviders.OCI_USER && (
+  <> 
         <InlineField
               label="User OCID"
               labelWidth={28}
@@ -422,9 +474,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'addon1')}
           />
         </InlineField>
-      </FieldSet>
         </>
-        )}
+        )}      
 
 {/* User Principals - Multitenancy Tenancy 2*/}
         {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon1 === true && options.jsonData.environment === AuthProviders.OCI_USER && (
