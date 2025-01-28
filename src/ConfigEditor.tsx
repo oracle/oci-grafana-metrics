@@ -842,15 +842,20 @@ export class ConfigEditor extends PureComponent<Props, State> {
         </>
         )}
 
+{/**
+ * --------------------------------------------------------------------------
+ *                          Multitenancy 4
+ * --------------------------------------------------------------------------
+ */}
 
-{/* User Principals - Multitenancy Tenancy 4*/}
+{/* User Principals - Multitenancy Tenancy 4 */}
+<br/>
 {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon3 === true && options.jsonData.environment === AuthProviders.OCI_USER && (
-          <>
       <FieldSet label="Tenancy-4 Connection Details">
       <InlineField
               label="Config Profile Name"
               labelWidth={28}
-              tooltip="Config profile name."
+              tooltip="Config profile name. Default value is DEFAULT."
             >
               <Input
                 className="width-30"
@@ -859,44 +864,95 @@ export class ConfigEditor extends PureComponent<Props, State> {
               />
       </InlineField>
       <InlineField
+          label="Dedicated Region"
+          labelWidth={28}
+          tooltip="Configure Dedicated Region YES/NO (default: NO)"
+        >
+          <InlineSwitch
+            className="width-30"
+            defaultChecked={options.jsonData && options.jsonData.customregionbool4 ? options.jsonData.customregionbool4 : false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'customregionbool4')}
+          />
+        </InlineField>
+        </FieldSet>    
+      )}
+
+  {/* Custom Region 4 */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon3 === true && options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.customregionbool4 && (
+  <>
+    <InlineField
+            label="Region"
+            labelWidth={28}
+            tooltip="Custom Region"
+          >
+            <Input
+              className="width-30"
+              defaultValue={options.jsonData.customregion4}
+              onChange={onUpdateDatasourceJsonDataOption(this.props, 'customregion4')}
+            />
+    </InlineField>
+    
+    <InlineField
+      label="Domain"
+      labelWidth={28}
+      tooltip="Custom Domain"
+    >
+      <Input
+        placeholder={options.secureJsonFields.customdomain4 ? 'configured' : ''}
+        className="width-30"
+        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'customdomain4')}
+      />
+    </InlineField>
+  </>
+  )}
+
+  {/* Commercial Region 4 */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon3 === true && options.jsonData.environment === AuthProviders.OCI_USER && !options.jsonData?.customregionbool4 && (
+  <>
+      <InlineField
           label="Region"
           labelWidth={28}
           tooltip="Specify the Region"
         >
-            <Select
-              className="width-30"
-              value={
-                this.props.options.jsonData.region4
-                  ? { label: this.props.options.jsonData.region4, value: this.props.options.jsonData.region4 }
-                  : undefined
-              }
-              allowCustomValue
-              onCreateOption={(customRegion4) => {
-                const newOption: SelectableValue<string> = {
-                  label: customRegion4,
-                  value: customRegion4,
-                };
-                // Update regions array to include the new option
-                this.setState((prevState) => ({
-                  dynamicRegion4: [...prevState.dynamicRegion4, customRegion4],
-                }));
-                // this.handleRegionChange(newOption, 4);
-                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(newOption);
-              }}
-              options={this.state.dynamicRegion4.map((region) => ({
-                label: region,
-                value: region,
-              }))}
-              defaultValue={
-                this.props.options.jsonData.region4
-                  ? { label: this.props.options.jsonData.region4, value: this.props.options.jsonData.region4 }
-                  : undefined
-              }
-              onChange={(option) => {
-                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(option);
-              }}
-            />
+          <Select
+            className="width-30"
+            value={
+              this.props.options.jsonData.region4
+                ? { label: this.props.options.jsonData.region4, value: this.props.options.jsonData.region4 }
+                : undefined
+            }
+            allowCustomValue
+            onCreateOption={(customRegion4) => {
+              const newOption: SelectableValue<string> = {
+                label: customRegion4,
+                value: customRegion4,
+              };
+              // Update regions array to include the new option
+              this.setState((prevState) => ({
+                dynamicRegion4: [...prevState.dynamicRegion4, customRegion4],
+              }));                    
+              // this.handleRegionChange(newOption, 4);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(newOption);
+            }}
+            options={this.state.dynamicRegion4.map((region) => ({
+              label: region,
+              value: region,
+            }))}
+            defaultValue={
+              this.props.options.jsonData.region4
+                ? { label: this.props.options.jsonData.region4, value: this.props.options.jsonData.region4 }
+                : undefined
+            }
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region4')(option);
+            }}
+          />      
         </InlineField>
+        </>
+      )}
+  {/* DEFAULT Conf */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon3 === true && options.jsonData.environment === AuthProviders.OCI_USER && (
+  <> 
         <InlineField
               label="User OCID"
               labelWidth={28}
@@ -941,7 +997,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 placeholder={options.secureJsonFields.privkey4 ? 'configured' : ''}
                 cols={20}
                 rows={4}
-                maxLength={4096}
+                maxLength={3096}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey4')}
                 />
       </InlineField>
@@ -956,21 +1012,24 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'addon4')}
           />
         </InlineField>
-      </FieldSet>
-          </>
+        </>
         )}
+        
 
+{/**
+ * --------------------------------------------------------------------------
+ *                          Multitenancy 5
+ * --------------------------------------------------------------------------
+ */}
 
-
-
-{/* User Principals - Multitenancy Tenancy 5*/}
+{/* User Principals - Multitenancy Tenancy 5 */}
+<br/>
 {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon4 === true && options.jsonData.environment === AuthProviders.OCI_USER && (
-          <>
       <FieldSet label="Tenancy-5 Connection Details">
       <InlineField
               label="Config Profile Name"
               labelWidth={28}
-              tooltip="Config profile name."
+              tooltip="Config profile name. Default value is DEFAULT."
             >
               <Input
                 className="width-30"
@@ -979,44 +1038,95 @@ export class ConfigEditor extends PureComponent<Props, State> {
               />
       </InlineField>
       <InlineField
+          label="Dedicated Region"
+          labelWidth={28}
+          tooltip="Configure Dedicated Region YES/NO (default: NO)"
+        >
+          <InlineSwitch
+            className="width-30"
+            defaultChecked={options.jsonData && options.jsonData.customregionbool5 ? options.jsonData.customregionbool5 : false}
+            onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'customregionbool5')}
+          />
+        </InlineField>
+        </FieldSet>    
+      )}
+
+  {/* Custom Region 5 */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon4 === true && options.jsonData.environment === AuthProviders.OCI_USER && options.jsonData?.customregionbool5 && (
+  <>
+    <InlineField
+            label="Region"
+            labelWidth={28}
+            tooltip="Custom Region"
+          >
+            <Input
+              className="width-30"
+              defaultValue={options.jsonData.customregion5}
+              onChange={onUpdateDatasourceJsonDataOption(this.props, 'customregion5')}
+            />
+    </InlineField>
+    
+    <InlineField
+      label="Domain"
+      labelWidth={28}
+      tooltip="Custom Domain"
+    >
+      <Input
+        placeholder={options.secureJsonFields.customdomain5 ? 'configured' : ''}
+        className="width-30"
+        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'customdomain5')}
+      />
+    </InlineField>
+  </>
+  )}
+
+  {/* Commercial Region 5 */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon4 === true && options.jsonData.environment === AuthProviders.OCI_USER && !options.jsonData?.customregionbool5 && (
+  <>
+      <InlineField
           label="Region"
           labelWidth={28}
           tooltip="Specify the Region"
         >
-            <Select
-              className="width-30"
-              value={
-                this.props.options.jsonData.region5
-                  ? { label: this.props.options.jsonData.region5, value: this.props.options.jsonData.region5 }
-                  : undefined
-              }
-              allowCustomValue
-              onCreateOption={(customRegion5) => {
-                const newOption: SelectableValue<string> = {
-                  label: customRegion5,
-                  value: customRegion5,
-                };
-                // Update regions array to include the new option
-                this.setState((prevState) => ({
-                  dynamicRegion5: [...prevState.dynamicRegion5, customRegion5],
-                }));
-                // this.handleRegionChange(newOption, 5);
-                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(newOption);
-              }}
-              options={this.state.dynamicRegion5.map((region) => ({
-                label: region,
-                value: region,
-              }))}
-              defaultValue={
-                this.props.options.jsonData.region5
-                  ? { label: this.props.options.jsonData.region5, value: this.props.options.jsonData.region5 }
-                  : undefined
-              }
-              onChange={(option) => {
-                onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(option);
-              }}
-            />
+          <Select
+            className="width-30"
+            value={
+              this.props.options.jsonData.region5
+                ? { label: this.props.options.jsonData.region5, value: this.props.options.jsonData.region5 }
+                : undefined
+            }
+            allowCustomValue
+            onCreateOption={(customRegion5) => {
+              const newOption: SelectableValue<string> = {
+                label: customRegion5,
+                value: customRegion5,
+              };
+              // Update regions array to include the new option
+              this.setState((prevState) => ({
+                dynamicRegion5: [...prevState.dynamicRegion5, customRegion5],
+              }));                    
+              // this.handleRegionChange(newOption, 5);
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(newOption);
+            }}
+            options={this.state.dynamicRegion5.map((region) => ({
+              label: region,
+              value: region,
+            }))}
+            defaultValue={
+              this.props.options.jsonData.region5
+                ? { label: this.props.options.jsonData.region5, value: this.props.options.jsonData.region5 }
+                : undefined
+            }
+            onChange={(option) => {
+              onUpdateDatasourceJsonDataOptionSelect(this.props, 'region5')(option);
+            }}
+          />      
         </InlineField>
+        </>
+      )}
+  {/* DEFAULT Conf */}
+  {options.jsonData.tenancymode === TenancyChoices.multitenancy && options.jsonData.addon4 === true && options.jsonData.environment === AuthProviders.OCI_USER && (
+  <> 
         <InlineField
               label="User OCID"
               labelWidth={28}
@@ -1061,12 +1171,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 placeholder={options.secureJsonFields.privkey5 ? 'configured' : ''}
                 cols={20}
                 rows={4}
-                maxLength={4096}
+                maxLength={3096}
                 onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'privkey5')}
                 />
       </InlineField>
-      </FieldSet>
-          </>
+        </>
         )}
 
 

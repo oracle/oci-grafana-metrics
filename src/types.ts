@@ -127,6 +127,8 @@ export interface OCIDataSourceOptions extends DataSourceJsonData {
   customregionbool2: boolean;
   customregionbool3: boolean;
   customregionbool4: boolean;
+  customregionbool5: boolean;
+
   customregion0: string
   customregion1: string  
   customregion2: string  
