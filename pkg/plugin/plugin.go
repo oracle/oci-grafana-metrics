@@ -270,12 +270,6 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.CustomRegion_4 = nonsecdat.CustomRegion_4
 	dat.CustomRegion_5 = nonsecdat.CustomRegion_5
 
-	backend.Logger.Error("dat.CustomRegion_0", "profile", dat.CustomRegion_0)
-	if dat.CustomRegion_0 != "" {
-		backend.Logger.Error("dat.CustomDomain_0", "profile", dat.CustomDomain_0)
-
-	}
-
 	v := reflect.ValueOf(dat)
 	typeOfS := v.Type()
 	var key string
@@ -327,17 +321,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	switch environment {
 	case "local":
 		log.DefaultLogger.Debug("Configuring using User Principals")
-		log.DefaultLogger.Debug("PerePe aslloyregion0 " + o.settings.CustomRegion_0)
 
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
 		}
-		log.DefaultLogger.Debug("PerePe aslloydomain0 " + q.customdomain["DEFAULT"])
-
 		for key := range q.tenancyocid {
-			log.DefaultLogger.Debug("PerePe q.region0 " + q.region[key])
-			log.DefaultLogger.Debug("PerePe q.customregion0 " + q.customregion[key])
 
 			var configProvider common.ConfigurationProvider
 			if tenancymode != "multitenancy" {
@@ -353,6 +342,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			// Override region in Configuration Provider in case a Custom region is configured
 			if q.customregion[key] != "" {
+				backend.Logger.Error("getConfigProvider", "CustomRegion", q.customregion[key])
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.customregion[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 			} else {
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
@@ -366,7 +356,6 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				return errors.New("error with client")
 			}
 			monitoringClient.Configuration.RetryPolicy = &mrp
-			log.DefaultLogger.Debug("PerePe monitoringClient.Host Before CustomDomain " + monitoringClient.Host)
 
 			// creating oci identity client
 			irp := clientRetryPolicy()
@@ -378,14 +367,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 
 			// Override Identity and Telemetry EndPoint region and domain in case a Custom region is configured
 			if q.customdomain[key] != "" {
-				log.DefaultLogger.Debug("PerePe reg: " + q.customregion[key] + "and dom: " + q.customdomain[key])
 				host_custom_telemetry := common.StringToRegion(q.customregion[key]).EndpointForTemplate("telemetry", "https://telemetry."+q.customregion[key]+"."+q.customdomain[key])
 				host_custom_identity := common.StringToRegion(q.customregion[key]).EndpointForTemplate("identity", "https://identity."+q.customregion[key]+"."+q.customdomain[key])
 				monitoringClient.Host = host_custom_telemetry
 				identityClient.Host = host_custom_identity
-				log.DefaultLogger.Debug("PerePe monitoringClient.Host After CustomDomain " + monitoringClient.Host)
-				log.DefaultLogger.Debug("PerePe identityClient.Host After CustomDomain " + identityClient.Host)
-
+				backend.Logger.Error("getConfigProvider", "monitoringClient.Host", monitoringClient.Host)
+				backend.Logger.Error("getConfigProvider", "identityClient.Host", identityClient.Host)
 			}
 
 			tenancyocid, err := configProvider.TenancyOCID()
