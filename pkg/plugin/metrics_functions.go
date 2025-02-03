@@ -520,8 +520,6 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 			wg.Add(1)
 			go func(mc monitoring.MonitoringClient, sRegion string, errCh chan error) {
 				defer wg.Done()
-
-				// mc.SetRegion(sRegion)
 				resp, err := mc.SummarizeMetricsData(ctx, metricsDataRequest)
 				if err != nil {
 					backend.Logger.Error("client", "GetMetricDataPoints", err)
@@ -1023,10 +1021,6 @@ func (o *OCIDatasource) GetResourceGroups(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
-		// if region != "" {
-		// 	o.tenancyAccess[takey].monitoringClient.SetRegion(region)
-		// }
-
 		metricResourceGroups = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,
@@ -1130,10 +1124,6 @@ func (o *OCIDatasource) GetDimensions(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
-		// if region != "" {
-		// 	o.tenancyAccess[takey].monitoringClient.SetRegion(region)
-		// }
-
 		metricDimensions = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,

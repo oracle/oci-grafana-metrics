@@ -371,8 +371,8 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				host_custom_identity := common.StringToRegion(q.customregion[key]).EndpointForTemplate("identity", "https://identity."+q.customregion[key]+"."+q.customdomain[key])
 				monitoringClient.Host = host_custom_telemetry
 				identityClient.Host = host_custom_identity
-				backend.Logger.Error("getConfigProvider", "monitoringClient.Host", monitoringClient.Host)
-				backend.Logger.Error("getConfigProvider", "identityClient.Host", identityClient.Host)
+				backend.Logger.Debug("getConfigProvider", "monitoringClient.Host", monitoringClient.Host)
+				backend.Logger.Debug("getConfigProvider", "identityClient.Host", identityClient.Host)
 			}
 
 			tenancyocid, err := configProvider.TenancyOCID()
