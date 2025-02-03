@@ -52,18 +52,17 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 
 		// Get the region from the tenancy access configuration
 		regio, regErr := o.tenancyAccess[key].config.Region()
-		backend.Logger.Error("TestConnectivity", "regio", key, "FAILED", regio)
 		if regErr != nil {
 			return errors.Wrap(regErr, "error fetching Region")
+		} else {
+			backend.Logger.Debug("TestConnectivity", "ConfigKey", key, "Region", regio)
 		}
-		// reg = common.StringToRegion(regio)
-		// o.tenancyAccess[key].monitoringClient.SetRegion(string(reg))
 
 		// Test the tenancy OCID
-		backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing Tenancy OCID", tenancyocid)
+		backend.Logger.Error("TestConnectivity", "ConfigKey", key, "Testing Tenancy OCID", tenancyocid)
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: &tenancyocid,
-			// Limit:         common.Int(25),
+			Limit:         common.Int(25),
 		}
 
 		var status int
