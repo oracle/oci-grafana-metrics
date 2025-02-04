@@ -53,70 +53,87 @@ type OCIDatasource struct {
 }
 
 type OCIConfigFile struct {
-	tenancyocid map[string]string
-	region      map[string]string
-	user        map[string]string
-	fingerprint map[string]string
-	privkey     map[string]string
-	privkeypass map[string]*string
-	logger      log.Logger
+	tenancyocid  map[string]string
+	region       map[string]string
+	user         map[string]string
+	fingerprint  map[string]string
+	privkey      map[string]string
+	privkeypass  map[string]*string
+	customregion map[string]string
+	customdomain map[string]string
+	logger       log.Logger
 }
 
 type OCISecuredSettings struct {
-	Profile_0     string `json:"profile0,omitempty"`
-	Tenancy_0     string `json:"tenancy0,omitempty"`
-	Region_0      string `json:"region0,omitempty"`
-	User_0        string `json:"user0,omitempty"`
-	Privkey_0     string `json:"privkey0,omitempty"`
-	Fingerprint_0 string `json:"fingerprint0,omitempty"`
+	Profile_0      string `json:"profile0,omitempty"`
+	Tenancy_0      string `json:"tenancy0,omitempty"`
+	Region_0       string `json:"region0,omitempty"`
+	User_0         string `json:"user0,omitempty"`
+	Privkey_0      string `json:"privkey0,omitempty"`
+	Fingerprint_0  string `json:"fingerprint0,omitempty"`
+	CustomRegion_0 string `json:"customregion0,omitempty"`
+	CustomDomain_0 string `json:"customdomain0,omitempty"`
 
-	Profile_1     string `json:"profile1,omitempty"`
-	Tenancy_1     string `json:"tenancy1,omitempty"`
-	Region_1      string `json:"region1,omitempty"`
-	User_1        string `json:"user1,omitempty"`
-	Fingerprint_1 string `json:"fingerprint1,omitempty"`
-	Privkey_1     string `json:"privkey1,omitempty"`
+	Profile_1      string `json:"profile1,omitempty"`
+	Tenancy_1      string `json:"tenancy1,omitempty"`
+	Region_1       string `json:"region1,omitempty"`
+	User_1         string `json:"user1,omitempty"`
+	Fingerprint_1  string `json:"fingerprint1,omitempty"`
+	Privkey_1      string `json:"privkey1,omitempty"`
+	CustomRegion_1 string `json:"customregion1,omitempty"`
+	CustomDomain_1 string `json:"customdomain1,omitempty"`
 
-	Profile_2     string `json:"profile2,omitempty"`
-	Tenancy_2     string `json:"tenancy2,omitempty"`
-	Region_2      string `json:"region2,omitempty"`
-	User_2        string `json:"user2,omitempty"`
-	Fingerprint_2 string `json:"fingerprint2,omitempty"`
-	Privkey_2     string `json:"privkey2,omitempty"`
+	Profile_2      string `json:"profile2,omitempty"`
+	Tenancy_2      string `json:"tenancy2,omitempty"`
+	Region_2       string `json:"region2,omitempty"`
+	User_2         string `json:"user2,omitempty"`
+	Fingerprint_2  string `json:"fingerprint2,omitempty"`
+	Privkey_2      string `json:"privkey2,omitempty"`
+	CustomRegion_2 string `json:"customregion2,omitempty"`
+	CustomDomain_2 string `json:"customdomain2,omitempty"`
 
-	Profile_3     string `json:"profile3,omitempty"`
-	Tenancy_3     string `json:"tenancy3,omitempty"`
-	Region_3      string `json:"region3,omitempty"`
-	User_3        string `json:"user3,omitempty"`
-	Fingerprint_3 string `json:"fingerprint3,omitempty"`
-	Privkey_3     string `json:"privkey3,omitempty"`
+	Profile_3      string `json:"profile3,omitempty"`
+	Tenancy_3      string `json:"tenancy3,omitempty"`
+	Region_3       string `json:"region3,omitempty"`
+	User_3         string `json:"user3,omitempty"`
+	Fingerprint_3  string `json:"fingerprint3,omitempty"`
+	Privkey_3      string `json:"privkey3,omitempty"`
+	CustomRegion_3 string `json:"customregion3,omitempty"`
+	CustomDomain_3 string `json:"customdomain3,omitempty"`
 
-	Profile_4     string `json:"profile4,omitempty"`
-	Tenancy_4     string `json:"tenancy4,omitempty"`
-	Region_4      string `json:"region4,omitempty"`
-	User_4        string `json:"user4,omitempty"`
-	Fingerprint_4 string `json:"fingerprint4,omitempty"`
-	Privkey_4     string `json:"privkey4,omitempty"`
+	Profile_4      string `json:"profile4,omitempty"`
+	Tenancy_4      string `json:"tenancy4,omitempty"`
+	Region_4       string `json:"region4,omitempty"`
+	User_4         string `json:"user4,omitempty"`
+	Fingerprint_4  string `json:"fingerprint4,omitempty"`
+	Privkey_4      string `json:"privkey4,omitempty"`
+	CustomRegion_4 string `json:"customregion4,omitempty"`
+	CustomDomain_4 string `json:"customdomain4,omitempty"`
 
-	Profile_5     string `json:"profile5,omitempty"`
-	Tenancy_5     string `json:"tenancy5,omitempty"`
-	Region_5      string `json:"region5,omitempty"`
-	User_5        string `json:"user5,omitempty"`
-	Fingerprint_5 string `json:"fingerprint5,omitempty"`
-	Privkey_5     string `json:"privkey5,omitempty"`
-	Xtenancy_0    string `json:"xtenancy0,omitempty"`
+	Profile_5      string `json:"profile5,omitempty"`
+	Tenancy_5      string `json:"tenancy5,omitempty"`
+	Region_5       string `json:"region5,omitempty"`
+	User_5         string `json:"user5,omitempty"`
+	Fingerprint_5  string `json:"fingerprint5,omitempty"`
+	Privkey_5      string `json:"privkey5,omitempty"`
+	CustomRegion_5 string `json:"customregion5,omitempty"`
+	CustomDomain_5 string `json:"customdomain5,omitempty"`
+
+	Xtenancy_0 string `json:"xtenancy0,omitempty"`
 }
 
 // NewOCIConfigFile - constructor
 func NewOCIConfigFile() *OCIConfigFile {
 	return &OCIConfigFile{
-		tenancyocid: make(map[string]string),
-		region:      make(map[string]string),
-		user:        make(map[string]string),
-		fingerprint: make(map[string]string),
-		privkey:     make(map[string]string),
-		privkeypass: make(map[string]*string),
-		logger:      log.DefaultLogger,
+		tenancyocid:  make(map[string]string),
+		region:       make(map[string]string),
+		user:         make(map[string]string),
+		fingerprint:  make(map[string]string),
+		privkey:      make(map[string]string),
+		privkeypass:  make(map[string]*string),
+		customregion: make(map[string]string),
+		customdomain: make(map[string]string),
+		logger:       log.DefaultLogger,
 	}
 }
 
@@ -246,6 +263,13 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 
 	dat.Xtenancy_0 = nonsecdat.Xtenancy_0
 
+	dat.CustomRegion_0 = nonsecdat.CustomRegion_0
+	dat.CustomRegion_1 = nonsecdat.CustomRegion_1
+	dat.CustomRegion_2 = nonsecdat.CustomRegion_2
+	dat.CustomRegion_3 = nonsecdat.CustomRegion_3
+	dat.CustomRegion_4 = nonsecdat.CustomRegion_4
+	dat.CustomRegion_5 = nonsecdat.CustomRegion_5
+
 	v := reflect.ValueOf(dat)
 	typeOfS := v.Type()
 	var key string
@@ -278,6 +302,10 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 					q.fingerprint[key] = fmt.Sprintf("%v", value)
 				case "privkeypass":
 					q.privkeypass[key] = EmptyKeyPass
+				case "customregion":
+					q.customregion[key] = fmt.Sprintf("%v", value)
+				case "customdomain":
+					q.customdomain[key] = fmt.Sprintf("%v", value)
 				}
 			}
 		} else {
@@ -293,11 +321,13 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 	switch environment {
 	case "local":
 		log.DefaultLogger.Debug("Configuring using User Principals")
+
 		q, err := OCILoadSettings(req)
 		if err != nil {
 			return errors.New("Error Loading config settings")
 		}
 		for key := range q.tenancyocid {
+
 			var configProvider common.ConfigurationProvider
 			if tenancymode != "multitenancy" {
 				if key != "DEFAULT" {
@@ -310,7 +340,13 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			if block == nil {
 				return errors.New("Invalid Private Key in profile " + key)
 			}
-			configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+			// Override region in Configuration Provider in case a Custom region is configured
+			if q.customregion[key] != "" {
+				backend.Logger.Error("getConfigProvider", "CustomRegion", q.customregion[key])
+				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.customregion[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+			} else {
+				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+			}
 
 			// creating oci monitoring client
 			mrp := clientRetryPolicy()
@@ -328,6 +364,17 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 				return errors.New("Error creating identity client")
 			}
 			identityClient.Configuration.RetryPolicy = &irp
+
+			// Override Identity and Telemetry EndPoint region and domain in case a Custom region is configured
+			if q.customdomain[key] != "" {
+				host_custom_telemetry := common.StringToRegion(q.customregion[key]).EndpointForTemplate("telemetry", "https://telemetry."+q.customregion[key]+"."+q.customdomain[key])
+				host_custom_identity := common.StringToRegion(q.customregion[key]).EndpointForTemplate("identity", "https://identity."+q.customregion[key]+"."+q.customdomain[key])
+				monitoringClient.Host = host_custom_telemetry
+				identityClient.Host = host_custom_identity
+				backend.Logger.Debug("getConfigProvider", "monitoringClient.Host", monitoringClient.Host)
+				backend.Logger.Debug("getConfigProvider", "identityClient.Host", identityClient.Host)
+			}
+
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
 				return errors.New("error with TenancyOCID")

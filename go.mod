@@ -8,7 +8,7 @@ require (
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/grafana/grafana-plugin-sdk-go v0.250.0
 	github.com/json-iterator/go v1.1.12
-	github.com/oracle/oci-go-sdk/v65 v65.69.0
+	github.com/oracle/oci-go-sdk/v65 v65.81.3
 	github.com/pkg/errors v0.9.1
 )
 

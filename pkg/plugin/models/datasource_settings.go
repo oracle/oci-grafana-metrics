@@ -41,6 +41,13 @@ type OCIDatasourceSettings struct {
 	Region_5  string `json:"region5,omitempty"`
 
 	Xtenancy_0 string `json:"xtenancy0,omitempty"`
+
+	CustomRegion_0 string `json:"customregion0,omitempty"`
+	CustomRegion_1 string `json:"customregion1,omitempty"`
+	CustomRegion_2 string `json:"customregion2,omitempty"`
+	CustomRegion_3 string `json:"customregion3,omitempty"`
+	CustomRegion_4 string `json:"customregion4,omitempty"`
+	CustomRegion_5 string `json:"customregion5,omitempty"`
 }
 
 func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSettings) error {

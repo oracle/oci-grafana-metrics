@@ -29,6 +29,4 @@ def fetch_and_process_regions(custom_regions=None):
 
     print("Result successfully written to './src/regionlist.ts'")
 
-# Example usage with custom regions
-custom_regions = ['ap-silverdale-1', 'ap-hobsonville-1']  # Define custom regions here
-fetch_and_process_regions(custom_regions)
+fetch_and_process_regions()
