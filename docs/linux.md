@@ -141,7 +141,7 @@ Choose **oracle-oci-datasource** as your data source type.
 
 This Configuration screen will appear:
 
-![Datasource Empty](images/datasource_conf_empty.png)
+![Datasource Empty](images/standard_region.png)
 
 For **Authentication Provider** choose **OCI User** and then choose between **single** or **multitenancy** as **Tenancy mode**.
 You can then choose between two different modes as **Tenancy mode**:
@@ -153,6 +153,7 @@ You can then choose between two different modes as **Tenancy mode**:
 If you selected **single** as **Tenancy mode** then fill in the following credentials:
 
 * `Profile Name` - A user-defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
+* `Dedicated Region` (optional) - Toggle this to configure dedicated Region and domain such as in DRCC/Alloy Regions (not needed for commercial or sovereign regions)
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
 * `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
