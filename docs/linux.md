@@ -153,15 +153,24 @@ You can then choose between two different modes as **Tenancy mode**:
 If you selected **single** as **Tenancy mode** then fill in the following credentials:
 
 * `Profile Name` - A user-defined name for this profile. In **single** mode this is automatically set to **DEFAULT** and cannot be modified.
+* `Dedicated Region` (optional) - Toggle this to configure dedicated Region and domain such as in DRCC/Alloy Regions (not needed for commercial or sovereign regions)
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
-* `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).* 
+* `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
 * `Fingerprint` - Fingerprint for the key pair being used. To get the value, see [**Getting Fingerprint Configuration value**](#getting-the-private-api-key-and-fingerprint).
 * `Private Key` - The contents of the private key file. To get the value, see [**Getting Private Key Configuration value**](#getting-the-private-api-key-and-fingerprint).
 
 The configured data source will look like the following:
 
-![Datasource Filled](images/datasource_conf_filled.png)
+![Datasource Filled](images/standard_region.png)
+
+In case you are setting up a Dedicated Region, you must provide these two additional information:
+* `Region` - The DRCC/Alloy region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
+* `Domain` - The first level domain of your Dedicated Region.
+
+The configured data source with dedicated Region and domain configuration will look like the following:
+
+![Datasource Filled](images/custom_region.png)
 
 Click **Save & Test** to return to the home dashboard.
 
@@ -170,6 +179,7 @@ Click **Save & Test** to return to the home dashboard.
 If you selected **multi** as **Tenancy mode** then fill in the following credentials for **each Tenancy you want to configure (up to 5 additional tenancies)**:
 
 * `Profile Name` - A user-defined name for this profile. The first Tenancy is automatically set to **DEFAULT** and cannot be modified. You need to specify a custom and unique Profile name for each of the additional tenancies.
+* `Dedicated Region` (optional) - Toggle this to configure dedicated Region and domain such as in DRCC/Alloy Regions (not needed for commercial or sovereign regions)
 * `Region` - An OCI region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
 * `User OCID` - OCID of the user calling the API. To get the value, see [**Getting User OCID Configuration value**](#getting-the-user-OCID).
 * `Tenancy OCID` - OCID of your tenancy. To get the value, see [**Getting Tenancy OCID Configuration value**](#getting-the-tenancy-OCID).
@@ -182,9 +192,17 @@ The configured data source will look like the following:
 
 ![Datasource Filled](images/multitenancy_configured.png)
 
+In case you are setting up a Dedicated Region, you must provide these two additional information:
+* `Region` - The DRCC/Alloy region. To get the value, see [**Getting Region Configuration value**](#getting-the-region).
+* `Domain` - The first level domain of your Dedicated Region.
+
+The configured data source with dedicated Region and domain configuration will look like the following:
+
+![Datasource Filled](images/custom_region.png)
+
 Click **Save & Test** to return to the home dashboard.
 
-After the initial configuration, you can modify the datasource by adding a new tenancy by clicking on the **Add another Tenancy** checkbox and filling in the additional credentials. You can also disable a configured Tenancy leaving ampty the **Profile Name** as in this screenshot:
+After the initial configuration, you can modify the datasource by adding a new tenancy by clicking on the **Add another Tenancy** checkbox and filling in the additional credentials. You can also disable a configured Tenancy leaving empty the **Profile Name** as in this screenshot:
 
 ![Tenancy Disabled](images/multi_disable.png)
 

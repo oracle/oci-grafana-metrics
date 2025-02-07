@@ -1,3 +1,16 @@
+<a name="v6.5.0"></a>
+# [Security Maintenance release (v6.5.0)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.0) - 05 Feb 2025
+
+This release includes:
+
+- Support for DRCC/Alloy Regions
+- Updated version of OCI Golang libraries to v65.81.3
+- Some bug fixes
+- Support for Custom Region
+
+[Changes][v6.5.0]
+
+
 <a name="v6.0.3"></a>
 # [Security Maintenance release (v6.0.3)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.0.3) - 26 Nov 2024
 
