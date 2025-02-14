@@ -255,7 +255,7 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/iampolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/identity/20160918/Compartment/ListCompartments
-func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string) []models.OCIResource {
+func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string, scope ...string) []models.OCIResource {
 	backend.Logger.Error("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
@@ -282,6 +282,14 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 		return nil
 	}
 
+	var effectiveScope identity.ListCompartmentsAccessLevelEnum
+
+	if len(scope) > 0 {
+		effectiveScope = identity.ListCompartmentsAccessLevelAccessible
+	} else {
+		effectiveScope = identity.ListCompartmentsAccessLevelAny
+	}
+
 	compartments := map[string]string{}
 
 	// calling the api if not present in cache
@@ -294,7 +302,7 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string)
 			identity.ListCompartmentsRequest{
 				CompartmentId:          common.String(tenancyocid),
 				Page:                   &pageHeader,
-				AccessLevel:            identity.ListCompartmentsAccessLevelAny,
+				AccessLevel:            effectiveScope,
 				LifecycleState:         identity.CompartmentLifecycleStateActive,
 				CompartmentIdInSubtree: common.Bool(true),
 			})
