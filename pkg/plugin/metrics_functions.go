@@ -91,7 +91,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 			backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
 
 			// Get the compartments
-			comparts := o.GetCompartments(ctx, tenancyocid, "restrict")
+			comparts := o.GetCompartments(ctx, tenancyocid, true)
 			if comparts == nil {
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", "could not read compartments")
 				return fmt.Errorf("TestConnectivity failed: cannot read Compartments in profile %v", key)
@@ -255,7 +255,7 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/iampolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/identity/20160918/Compartment/ListCompartments
-func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string, scope ...string) []models.OCIResource {
+func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string, includeAccessibleOnly ...bool) []models.OCIResource {
 	backend.Logger.Error("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
@@ -284,8 +284,9 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string,
 
 	var effectiveScope identity.ListCompartmentsAccessLevelEnum
 
-	if len(scope) > 0 {
+	if len(includeAccessibleOnly) == 1 && includeAccessibleOnly[0] {
 		effectiveScope = identity.ListCompartmentsAccessLevelAccessible
+		backend.Logger.Error("client", "GetCompartments", "using ListCompartmentsAccessLevelAccessible")
 	} else {
 		effectiveScope = identity.ListCompartmentsAccessLevelAny
 	}
