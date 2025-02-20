@@ -91,7 +91,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 			backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
 
 			// Get the compartments
-			comparts := o.GetCompartments(ctx, tenancyocid)
+			comparts := o.GetCompartments(ctx, tenancyocid, "restrict")
 			if comparts == nil {
 				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", "could not read compartments")
 				return fmt.Errorf("TestConnectivity failed: cannot read Compartments in profile %v", key)
