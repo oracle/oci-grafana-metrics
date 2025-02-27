@@ -37,6 +37,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
+    
   }
  
 
@@ -71,49 +72,40 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
+    const interpolatedQ = _.cloneDeep(query);
 
     const TimeStart = parseInt(getTemplateSrv().replace("${__from}"), 10)
     const TimeEnd  = parseInt(getTemplateSrv().replace("${__to}"), 10)
-    if (this.isVariable(query.interval)) {
-      query.interval = templateSrv.replace(query.interval, scopedVars);
+    if (this.isVariable(interpolatedQ.interval)) {
+      interpolatedQ.interval = templateSrv.replace(interpolatedQ.interval, scopedVars);
     }
-    if (query.interval === QueryPlaceholder.Interval || query.interval === "auto" || query.interval === undefined){
-      query.interval = SetAutoInterval(TimeStart, TimeEnd);
+    if (interpolatedQ.interval === QueryPlaceholder.Interval || interpolatedQ.interval === "auto" || interpolatedQ.interval === undefined){
+      interpolatedQ.interval = SetAutoInterval(TimeStart, TimeEnd);
     }
-    query.region = templateSrv.replace(query.region, scopedVars);
-    query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
-    query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);
-    query.namespace = templateSrv.replace(query.namespace, scopedVars);
-    query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
-    query.metric = templateSrv.replace(query.metric, scopedVars);
-    query.queryTextRaw = templateSrv.replace(query.queryTextRaw, scopedVars);
+    interpolatedQ.region = templateSrv.replace(interpolatedQ.region, scopedVars);
+    interpolatedQ.tenancy = templateSrv.replace(interpolatedQ.tenancy, scopedVars);
+    interpolatedQ.compartment = templateSrv.replace(interpolatedQ.compartment, scopedVars, this.compartmentFormatter);
+    interpolatedQ.namespace = templateSrv.replace(interpolatedQ.namespace, scopedVars);
+    interpolatedQ.resourcegroup = templateSrv.replace(interpolatedQ.resourcegroup, scopedVars);
+    interpolatedQ.metric = templateSrv.replace(interpolatedQ.metric, scopedVars);
+    interpolatedQ.queryTextRaw = templateSrv.replace(interpolatedQ.queryTextRaw, scopedVars);
 
-    if (query.dimensionValues) {
-      for (let i = 0; i < query.dimensionValues.length; i++) {
-        query.dimensionValues[i] = templateSrv.replace(query.dimensionValues[i], scopedVars);
-      }
-    }
-    if (query.tenancy) {
-      query.tenancy = templateSrv.replace(query.tenancy, scopedVars);
-    }
-    if (query.compartment) {
-      query.compartment = templateSrv.replace(query.compartment, scopedVars, this.compartmentFormatter);
-    }
-    if (query.resourcegroup) {
-      query.resourcegroup = templateSrv.replace(query.resourcegroup, scopedVars);
+    if (interpolatedQ.dimensionValues) {
+      interpolatedQ.dimensionValues = interpolatedQ.dimensionValues.map(value => 
+        templateSrv.replace(value, scopedVars)
+      );
     }
     
-    const queryModel = new QueryModel(query, getTemplateSrv());
+    const queryModel = new QueryModel(interpolatedQ, getTemplateSrv());
     if (queryModel.isQueryReady()) {
-      if (query.rawQuery === false && query.queryTextRaw !== '') {
-        query.queryTextRaw = templateSrv.replace(query.queryTextRaw, scopedVars);
-        query.queryText = queryModel.buildQuery(String(query.queryTextRaw));
+      if (interpolatedQ.rawQuery === false && interpolatedQ.queryTextRaw !== '') {
+        interpolatedQ.queryTextRaw = templateSrv.replace(interpolatedQ.queryTextRaw, scopedVars);
+        interpolatedQ.queryText = queryModel.buildQuery(String(interpolatedQ.queryTextRaw));
       } else {
-        query.queryText = queryModel.buildQuery(String(query.metric));
+        interpolatedQ.queryText = queryModel.buildQuery(String(interpolatedQ.metric));
       }
-      
     }    
-    return query;
+    return interpolatedQ;
   }
 
 
