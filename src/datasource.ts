@@ -90,9 +90,18 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     interpolatedQ.queryTextRaw = templateSrv.replace(interpolatedQ.queryTextRaw, scopedVars);
 
     if (interpolatedQ.dimensionValues) {
-      interpolatedQ.dimensionValues = interpolatedQ.dimensionValues.map(value => 
-        templateSrv.replace(value, scopedVars)
-      );
+      for (let i = 0; i < interpolatedQ.dimensionValues.length; i++) {
+        interpolatedQ.dimensionValues[i] = templateSrv.replace(interpolatedQ.dimensionValues[i], scopedVars);
+      }
+    }
+    if (interpolatedQ.tenancy) {
+      interpolatedQ.tenancy = templateSrv.replace(interpolatedQ.tenancy, scopedVars);
+    }
+    if (interpolatedQ.compartment) {
+      interpolatedQ.compartment = templateSrv.replace(interpolatedQ.compartment, scopedVars, this.compartmentFormatter);
+    }
+    if (interpolatedQ.resourcegroup) {
+      interpolatedQ.resourcegroup = templateSrv.replace(interpolatedQ.resourcegroup, scopedVars);
     }
     
     const queryModel = new QueryModel(interpolatedQ, getTemplateSrv());
@@ -103,6 +112,7 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       } else {
         interpolatedQ.queryText = queryModel.buildQuery(String(interpolatedQ.metric));
       }
+      
     }    
     return interpolatedQ;
   }
