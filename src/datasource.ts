@@ -37,7 +37,6 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
-    
   }
  
 
