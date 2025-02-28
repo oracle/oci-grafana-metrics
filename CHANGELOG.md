@@ -1,5 +1,15 @@
+<a name="v6.5.1"></a>
+# [Security Maintenance release (v6.5.1)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.1) - 28 Feb 2025
+
+This release includes:
+
+- Bug fix for issue #311 
+- Bug fix for issue #309
+
+[Changes][v6.5.1]
+
 <a name="v6.5.0"></a>
-# [Security Maintenance release (v6.5.0)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.0) - 05 Feb 2025
+# [Support for DRCC/Alloy Regions (v6.5.0)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.0) - 05 Feb 2025
 
 This release includes:
 
