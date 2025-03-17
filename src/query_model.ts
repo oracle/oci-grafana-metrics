@@ -13,6 +13,16 @@ export default class QueryModel {
   scopedVars: any;
   refId?: string;
 
+  /**
+   * Constructor for the QueryModel class.
+   *
+   * Initializes a new QueryModel instance based on the provided OCIQuery, template service, and scoped variables.
+   * It sets default values for various properties of the OCIQuery if they are not provided.
+   *
+   * @param {OCIQuery} incomingQuery - The initial query object.
+   * @param {TemplateSrv} [templateSrv] - The template service for variable interpolation.
+   * @param {ScopedVars} [scopedVars] - The scoped variables.
+   */
   constructor(incomingQuery: OCIQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = incomingQuery;
     this.templateSrv = templateSrv;
@@ -51,6 +61,13 @@ export default class QueryModel {
     }
   }
 
+  /**
+   * Checks if the query is ready to be built.
+   *
+   * A query is considered ready if it has values for tenancy, region, namespace, and either a metric or a raw query text.
+   *
+   * @returns {boolean} True if the query is ready, false otherwise.
+   */
   isQueryReady() {
     // check if the query is ready to be built
     if (
@@ -65,7 +82,16 @@ export default class QueryModel {
     return true;
   }
 
-
+  /**
+   * Builds the MQL query string based on the current query parameters.
+   *
+   * This function constructs a MQL query string for retrieving metrics data from OCI.
+   * It handles different query modes (raw vs. builder), and formats the query accordingly,
+   * adding interval, dimensions, group by options, and statistics.
+   *
+   * @param {string} queryText - The base query text (usually the metric name).
+   * @returns {string} The fully constructed MQL query string.
+   */
   buildQuery(queryText: string) { 
     //check if a raw query is being used
     if (this.target.queryTextRaw !== '' && this.target.rawQuery === false) {

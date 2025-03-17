@@ -37,6 +37,13 @@ interface State {
   dynamicRegion5: string[];
 }
 
+/**
+ * ConfigEditor Component
+ *
+ * This component provides an editor for configuring the OCI data source. It allows
+ * users to specify connection details, authentication providers, tenancy modes, regions,
+ * and credentials for accessing OCI resources.
+ */
 export class ConfigEditor extends PureComponent<Props, State> {
     // Initialize state with a default empty value
     state: State = {
@@ -93,7 +100,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
       }
     }  
   
-  
+  /**
+ * render
+ *
+ * This method renders the UI for the ConfigEditor component. It creates the form
+ * for configuring the OCI data source, including fields for:
+ * - Authentication Provider
+ * - Cross Tenancy OCID (optional)
+ * - Tenancy Mode (Single/Multi-tenancy)
+ * - Config Profile Names
+ * - Dedicated/Custom Regions
+ * - Commercial Regions
+ * - User OCIDs, Tenancy OCIDs, Fingerprints, and Private Keys.
+ *
+ * @returns {JSX.Element} The JSX to render.
+ */
   render() {
     const { options } = this.props;
 
