@@ -20,7 +20,6 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/monitoring"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
-	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
 // Prepare format to decode SecureJson
@@ -36,6 +35,17 @@ func transcode(in, out interface{}) {
 // Links:
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+// listMetrics retrieves a list of metrics from the monitoring client.
+// It handles pagination internally to fetch all available metrics.
+//
+// Parameters:
+//   - ctx: The context for the request, used for cancellation and timeouts.
+//   - mClient: The monitoring client used to make the request.
+//   - req: The request object containing parameters for listing metrics.
+//
+// Returns:
+//
+//	A slice of monitoring.Metric containing all fetched metrics.
 func listMetrics(ctx context.Context, mClient monitoring.MonitoringClient, req monitoring.ListMetricsRequest) []monitoring.Metric {
 	var fetchedMetricDetails []monitoring.Metric
 	var pageHeader string
@@ -62,7 +72,21 @@ func listMetrics(ctx context.Context, mClient monitoring.MonitoringClient, req m
 	return fetchedMetricDetails
 }
 
-// listMetricsMetadataFromAllRegion will list either metric names with namespaces or dimensions for all subscribed region
+// listMetricsMetadataFromAllRegion fetches and aggregates metrics metadata from all specified regions.
+// It concurrently calls the listMetricsMetadataPerRegion function for each region, except for the constant ALL_REGION,
+// and stores the results in a sync.Map. After all goroutines complete, it merges the results into a single map.
+//
+// Parameters:
+// - ctx: The context for controlling cancellation and deadlines.
+// - ci: The cache instance to use for caching metadata.
+// - cacheKey: The key to use for caching metadata.
+// - fetchFor: A string indicating what data is being fetched for.
+// - mClient: The MonitoringClient instance to use for making API calls.
+// - req: The ListMetricsRequest to use for fetching metrics metadata.
+// - regions: A slice of strings representing the regions to fetch metrics metadata from.
+//
+// Returns:
+// A map where the keys are metric namespaces or dimension keys, and the values are slices of metric names or dimension values.
 func listMetricsMetadataFromAllRegion(
 	ctx context.Context,
 	ci *ristretto.Cache,
@@ -135,7 +159,21 @@ func listMetricsMetadataFromAllRegion(
 	return metricsMetadata
 }
 
-// listMetricsMetadataPerRegion will list all either dimensions or metrics either per namespaces or per resurce groups for a particular region
+// listMetricsMetadataPerRegion fetches and returns metrics metadata for a specified region.
+// It first checks if the data is available in the cache and returns it if found.
+// If not, it fetches the data from the monitoring client, processes it, and stores it in the cache.
+//
+// Parameters:
+//   - ctx: The context for controlling the request lifetime.
+//   - ci: The cache instance to store and retrieve cached data.
+//   - cacheKey: The key used to store and retrieve data from the cache.
+//   - fetchFor: The type of metadata to fetch (namespace, resource group, dimension, or label dimension).
+//   - mClient: The monitoring client used to fetch metrics data.
+//   - req: The request object containing parameters for the metrics API call.
+//
+// Returns:
+//
+//	A map where the keys are metadata keys (e.g., namespaces, resource groups, dimensions) and the values are lists of metric names or dimension values.
 func listMetricsMetadataPerRegion(
 	ctx context.Context,
 	ci *ristretto.Cache,
@@ -292,7 +330,18 @@ func clientRetryPolicy() common.RetryPolicy {
 	return common.NewRetryPolicy(uint(15), clientRetryOperation, nextCallAt)
 }
 
-// Get the tenancy Access Key
+// GetTenancyAccessKey retrieves the tenancy access key based on the tenancy mode.
+// If the tenancy mode is "multitenancy", it uses the provided tenancyOCID as the key.
+// Otherwise, it uses a predefined SingleTenancyKey.
+// It logs an error if the key is invalid and returns an empty string in that case.
+//
+// Parameters:
+//
+//	tenancyOCID (string): The OCID of the tenancy.
+//
+// Returns:
+//
+//	string: The tenancy access key if valid, otherwise an empty string.
 func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 
 	var takey string
@@ -315,184 +364,201 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 	return takey
 }
 
-// till here
+// ************************************************************************************************
+// ***************  FUNCTIONS HERE WILL BE USED FOR FUTURE TAG IMPLEMENTATION	 ******************
+// *************************************************************************************************
+// func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string][]string, map[string]map[string]struct{}) {
+// 	backend.Logger.Error("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
 
-func fetchResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string][]string, map[string]map[string]struct{}) {
-	backend.Logger.Error("client.utils", "fetchResourceTags", "Fetching the tags from the oci call response")
+// 	// holds key: value1, value2, for UI
+// 	resourceTags := map[string][]string{}
+// 	// holds key.value: map of resourceIDs, for caching
+// 	resourceIDsPerTag := map[string]map[string]struct{}{}
 
-	// holds key: value1, value2, for UI
-	resourceTags := map[string][]string{}
-	// holds key.value: map of resourceIDs, for caching
-	resourceIDsPerTag := map[string]map[string]struct{}{}
+// 	for _, item := range resourceTagsResponse {
+// 		resourceID := item.ResourceID
+// 		isExist := false
+// 		// for defined tags
+// 		for rootTagKey, rootTags := range item.DefinedTags {
+// 			if rootTagKey == "Oracle-Tags" {
+// 				continue
+// 			}
 
-	for _, item := range resourceTagsResponse {
-		resourceID := item.ResourceID
-		isExist := false
-		// for defined tags
-		for rootTagKey, rootTags := range item.DefinedTags {
-			if rootTagKey == "Oracle-Tags" {
-				continue
-			}
+// 			for k, v := range rootTags {
+// 				if k == "Created_On" {
+// 					continue
+// 				}
+// 				tagValue := v.(string)
 
-			for k, v := range rootTags {
-				if k == "Created_On" {
-					continue
-				}
-				tagValue := v.(string)
+// 				key := strings.Join([]string{rootTagKey, k}, ".")
+// 				cacheKey := strings.Join([]string{key, tagValue}, "=")
 
-				key := strings.Join([]string{rootTagKey, k}, ".")
-				cacheKey := strings.Join([]string{key, tagValue}, "=")
+// 				// for UI
+// 				existingVs, ok := resourceTags[key]
+// 				if ok {
+// 					for _, oldv := range existingVs {
+// 						if oldv == tagValue {
+// 							isExist = true
+// 							break
+// 						}
+// 					}
+// 					if !isExist {
+// 						resourceTags[key] = append(resourceTags[key], tagValue)
+// 					}
 
-				// for UI
-				existingVs, ok := resourceTags[key]
-				if ok {
-					for _, oldv := range existingVs {
-						if oldv == tagValue {
-							isExist = true
-							break
-						}
-					}
-					if !isExist {
-						resourceTags[key] = append(resourceTags[key], tagValue)
-					}
+// 					isExist = false
+// 				} else {
+// 					resourceTags[key] = []string{tagValue}
+// 				}
 
-					isExist = false
-				} else {
-					resourceTags[key] = []string{tagValue}
-				}
+// 				// for caching
+// 				if len(resourceIDsPerTag[cacheKey]) == 0 {
+// 					resourceIDsPerTag[cacheKey] = map[string]struct{}{
+// 						resourceID: {},
+// 					}
+// 				} else {
+// 					resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+// 				}
+// 			}
+// 		}
 
-				// for caching
-				if len(resourceIDsPerTag[cacheKey]) == 0 {
-					resourceIDsPerTag[cacheKey] = map[string]struct{}{
-						resourceID: {},
-					}
-				} else {
-					resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
-				}
-			}
-		}
+// 		isExist = false
+// 		// for freeform tags
+// 		for k, v := range item.FreeFormTags {
+// 			cacheKey := strings.Join([]string{k, v}, "=")
 
-		isExist = false
-		// for freeform tags
-		for k, v := range item.FreeFormTags {
-			cacheKey := strings.Join([]string{k, v}, "=")
+// 			// for UI
+// 			existingVs, ok := resourceTags[k]
+// 			if ok {
+// 				for _, oldv := range existingVs {
+// 					if v == oldv {
+// 						isExist = true
+// 						break
+// 					}
+// 				}
+// 				if !isExist {
+// 					resourceTags[k] = append(resourceTags[k], v)
+// 				}
 
-			// for UI
-			existingVs, ok := resourceTags[k]
-			if ok {
-				for _, oldv := range existingVs {
-					if v == oldv {
-						isExist = true
-						break
-					}
-				}
-				if !isExist {
-					resourceTags[k] = append(resourceTags[k], v)
-				}
+// 				isExist = false
+// 			} else {
+// 				resourceTags[k] = []string{v}
+// 			}
 
-				isExist = false
-			} else {
-				resourceTags[k] = []string{v}
-			}
+// 			// for caching
+// 			if len(resourceIDsPerTag[cacheKey]) == 0 {
+// 				resourceIDsPerTag[cacheKey] = map[string]struct{}{
+// 					resourceID: {},
+// 				}
+// 			} else {
+// 				resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+// 			}
+// 		}
+// 	}
 
-			// for caching
-			if len(resourceIDsPerTag[cacheKey]) == 0 {
-				resourceIDsPerTag[cacheKey] = map[string]struct{}{
-					resourceID: {},
-				}
-			} else {
-				resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
-			}
-		}
-	}
+// 	return resourceTags, resourceIDsPerTag
+// }
 
-	return resourceTags, resourceIDsPerTag
-}
+// func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string]map[string]struct{}, map[string]map[string]struct{}) {
+// 	backend.Logger.Error("client.utils", "collectResourceTags", "Fetching the tags from the oci call response")
 
-func collectResourceTags(resourceTagsResponse []models.OCIResourceTagsResponse) (map[string]map[string]struct{}, map[string]map[string]struct{}) {
-	backend.Logger.Error("client.utils", "collectResourceTags", "Fetching the tags from the oci call response")
+// 	// holds key: map of values, for UI
+// 	resourceTags := map[string]map[string]struct{}{}
+// 	// holds key.value: map of resourceIDs, for caching
+// 	resourceIDsPerTag := map[string]map[string]struct{}{}
 
-	// holds key: map of values, for UI
-	resourceTags := map[string]map[string]struct{}{}
-	// holds key.value: map of resourceIDs, for caching
-	resourceIDsPerTag := map[string]map[string]struct{}{}
+// 	for _, item := range resourceTagsResponse {
+// 		resourceID := item.ResourceID
+// 		// for defined tags
+// 		for rootTagKey, rootTags := range item.DefinedTags {
+// 			if rootTagKey == "Oracle-Tags" {
+// 				continue
+// 			}
 
-	for _, item := range resourceTagsResponse {
-		resourceID := item.ResourceID
-		// for defined tags
-		for rootTagKey, rootTags := range item.DefinedTags {
-			if rootTagKey == "Oracle-Tags" {
-				continue
-			}
+// 			for k, v := range rootTags {
+// 				if k == "Created_On" {
+// 					continue
+// 				}
+// 				tagValue := v.(string)
 
-			for k, v := range rootTags {
-				if k == "Created_On" {
-					continue
-				}
-				tagValue := v.(string)
+// 				tagKey := strings.Join([]string{rootTagKey, k}, ".")
+// 				cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
 
-				tagKey := strings.Join([]string{rootTagKey, k}, ".")
-				cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
+// 				// for UI
+// 				// when the tag key is already present
+// 				if existingVs, ok := resourceTags[tagKey]; ok {
+// 					// if the value for the tag key is not added before
+// 					if _, found := existingVs[tagValue]; !found {
+// 						existingVs[tagValue] = struct{}{}
+// 						resourceTags[tagKey] = existingVs
+// 					}
+// 				} else {
+// 					// when the tag key is added for first time
+// 					resourceTags[tagKey] = map[string]struct{}{
+// 						tagValue: {},
+// 					}
+// 				}
 
-				// for UI
-				// when the tag key is already present
-				if existingVs, ok := resourceTags[tagKey]; ok {
-					// if the value for the tag key is not added before
-					if _, found := existingVs[tagValue]; !found {
-						existingVs[tagValue] = struct{}{}
-						resourceTags[tagKey] = existingVs
-					}
-				} else {
-					// when the tag key is added for first time
-					resourceTags[tagKey] = map[string]struct{}{
-						tagValue: {},
-					}
-				}
+// 				// for caching
+// 				if len(resourceIDsPerTag[cacheKey]) == 0 {
+// 					resourceIDsPerTag[cacheKey] = map[string]struct{}{
+// 						resourceID: {},
+// 					}
+// 				} else {
+// 					resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+// 				}
+// 			}
+// 		}
 
-				// for caching
-				if len(resourceIDsPerTag[cacheKey]) == 0 {
-					resourceIDsPerTag[cacheKey] = map[string]struct{}{
-						resourceID: {},
-					}
-				} else {
-					resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
-				}
-			}
-		}
+// 		// for freeform tags
+// 		for tagKey, tagValue := range item.FreeFormTags {
+// 			cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
 
-		// for freeform tags
-		for tagKey, tagValue := range item.FreeFormTags {
-			cacheKey := strings.Join([]string{tagKey, tagValue}, "=")
+// 			// for UI
+// 			// when the tag key is already present
+// 			if existingVs, ok := resourceTags[tagKey]; ok {
+// 				// if the value for the tag key is not added before
+// 				if _, found := existingVs[tagValue]; !found {
+// 					existingVs[tagValue] = struct{}{}
+// 					resourceTags[tagKey] = existingVs
+// 				}
+// 			} else {
+// 				// when the tag key is added for first time
+// 				resourceTags[tagKey] = map[string]struct{}{
+// 					tagValue: {},
+// 				}
+// 			}
 
-			// for UI
-			// when the tag key is already present
-			if existingVs, ok := resourceTags[tagKey]; ok {
-				// if the value for the tag key is not added before
-				if _, found := existingVs[tagValue]; !found {
-					existingVs[tagValue] = struct{}{}
-					resourceTags[tagKey] = existingVs
-				}
-			} else {
-				// when the tag key is added for first time
-				resourceTags[tagKey] = map[string]struct{}{
-					tagValue: {},
-				}
-			}
+// 			// for caching
+// 			if len(resourceIDsPerTag[cacheKey]) == 0 {
+// 				resourceIDsPerTag[cacheKey] = map[string]struct{}{
+// 					resourceID: {},
+// 				}
+// 			} else {
+// 				resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
+// 			}
+// 		}
+// 	}
 
-			// for caching
-			if len(resourceIDsPerTag[cacheKey]) == 0 {
-				resourceIDsPerTag[cacheKey] = map[string]struct{}{
-					resourceID: {},
-				}
-			} else {
-				resourceIDsPerTag[cacheKey][resourceID] = struct{}{}
-			}
-		}
-	}
+// 	return resourceTags, resourceIDsPerTag
+// }
+// ************************************************************************************************
+// ************************************************************************************************
 
-	return resourceTags, resourceIDsPerTag
-}
-
+// getUniqueIdsForLabels extracts unique identifiers for given labels based on the provided namespace, dimensions, and metric.
+// It returns the resource ID, dimension key, resource display name, monitor ID, and a boolean indicating if the resource ID was found.
+//
+// Parameters:
+//   - namespace: A string representing the namespace.
+//   - dimensions: A map of string keys to string values representing the dimensions.
+//   - metric: A string representing the metric.
+//
+// Returns:
+//   - resourceID: A string representing the unique resource ID.
+//   - dimensionKey: A string representing the key used to find the resource ID.
+//   - resourceDisplayName: A string representing the display name of the resource.
+//   - monitorID: A string representing the monitor ID (if applicable).
+//   - found: A boolean indicating if the resource ID was found in the dimensions.
 func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metric string) (string, string, string, string, bool) {
 	monitorID := ""
 	var resourceID string // Declare resourceID
@@ -571,6 +637,17 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 	return resourceID, dimensionKey, resourceDisplayName, monitorID, found
 }
 
+// addSelectedValuesLabels adds key-value pairs from selectedValuePairs to existingLabels.
+// Each element in selectedValuePairs is expected to be in the format "key=value".
+// The keys are converted to lowercase and the values are stripped of surrounding quotes.
+// If existingLabels is nil, a new map is created.
+//
+// Parameters:
+// - existingLabels: map[string]string - The map to which the key-value pairs will be added.
+// - selectedValuePairs: []string - A slice of strings containing key-value pairs in the format "key=value".
+//
+// Returns:
+// - map[string]string - The updated map with the added key-value pairs.
 func addSelectedValuesLabels(existingLabels map[string]string, selectedValuePairs []string) map[string]string {
 	if existingLabels == nil {
 		existingLabels = map[string]string{}
