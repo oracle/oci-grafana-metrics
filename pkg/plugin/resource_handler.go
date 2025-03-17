@@ -14,20 +14,27 @@ import (
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
+// rootRequest defines the structure for requests that only require a tenancy OCID.
 type rootRequest struct {
 	Tenancy string `json:"tenancy"`
 }
+
+// namespaceMetricRequest defines the structure for requests that require tenancy, compartment, and region.
 type namespaceMetricRequest struct {
 	Tenancy     string `json:"tenancy"`
 	Compartment string `json:"compartment"`
 	Region      string `json:"region"`
 }
+
+// resourceGroupRequest defines the structure for requests that require tenancy, compartment, region, and namespace.
 type resourceGroupRequest struct {
 	Tenancy     string `json:"tenancy"`
 	Compartment string `json:"compartment"`
 	Region      string `json:"region"`
 	Namespace   string `json:"namespace"`
 }
+
+// dimensionRequest defines the structure for requests that require tenancy, compartment, region, namespace, and metric name.
 type dimensionRequest struct {
 	Tenancy     string `json:"tenancy"`
 	Compartment string `json:"compartment"`
@@ -35,6 +42,8 @@ type dimensionRequest struct {
 	Namespace   string `json:"namespace"`
 	MetricName  string `json:"metric_name"`
 }
+
+// tagRequest defines the structure for requests that require tenancy, compartment, compartment name, region, and namespace.
 type tagRequest struct {
 	Tenancy         string `json:"tenancy"`
 	Compartment     string `json:"compartment"`
@@ -43,6 +52,10 @@ type tagRequest struct {
 	Namespace       string `json:"namespace"`
 }
 
+// registerRoutes registers the HTTP handlers for various resource endpoints.
+//
+// Parameters:
+//   - mux: A pointer to an http.ServeMux to which the handlers will be registered.
 func (ocidx *OCIDatasource) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/tenancies", ocidx.GetTenanciesHandler)
 	mux.HandleFunc("/regions", ocidx.GetRegionsHandler)
@@ -53,18 +66,31 @@ func (ocidx *OCIDatasource) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/tags", ocidx.GetTagsHandler)
 }
 
+// GetTenanciesHandler handles requests to list tenancies.
+//
+// It expects a GET request and returns a list of tenancies.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - req: *http.Request representing the incoming request.
 func (ocidx *OCIDatasource) GetTenanciesHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
 		return
 	}
 
-	// ts := ocidx.clients.GetTenancies(req.Context())
 	ts := ocidx.GetTenancies(req.Context())
 
 	writeResponse(rw, ts)
 }
 
+// GetRegionsHandler handles requests to list subscribed regions for a tenancy.
+//
+// It expects a POST request with a JSON body containing the tenancy OCID.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - req: *http.Request representing the incoming request.
 func (ocidx *OCIDatasource) GetRegionsHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
@@ -87,6 +113,13 @@ func (ocidx *OCIDatasource) GetRegionsHandler(rw http.ResponseWriter, req *http.
 	writeResponse(rw, regions)
 }
 
+// GetCompartmentsHandler handles requests to list compartments for a tenancy.
+//
+// It expects a POST request with a JSON body containing the tenancy OCID.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - req: *http.Request representing the incoming request.
 func (ocidx *OCIDatasource) GetCompartmentsHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
@@ -109,6 +142,13 @@ func (ocidx *OCIDatasource) GetCompartmentsHandler(rw http.ResponseWriter, req *
 	writeResponse(rw, compartments)
 }
 
+// GetNamespacesHandler handles requests to list namespaces with metric names for a tenancy, compartment, and region.
+//
+// It expects a POST request with a JSON body containing the tenancy OCID, compartment OCID, and region.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - req: *http.Request representing the incoming request.
 func (ocidx *OCIDatasource) GetNamespacesHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
@@ -127,6 +167,13 @@ func (ocidx *OCIDatasource) GetNamespacesHandler(rw http.ResponseWriter, req *ht
 	writeResponse(rw, namespaces)
 }
 
+// GetResourceGroupHandler handles requests to list resource groups with metric names for a tenancy, compartment, region, and namespace.
+//
+// It expects a POST request with a JSON body containing the tenancy OCID, compartment OCID, region, and namespace.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - req: *http.Request representing the incoming request.
 func (ocidx *OCIDatasource) GetResourceGroupHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
@@ -145,6 +192,13 @@ func (ocidx *OCIDatasource) GetResourceGroupHandler(rw http.ResponseWriter, req 
 	writeResponse(rw, rgs)
 }
 
+// GetDimensionsHandler handles requests to list dimensions for a metric in a tenancy, compartment, region, and namespace.
+//
+// It expects a POST request with a JSON body containing the tenancy OCID, compartment OCID, region, namespace, and metric name.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - req: *http.Request representing the incoming request.
 func (ocidx *OCIDatasource) GetDimensionsHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
@@ -163,6 +217,13 @@ func (ocidx *OCIDatasource) GetDimensionsHandler(rw http.ResponseWriter, req *ht
 	writeResponse(rw, dimensions)
 }
 
+// GetTagsHandler handles requests to list tags for a tenancy, compartment, compartment name, region, and namespace.
+//
+// It expects a POST request with a JSON body containing the tenancy OCID, compartment OCID, compartment name, region, and namespace.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - req: *http.Request representing the incoming request.
 func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
@@ -181,6 +242,11 @@ func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Req
 	writeResponse(rw, tags)
 }
 
+// writeResponse writes a successful JSON response to the http.ResponseWriter.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - resp: interface{} representing the data to be written as JSON.
 func writeResponse(rw http.ResponseWriter, resp interface{}) {
 	resultJson, err := jsoniter.Marshal(resp)
 	if err != nil {
@@ -191,6 +257,13 @@ func writeResponse(rw http.ResponseWriter, resp interface{}) {
 	sendResponse(rw, http.StatusOK, resultJson)
 }
 
+// respondWithError writes an error JSON response to the http.ResponseWriter.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - statusCode: int representing the HTTP status code.
+//   - message: string representing the error message.
+//   - err: error representing the error object (optional).
 func respondWithError(rw http.ResponseWriter, statusCode int, message string, err error) {
 	httpError := &models.HttpError{
 		Message:    message,
@@ -210,6 +283,12 @@ func respondWithError(rw http.ResponseWriter, statusCode int, message string, er
 	sendResponse(rw, statusCode, response)
 }
 
+// sendResponse writes the given JSON response to the http.ResponseWriter with the specified status code.
+//
+// Parameters:
+//   - rw: http.ResponseWriter to write the response.
+//   - statusCode: int representing the HTTP status code.
+//   - response: []byte representing the JSON response.
 func sendResponse(rw http.ResponseWriter, statusCode int, response []byte) {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(statusCode)
