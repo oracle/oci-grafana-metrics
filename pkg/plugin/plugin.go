@@ -146,6 +146,15 @@ func NewOCIDatasourceConstructor() *OCIDatasource {
 	}
 }
 
+// NewOCIDatasource creates a new instance of OCIDatasource with the provided settings.
+// It initializes the datasource settings, config provider, and cache, and registers HTTP routes.
+//
+// Parameters:
+//   - settings: backend.DataSourceInstanceSettings containing the datasource instance settings.
+//
+// Returns:
+//   - instancemgmt.Instance: The created OCIDatasource instance.
+//   - error: An error if the datasource creation fails.
 func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	backend.Logger.Error("plugin", "NewOCIDatasource", settings.ID)
 
@@ -187,6 +196,24 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 	return o, nil
 }
 
+/**
+* @Description: QueryData handles the execution of multiple queries against the OCI Monitoring service.
+* It iterates through each query in the request, executes it, and aggregates the results into a single response.
+*
+* @param ctx context.Context - The context for the request.
+* @param req *backend.QueryDataRequest - The request containing multiple queries to be executed.
+*
+* @return *backend.QueryDataResponse - The response containing the results of all executed queries.
+* @return error - An error if any of the queries fail or if there are issues processing the request.
+*
+* @Details:
+*   - This function is the main entry point for handling data queries in the OCI Grafana plugin.
+*   - It receives a `QueryDataRequest` which can contain multiple individual queries.
+*   - For each query, it calls the `query` method to execute the query and get the result.
+*   - The results are then stored in a `QueryDataResponse` using the query's `RefID` as the key.
+*   - The function logs the start of the query process and returns the aggregated response.
+*   - If any error occurs during the query execution, it will be returned.
+ */
 func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	backend.Logger.Error("plugin", "QueryData", req.PluginContext.DataSourceInstanceSettings.Name)
 
@@ -226,7 +253,29 @@ func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealt
 	}, nil
 }
 
-// OCILoadSettings will read and validate Settings from the DataSourceConfig
+// OCILoadSettings loads and processes OCI configuration settings from the Grafana data source instance settings.
+//
+// This function handles both secured and non-secured settings, merging them to create a comprehensive
+// configuration. It iterates through the settings, parsing and storing them in an OCIConfigFile struct.
+// The function supports multiple tenancy configurations, identified by a numerical suffix (e.g., _0, _1).
+//
+// Parameters:
+//   - req: backend.DataSourceInstanceSettings - The data source instance settings from Grafana.
+//
+// Returns:
+//   - *OCIConfigFile: A pointer to an OCIConfigFile struct containing the parsed settings.
+//   - error: An error if any issues occur during the loading or parsing of settings.
+//
+// The function performs the following steps:
+//  1. Initializes an empty OCIConfigFile.
+//  2. Unmarshals the JSON data from req.JSONData into both OCISecuredSettings and OCIDatasourceSettings structs.
+//  3. Merges the non-secured settings into the secured settings.
+//  4. Iterates through the fields of the OCISecuredSettings struct using reflection.
+//  5. Parses the field names to determine the tenancy block index (e.g., _0, _1).
+//  6. Extracts the profile name as the key for each tenancy block.
+//  7. Stores the tenancy OCID, region, user, private key, fingerprint, private key passphrase, custom region, and custom domain in the OCIConfigFile.
+//  8. Handles multiple tenancy blocks by incrementing the TenancySettingsBlock index.
+//  9. Returns the populated OCIConfigFile or an error if any step fails.
 func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
 
@@ -316,6 +365,32 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	return q, nil
 }
 
+// getConfigProvider configures the OCI Datasource based on the provided environment and tenancy mode.
+// It supports two environments: "local" and "OCI Instance".
+//
+// Parameters:
+// - environment: A string indicating the environment type ("local" or "OCI Instance").
+// - tenancymode: A string indicating the tenancy mode ("singletenancy" or "multitenancy").
+// - req: A backend.DataSourceInstanceSettings object containing the datasource instance settings.
+//
+// Returns:
+// - error: An error object if any issues occur during configuration, otherwise nil.
+//
+// For "local" environment:
+// - Configures using User Principals.
+// - Loads settings from the provided datasource instance settings.
+// - Validates the PEM key.
+// - Creates OCI monitoring and identity clients with retry policies.
+// - Overrides region and domain if a custom region is configured.
+// - Stores the configured clients in the tenancyAccess map.
+//
+// For "OCI Instance" environment:
+// - Configures using Instance Principal.
+// - Optionally configures cross-tenancy instance principal if Xtenancy_0 is set.
+// - Creates OCI monitoring and identity clients.
+// - Stores the configured clients in the tenancyAccess map.
+//
+// Returns an error if the environment type is unknown or if any configuration steps fail.
 func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string, req backend.DataSourceInstanceSettings) error {
 
 	switch environment {

@@ -21,28 +21,91 @@ export const metricsQueryRegex = /^metrics\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+
 export const dimensionQueryRegex = /^dimensions\(\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*,\s*(\".+\"|\'.+\'|\$\w+)\s*(?:,\s*(\".+\"|\'.+\'|\$\w+)\s*)?\)/;
 export const windowsAndResolutionRegex = /^[0-9]+[mhs]$/;
 
+/**
+ * Enum representing the different OCI resource API calls.
+ */
 export enum OCIResourceCall {
+  /**
+   * Represents the API call to list tenancies.
+   */
   Tenancies = 'tenancies',
+  /**
+   * Represents the API call to get tenancy mode information.
+   */
   TenancyMode = 'tenancymode',
+  /**
+   * Represents the API call to list compartments.
+   */
   Compartments = 'compartments',
+  /**
+   * Represents the API call to list regions.
+   */
   Regions = 'regions',
+  /**
+   * Represents the API call to list namespaces.
+   */
   Namespaces = 'namespaces',
+  /**
+   * Represents the API call to list resource groups.
+   */
   ResourceGroups = 'resourcegroups',
+  /**
+   * Represents the API call to list dimensions.
+   */
   Dimensions = 'dimensions',
+  /**
+   * Represents the API call to list tags.
+   */
   Tags = 'tags',
 }
 
+/**
+ * Enum representing the different query placeholders used in the UI.
+ */
 export enum QueryPlaceholder {
+  /**
+   * Placeholder for the tenancy selection.
+   */
   Tenancy = 'select tenancy',
+  /**
+   * Placeholder for the compartment selection.
+   */
   Compartment = 'select compartment',
+  /**
+   * Placeholder for the region selection.
+   */
   Region = 'select region',
+  /**
+   * Placeholder for the namespace selection.
+   */
   Namespace = 'select namespace',
+  /**
+   * Placeholder for the metric selection.
+   */
   Metric = 'select metric',
+  /**
+   * Placeholder for the aggregation selection.
+   */
   Aggregation = 'select aggregation',
+  /**
+   * Placeholder for the interval selection.
+   */
   Interval = 'select interval',
+  /**
+   * Placeholder for the dimensions selection.
+   */
   Dimensions = 'select dimensions (optional)',
+  /**
+   * Placeholder for the resource group selection.
+   */
   ResourceGroup = 'select resource group',
+  /**
+   * Placeholder for the tags selection.
+   */
   Tags = 'select resource tags (optional)',
+  /**
+   * Placeholder for the group by selection.
+   */
   GroupBy = 'select option (optional)',
 }
 
@@ -54,6 +117,9 @@ export interface DimensionPart {
 
 export type UnitOptions = 'minute' | 'hour';
 
+/**
+ * Represents the available interval options for metric queries.
+ */
 export const IntervalOptions = [
   { label: '1 minute', value: '[1m]', description: 'Maximum time range supported: 7 days' },
   { label: '5 minutes', value: '[5m]', description: 'Maximum time range supported: 30 days' },
@@ -62,6 +128,9 @@ export const IntervalOptions = [
   { label: 'Auto', value: 'auto', description: 'Automatic selection of interval accordingly to OCI default' },
 ];
 
+/**
+ * Represents the available aggregation options for metric queries.
+ */
 export const AggregationOptions = [
   { label: 'average', value: 'avg()' },
   { label: 'count', value: 'count()' },
@@ -76,32 +145,101 @@ export const AggregationOptions = [
   { label: 'P99.9', value: 'percentile(.999)' },
 ];
 
+/**
+ * Represents the available group by options for metric queries.
+ */
 export const GroupOptions = [
   { label: 'group by', value: 'groupBy()' },
   { label: 'grouping', value: 'grouping()' },
 ];
 
+/**
+ * Represents the structure of an OCI query.
+ */
 export interface OCIQuery extends DataQuery {
+  /**
+   * The MQL query text.
+   */
   queryText?: string;
+  /**
+   * The raw MQL query text entered by the user, before any processing.
+   */
   queryTextRaw?: string;
+  /**
+   * Indicates whether the query is a raw query or a builder-based query.
+   */
   rawQuery: boolean;
+  /**
+   * The name of the tenancy.
+   */
   tenancyName: string;
+  /**
+   * The OCID of the tenancy.
+   */
   tenancy: string;
+  /**
+   * The tenancy mode (e.g., single-tenancy, multi-tenancy).
+   */
   tenancymode: string;
+  /**
+   * The name of the compartment.
+   */
   compartmentName?: string;
+  /**
+   * The OCID of the compartment.
+   */
   compartment?: string;
+  /**
+   * The region to query.
+   */
   region?: string;
+  /**
+   * The namespace to query.
+   */
   namespace?: string;
+  /**
+   * A list of metric names.
+   */
   metricNames?: string[];
+  /**
+   * The metric to query.
+   */
   metric?: string;
+  /**
+   * The query interval.
+   */
   interval: string;
+  /**
+   * The label of the interval.
+   */
   intervalLabel?: string;
+  /**
+   * The legend format for the query.
+   */
   legendFormat?: string;
+  /**
+   * The aggregation statistic to use.
+   */
   statistic: string;
+  /**
+   * The label of the statistic.
+   */
   statisticLabel?: string;
+  /**
+   * The resource group to query.
+   */
   resourcegroup?: string;
+  /**
+   * A list of dimension values.
+   */
   dimensionValues?: string[];
+  /**
+   * A list of tag values.
+   */
   tagsValues?: string[];
+  /**
+   * The group by option.
+   */
   groupBy?: string;
 }
 
@@ -197,6 +335,13 @@ export interface OCISecureJsonData {
   customdomain5: string
 }
 
+/**
+ * Function to automatically determine the appropriate interval based on the time range.
+ *
+ * @param timestamp1 - The start timestamp in milliseconds.
+ * @param timestamp2 - The end timestamp in milliseconds.
+ * @returns The suggested interval string (e.g., "[1m]", "[5m]", "[1h]").
+ */
 export const SetAutoInterval = (timestamp1: number, timestamp2: number): string => {
   const differenceInMs = timestamp2 - timestamp1;
   const differenceInHours = differenceInMs / (1000 * 60 * 60);

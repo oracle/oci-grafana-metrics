@@ -24,10 +24,22 @@ type metricDataBank struct {
 
 // TestConnectivity checks the OCI data source test request in Grafana's Datasource configuration UI.
 //
-// This function tests the OCI connectivity by iterating over the tenancy access configurations,
-// fetching the tenancy OCID, and testing the monitoring client with the tenancy OCID and compartments.
+// This function performs a connectivity test to the Oracle Cloud Infrastructure (OCI) Monitoring service.
+// It verifies the configured credentials and permissions by attempting to list metrics at both the tenancy
+// and compartment levels.
 //
-// Returns an error if any of the tests fail.
+// The function iterates through each configured tenancy access key. For each key, it performs the following steps:
+// 1. Fetches the tenancy OCID using the `FetchTenancyOCID` method.
+// 2. Retrieves the configured region using `o.tenancyAccess[key].config.Region()`.
+// 3. Attempts to list metrics at the tenancy level.
+// 4. If listing metrics at the tenancy level fails, it attempts to list metrics at each compartment level.
+// 5. The function checks for various error conditions and returns appropriate error messages.
+//
+// Parameters:
+//   - ctx: The context.Context for the request.
+//
+// Returns:
+//   - error: An error if any of the tests fail, or nil if the connectivity is successful.
 func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	// Log the start of the test
 	backend.Logger.Error("client", "TestConnectivity", "testing the OCI connectivity")
@@ -131,7 +143,17 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 }
 
 /*
-Fetch TenancyOcid function
+FetchTenancyOCID retrieves the tenancy OCID based on the provided tenancy access key (takey).
+
+This function handles different tenancy modes (single vs. multi-tenancy) and environments (local vs. OCI Instance).
+It fetches the tenancy OCID from the appropriate configuration provider.
+
+Parameters:
+  - takey: The tenancy access key.
+
+Returns:
+  - string: The tenancy OCID.
+  - error: An error if the tenancy OCID cannot be fetched.
 */
 func (o *OCIDatasource) FetchTenancyOCID(takey string) (string, error) {
 	tenv := o.settings.Environment
@@ -170,8 +192,18 @@ func (o *OCIDatasource) FetchTenancyOCID(takey string) (string, error) {
 }
 
 /*
-Function generates an array  containing OCI tenancy list in the following format:
+GetTenancies function
+
+Generates an array containing OCI tenancy list in the following format:
 <Label/TenancyOCID>
+
+This function retrieves the list of tenancies available in the OCI environment.
+
+Parameters:
+  - ctx: The context.Context for the request.
+
+Returns:
+  - []models.OCIResource: A slice of OCIResource containing tenancy information.
 */
 func (o *OCIDatasource) GetTenancies(ctx context.Context) []models.OCIResource {
 	backend.Logger.Error("client", "GetTenancies", "fetching the tenancies")
@@ -196,6 +228,17 @@ func (o *OCIDatasource) GetTenancies(ctx context.Context) []models.OCIResource {
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/iampolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingregions.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/identity/20160918/RegionSubscription/ListRegionSubscriptions
+//
+// This function retrieves the list of regions subscribed to by a specific tenancy in Oracle Cloud Infrastructure.
+// It queries the Identity service to obtain the list of subscribed regions.
+//
+// Parameters:
+//   - ctx: The context.Context for the request.
+//   - tenancyOCID: The OCID of the tenancy for which to list subscribed regions.
+//
+// Returns:
+//   - []string: A slice of strings, where each string represents a subscribed region.
+//     Returns nil if any error occurred during the process.
 func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID string) []string {
 	backend.Logger.Error("client", "GetSubscribedRegions", "fetching the subscribed region for tenancy: "+tenancyOCID)
 
@@ -255,6 +298,19 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/iampolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/identity/20160918/Compartment/ListCompartments
+//
+// Retrieves a list of compartments within a specified tenancy in Oracle Cloud Infrastructure.
+// This function interacts with the OCI Identity service to fetch compartments.
+//
+// Parameters:
+//   - ctx: The context.Context for the request.
+//   - tenancyOCID: The OCID of the tenancy for which to list compartments.
+//   - includeAccessibleOnly: An optional boolean flag. If true, only accessible compartments are included.
+//     If omitted or false, all compartments are included.
+//
+// Returns:
+//   - []models.OCIResource: A slice of OCIResource, where each element represents a compartment with its
+//     name and OCID. Returns nil if there is an error during the process.
 func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string, includeAccessibleOnly ...bool) []models.OCIResource {
 	backend.Logger.Error("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
 
@@ -369,12 +425,34 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string,
 	return compartmentList
 }
 
-// GetNamespaceWithMetricNames Returns all the namespaces with associated metrics under the compartment of mentioned tenancy
-// API Operation: ListMetrics
-// Permission Required: METRIC_INSPECT
-// Links:
-// https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
-// https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+// GetNamespaceWithMetricNames retrieves a list of namespaces along with their associated metric names within a specified compartment of an OCI tenancy.
+//
+// This function interacts with the OCI Monitoring service to fetch the namespaces and their respective metric names.
+// It supports caching to improve performance and reduces the number of API calls to OCI. It also supports fetching data for all subscribed regions.
+//
+// Parameters:
+//   - ctx: The context.Context for the request, used for cancellation and request-scoped values.
+//   - tenancyOCID: The OCID of the tenancy in which to search for namespaces and metrics.
+//   - compartmentOCID: The OCID of the compartment in which to search. If empty, the search spans the entire tenancy.
+//   - region: The OCI region to search in. If constants.ALL_REGION is specified, data from all subscribed regions is fetched.
+//
+// Returns:
+//   - []models.OCIMetricNamesWithNamespace: A slice of OCIMetricNamesWithNamespace, where each element contains a namespace and its associated metric names.
+//   - An empty slice if no namespaces or metrics are found, or if an error occurs.
+//
+// API Operation:
+//   - ListMetrics: https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+//
+// Permissions Required:
+//   - METRIC_INSPECT: Required to list metrics and namespaces.
+//
+// Caching:
+//   - The results are cached to reduce API calls. The cache key is generated using the tenancy OCID, compartment OCID, region, and the string "nss".
+//   - Cached data has a Time To Live (TTL) of 5 minutes.
+//
+// Error Handling:
+//   - Logs errors encountered during the process.
+//   - Returns an empty slice if errors occur or no data is found.
 func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	ctx context.Context,
 	tenancyOCID string,
@@ -457,12 +535,40 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	return namespaceWithMetricNamesList
 }
 
-// GetMetricDataPoints Returns metric datapoints
-// API Operation: SummarizeMetricsData
-// Permission Required: METRIC_INSPECT and METRIC_READ
-// Links:
-// https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
-// https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/MetricData/SummarizeMetricsData
+// GetMetricDataPoints retrieves metric data points from the OCI Monitoring service based on the provided parameters.
+//
+// This function queries the OCI Monitoring service to retrieve aggregated metric data points. It supports various filters
+// such as tenancy, compartment, namespace, query text, time range, resource group, dimensions, and tags. The function also
+// handles fetching data across multiple regions in parallel and performs necessary data adjustments for accurate representation.
+//
+// Parameters:
+//   - ctx: The context.Context for the request.
+//   - requestParams: A models.MetricsDataRequest struct containing all the necessary parameters for the query.
+//   - tenancyOCID: The OCID of the tenancy for which the metrics data is requested.
+//
+// Returns:
+//   - []time.Time: A slice of time.Time representing the timestamps for the retrieved data points.
+//   - []models.OCIMetricDataPoints: A slice of OCIMetricDataPoints, each containing the data points, labels, and other metadata for a metric.
+//   - error: An error if any operation fails during the process.
+//
+// API Operation:
+//   - SummarizeMetricsData: https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/MetricData/SummarizeMetricsData
+//
+// Permissions Required:
+//   - METRIC_INSPECT: Required to inspect metrics.
+//   - METRIC_READ: Required to read metric data.
+//
+// Data Handling:
+//   - Handles fetching data for all regions in parallel when specified.
+//   - Adjusts data when different resource datapoints have a mismatched number of values.
+//   - Supports filtering by resource group, dimensions, and tags.
+//   - Adds labels based on selected dimensions and tags.
+//   - Sorts the time slice for proper representation in Grafana.
+//
+// Error Handling:
+//   - Returns an error if an invalid 'takey' (tenancy access key) is detected.
+//   - Returns any errors encountered during API calls.
+//   - Logs errors encountered during the data retrieval process.
 func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams models.MetricsDataRequest, tenancyOCID string) ([]time.Time, []models.OCIMetricDataPoints, error) {
 	backend.Logger.Error("client", "GetMetricDataPoints", "fetching the metrics datapoints under compartment '"+requestParams.CompartmentOCID+"' for query '"+requestParams.QueryText+"'")
 
@@ -732,7 +838,23 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	return times, dataPoints, nil
 }
 
-// fetchFromCache will fetch value from cache and if it not present it will fetch via api and store to cache and return
+// ****** WARNING This function is not implemented yet ******
+// fetchFromCache retrieves data from the cache based on the provided parameters.
+// If the data is not found in the cache, it fetches the tags and updates the cache.
+//
+// Parameters:
+//
+//	ctx - The context for controlling the request lifetime.
+//	tenancyOCID - The OCID of the tenancy.
+//	compartmentOCID - The OCID of the compartment.
+//	compartmentName - The name of the compartment.
+//	region - The region identifier.
+//	namespace - The namespace identifier.
+//	suffix - The suffix to be appended to the cache key.
+//
+// Returns:
+//
+//	An interface{} containing the cached resource.
 func (o *OCIDatasource) fetchFromCache(ctx context.Context, tenancyOCID string, compartmentOCID string, compartmentName string, region string, namespace string, suffix string) interface{} {
 	backend.Logger.Error("client", "fetchFromCache", "fetching from cache")
 
@@ -745,6 +867,7 @@ func (o *OCIDatasource) fetchFromCache(ctx context.Context, tenancyOCID string, 
 	return cachedResource
 }
 
+// ****** WARNING This function is not implemented yet ******
 // GetTags Returns all the defined as well as freeform tags attached with resources for a namespace under a compartment
 // fetching the resources based on which type resources we want
 // API Operation: ListInstances, ListVcns
@@ -983,6 +1106,20 @@ func (o *OCIDatasource) GetTags(
 // Links:
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+// GetResourceGroups fetches the resource groups under a specified compartment and namespace.
+// It first checks the cache for existing data and returns it if available. If not, it makes a request
+// to the OCI Monitoring service to retrieve the resource groups and their associated metric names.
+// The results are then cached for future use.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - tenancyOCID: The OCID of the tenancy.
+//   - compartmentOCID: The OCID of the compartment.
+//   - region: The region to query. If set to constants.ALL_REGION, it queries all subscribed regions.
+//   - namespace: The namespace to query.
+//
+// Returns:
+//   - A slice of OCIMetricNamesWithResourceGroup, which contains the resource groups and their associated metric names.
 func (o *OCIDatasource) GetResourceGroups(
 	ctx context.Context,
 	tenancyOCID string,
@@ -1065,6 +1202,20 @@ func (o *OCIDatasource) GetResourceGroups(
 // Links:
 // https://docs.oracle.com/en-us/iaas/Content/Identity/Reference/monitoringpolicyreference.htm
 // https://docs.oracle.com/en-us/iaas/api/#/en/monitoring/20180401/Metric/ListMetrics
+// GetDimensions retrieves the dimensions for a given metric in a specified compartment and namespace.
+// It can be used to fetch dimensions for panels or labels based on the isLabel parameter.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - tenancyOCID: The OCID of the tenancy.
+//   - compartmentOCID: The OCID of the compartment.
+//   - region: The region to query metrics from.
+//   - namespace: The namespace of the metric.
+//   - metricName: The name of the metric.
+//   - isLabel: Optional boolean parameter to specify if dimensions are to be used as labels.
+//
+// Returns:
+//   - A slice of OCIMetricDimensions containing the dimensions for the specified metric.
 func (o *OCIDatasource) GetDimensions(
 	ctx context.Context,
 	tenancyOCID string,

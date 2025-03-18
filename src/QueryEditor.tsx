@@ -14,7 +14,13 @@ import { TenancyChoices } from './config.options';
 
 type Props = QueryEditorProps<OCIDataSource, OCIQuery, OCIDataSourceOptions>;
 
-
+/**
+ * QueryEditor Component
+ *
+ * This component provides a user interface for building and editing queries for the OCI data source.
+ * It allows users to select various parameters such as tenancy, compartment, region, namespace, metric,
+ * aggregation, interval, dimensions, and legend format. It also supports raw query input.
+ */
 export const QueryEditor: React.FC<Props> = (props) => {
   const { query, datasource, onChange, onRunQuery } = props;
   const tmode = datasource.getJsonData().tenancymode;
@@ -38,6 +44,14 @@ export const QueryEditor: React.FC<Props> = (props) => {
     { label: 'Builder', value: true },
   ];  
   
+  /**
+   * onApplyQueryChange
+   *
+   * Applies changes to the query and optionally runs the query.
+   *
+   * @param changedQuery - The modified OCIQuery object.
+   * @param runQuery - A boolean indicating whether to run the query after applying changes. Defaults to true.
+   */  
   const onApplyQueryChange = (changedQuery: OCIQuery, runQuery = true) => {
     if (runQuery) {        
       const queryModel = new QueryModel(changedQuery, getTemplateSrv());
@@ -58,7 +72,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     }
   };
 
-
+  /**
+   * init
+   *
+   * Initializes the dimensions and tags based on the existing query.
+   *
+   * @returns An array containing the initial dimensions and tags.
+   */
   const init = () => {
     let initialDimensions: any = [];
     let initialTags: any = [];
@@ -98,7 +118,14 @@ export const QueryEditor: React.FC<Props> = (props) => {
   const [dimensionValue, setDimensionValue] = useState<Array<SelectableValue<string>>>(initialDimensions);
   // const [tagValue, setTagValue] = useState<Array<SelectableValue<string>>>(initialTags);
 
-  // Appends all available template variables to options used by dropdowns
+  /**
+   * addTemplateVariablesToOptions
+   *
+   * Appends all available template variables to options used by dropdowns.
+   *
+   * @param options - The array of SelectableValue options to which template variables will be added.
+   * @returns The updated array of SelectableValue options.
+   */  
   const addTemplateVariablesToOptions = (options: Array<SelectableValue<string>>) => {
     getTemplateSrv()
       .getVariables()
@@ -111,7 +138,12 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   }
 
-  // Custom input field for Single Tenancy Mode
+  
+  /**
+   * CustomInput Component
+   *
+   * A custom input field for Single Tenancy Mode, pre-filling the tenancy with "DEFAULT/".
+   */  
   const CustomInput = ({ ...props }) => {
     const [isReady, setIsReady] = useState(false);
   
@@ -134,7 +166,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return <Input {...props} />;
   };
 
-  // fetch the tenancies, with name as key and ocid as value
+  /**
+   * getTenancyOptions
+   *
+   * Fetches the available tenancies from the data source.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the tenancies.
+   */  
   const getTenancyOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
@@ -151,6 +189,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  /**
+   * getCompartmentOptions
+   *
+   * Fetches the available compartments for the selected tenancy from the data source.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the compartments.
+   */  
   const getCompartmentOptions = async () => {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
@@ -167,6 +212,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
       return options;
   };
 
+  /**
+   * getSubscribedRegionOptions
+   *
+   * Fetches the subscribed regions for the selected tenancy from the data source.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the regions.
+   */  
   const getSubscribedRegionOptions = async () => {
       let options: Array<SelectableValue<string>> = [];
       options = addTemplateVariablesToOptions(options)
@@ -183,6 +235,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
       return options;
   };
 
+  /**
+   * getNamespaceOptions
+   *
+   * Fetches the available namespaces for the selected tenancy, compartment, and region from the data source.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the namespaces.
+   */  
   const getNamespaceOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options) 
@@ -203,6 +262,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  /**
+   * getResourceGroupOptions
+   *
+   * Fetches the available resource groups for the selected tenancy, compartment, region, and namespace from the data source.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the resource groups.
+   */  
   const getResourceGroupOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
@@ -224,6 +290,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  /**
+   * getMetricOptions
+   *
+   * Fetches the available metrics for the selected tenancy, compartment, region, and namespace from the data source.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the metrics.
+   */  
   const getMetricOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options)
@@ -247,6 +320,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  /**
+   * getAggregationOptions
+   *
+   * Returns the available aggregation options.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the aggregation options.
+   */  
   const getAggregationOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     AggregationOptions.forEach((item: any) => {
@@ -259,6 +339,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  /**
+   * getIntervalOptions
+   *
+   * Returns the available interval options.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the interval options.
+   */  
   const getIntervalOptions = async () => {
     let options: Array<SelectableValue<string>> = [];
     options = addTemplateVariablesToOptions(options);
@@ -272,6 +359,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
     return options;
   };
 
+  /**
+   * getDimensionOptions
+   *
+   * Fetches the available dimensions for the selected tenancy, compartment, region, namespace, and metric from the data source.
+   *
+   * @returns A promise that resolves to an array of SelectableValue options representing the dimensions.
+   */  
   const getDimensionOptions = () => {
     let templateOptions: Array<SelectableValue<string>> = [];
     templateOptions = addTemplateVariablesToOptions(templateOptions);
@@ -332,6 +426,13 @@ export const QueryEditor: React.FC<Props> = (props) => {
   // };
 
 
+  /**
+   * onTenancyChange
+   *
+   * Handles changes to the selected tenancy.
+   *
+   * @param data - The selected tenancy data.
+   */
   const onTenancyChange = async (data: any) => {
     setTenancyValue(data);
     onApplyQueryChange(
@@ -349,11 +450,25 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
+  /**
+   * onRawQueryChange
+   *
+   * Handles changes to the raw query mode.
+   *
+   * @param data - The new raw query mode (true for builder, false for raw query).
+   */  
   const onRawQueryChange = (data: boolean) => {
     setQueryRawValue(data);   
     onApplyQueryChange({ ...query, rawQuery: data }, false);
   };
 
+  /**
+   * onCompartmentChange
+   *
+   * Handles changes to the selected compartment.
+   *
+   * @param data - The selected compartment data.
+   */  
   const onCompartmentChange = (data: any) => {
     setCompartmentValue(data);
     onApplyQueryChange(
@@ -368,11 +483,25 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
+  /**
+   * onRegionChange 
+   * 
+   * Handles the change of the region selection.
+   *
+   * @param {SelectableValue} data - The selected region data.
+   */  
   const onRegionChange = (data: SelectableValue) => {
     setRegionValue(data.value);   
     onApplyQueryChange({ ...query, region: data.value, namespace: undefined, metric: undefined }, false);
   };
 
+  /**
+   * onNamespaceChange
+   * 
+   * Handles the change of the namespace selection.
+   *
+   * @param {any} data - The selected namespace data.
+   */  
   const onNamespaceChange = (data: any) => {
     // tags will be use in future release
     // new Promise<Array<SelectableValue<string>>>(() => {
@@ -399,33 +528,90 @@ export const QueryEditor: React.FC<Props> = (props) => {
     );
   };
 
+  /**
+   * onResourceGroupChange
+   * 
+   * Handles the change of the resource group selection.
+   *
+   * @param {any} data - The selected resource group data.
+   */  
   const onResourceGroupChange = (data: any) => {
     let mn: string[] = data.value;
     setResourceGroupValue(data);
     onApplyQueryChange({ ...query, resourcegroup: data.label, metricNames: mn, metric: undefined }, false);
   };
 
+
+  /**
+   * onQueryTextChange
+   * 
+   * Handles the change of the query text.
+   *
+   * @param {any} data - The new query text.
+   */  
   const onQueryTextChange = (data: any) => {
     setQueryValue(data);
     onApplyQueryChange({ ...query, queryTextRaw: data });
   };
 
 
+  /**
+   * onMetricChange
+   * 
+   * Handles the change of the metric selection.
+   *
+   * @param {any} data - The selected metric data.
+   */
   const onMetricChange = (data: any) => {
     setMetricValue(data);
     onApplyQueryChange({ ...query, metric: data.value }, true);
   };
+
+  /**
+   * onAggregationChange
+   * 
+   * Handles the change of the aggregation selection.
+   *
+   * @param {any} data - The selected aggregation data.
+   */  
   const onAggregationChange = (data: any) => {
     onApplyQueryChange({ ...query, statisticLabel: data.label, statistic: data.value });
   };
+
+
+  /**
+   * onIntervalChange
+   * 
+   * Handles the change of the interval selection.
+   *
+   * @param {any} data - The selected interval data.
+   */  
   const onIntervalChange = (data: any) => {
     setIntervalValue(data);
     onApplyQueryChange({ ...query, intervalLabel: data.label, interval: data.value });
   };
+
+
+  /**
+   * onLegendFormatChange
+   * 
+   * Handles the change of the legend format.
+   *
+   * @param {any} data - The new legend format.
+   */  
   const onLegendFormatChange = (data: any) => {
     setLegendFormatValue(data);
     onApplyQueryChange({ ...query, legendFormat: data });
   };
+
+
+  /**
+   * onDimensionChange
+   * 
+   * Handles the change of the dimension selection.
+   *
+   * @param {any} data - The selected dimension data.
+   */  
   const onDimensionChange = (data: any) => {
     const existingDVs = query.dimensionValues || [];
     let newDimensionValues: string[] = [];

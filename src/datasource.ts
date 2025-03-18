@@ -30,10 +30,24 @@ import {
 } from "./types";
 import QueryModel from './query_model';
 
+
+/**
+ * The OCIDataSource class extends the DataSourceWithBackend class to provide
+ * functionality for interacting with Oracle Cloud Infrastructure (OCI) metrics.
+ * It includes methods for filtering queries, formatting compartment values,
+ * applying template variables, and executing queries for template variable values.
+ * 
+ * @extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions>
+ */
 export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSourceOptions> {
   private jsonData: any;
   ocidCompartmentStore: Record<string, string> ={}
 
+    /**
+   * Constructor for the OCIDataSource class.
+   *
+   * @param {DataSourceInstanceSettings<OCIDataSourceOptions>} instanceSettings - The settings for the data source instance.
+   */
   constructor(instanceSettings: DataSourceInstanceSettings<OCIDataSourceOptions>) {
     super(instanceSettings);
     this.jsonData = instanceSettings.jsonData;
@@ -41,9 +55,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
  
 
   /**
-   * Filters disabled/hidden queries
+   * Filters disabled/hidden queries.
    *
-   * @param {string} query Query
+   * @param {OCIQuery} query - The query to filter.
+   * @returns {boolean} True if the query is not hidden, false otherwise.
    */
   filterQuery(query: OCIQuery): boolean {
     if (query.hide) {
@@ -52,6 +67,12 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return true;
   }
 
+  /**
+   * Formats compartment values, resolving names to OCIDs if available in the store.
+   *
+   * @param {string} value - The compartment name or OCID.
+   * @returns {string} The resolved compartment OCID or the original value if not found.
+   */
   compartmentFormatter = (value: string): string => {
     // if (typeof value === 'string') {
     //   return value;
@@ -64,10 +85,11 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   };
 
   /**
-   * Override to apply template variables
+   * Applies template variables to the query, interpolating values and building the MQL query.
    *
-   * @param {string} query Query
-   * @param {ScopedVars} scopedVars Scoped variables
+   * @param {OCIQuery} query - The query object to apply variables to.
+   * @param {ScopedVars} scopedVars - The scoped variables to use for interpolation.
+   * @returns {OCIQuery} The query object with template variables applied.
    */
   applyTemplateVariables(query: OCIQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
@@ -118,6 +140,13 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
 
+  /**
+   * Interpolates properties of an object using template variables.
+   *
+   * @param {T} object - The object whose properties to interpolate.
+   * @param {ScopedVars} [scopedVars={}] - The scoped variables to use for interpolation.
+   * @returns {T} The object with interpolated properties.
+   */
   interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
     const templateSrv = getTemplateSrv();
     return Object.entries(object).reduce((acc: any, [key, value]) => {
@@ -131,14 +160,15 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     }, {});
   }
 
+
   // // **************************** Template variable helpers ****************************
-
-  // /**
-  //  * Matches the regex from creating template variables and returns options for the corresponding variable.
-  //  * Example:
-  //  * template variable with the query "regions()" will be matched with the regionsQueryRegex and list of available regions will be returned.
-  //  */
-
+  /**
+   * Executes a query for template variable values and returns the results.
+   *
+   * @param {any} query - The query string or object.
+   * @param {any} [options] - Optional query options.
+   * @returns {Promise<MetricFindValue[]>} A promise that resolves to an array of MetricFindValue objects.
+   */
   async metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]> {
     const templateSrv = getTemplateSrv();
 
@@ -290,24 +320,43 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     return [];
   }
 
-
+  /**
+   * Gets the JSON data associated with this data source.
+   *
+   * @returns {any} The JSON data.
+   */
   getJsonData() {
     return this.jsonData;
   }
   
+  /**
+   * Gets the list of variable names.
+   *
+   * @returns {string[]} An array of variable names with '$' at the beginning.
+   */
   getVariables() {
     const templateSrv = getTemplateSrv();
     return templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
+  /**
+   * Gets the raw list of variables.
+   *
+   * @returns {any[]} An array of raw variable objects.
+   */
   getVariablesRaw() {
     const templateSrv = getTemplateSrv();
     return templateSrv.getVariables();
   }  
 
 
- // **************************** Template variables helpers ****************************
-
+   // **************************** Template variables helpers ****************************
+  /**
+   * Checks if a given name is a variable.
+   *
+   * @param {string} varName - The name to check, expected to contain '$'.
+   * @returns {boolean} True if the name is a variable, false otherwise.
+   */
   /**
    * List all variable names optionally filtered by regex or/and type
    * Returns list of names with '$' at the beginning. Example: ['$dimensionKey', '$dimensionValue']
@@ -319,8 +368,10 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
    */
 
   /**
-   * @param varName valid varName contains '$'. Example: '$dimensionKey'
-   * Returns true if variable with the given name is found
+   * Checks if a given name is a variable.
+   *
+   * @param {string} varName - The name to check, expected to contain '$'.
+   * @returns {boolean} True if the name is a variable, false otherwise.
    */
   isVariable(varName: string) {
     const varNames = this.getVariables() || [];
@@ -328,22 +379,47 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
 
-  // main caller to call resource handler for get call
+  /**
+   * Calls the backend to fetch a resource.
+   *
+   * @param {string} path - The path of the resource to fetch.
+   * @returns {Promise<any>} A promise that resolves to the resource data.
+   */
   async getResource(path: string): Promise<any> {
     return super.getResource(path);
   }
-  // main caller to call resource handler for post call
+
+  /**
+   * Calls the backend to post data to a resource.
+   *
+   * @param {string} path - The path of the resource.
+   * @param {any} body - The request body.
+   * @returns {Promise<any>} A promise that resolves to the response data.
+   */
   async postResource(path: string, body: any): Promise<any> {
     return super.postResource(path, body);
   }
 
 
+  /**
+   * Retrieves a list of tenancies from the OCI (Oracle Cloud Infrastructure).
+   *
+   * @returns {Promise<OCIResourceItem[]>} A promise that resolves to an array of OCIResourceItem objects representing the tenancies.
+   */
   async getTenancies(): Promise<OCIResourceItem[]> {
     return this.getResource(OCIResourceCall.Tenancies).then((response) => {
       return new ResponseParser().parseTenancies(response);
     });
   }
 
+  /**
+   * Retrieves the list of subscribed regions for a given tenancy.
+   *
+   * @param tenancy - The tenancy identifier. If the tenancy is a variable, it will be interpolated.
+   * @returns A promise that resolves to an array of subscribed region names.
+   *
+   * @throws Will return an empty array if the tenancy is an empty string.
+   */
   async getSubscribedRegions(tenancy: string): Promise<string[]> {
     if (this.isVariable(tenancy)) {
       let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
@@ -362,6 +438,16 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });
   }
 
+  /**
+   * Retrieves the compartments for a given tenancy.
+   *
+   * @param {string} tenancy - The tenancy OCID or a variable representing the tenancy.
+   * @returns {Promise<OCIResourceItem[]>} A promise that resolves to an array of OCIResourceItem objects representing the compartments.
+   *
+   * This method first checks if the provided tenancy is a variable and interpolates its value if necessary.
+   * If the tenancy is an empty string, it returns an empty array.
+   * Otherwise, it sends a request to retrieve the compartments for the specified tenancy and parses the response.
+   */
   async getCompartments(tenancy: string): Promise<OCIResourceItem[]> {
     if (this.isVariable(tenancy)) {
       let { tenancy: var_tenancy} = this.interpolateProps({tenancy});
@@ -380,6 +466,21 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });
   }
 
+  /**
+   * Retrieves namespaces with their associated metric names for a given tenancy, compartment, and region.
+   * 
+   * @param tenancy - The tenancy OCID or a variable representing the tenancy.
+   * @param compartment - The compartment OCID or a variable representing the compartment.
+   * @param region - The region name or a variable representing the region.
+   * @returns A promise that resolves to an array of OCINamespaceWithMetricNamesItem objects.
+   * 
+   * The function interpolates the tenancy, compartment, and region if they are variables.
+   * If the tenancy is empty, or the region is undefined or a placeholder, it returns an empty array.
+   * If the compartment is undefined or a placeholder, it sets the compartment to an empty string.
+   * 
+   * The function sends a POST request to the OCI Namespaces resource with the tenancy, compartment, and region
+   * in the request body, and parses the response to extract the namespaces with their metric names.
+   */
   async getNamespacesWithMetricNames(
     tenancy: string,
     compartment: any,
@@ -428,6 +529,19 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
   }
 
 
+  /**
+   * Retrieves resource groups along with their metric names for a given tenancy, compartment, region, and namespace.
+   * 
+   * @param tenancy - The tenancy identifier, which can be a variable.
+   * @param compartment - The compartment identifier, which can be a variable.
+   * @param region - The region identifier, which can be a variable.
+   * @param namespace - The namespace identifier, which can be a variable.
+   * @returns A promise that resolves to an array of OCIResourceGroupWithMetricNamesItem objects.
+   * 
+   * The function interpolates the provided parameters if they are variables. If any of the required parameters
+   * (tenancy, region, namespace) are missing or placeholders, it returns an empty array. Otherwise, it constructs
+   * a request body and makes a POST request to retrieve the resource groups and their metric names.
+   */
   async getResourceGroupsWithMetricNames(
     tenancy: any,
     compartment: any,
@@ -491,6 +605,19 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
     });
   }
 
+  /**
+   * Retrieves the dimensions for a specified metric in Oracle Cloud Infrastructure (OCI).
+   *
+   * @param tenancy - The tenancy identifier, which can be a variable.
+   * @param compartment - The compartment identifier, which can be a variable.
+   * @param region - The region identifier, which can be a variable.
+   * @param namespace - The namespace of the metric, which can be a variable.
+   * @param metricName - The name of the metric, which can be a variable.
+   * @returns A promise that resolves to an array of OCIResourceMetadataItem objects representing the dimensions of the specified metric.
+   *
+   * The function interpolates the provided parameters if they are variables, and then constructs a request body to fetch the dimensions
+   * from the OCI resource. If any required parameter is missing or invalid, it returns an empty array.
+   */
   async getDimensions(
     tenancy: any,
     compartment: any,
@@ -563,6 +690,19 @@ export class OCIDataSource extends DataSourceWithBackend<OCIQuery, OCIDataSource
       return new ResponseParser().parseDimensions(response);
     });
   }
+
+
+  /**
+   * Retrieves tags for a specified OCI resource.
+   * WARNING: This function is not yet implemented.
+   *
+   * @param tenancy - The tenancy identifier.
+   * @param compartment - The compartment identifier.
+   * @param compartmentName - The name of the compartment.
+   * @param region - The region identifier.
+   * @param namespace - The namespace identifier.
+   * @returns A promise that resolves to an array of OCIResourceMetadataItem objects.
+   */
   async getTags(
     tenancy: any,
     compartment: any,

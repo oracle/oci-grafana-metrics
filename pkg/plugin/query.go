@@ -14,6 +14,26 @@ import (
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
+// query handles the execution of a data query for the OCIDatasource plugin.
+// It performs the following steps:
+// 1. Logs the initiation of the query.
+// 2. Creates a DataResponse object to hold the query results.
+// 3. Unmarshals the JSON query into a QueryModel object.
+// 4. Validates the presence of mandatory fields (TenancyOCID and Interval) in the query.
+// 5. Constructs a MetricsDataRequest object with the necessary details for fetching metrics data.
+// 6. Creates a data frame to store the response data.
+// 7. Fetches metric data points if the region, compartment, and namespace are valid.
+// 8. Handles errors during data fetching and returns the response if any errors occur.
+// 9. Plots the x-axis with time as the unit and processes metric data values to populate the data frame.
+// 10. Adds the data frame to the response and returns the response.
+//
+// Parameters:
+// - ctx: The context for the query execution.
+// - pCtx: The plugin context.
+// - query: The data query to be executed.
+//
+// Returns:
+// - backend.DataResponse: The response containing the query results or an error if the query fails.
 func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	backend.Logger.Error("plugin.query", "query", "query initiated for "+query.RefID)
 

@@ -50,6 +50,17 @@ type OCIDatasourceSettings struct {
 	CustomRegion_5 string `json:"customregion5,omitempty"`
 }
 
+// Load initializes the OCIDatasourceSettings from the provided backend.DataSourceInstanceSettings.
+// It unmarshals the JSONData from the DataSourceInstanceSettings into the OCIDatasourceSettings struct.
+// If the JSONData is not nil and has more than one element, it attempts to unmarshal it.
+// If unmarshalling fails, it returns an error indicating the failure.
+// Additionally, it sets the ConfigProfile to the default instance profile.
+//
+// Parameters:
+// - dsiSettings: backend.DataSourceInstanceSettings containing the settings to load.
+//
+// Returns:
+// - error: An error if the JSONData could not be unmarshalled, otherwise nil.
 func (d *OCIDatasourceSettings) Load(dsiSettings backend.DataSourceInstanceSettings) error {
 	var err error
 
