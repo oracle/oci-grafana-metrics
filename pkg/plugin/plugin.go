@@ -417,7 +417,28 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			// Override region in Configuration Provider in case a Custom region is configured
 			if q.customregion[key] != "" {
+				// Bootstrapping: The OCI SDK requires a known endpoint schema to initialize
+				// the identity client. Before discovering all subscribed regions, we must
+				// manually register the Home Region. This ensures the initial connection
+				// to the tenancy succeeds, allowing the plugin to authenticate and
+				// subsequently discover the full list of available regions and domains.
 				backend.Logger.Error("getConfigProvider", "CustomRegion", q.customregion[key])
+				regionSchema := map[string]string{
+					"regionIdentifier":     q.customregion[key],
+					"realmKey":             q.customregion[key],
+					"realmDomainComponent": q.customdomain[key],
+					"regionKey":            q.customregion[key],
+				}
+
+				common.AddRegionSchemaForPlc(regionSchema)
+				verifyHomeRegionAdded := common.StringToRegion(q.customregion[key])
+				homeRegionRealmID, err := verifyHomeRegionAdded.RealmID()
+				if err != nil {
+					backend.Logger.Error("getConfigProvider", "CustomRegion", "Failed to add home region", "realmID", err)
+				} else {
+					backend.Logger.Error("getConfigProvider", "CustomRegion", "Home region successfully added", "realmID", homeRegionRealmID)
+				}
+
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.customregion[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 			} else {
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
@@ -432,6 +453,11 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			monitoringClient.Configuration.RetryPolicy = &mrp
 
+			//Enforce realm-specific monitoring endpoints
+			monitoringClient.SetCustomClientConfiguration(common.CustomClientConfiguration{
+				RealmSpecificServiceEndpointTemplateEnabled: common.Bool(true),
+			})
+
 			// creating oci identity client
 			irp := clientRetryPolicy()
 			identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)
@@ -440,13 +466,10 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			identityClient.Configuration.RetryPolicy = &irp
 
-			// Override Identity and Telemetry EndPoint region and domain in case a Custom region is configured
-			if q.customdomain[key] != "" {
-				host_custom_telemetry := common.StringToRegion(q.customregion[key]).EndpointForTemplate("telemetry", "https://telemetry."+q.customregion[key]+"."+q.customdomain[key])
-				host_custom_identity := common.StringToRegion(q.customregion[key]).EndpointForTemplate("identity", "https://identity."+q.customregion[key]+"."+q.customdomain[key])
-				monitoringClient.Host = host_custom_telemetry
-				identityClient.Host = host_custom_identity
-			}
+			// Enfoce realm-specific indentity endpoints
+			identityClient.SetCustomClientConfiguration(common.CustomClientConfiguration{
+				RealmSpecificServiceEndpointTemplateEnabled: common.Bool(true),
+			})
 
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
@@ -457,6 +480,57 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			} else {
 				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{monitoringClient, identityClient, configProvider}
 			}
+
+			// The OCI SDK's SetRegion function defaults to the standard 'oraclecloud.com'
+			// second-level domain. To support UI region switching for Sovereign Clouds
+			// or custom realms, we must pre-register these regions into the SDK's
+			// global region map. By iterating through all subscribed regions and
+			// applying custom domain mappings, we ensure the SDK can resolve the
+			// correct endpoints during runtime region transitions.
+			req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
+			response, erri := identityClient.ListRegionSubscriptions(context.Background(), req)
+			if erri != nil {
+				backend.Logger.Warn("client", "getConfigProvider", err)
+				return nil
+			}
+
+			for _, item := range response.Items {
+				var regionName string
+				if item.RegionName != nil {
+					regionName = *item.RegionName
+				} else {
+					regionName = ""
+				}
+
+				if regionName == "" {
+					backend.Logger.Error("getConfigProvider", "error", "Empty regionName pointer encountered")
+					continue
+				}
+
+				verifyRegionAdded := common.StringToRegion(regionName)
+				regionRealmID, err := verifyRegionAdded.RealmID()
+
+				if err != nil {
+					regionSchema := map[string]string{
+						"regionIdentifier":     regionName,
+						"realmKey":             regionName,
+						"realmDomainComponent": q.customdomain[key],
+						"regionKey":            regionName,
+					}
+					common.AddRegionSchemaForPlc(regionSchema)
+					verifyRegionAdded = common.StringToRegion(regionName)
+					regionRealmID, err = verifyRegionAdded.RealmID()
+					if err != nil {
+						backend.Logger.Error("getConfigProvider", "CustomRegion", "Failed to add region", "realmID", err)
+					} else {
+						backend.Logger.Error("getConfigProvider", "CustomRegion", "Region successfully added", "realmID", regionRealmID)
+					}
+				} else {
+					backend.Logger.Error("getConfigProvider", "CustomRegion", "Region exists and resolved to ", "realmID", regionRealmID)
+				}
+
+			}
+
 		}
 		return nil
 

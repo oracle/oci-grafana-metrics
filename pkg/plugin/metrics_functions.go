@@ -315,6 +315,13 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string,
 	backend.Logger.Error("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
+	region, regErr := o.tenancyAccess[takey].config.Region()
+	if regErr != nil {
+		backend.Logger.Error("client", "GetCompartments", "error retrieving default region")
+		return nil
+	}
+	reg := common.StringToRegion(region)
+	o.tenancyAccess[takey].monitoringClient.SetRegion(string(reg))
 
 	tenancyocid, tenancyErr := o.FetchTenancyOCID(takey)
 	if tenancyErr != nil {
@@ -505,6 +512,9 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
+		if region != "" {
+			o.tenancyAccess[takey].monitoringClient.SetRegion(region)
+		}
 		namespaceWithMetricNames = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,
@@ -1167,6 +1177,9 @@ func (o *OCIDatasource) GetResourceGroups(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
+		if region != "" {
+			o.tenancyAccess[takey].monitoringClient.SetRegion(region)
+		}
 		metricResourceGroups = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,
@@ -1284,6 +1297,9 @@ func (o *OCIDatasource) GetDimensions(
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
+		if region != "" {
+			o.tenancyAccess[takey].monitoringClient.SetRegion(region)
+		}
 		metricDimensions = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,

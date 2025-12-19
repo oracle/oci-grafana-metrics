@@ -104,6 +104,7 @@ func listMetricsMetadataFromAllRegion(
 
 	for _, subscribedRegion := range regions {
 		if subscribedRegion != constants.ALL_REGION {
+			mClient.SetRegion(subscribedRegion)
 			wg.Add(1)
 			go func(mc monitoring.MonitoringClient, sRegion string) {
 				defer wg.Done()

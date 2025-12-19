@@ -1,3 +1,13 @@
+<a name="v6.5.3"></a>
+# [Bug Fix & SDK Update (v6.5.3)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.3) - 19 Dec 2025
+
+This release includes:
+
+- Bug fix for issue #328
+- OCI SDK updated to v65.105.0
+
+[Changes][v6.5.3]
+
 <a name="v6.5.2"></a>
 # [Security Maintenance release (v6.5.2)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.2) - 28 Feb 2025
 
