@@ -487,48 +487,50 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			// global region map. By iterating through all subscribed regions and
 			// applying custom domain mappings, we ensure the SDK can resolve the
 			// correct endpoints during runtime region transitions.
-			req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
-			response, erri := identityClient.ListRegionSubscriptions(context.Background(), req)
-			if erri != nil {
-				backend.Logger.Warn("client", "getConfigProvider", err)
-				return nil
-			}
-
-			for _, item := range response.Items {
-				var regionName string
-				if item.RegionName != nil {
-					regionName = *item.RegionName
-				} else {
-					regionName = ""
+			if q.customregion[key] != "" {
+				req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
+				response, erri := identityClient.ListRegionSubscriptions(context.Background(), req)
+				if erri != nil {
+					backend.Logger.Warn("client", "getConfigProvider", err)
+					return nil
 				}
 
-				if regionName == "" {
-					backend.Logger.Error("getConfigProvider", "error", "Empty regionName pointer encountered")
-					continue
-				}
-
-				verifyRegionAdded := common.StringToRegion(regionName)
-				regionRealmID, err := verifyRegionAdded.RealmID()
-
-				if err != nil {
-					regionSchema := map[string]string{
-						"regionIdentifier":     regionName,
-						"realmKey":             regionName,
-						"realmDomainComponent": q.customdomain[key],
-						"regionKey":            regionName,
-					}
-					common.AddRegionSchemaForPlc(regionSchema)
-					verifyRegionAdded = common.StringToRegion(regionName)
-					regionRealmID, err = verifyRegionAdded.RealmID()
-					if err != nil {
-						backend.Logger.Error("getConfigProvider", "CustomRegion", "Failed to add region", "realmID", err)
+				for _, item := range response.Items {
+					var regionName string
+					if item.RegionName != nil {
+						regionName = *item.RegionName
 					} else {
-						backend.Logger.Error("getConfigProvider", "CustomRegion", "Region successfully added", "realmID", regionRealmID)
+						regionName = ""
 					}
-				} else {
-					backend.Logger.Error("getConfigProvider", "CustomRegion", "Region exists and resolved to ", "realmID", regionRealmID)
-				}
 
+					if regionName == "" {
+						backend.Logger.Error("getConfigProvider", "error", "Empty regionName pointer encountered")
+						continue
+					}
+
+					verifyRegionAdded := common.StringToRegion(regionName)
+					regionRealmID, err := verifyRegionAdded.RealmID()
+
+					if err != nil {
+						regionSchema := map[string]string{
+							"regionIdentifier":     regionName,
+							"realmKey":             regionName,
+							"realmDomainComponent": q.customdomain[key],
+							"regionKey":            regionName,
+						}
+						common.AddRegionSchemaForPlc(regionSchema)
+						verifyRegionAdded = common.StringToRegion(regionName)
+						regionRealmID, err = verifyRegionAdded.RealmID()
+						if err != nil {
+							backend.Logger.Error("getConfigProvider", "CustomRegion", "Failed to add region", "realmID", err)
+						} else {
+							backend.Logger.Error("getConfigProvider", "CustomRegion", "Region successfully added", "realmID", regionRealmID)
+						}
+					} else {
+						backend.Logger.Error("getConfigProvider", "CustomRegion", "Region exists and resolved to ", "realmID", regionRealmID)
+					}
+
+				}
 			}
 
 		}
