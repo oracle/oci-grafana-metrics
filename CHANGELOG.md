@@ -5,7 +5,7 @@ This release includes:
 
 - Bug fix for issue #328
 - OCI SDK updated to v65.105.0
-- Security updates for #332,  #334 and #339
+- Security updates for #332,  #334, #339 and #340
 
 [Changes][v6.5.3]
 

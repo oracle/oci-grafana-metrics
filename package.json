@@ -76,7 +76,7 @@
     "@grafana/ui": "^10.4.10",
     "eslint": "^9.6.0",
     "js-yaml": "^4.1.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "@grafana/schema": "^10.4.10",
