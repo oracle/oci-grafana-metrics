@@ -92,7 +92,7 @@ func listMetricsMetadataFromAllRegion(
 	ci *ristretto.Cache,
 	cacheKey string,
 	fetchFor string,
-	mClient monitoring.MonitoringClient,
+	ta *TenancyAccess,
 	req monitoring.ListMetricsRequest,
 	regions []string) map[string][]string {
 
@@ -105,16 +105,22 @@ func listMetricsMetadataFromAllRegion(
 	for _, subscribedRegion := range regions {
 		if subscribedRegion != constants.ALL_REGION {
 			wg.Add(1)
-			go func(mc monitoring.MonitoringClient, sRegion string) {
+			go func(sRegion string) {
 				defer wg.Done()
 
+				regionalClient, err := ta.GetMonitoringClientForRegion(sRegion)
+				if err != nil {
+					backend.Logger.Error("client.utils", "listMetricsMetadataFromAllRegion", err)
+					return
+				}
+
 				newCacheKey := strings.ReplaceAll(cacheKey, constants.ALL_REGION, sRegion)
-				metadata := listMetricsMetadataPerRegion(ctx, ci, newCacheKey, fetchFor, mc, req)
+				metadata := listMetricsMetadataPerRegion(ctx, ci, newCacheKey, fetchFor, *regionalClient, req)
 
 				if len(metadata) > 0 {
 					allRegionsData.Store(sRegion, metadata)
 				}
-			}(mClient, subscribedRegion)
+			}(subscribedRegion)
 		}
 	}
 	wg.Wait()

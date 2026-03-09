@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/identity"
 	"github.com/oracle/oci-go-sdk/v65/monitoring"
 
+	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
 
@@ -39,6 +41,54 @@ type TenancyAccess struct {
 	monitoringClient monitoring.MonitoringClient
 	identityClient   identity.IdentityClient
 	config           common.ConfigurationProvider
+	regionClients    map[string]*monitoring.MonitoringClient
+	mu               sync.RWMutex
+	customDomain     string // Sovereign cloud domain for endpoint fallback if SDK region discovery fails
+}
+
+// GetMonitoringClientForRegion returns a monitoring client configured for the specified region.
+// Clients are lazily created and cached. Empty region or ALL_REGION returns the default client.
+func (ta *TenancyAccess) GetMonitoringClientForRegion(region string) (*monitoring.MonitoringClient, error) {
+	if region == "" || region == constants.ALL_REGION {
+		return &ta.monitoringClient, nil
+	}
+
+	ta.mu.RLock()
+	if client, ok := ta.regionClients[region]; ok {
+		ta.mu.RUnlock()
+		return client, nil
+	}
+	ta.mu.RUnlock()
+
+	ta.mu.Lock()
+	defer ta.mu.Unlock()
+
+	// Double-check after acquiring write lock
+	if client, ok := ta.regionClients[region]; ok {
+		return client, nil
+	}
+
+	newClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(ta.config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating monitoring client for region %s: %w", region, err)
+	}
+
+	rp := clientRetryPolicy()
+	newClient.Configuration.RetryPolicy = &rp
+	newClient.SetRegion(region)
+
+	// Safety net: if SDK region discovery failed at startup, SetRegion may resolve
+	// sovereign cloud regions to the wrong domain (oraclecloud.com). Verify and
+	// fall back to manual endpoint construction using the configured custom domain.
+	if ta.customDomain != "" && !strings.Contains(newClient.Host, ta.customDomain) {
+		fallbackHost := "https://telemetry." + region + "." + ta.customDomain
+		backend.Logger.Warn("GetMonitoringClientForRegion", "FallbackEndpoint",
+			"SDK resolved wrong domain for region "+region+", using fallback: "+fallbackHost)
+		newClient.Host = fallbackHost
+	}
+
+	ta.regionClients[region] = &newClient
+	return &newClient, nil
 }
 
 type OCIDatasource struct {
@@ -419,6 +469,18 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			if q.customregion[key] != "" {
 				backend.Logger.Error("getConfigProvider", "CustomRegion", q.customregion[key])
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.customregion[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
+
+				// Register custom home region in SDK's global region map so that
+				// SetRegion() can resolve sovereign cloud endpoints correctly
+				if q.customdomain[key] != "" {
+					regionSchema := map[string]string{
+						"regionIdentifier":     q.customregion[key],
+						"realmKey":             q.customregion[key],
+						"realmDomainComponent": q.customdomain[key],
+						"regionKey":            q.customregion[key],
+					}
+					common.AddRegionSchemaForPlc(regionSchema)
+				}
 			} else {
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 			}
@@ -440,22 +502,50 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			identityClient.Configuration.RetryPolicy = &irp
 
-			// Override Identity and Telemetry EndPoint region and domain in case a Custom region is configured
-			if q.customdomain[key] != "" {
-				host_custom_telemetry := common.StringToRegion(q.customregion[key]).EndpointForTemplate("telemetry", "https://telemetry."+q.customregion[key]+"."+q.customdomain[key])
-				host_custom_identity := common.StringToRegion(q.customregion[key]).EndpointForTemplate("identity", "https://identity."+q.customregion[key]+"."+q.customdomain[key])
-				monitoringClient.Host = host_custom_telemetry
-				identityClient.Host = host_custom_identity
-			}
-
 			tenancyocid, err := configProvider.TenancyOCID()
 			if err != nil {
 				return errors.New("error with TenancyOCID")
 			}
+			ta := &TenancyAccess{
+				monitoringClient: monitoringClient,
+				identityClient:   identityClient,
+				config:           configProvider,
+				regionClients:    make(map[string]*monitoring.MonitoringClient),
+				customDomain:     q.customdomain[key],
+			}
 			if tenancymode == "multitenancy" {
-				o.tenancyAccess[key+"/"+tenancyocid] = &TenancyAccess{monitoringClient, identityClient, configProvider}
+				o.tenancyAccess[key+"/"+tenancyocid] = ta
 			} else {
-				o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{monitoringClient, identityClient, configProvider}
+				o.tenancyAccess[SingleTenancyKey] = ta
+			}
+
+			// Discover and register all subscribed sovereign cloud regions so that
+			// SetRegion() resolves correct endpoints for cross-region queries.
+			// Note: AddRegionSchemaForPlc is idempotent (skips already-registered regions),
+			// so we register unconditionally to avoid StringToRegion side effects (IMDS, disk I/O).
+			if q.customregion[key] != "" && q.customdomain[key] != "" {
+				listReq := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
+				response, regErr := identityClient.ListRegionSubscriptions(context.Background(), listReq)
+				if regErr != nil {
+					backend.Logger.Warn("getConfigProvider", "RegionDiscovery", "Failed to discover subscribed regions: "+regErr.Error())
+				} else {
+					for _, item := range response.Items {
+						if item.RegionName == nil || *item.RegionName == "" {
+							continue
+						}
+						regionName := *item.RegionName
+						// Register unconditionally — AddRegionSchemaForPlc is a no-op
+						// for regions already in the SDK's global map
+						schema := map[string]string{
+							"regionIdentifier":     regionName,
+							"realmKey":             regionName,
+							"realmDomainComponent": q.customdomain[key],
+							"regionKey":            regionName,
+						}
+						common.AddRegionSchemaForPlc(schema)
+						backend.Logger.Warn("getConfigProvider", "RegionDiscovery", "Registered sovereign region: "+regionName)
+					}
+				}
 			}
 		}
 		return nil
@@ -482,7 +572,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		if err != nil {
 			return errors.New("Error creating identity client")
 		}
-		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{monitoringClient, identityClient, configProvider}
+		o.tenancyAccess[SingleTenancyKey] = &TenancyAccess{
+			monitoringClient: monitoringClient,
+			identityClient:   identityClient,
+			config:           configProvider,
+			regionClients:    make(map[string]*monitoring.MonitoringClient),
+		}
 		return nil
 
 	default:
