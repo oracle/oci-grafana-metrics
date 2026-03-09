@@ -3,8 +3,6 @@
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 
-import _ from 'lodash';
-
 /**
  * @interface OCIResourceItem
  * @description Represents a generic OCI resource with a name and OCID.

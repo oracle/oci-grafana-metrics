@@ -1,3 +1,18 @@
+<a name="v6.5.3"></a>
+# [Bug fix release (v6.5.3)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.3) - 09 Mar 2026
+
+This release includes:
+
+- Bug fix for issue #328: Explorer queries now use the selected region instead of always using the default/home region
+- Added per-region client pool for thread-safe, concurrent multi-region support
+- Fixed ALL_REGION aggregation to correctly query all subscribed regions
+- Added sovereign cloud region discovery via AddRegionSchemaForPlc for DRCC/Alloy support
+- Upgraded OCI Go SDK from v65.81.3 to v65.105.0
+- Bumped lodash to 4.17.23 (#340) for security fix
+- Removed unused js-yaml dependency (#332, #334, #339)
+
+[Changes][v6.5.3]
+
 <a name="v6.5.2"></a>
 # [Security Maintenance release (v6.5.2)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.2) - 28 Feb 2025
 
@@ -502,6 +517,7 @@ Adds more documentation
 
 [Changes][v1.0.1]
 
+[v6.5.3]: https://github.com/oracle/oci-grafana-metrics/compare/v6.5.2...v6.5.3
 [v6.0.3]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.2...v6.0.3
 [v6.0.2]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.1...v6.0.2
 [v6.0.1]: https://github.com/oracle/oci-grafana-metrics/compare/v6.0.0...v6.0.1

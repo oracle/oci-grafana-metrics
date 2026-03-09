@@ -500,17 +500,22 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 			o.cache,
 			cacheKey,
 			constants.FETCH_FOR_NAMESPACE,
-			o.tenancyAccess[takey].monitoringClient,
+			o.tenancyAccess[takey],
 			monitoringRequest,
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
+		regionalClient, err := o.tenancyAccess[takey].GetMonitoringClientForRegion(region)
+		if err != nil {
+			backend.Logger.Error("client", "GetNamespaceWithMetricNames", err)
+			return nil
+		}
 		namespaceWithMetricNames = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,
 			cacheKey,
 			constants.FETCH_FOR_NAMESPACE,
-			o.tenancyAccess[takey].monitoringClient,
+			*regionalClient,
 			monitoringRequest,
 		)
 	}
@@ -633,12 +638,19 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	for _, subscribedRegion := range subscribedRegions {
 		if subscribedRegion != constants.ALL_REGION {
 			wg.Add(1)
-			go func(mc monitoring.MonitoringClient, sRegion string, errCh chan error) {
+			go func(ta *TenancyAccess, sRegion string, errCh chan error) {
 				defer wg.Done()
-				resp, err := mc.SummarizeMetricsData(ctx, metricsDataRequest)
+				regionalClient, err := ta.GetMonitoringClientForRegion(sRegion)
 				if err != nil {
 					backend.Logger.Error("client", "GetMetricDataPoints", err)
 					errCh <- err
+					return
+				}
+				resp, err := regionalClient.SummarizeMetricsData(ctx, metricsDataRequest)
+				if err != nil {
+					backend.Logger.Error("client", "GetMetricDataPoints", err)
+					errCh <- err
+					return
 				}
 
 				if len(resp.Items) > 0 {
@@ -665,7 +677,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 					})
 				}
 				errCh <- nil
-			}(o.tenancyAccess[takey].monitoringClient, subscribedRegion, errCh)
+			}(o.tenancyAccess[takey], subscribedRegion, errCh)
 			// Receive on the error channel
 			err := <-errCh
 			if err != nil {
@@ -1162,17 +1174,22 @@ func (o *OCIDatasource) GetResourceGroups(
 			o.cache,
 			cacheKey,
 			constants.FETCH_FOR_RESOURCE_GROUP,
-			o.tenancyAccess[takey].monitoringClient,
+			o.tenancyAccess[takey],
 			monitoringRequest,
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
+		regionalClient, err := o.tenancyAccess[takey].GetMonitoringClientForRegion(region)
+		if err != nil {
+			backend.Logger.Error("client", "GetResourceGroups", err)
+			return nil
+		}
 		metricResourceGroups = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,
 			cacheKey,
 			constants.FETCH_FOR_RESOURCE_GROUP,
-			o.tenancyAccess[takey].monitoringClient,
+			*regionalClient,
 			monitoringRequest,
 		)
 	}
@@ -1279,17 +1296,22 @@ func (o *OCIDatasource) GetDimensions(
 			o.cache,
 			cacheKey,
 			DimensionUse,
-			o.tenancyAccess[takey].monitoringClient,
+			o.tenancyAccess[takey],
 			monitoringRequest,
 			o.GetSubscribedRegions(ctx, tenancyOCID),
 		)
 	} else {
+		regionalClient, err := o.tenancyAccess[takey].GetMonitoringClientForRegion(region)
+		if err != nil {
+			backend.Logger.Error("client", "GetDimensions", err)
+			return nil
+		}
 		metricDimensions = listMetricsMetadataPerRegion(
 			ctx,
 			o.cache,
 			cacheKey,
 			DimensionUse,
-			o.tenancyAccess[takey].monitoringClient,
+			*regionalClient,
 			monitoringRequest,
 		)
 	}
