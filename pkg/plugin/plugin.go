@@ -53,12 +53,15 @@ func (ta *TenancyAccess) GetMonitoringClientForRegion(region string) (*monitorin
 		return &ta.monitoringClient, nil
 	}
 
+	region = strings.ToLower(region)
+
 	ta.mu.RLock()
-	if client, ok := ta.regionClients[region]; ok {
-		ta.mu.RUnlock()
+	client, ok := ta.regionClients[region]
+	ta.mu.RUnlock()
+
+	if ok {
 		return client, nil
 	}
-	ta.mu.RUnlock()
 
 	ta.mu.Lock()
 	defer ta.mu.Unlock()
