@@ -82,6 +82,10 @@
     "tslib": "2.5.3"
   },
   "resolutions": {
-    "d3-color": "3.1.0"
+    "d3-color": "3.1.0",
+    "form-data": "^4.0.4",
+    "flatted": "^3.4.2",
+    "minimatch": "^9.0.7",
+    "serialize-javascript": "^6.0.2"
   }
 }
