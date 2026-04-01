@@ -1,59 +1,14 @@
-# Multi-version Grafana setup for testing OCI metrics plugin compatibility.
-# Port scheme: 30XX where XX maps to major version (3075=v7.5, 3090=v9, etc.)
-#
-# Usage:
-#   docker compose up -d
-#   ./verify-plugin-load.sh
-#   docker compose down
-
-x-grafana-common: &grafana-common
-  environment: &grafana-env
-    GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
-    GF_AUTH_ANONYMOUS_ENABLED: "true"
-    GF_AUTH_BASIC_ENABLED: "false"
-    GF_DEFAULT_APP_MODE: "development"
-    GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: "oci-metrics-datasource"
-  volumes:
-    - ./dist:/var/lib/grafana/plugins/oci-metrics-datasource:ro
-  healthcheck:
-    test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/api/health || exit 1"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
-    start_period: 15s
+version: '3.0'
 
 services:
-  grafana-7-5:
-    <<: *grafana-common
-    container_name: oci-metrics-grafana-7-5
-    image: grafana/grafana:7.5.17
+  grafana:
+    container_name: 'oci-metrics-datasource'
+    build:
+      context: ./.config
+      args:
+        grafana_version: ${GRAFANA_VERSION:-9.3.8}
     ports:
-      - "3075:3000"
-
-  grafana-9:
-    <<: *grafana-common
-    container_name: oci-metrics-grafana-9
-    image: grafana/grafana:9.5.21
-    ports:
-      - "3090:3000"
-
-  grafana-10:
-    <<: *grafana-common
-    container_name: oci-metrics-grafana-10
-    image: grafana/grafana:10.4.15
-    ports:
-      - "3100:3000"
-
-  grafana-11:
-    <<: *grafana-common
-    container_name: oci-metrics-grafana-11
-    image: grafana/grafana:11.4.0
-    ports:
-      - "3110:3000"
-
-  grafana-12:
-    <<: *grafana-common
-    container_name: oci-metrics-grafana-12
-    image: grafana/grafana:12.3.6
-    ports:
-      - "3120:3000"
+      - 3000:3000/tcp
+    volumes:
+      - ./dist:/var/lib/grafana/plugins/oci-metrics-datasource
+      - ./provisioning:/etc/grafana/provisioning

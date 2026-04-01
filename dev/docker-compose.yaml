@@ -1,0 +1,58 @@
+# Managed by dev/test.sh — not intended to be run directly.
+
+x-grafana-common: &grafana-common
+  env_file: ./.env
+  entrypoint: ["/bin/bash", "/entrypoint.sh"]
+  environment: &grafana-env
+    GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    GF_AUTH_ANONYMOUS_ENABLED: "true"
+    GF_AUTH_BASIC_ENABLED: "false"
+    GF_DEFAULT_APP_MODE: "development"
+    GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: "oci-metrics-datasource"
+  volumes:
+    - ../dist:/var/lib/grafana/plugins/oci-metrics-datasource:ro
+    - ./config/entrypoint.sh:/entrypoint.sh:ro
+    - ./config/provisioning/dashboards:/etc/grafana/provisioning-templates/dashboards:ro
+    - ./config/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+  healthcheck:
+    test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/api/health || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 15s
+
+services:
+  grafana-7-5:
+    <<: *grafana-common
+    container_name: oci-metrics-grafana-7-5
+    image: grafana/grafana:7.5.17
+    ports:
+      - "127.0.0.1:3075:3000"
+
+  grafana-9:
+    <<: *grafana-common
+    container_name: oci-metrics-grafana-9
+    image: grafana/grafana:9.5.21
+    ports:
+      - "127.0.0.1:3090:3000"
+
+  grafana-10:
+    <<: *grafana-common
+    container_name: oci-metrics-grafana-10
+    image: grafana/grafana:10.4.15
+    ports:
+      - "127.0.0.1:3100:3000"
+
+  grafana-11:
+    <<: *grafana-common
+    container_name: oci-metrics-grafana-11
+    image: grafana/grafana:11.4.0
+    ports:
+      - "127.0.0.1:3110:3000"
+
+  grafana-12:
+    <<: *grafana-common
+    container_name: oci-metrics-grafana-12
+    image: grafana/grafana:12.3.6
+    ports:
+      - "127.0.0.1:3120:3000"

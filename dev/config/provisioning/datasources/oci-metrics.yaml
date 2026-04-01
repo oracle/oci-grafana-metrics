@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: Oracle Cloud Infrastructure Metrics
+    type: oci-metrics-datasource
+    access: proxy
+    isDefault: true
+    editable: true
+    jsonData:
+      environment: "OCI Instance"
+      tenancymode: "single"
