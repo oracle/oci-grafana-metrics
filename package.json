@@ -20,7 +20,7 @@
   "author": "",
   "license": "UPL-1.0",
   "engines": {
-    "node": ">=16"
+    "node": ">=22"
   },
   "engineStrict": true,
   "devDependencies": {
@@ -86,6 +86,7 @@
     "form-data": "^4.0.4",
     "flatted": "^3.4.2",
     "minimatch": "^9.0.7",
-    "serialize-javascript": "^6.0.2"
+    "picomatch": "^2.3.2",
+    "serialize-javascript": "^7.0.5"
   }
 }
