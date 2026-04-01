@@ -75,3 +75,8 @@ e2e-results/
 .vscode
 
 .codegpt
+
+# Dev environment files
+.env
+dev/.env
+dev/.tunnel.pid

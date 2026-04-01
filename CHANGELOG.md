@@ -1,5 +1,6 @@
 <a name="v6.5.3"></a>
-# [Bug fix release (v6.5.3)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.3) - 09 Mar 2026
+
+# [Bug fix and security release (v6.5.3)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.3) - 01 Apr 2026
 
 This release includes:
 
@@ -8,8 +9,10 @@ This release includes:
 - Fixed ALL_REGION aggregation to correctly query all subscribed regions
 - Added sovereign cloud region discovery via AddRegionSchemaForPlc for DRCC/Alloy support
 - Upgraded OCI Go SDK from v65.81.3 to v65.105.0
-- Bumped lodash to 4.17.23 (#340) for security fix
-- Removed unused js-yaml dependency (#332, #334, #339)
+- Upgraded grafana-plugin-sdk-go from v0.250.0 to v0.290.1 to resolve CVE-2026-33186 (gRPC authorization bypass) and CVE-2026-24051 (OpenTelemetry SDK path hijacking)
+- Bumped google.golang.org/grpc to v1.79.3 (CVE-2026-33186 fix)
+- Added yarn resolutions for JS dev dependency vulnerabilities (form-data, flatted, minimatch, serialize-javascript)
+- Added dev environment for multi-version Grafana plugin testing (v7.5, v9, v10, v11, v12)
 
 [Changes][v6.5.3]
 
