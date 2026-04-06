@@ -57,7 +57,7 @@ func listMetrics(ctx context.Context, mClient monitoring.MonitoringClient, req m
 
 		res, err := mClient.ListMetrics(ctx, req)
 		if err != nil {
-			backend.Logger.Error("client.utils", "listMetrics", err)
+			backend.Logger.Error("failed to list metrics", "method", "listMetrics", "error", err)
 			break
 		}
 
@@ -96,7 +96,7 @@ func listMetricsMetadataFromAllRegion(
 	req monitoring.ListMetricsRequest,
 	regions []string) map[string][]string {
 
-	backend.Logger.Error("client.utils", "listMetricsMetadataFromAllRegion", "Data fetch start by calling list metrics API from all subscribed regions")
+	backend.Logger.Debug("fetching metrics metadata from all subscribed regions", "method", "listMetricsMetadataFromAllRegion")
 
 	var metricsMetadata map[string][]string
 	var allRegionsData sync.Map
@@ -110,7 +110,7 @@ func listMetricsMetadataFromAllRegion(
 
 				regionalClient, err := ta.GetMonitoringClientForRegion(sRegion)
 				if err != nil {
-					backend.Logger.Error("client.utils", "listMetricsMetadataFromAllRegion", err)
+					backend.Logger.Error("failed to get regional monitoring client", "method", "listMetricsMetadataFromAllRegion", "region", sRegion, "error", err)
 					return
 				}
 
@@ -188,7 +188,7 @@ func listMetricsMetadataPerRegion(
 	mClient monitoring.MonitoringClient,
 	req monitoring.ListMetricsRequest) map[string][]string {
 
-	backend.Logger.Error("client.utils", "listMetricsMetadataPerRegion", "Data fetch start by calling list metrics API for a particular regions")
+	backend.Logger.Debug("fetching metrics metadata for region", "method", "listMetricsMetadataPerRegion")
 	if cachedMetricsData, found := ci.Get(cacheKey); found {
 		// This check avoids the type assertion and potential panic
 		if _, ok := cachedMetricsData.(map[string][]string); ok {
@@ -361,9 +361,9 @@ func (o *OCIDatasource) GetTenancyAccessKey(tenancyOCID string) string {
 
 	_, ok := o.tenancyAccess[takey]
 	if ok {
-		backend.Logger.Error("GetTenancyAccessKey", "Valid takey", takey)
+		backend.Logger.Debug("resolved tenancy access key", "method", "GetTenancyAccessKey", "takey", takey)
 	} else {
-		backend.Logger.Error("GetTenancyAccessKey", "Invalid takey", takey)
+		backend.Logger.Warn("invalid tenancy access key", "method", "GetTenancyAccessKey", "takey", takey)
 		return ""
 	}
 

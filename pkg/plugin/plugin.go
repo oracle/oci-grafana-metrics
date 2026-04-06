@@ -209,19 +209,18 @@ func NewOCIDatasourceConstructor() *OCIDatasource {
 //   - instancemgmt.Instance: The created OCIDatasource instance.
 //   - error: An error if the datasource creation fails.
 func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	backend.Logger.Error("plugin", "NewOCIDatasource", settings.ID)
+	backend.Logger.Debug("NewOCIDatasource", "instanceID", settings.ID)
 
 	o := NewOCIDatasourceConstructor()
 	dsSettings := &models.OCIDatasourceSettings{}
 
 	if err := dsSettings.Load(settings); err != nil {
-		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to load oci datasource settings: "+err.Error())
+		backend.Logger.Error("failed to load datasource settings", "method", "NewOCIDatasource", "error", err)
 		return nil, err
 	}
 	o.settings = dsSettings
 
-	backend.Logger.Error("plugin", "dsSettings.Environment", "dsSettings.Environment: "+dsSettings.Environment)
-	backend.Logger.Error("plugin", "dsSettings.TenancyMode", "dsSettings.TenancyMode: "+dsSettings.TenancyMode)
+	backend.Logger.Debug("datasource settings loaded", "environment", dsSettings.Environment, "tenancyMode", dsSettings.TenancyMode)
 
 	if len(o.tenancyAccess) == 0 {
 		err := o.getConfigProvider(dsSettings.Environment, dsSettings.TenancyMode, settings)
@@ -237,7 +236,7 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 		Metrics:     false,
 	})
 	if err != nil {
-		backend.Logger.Error("plugin", "NewOCIDatasource", "failed to create cache: "+err.Error())
+		backend.Logger.Error("failed to create cache", "method", "NewOCIDatasource", "error", err)
 		return nil, err
 	}
 	o.cache = cache
@@ -268,7 +267,7 @@ func NewOCIDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt
 *   - If any error occurs during the query execution, it will be returned.
  */
 func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	backend.Logger.Error("plugin", "QueryData", req.PluginContext.DataSourceInstanceSettings.Name)
+	backend.Logger.Debug("QueryData", "datasource", req.PluginContext.DataSourceInstanceSettings.Name)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -289,14 +288,14 @@ func (o *OCIDatasource) QueryData(ctx context.Context, req *backend.QueryDataReq
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	backend.Logger.Error("plugin", "CheckHealth", req.PluginContext.PluginID)
+	backend.Logger.Debug("CheckHealth", "pluginID", req.PluginContext.PluginID)
 
 	hRes := &backend.CheckHealthResult{}
 
 	if err := o.TestConnectivity(ctx); err != nil {
 		hRes.Status = backend.HealthStatusError
 		hRes.Message = err.Error()
-		backend.Logger.Error("plugin", "CheckHealth", err)
+		backend.Logger.Error("health check failed", "method", "CheckHealth", "error", err)
 		return hRes, nil
 	}
 
@@ -459,7 +458,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			var configProvider common.ConfigurationProvider
 			if tenancymode != "multitenancy" {
 				if key != "DEFAULT" {
-					backend.Logger.Error("Single Tenancy mode detected, skipping additional profile", "profile", key)
+					backend.Logger.Debug("single tenancy mode, skipping additional profile", "profile", key)
 					continue
 				}
 			}
@@ -470,7 +469,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			// Override region in Configuration Provider in case a Custom region is configured
 			if q.customregion[key] != "" {
-				backend.Logger.Error("getConfigProvider", "CustomRegion", q.customregion[key])
+				backend.Logger.Debug("using custom region", "method", "getConfigProvider", "customRegion", q.customregion[key])
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.customregion[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 
 				// Register custom home region in SDK's global region map so that
@@ -492,7 +491,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			mrp := clientRetryPolicy()
 			monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 			if err != nil {
-				backend.Logger.Error("getConfigProvider", "Error with config", key)
+				backend.Logger.Error("failed to create monitoring client", "method", "getConfigProvider", "profile", key, "error", err)
 				return errors.New("error with client")
 			}
 			monitoringClient.Configuration.RetryPolicy = &mrp
@@ -568,7 +567,7 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 		}
 		monitoringClient, err := monitoring.NewMonitoringClientWithConfigurationProvider(configProvider)
 		if err != nil {
-			backend.Logger.Error("getConfigProvider", "Error with config", SingleTenancyKey)
+			backend.Logger.Error("failed to create monitoring client", "method", "getConfigProvider", "profile", SingleTenancyKey, "error", err)
 			return errors.New("error with client")
 		}
 		identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configProvider)

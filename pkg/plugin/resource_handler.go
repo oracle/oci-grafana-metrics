@@ -99,13 +99,13 @@ func (ocidx *OCIDatasource) GetRegionsHandler(rw http.ResponseWriter, req *http.
 
 	var rr rootRequest
 	if err := jsoniter.NewDecoder(req.Body).Decode(&rr); err != nil {
-		backend.Logger.Error("plugin.resource_handler", "GetRegionsHandler", err)
+		backend.Logger.Error("failed to decode request body", "method", "GetRegionsHandler", "error", err)
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
 	regions := ocidx.GetSubscribedRegions(req.Context(), rr.Tenancy)
 	if regions == nil {
-		backend.Logger.Error("plugin.resource_handler", "GetSubscribedRegions", "Could not read regions")
+		backend.Logger.Error("could not read regions", "method", "GetRegionsHandler")
 		respondWithError(rw, http.StatusBadRequest, "Could not read regions", nil)
 		return
 	}
@@ -128,13 +128,13 @@ func (ocidx *OCIDatasource) GetCompartmentsHandler(rw http.ResponseWriter, req *
 
 	var rr rootRequest
 	if err := jsoniter.NewDecoder(req.Body).Decode(&rr); err != nil {
-		backend.Logger.Error("plugin.resource_handler", "GetCompartmentsHandler", err)
+		backend.Logger.Error("failed to decode request body", "method", "GetCompartmentsHandler", "error", err)
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
 	compartments := ocidx.GetCompartments(req.Context(), rr.Tenancy)
 	if compartments == nil {
-		backend.Logger.Error("plugin.resource_handler", "GetCompartmentsHandler", "Could not read compartments")
+		backend.Logger.Error("could not read compartments", "method", "GetCompartmentsHandler")
 		respondWithError(rw, http.StatusBadRequest, "Could not read compartments", nil)
 		return
 	}
@@ -157,7 +157,7 @@ func (ocidx *OCIDatasource) GetNamespacesHandler(rw http.ResponseWriter, req *ht
 
 	var nmr namespaceMetricRequest
 	if err := jsoniter.NewDecoder(req.Body).Decode(&nmr); err != nil {
-		backend.Logger.Error("plugin.resource_handler", "GetNamespacesHandler", err)
+		backend.Logger.Error("failed to decode request body", "method", "GetNamespacesHandler", "error", err)
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
@@ -182,7 +182,7 @@ func (ocidx *OCIDatasource) GetResourceGroupHandler(rw http.ResponseWriter, req 
 
 	var rgr resourceGroupRequest
 	if err := jsoniter.NewDecoder(req.Body).Decode(&rgr); err != nil {
-		backend.Logger.Error("plugin.resource_handler", "GetResourceGroupHandler", err)
+		backend.Logger.Error("failed to decode request body", "method", "GetResourceGroupHandler", "error", err)
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
@@ -207,7 +207,7 @@ func (ocidx *OCIDatasource) GetDimensionsHandler(rw http.ResponseWriter, req *ht
 
 	var dr dimensionRequest
 	if err := jsoniter.NewDecoder(req.Body).Decode(&dr); err != nil {
-		backend.Logger.Error("plugin.resource_handler", "GetDimensionsHandler", err)
+		backend.Logger.Error("failed to decode request body", "method", "GetDimensionsHandler", "error", err)
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
@@ -232,7 +232,7 @@ func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Req
 
 	var tr tagRequest
 	if err := jsoniter.NewDecoder(req.Body).Decode(&tr); err != nil {
-		backend.Logger.Error("ResourceHandler", "GetTagsHandler", err)
+		backend.Logger.Error("failed to decode request body", "method", "GetTagsHandler", "error", err)
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
@@ -250,7 +250,7 @@ func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Req
 func writeResponse(rw http.ResponseWriter, resp interface{}) {
 	resultJson, err := jsoniter.Marshal(resp)
 	if err != nil {
-		backend.Logger.Error("plugin.resource_handler", "writeResponse", "could not parse response:"+err.Error())
+		backend.Logger.Error("could not marshal response", "method", "writeResponse", "error", err)
 		respondWithError(rw, http.StatusInternalServerError, "Failed to convert result", err)
 	}
 
@@ -275,7 +275,7 @@ func respondWithError(rw http.ResponseWriter, statusCode int, message string, er
 
 	response, err := jsoniter.Marshal(httpError)
 	if err != nil {
-		backend.Logger.Error("plugin.resource_handler", "respondWithError", "could not parse response:"+err.Error())
+		backend.Logger.Error("could not marshal error response", "method", "respondWithError", "error", err)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -295,7 +295,7 @@ func sendResponse(rw http.ResponseWriter, statusCode int, response []byte) {
 
 	_, err := rw.Write(response)
 	if err != nil {
-		backend.Logger.Error("plugin.resource_handler", "sendResponse", "could not write to response: "+err.Error())
+		backend.Logger.Error("could not write response", "method", "sendResponse", "error", err)
 		rw.WriteHeader(http.StatusInternalServerError)
 	}
 }

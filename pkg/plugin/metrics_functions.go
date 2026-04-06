@@ -42,7 +42,7 @@ type metricDataBank struct {
 //   - error: An error if any of the tests fail, or nil if the connectivity is successful.
 func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 	// Log the start of the test
-	backend.Logger.Error("client", "TestConnectivity", "testing the OCI connectivity")
+	backend.Logger.Debug("testing OCI connectivity", "method", "TestConnectivity")
 
 	// var reg common.Region
 	var testResult bool
@@ -71,7 +71,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		}
 
 		// Test the tenancy OCID
-		backend.Logger.Error("TestConnectivity", "ConfigKey", key, "Testing Tenancy OCID", tenancyocid)
+		backend.Logger.Debug("testing tenancy", "method", "TestConnectivity", "configKey", key, "tenancyOCID", tenancyocid)
 		listMetrics := monitoring.ListMetricsRequest{
 			CompartmentId: &tenancyocid,
 			Limit:         common.Int(25),
@@ -80,7 +80,7 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		var status int
 		res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
 		if res.RawResponse == nil || res.RawResponse.ContentLength == 0 {
-			backend.Logger.Error("TestConnectivity", "Config Key", key, "error", err)
+			backend.Logger.Error("connectivity test returned empty result", "method", "TestConnectivity", "configKey", key, "error", err)
 			return fmt.Errorf("TestConnectivity failed: result is empty %v: %v", key, err)
 		} else {
 			status = res.RawResponse.StatusCode
@@ -89,30 +89,30 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 		// Handle errors
 		if err != nil {
 			if res.RawResponse.StatusCode == 401 {
-				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", err)
+				backend.Logger.Error("connectivity test unauthorized", "method", "TestConnectivity", "configKey", key, "error", err)
 				return fmt.Errorf("TestConnectivity failed: error in profile %v: %v", key, err)
 			} else {
-				backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", err)
+				backend.Logger.Warn("tenancy-level list metrics returned error, trying compartments", "method", "TestConnectivity", "configKey", key, "error", err)
 			}
 		}
 
 		// Check the status code
 		if status >= 200 && status < 300 {
-			backend.Logger.Error("TestConnectivity", "Config Key", key, "OK", status)
+			backend.Logger.Debug("tenancy connectivity test passed", "method", "TestConnectivity", "configKey", key, "status", status)
 		} else {
-			backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", fmt.Sprintf("listMetrics on Tenancy %s did not work, testing compartments", tenancyocid))
+			backend.Logger.Debug("tenancy-level list metrics failed, testing compartments", "method", "TestConnectivity", "configKey", key, "tenancyOCID", tenancyocid)
 
 			// Get the compartments
 			comparts := o.GetCompartments(ctx, tenancyocid, true)
 			if comparts == nil {
-				backend.Logger.Error("TestConnectivity", "Config Key", key, "error", "could not read compartments")
+				backend.Logger.Error("could not read compartments", "method", "TestConnectivity", "configKey", key)
 				return fmt.Errorf("TestConnectivity failed: cannot read Compartments in profile %v", key)
 			}
 
 			// Test each compartment
 			for _, v := range comparts {
 				tocid := v.OCID
-				backend.Logger.Error("TestConnectivity", "Config Key", key, "Testing", tocid)
+				backend.Logger.Debug("testing compartment", "method", "TestConnectivity", "configKey", key, "compartmentOCID", tocid)
 				listMetrics := monitoring.ListMetricsRequest{
 					CompartmentId: common.String(tocid),
 					Limit:         common.Int(25),
@@ -120,21 +120,21 @@ func (o *OCIDatasource) TestConnectivity(ctx context.Context) error {
 
 				res, err := o.tenancyAccess[key].monitoringClient.ListMetrics(ctx, listMetrics)
 				if err != nil {
-					backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", err)
+					backend.Logger.Warn("compartment test returned error, skipping", "method", "TestConnectivity", "configKey", key, "error", err)
 				}
 				status := res.RawResponse.StatusCode
 				if status >= 200 && status < 300 {
-					backend.Logger.Error("TestConnectivity", "Config Key", key, "OK", status)
+					backend.Logger.Debug("compartment connectivity test passed", "method", "TestConnectivity", "configKey", key, "status", status)
 					testResult = true
 					break
 				} else {
-					backend.Logger.Error("TestConnectivity", "Config Key", key, "SKIPPED", status)
+					backend.Logger.Debug("compartment test returned non-success status, skipping", "method", "TestConnectivity", "configKey", key, "status", status)
 				}
 			}
 			if testResult {
 				continue
 			} else {
-				backend.Logger.Error("TestConnectivity", "Config Key", key, "FAILED", "listMetrics failed in each compartment")
+				backend.Logger.Error("listMetrics failed in all compartments", "method", "TestConnectivity", "configKey", key)
 				return fmt.Errorf("listMetrics failed in each Compartments in profile %v", key)
 			}
 		}
@@ -206,7 +206,7 @@ Returns:
   - []models.OCIResource: A slice of OCIResource containing tenancy information.
 */
 func (o *OCIDatasource) GetTenancies(ctx context.Context) []models.OCIResource {
-	backend.Logger.Error("client", "GetTenancies", "fetching the tenancies")
+	backend.Logger.Debug("fetching tenancies", "method", "GetTenancies")
 
 	tenancyList := []models.OCIResource{}
 	for key := range o.tenancyAccess {
@@ -240,7 +240,7 @@ func (o *OCIDatasource) GetTenancies(ctx context.Context) []models.OCIResource {
 //   - []string: A slice of strings, where each string represents a subscribed region.
 //     Returns nil if any error occurred during the process.
 func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID string) []string {
-	backend.Logger.Error("client", "GetSubscribedRegions", "fetching the subscribed region for tenancy: "+tenancyOCID)
+	backend.Logger.Debug("fetching subscribed regions", "method", "GetSubscribedRegions", "tenancyOCID", tenancyOCID)
 
 	var subscribedRegions []string
 	takey := o.GetTenancyAccessKey(tenancyOCID)
@@ -256,7 +256,7 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 		return nil
 	}
 
-	backend.Logger.Error("client", "GetSubscribedRegionstakey", "fetching the subscribed region for tenancy OCID: "+*common.String(tenancyocid))
+	backend.Logger.Debug("fetching subscribed regions for tenancy", "method", "GetSubscribedRegions", "tenancyOCID", tenancyocid)
 
 	req := identity.ListRegionSubscriptionsRequest{TenancyId: common.String(tenancyocid)}
 
@@ -278,7 +278,7 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 
 	for _, item := range resp.Items {
 		if item.Status == identity.RegionSubscriptionStatusReady {
-			backend.Logger.Error("client", "GetSubscribedRegionstakey", "fetching the subscribed region for regioname: "+*item.RegionName)
+			backend.Logger.Debug("found subscribed region", "method", "GetSubscribedRegions", "region", *item.RegionName)
 			subscribedRegions = append(subscribedRegions, *item.RegionName)
 		}
 	}
@@ -312,7 +312,7 @@ func (o *OCIDatasource) GetSubscribedRegions(ctx context.Context, tenancyOCID st
 //   - []models.OCIResource: A slice of OCIResource, where each element represents a compartment with its
 //     name and OCID. Returns nil if there is an error during the process.
 func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string, includeAccessibleOnly ...bool) []models.OCIResource {
-	backend.Logger.Error("client", "GetCompartments", "fetching the sub-compartments for tenancy: "+tenancyOCID)
+	backend.Logger.Debug("fetching compartments", "method", "GetCompartments", "tenancyOCID", tenancyOCID)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 
@@ -334,7 +334,7 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string,
 	// Send the request using the service client
 	resp, err := o.tenancyAccess[takey].identityClient.GetTenancy(context.Background(), req)
 	if err != nil {
-		backend.Logger.Error("client", "GetCompartments", "error in GetTenancy")
+		backend.Logger.Error("failed to get tenancy", "method", "GetCompartments", "error", err)
 		return nil
 	}
 
@@ -342,7 +342,7 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string,
 
 	if len(includeAccessibleOnly) == 1 && includeAccessibleOnly[0] {
 		effectiveScope = identity.ListCompartmentsAccessLevelAccessible
-		backend.Logger.Error("client", "GetCompartments", "using ListCompartmentsAccessLevelAccessible")
+		backend.Logger.Debug("using accessible-only compartment scope", "method", "GetCompartments")
 	} else {
 		effectiveScope = identity.ListCompartmentsAccessLevelAny
 	}
@@ -458,7 +458,7 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	tenancyOCID string,
 	compartmentOCID string,
 	region string) []models.OCIMetricNamesWithNamespace {
-	backend.Logger.Error("client", "GetNamespaceWithMetricNames", "fetching the metric names along with namespaces under compartment: "+compartmentOCID)
+	backend.Logger.Debug("fetching namespaces and metric names", "method", "GetNamespaceWithMetricNames", "compartment", compartmentOCID)
 
 	takey := o.GetTenancyAccessKey(tenancyOCID)
 	// fetching from cache, if present
@@ -507,7 +507,7 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 	} else {
 		regionalClient, err := o.tenancyAccess[takey].GetMonitoringClientForRegion(region)
 		if err != nil {
-			backend.Logger.Error("client", "GetNamespaceWithMetricNames", err)
+			backend.Logger.Error("failed to get regional monitoring client", "method", "GetNamespaceWithMetricNames", "error", err)
 			return nil
 		}
 		namespaceWithMetricNames = listMetricsMetadataPerRegion(
@@ -575,7 +575,7 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 //   - Returns any errors encountered during API calls.
 //   - Logs errors encountered during the data retrieval process.
 func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams models.MetricsDataRequest, tenancyOCID string) ([]time.Time, []models.OCIMetricDataPoints, error) {
-	backend.Logger.Error("client", "GetMetricDataPoints", "fetching the metrics datapoints under compartment '"+requestParams.CompartmentOCID+"' for query '"+requestParams.QueryText+"'")
+	backend.Logger.Debug("fetching metric datapoints", "method", "GetMetricDataPoints", "compartment", requestParams.CompartmentOCID, "query", requestParams.QueryText)
 
 	times := []time.Time{}
 	dataValuesWithTime := map[common.SDKTime][]float64{}
@@ -642,13 +642,13 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 				defer wg.Done()
 				regionalClient, err := ta.GetMonitoringClientForRegion(sRegion)
 				if err != nil {
-					backend.Logger.Error("client", "GetMetricDataPoints", err)
+					backend.Logger.Error("failed to get regional monitoring client", "method", "GetMetricDataPoints", "region", sRegion, "error", err)
 					errCh <- err
 					return
 				}
 				resp, err := regionalClient.SummarizeMetricsData(ctx, metricsDataRequest)
 				if err != nil {
-					backend.Logger.Error("client", "GetMetricDataPoints", err)
+					backend.Logger.Error("failed to summarize metrics data", "method", "GetMetricDataPoints", "region", sRegion, "error", err)
 					errCh <- err
 					return
 				}
@@ -681,7 +681,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 			// Receive on the error channel
 			err := <-errCh
 			if err != nil {
-				backend.Logger.Error("client", "GetMetricDataPoints", err)
+				backend.Logger.Error("region metrics fetch failed", "method", "GetMetricDataPoints", "error", err)
 				return nil, nil, err
 			}
 		}
@@ -868,7 +868,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 //
 //	An interface{} containing the cached resource.
 func (o *OCIDatasource) fetchFromCache(ctx context.Context, tenancyOCID string, compartmentOCID string, compartmentName string, region string, namespace string, suffix string) interface{} {
-	backend.Logger.Error("client", "fetchFromCache", "fetching from cache")
+	backend.Logger.Debug("fetching from cache", "method", "fetchFromCache")
 
 	labelCacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, suffix}, "-")
 	if _, found := o.cache.Get(labelCacheKey); !found {
@@ -893,7 +893,7 @@ func (o *OCIDatasource) GetTags(
 	compartmentName string,
 	region string,
 	namespace string) []models.OCIResourceTags {
-	backend.Logger.Error("client", "GetTags", "fetching the tags for namespace '"+namespace+"'")
+	backend.Logger.Debug("fetching tags", "method", "GetTags", "namespace", namespace)
 
 	resourceTagsList := []models.OCIResourceTags{}
 	allResourceTags := map[string][]string{}
@@ -1138,7 +1138,7 @@ func (o *OCIDatasource) GetResourceGroups(
 	compartmentOCID string,
 	region string,
 	namespace string) []models.OCIMetricNamesWithResourceGroup {
-	backend.Logger.Error("client", "GetResourceGroups", "fetching the resource groups under compartment '"+compartmentOCID+"' for namespace '"+namespace+"'")
+	backend.Logger.Debug("fetching resource groups", "method", "GetResourceGroups", "compartment", compartmentOCID, "namespace", namespace)
 
 	// fetching from cache, if present
 	cacheKey := strings.Join([]string{tenancyOCID, compartmentOCID, region, namespace, "rgs"}, "-")
@@ -1181,7 +1181,7 @@ func (o *OCIDatasource) GetResourceGroups(
 	} else {
 		regionalClient, err := o.tenancyAccess[takey].GetMonitoringClientForRegion(region)
 		if err != nil {
-			backend.Logger.Error("client", "GetResourceGroups", err)
+			backend.Logger.Error("failed to get regional monitoring client", "method", "GetResourceGroups", "error", err)
 			return nil
 		}
 		metricResourceGroups = listMetricsMetadataPerRegion(
@@ -1195,7 +1195,7 @@ func (o *OCIDatasource) GetResourceGroups(
 	}
 
 	if len(metricResourceGroups) == 0 {
-		backend.Logger.Error("client", "GetResourceGroups", "resource groups under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' is empty")
+		backend.Logger.Debug("no resource groups found", "method", "GetResourceGroups", "compartment", compartmentOCID, "namespace", namespace)
 		return nil
 	} else {
 		for k, v := range metricResourceGroups {
@@ -1246,11 +1246,11 @@ func (o *OCIDatasource) GetDimensions(
 	var DimensionUse string
 	var cacheSubKey string
 	if len(isLabel) > 0 {
-		backend.Logger.Error("client", "GetDimensionsLabels", "fetching the dimension under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' and metric '"+metricName+"' to be used as labels")
+		backend.Logger.Debug("fetching dimensions for labels", "method", "GetDimensions", "compartment", compartmentOCID, "namespace", namespace, "metric", metricName)
 		DimensionUse = constants.FETCH_FOR_LABELDIMENSION
 		cacheSubKey = "dslabel"
 	} else {
-		backend.Logger.Error("client", "GetDimensions", "fetching the dimension under compartment '"+compartmentOCID+"' for namespace '"+namespace+"' and metric '"+metricName+"'")
+		backend.Logger.Debug("fetching dimensions", "method", "GetDimensions", "compartment", compartmentOCID, "namespace", namespace, "metric", metricName)
 		DimensionUse = constants.FETCH_FOR_DIMENSION
 		cacheSubKey = "ds"
 	}
@@ -1303,7 +1303,7 @@ func (o *OCIDatasource) GetDimensions(
 	} else {
 		regionalClient, err := o.tenancyAccess[takey].GetMonitoringClientForRegion(region)
 		if err != nil {
-			backend.Logger.Error("client", "GetDimensions", err)
+			backend.Logger.Error("failed to get regional monitoring client", "method", "GetDimensions", "error", err)
 			return nil
 		}
 		metricDimensions = listMetricsMetadataPerRegion(
