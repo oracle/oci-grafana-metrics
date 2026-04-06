@@ -35,7 +35,7 @@ import (
 // Returns:
 // - backend.DataResponse: The response containing the query results or an error if the query fails.
 func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	backend.Logger.Error("plugin.query", "query", "query initiated for "+query.RefID)
+	backend.Logger.Debug("query initiated", "method", "query", "refID", query.RefID)
 
 	// Creating the Data response for query
 	response := backend.DataResponse{}
