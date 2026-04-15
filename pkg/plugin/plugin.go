@@ -8,8 +8,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
-	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -322,17 +320,14 @@ func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealt
 //  1. Initializes an empty OCIConfigFile.
 //  2. Unmarshals the JSON data from req.JSONData into both OCISecuredSettings and OCIDatasourceSettings structs.
 //  3. Merges the non-secured settings into the secured settings.
-//  4. Iterates through the fields of the OCISecuredSettings struct using reflection.
-//  5. Parses the field names to determine the tenancy block index (e.g., _0, _1).
-//  6. Extracts the profile name as the key for each tenancy block.
-//  7. Stores the tenancy OCID, region, user, private key, fingerprint, private key passphrase, custom region, and custom domain in the OCIConfigFile.
-//  8. Handles multiple tenancy blocks by incrementing the TenancySettingsBlock index.
-//  9. Returns the populated OCIConfigFile or an error if any step fails.
+//  4. Iterates the six profile blocks (_0.._5) in order, using each non-empty Profile name as the map key.
+//  5. Stores the tenancy OCID, region, user, private key, fingerprint, custom region, and custom domain in the OCIConfigFile.
+//  6. Stops at the first profile block whose Profile name is empty.
+//  7. Returns the populated OCIConfigFile or an error if any step fails.
 func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
 
 	// Load secured and non-secured settings
-	TenancySettingsBlock := 0
 	var dat OCISecuredSettings
 	var nonsecdat models.OCIDatasourceSettings
 
@@ -371,49 +366,31 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.CustomRegion_4 = nonsecdat.CustomRegion_4
 	dat.CustomRegion_5 = nonsecdat.CustomRegion_5
 
-	v := reflect.ValueOf(dat)
-	typeOfS := v.Type()
-	var key string
-
-	for FieldIndex := 0; FieldIndex < v.NumField(); FieldIndex++ {
-		splits := strings.Split(typeOfS.Field(FieldIndex).Name, "_")
-		SettingsBlockIndex, interr := strconv.Atoi(splits[1])
-		if interr != nil {
-			return nil, fmt.Errorf("can not read settings: %s", interr.Error())
-		}
-
-		if SettingsBlockIndex == TenancySettingsBlock {
-			if splits[0] == "Profile" {
-				if v.Field(FieldIndex).Interface() != "" {
-					key = fmt.Sprintf("%v", v.Field(FieldIndex).Interface())
-				} else {
-					return q, nil
-				}
-			} else {
-				switch value := v.Field(FieldIndex).Interface(); strings.ToLower(splits[0]) {
-				case "tenancy":
-					q.tenancyocid[key] = fmt.Sprintf("%v", value)
-				case "region":
-					q.region[key] = fmt.Sprintf("%v", value)
-				case "user":
-					q.user[key] = fmt.Sprintf("%v", value)
-				case "privkey":
-					q.privkey[key] = fmt.Sprintf("%v", value)
-				case "fingerprint":
-					q.fingerprint[key] = fmt.Sprintf("%v", value)
-				case "privkeypass":
-					q.privkeypass[key] = EmptyKeyPass
-				case "customregion":
-					q.customregion[key] = fmt.Sprintf("%v", value)
-				case "customdomain":
-					q.customdomain[key] = fmt.Sprintf("%v", value)
-				}
-			}
-		} else {
-			TenancySettingsBlock++
-			FieldIndex--
-		}
+	blocks := [6]struct {
+		Profile, Tenancy, Region, User, Privkey, Fingerprint, CustomRegion, CustomDomain string
+	}{
+		{dat.Profile_0, dat.Tenancy_0, dat.Region_0, dat.User_0, dat.Privkey_0, dat.Fingerprint_0, dat.CustomRegion_0, dat.CustomDomain_0},
+		{dat.Profile_1, dat.Tenancy_1, dat.Region_1, dat.User_1, dat.Privkey_1, dat.Fingerprint_1, dat.CustomRegion_1, dat.CustomDomain_1},
+		{dat.Profile_2, dat.Tenancy_2, dat.Region_2, dat.User_2, dat.Privkey_2, dat.Fingerprint_2, dat.CustomRegion_2, dat.CustomDomain_2},
+		{dat.Profile_3, dat.Tenancy_3, dat.Region_3, dat.User_3, dat.Privkey_3, dat.Fingerprint_3, dat.CustomRegion_3, dat.CustomDomain_3},
+		{dat.Profile_4, dat.Tenancy_4, dat.Region_4, dat.User_4, dat.Privkey_4, dat.Fingerprint_4, dat.CustomRegion_4, dat.CustomDomain_4},
+		{dat.Profile_5, dat.Tenancy_5, dat.Region_5, dat.User_5, dat.Privkey_5, dat.Fingerprint_5, dat.CustomRegion_5, dat.CustomDomain_5},
 	}
+
+	for _, b := range blocks {
+		if b.Profile == "" {
+			break
+		}
+		key := b.Profile
+		q.tenancyocid[key] = b.Tenancy
+		q.region[key] = b.Region
+		q.user[key] = b.User
+		q.privkey[key] = b.Privkey
+		q.fingerprint[key] = b.Fingerprint
+		q.customregion[key] = b.CustomRegion
+		q.customdomain[key] = b.CustomDomain
+	}
+
 	return q, nil
 }
 
