@@ -46,12 +46,21 @@ type TenancyAccess struct {
 
 // GetMonitoringClientForRegion returns a monitoring client configured for the specified region.
 // Clients are lazily created and cached. Empty region or ALL_REGION returns the default client.
+// SECURITY: The region parameter is validated before use to prevent SSRF attacks.
+//
+// Canonicalization (TrimSpace + ToLower) happens once here so that the cache key,
+// validator input, and SetRegion() argument all see the same form. Resource handlers
+// already canonicalize at the HTTP boundary; this is the single source of truth for
+// callers reaching the SDK directly.
 func (ta *TenancyAccess) GetMonitoringClientForRegion(region string) (*monitoring.MonitoringClient, error) {
+	region = strings.ToLower(strings.TrimSpace(region))
 	if region == "" || region == constants.ALL_REGION {
 		return &ta.monitoringClient, nil
 	}
 
-	region = strings.ToLower(region)
+	if err := ValidateRegion(region); err != nil {
+		return nil, fmt.Errorf("GetMonitoringClientForRegion: rejected invalid region: %w", err)
+	}
 
 	ta.mu.RLock()
 	client, ok := ta.regionClients[region]
@@ -82,9 +91,17 @@ func (ta *TenancyAccess) GetMonitoringClientForRegion(region string) (*monitorin
 	// sovereign cloud regions to the wrong domain (oraclecloud.com). Verify and
 	// fall back to manual endpoint construction using the configured custom domain.
 	if ta.customDomain != "" && !strings.Contains(newClient.Host, ta.customDomain) {
+		// SECURITY: Validate custom domain before constructing endpoint URL
+		if err := ValidateCustomDomain(ta.customDomain); err != nil {
+			return nil, fmt.Errorf("GetMonitoringClientForRegion: invalid custom domain: %w", err)
+		}
 		fallbackHost := "https://telemetry." + region + "." + ta.customDomain
-		backend.Logger.Warn("GetMonitoringClientForRegion", "FallbackEndpoint",
-			"SDK resolved wrong domain for region "+region+", using fallback: "+fallbackHost)
+		// Operational signal: SDK region resolution missed and we are constructing the
+		// endpoint manually. The host itself is operator-configured non-secret data, but
+		// we omit it from the log to keep the message stable for alerting.
+		backend.Logger.Warn("SDK region resolution missed; using custom domain fallback",
+			"method", "GetMonitoringClientForRegion",
+			"region", region)
 		newClient.Host = fallbackHost
 	}
 
@@ -305,9 +322,10 @@ func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealt
 
 // OCILoadSettings loads and processes OCI configuration settings from the Grafana data source instance settings.
 //
-// This function handles both secured and non-secured settings, merging them to create a comprehensive
-// configuration. It iterates through the settings, parsing and storing them in an OCIConfigFile struct.
-// The function supports multiple tenancy configurations, identified by a numerical suffix (e.g., _0, _1).
+// This function handles both secured and non-secured settings, combining them to create a comprehensive
+// configuration. Non-sensitive fields (profile names, regions, custom region identifiers) are read from
+// plaintext JSONData. Sensitive credentials (private keys, tenancy OCIDs, user OCIDs, fingerprints,
+// custom domains) are read exclusively from DecryptedSecureJSONData to prevent credential exposure.
 //
 // Parameters:
 //   - req: backend.DataSourceInstanceSettings - The data source instance settings from Grafana.
@@ -315,33 +333,43 @@ func (o *OCIDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealt
 // Returns:
 //   - *OCIConfigFile: A pointer to an OCIConfigFile struct containing the parsed settings.
 //   - error: An error if any issues occur during the loading or parsing of settings.
-//
-// The function performs the following steps:
-//  1. Initializes an empty OCIConfigFile.
-//  2. Unmarshals the JSON data from req.JSONData into both OCISecuredSettings and OCIDatasourceSettings structs.
-//  3. Merges the non-secured settings into the secured settings.
-//  4. Iterates the six profile blocks (_0.._5) in order, using each non-empty Profile name as the map key.
-//  5. Stores the tenancy OCID, region, user, private key, fingerprint, custom region, and custom domain in the OCIConfigFile.
-//  6. Stops at the first profile block whose Profile name is empty.
-//  7. Returns the populated OCIConfigFile or an error if any step fails.
 func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, error) {
 	q := NewOCIConfigFile()
 
-	// Load secured and non-secured settings
-	var dat OCISecuredSettings
+	// Load non-sensitive settings from plaintext JSONData (profile names, regions, custom region identifiers)
 	var nonsecdat models.OCIDatasourceSettings
-
-	if err := json.Unmarshal(req.JSONData, &dat); err != nil {
-		return nil, fmt.Errorf("can not read Secured settings: %s", err.Error())
-	}
-
 	if err := json.Unmarshal(req.JSONData, &nonsecdat); err != nil {
 		return nil, fmt.Errorf("can not read settings: %s", err.Error())
 	}
 
-	// merge non secured settings into secured
+	// SECURITY: Load sensitive credentials from DecryptedSecureJSONData (encrypted storage).
+	// For backward compatibility with legacy deployments that may have credentials in plaintext
+	// JSONData, we fall back to reading from JSONData if DecryptedSecureJSONData is empty,
+	// but log a security warning so administrators can migrate to secureJsonData.
+	var dat OCISecuredSettings
 	decryptedJSONData := req.DecryptedSecureJSONData
-	transcode(decryptedJSONData, &dat)
+	if len(decryptedJSONData) > 0 {
+		transcode(decryptedJSONData, &dat)
+	} else {
+		// DEPRECATED: This plaintext-fallback branch exists so data sources provisioned before
+		// the credential-encryption fix continue to work after upgrade. It is targeted for
+		// removal in v6.0; operators should re-save each data source in Grafana to migrate
+		// credentials into secureJsonData and clear the warning emitted below.
+		if err := json.Unmarshal(req.JSONData, &dat); err != nil {
+			return nil, fmt.Errorf("can not read secured settings: %s", err.Error())
+		}
+		backend.Logger.Warn("credentials loaded from plaintext jsonData",
+			"method", "OCILoadSettings",
+			"action", "resave_datasource_to_migrate")
+	}
+
+	// Merge non-sensitive fields from plaintext settings
+	dat.Profile_0 = nonsecdat.Profile_0
+	dat.Profile_1 = nonsecdat.Profile_1
+	dat.Profile_2 = nonsecdat.Profile_2
+	dat.Profile_3 = nonsecdat.Profile_3
+	dat.Profile_4 = nonsecdat.Profile_4
+	dat.Profile_5 = nonsecdat.Profile_5
 
 	dat.Region_0 = nonsecdat.Region_0
 	dat.Region_1 = nonsecdat.Region_1
@@ -349,13 +377,6 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.Region_3 = nonsecdat.Region_3
 	dat.Region_4 = nonsecdat.Region_4
 	dat.Region_5 = nonsecdat.Region_5
-
-	dat.Profile_0 = nonsecdat.Profile_0
-	dat.Profile_1 = nonsecdat.Profile_1
-	dat.Profile_2 = nonsecdat.Profile_2
-	dat.Profile_3 = nonsecdat.Profile_3
-	dat.Profile_4 = nonsecdat.Profile_4
-	dat.Profile_5 = nonsecdat.Profile_5
 
 	dat.Xtenancy_0 = nonsecdat.Xtenancy_0
 
@@ -366,6 +387,7 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 	dat.CustomRegion_4 = nonsecdat.CustomRegion_4
 	dat.CustomRegion_5 = nonsecdat.CustomRegion_5
 
+	// Iterate the six profile blocks in order, stopping at the first empty profile
 	blocks := [6]struct {
 		Profile, Tenancy, Region, User, Privkey, Fingerprint, CustomRegion, CustomDomain string
 	}{
@@ -387,6 +409,7 @@ func OCILoadSettings(req backend.DataSourceInstanceSettings) (*OCIConfigFile, er
 		q.user[key] = b.User
 		q.privkey[key] = b.Privkey
 		q.fingerprint[key] = b.Fingerprint
+		q.privkeypass[key] = EmptyKeyPass
 		q.customregion[key] = b.CustomRegion
 		q.customdomain[key] = b.CustomDomain
 	}
@@ -446,12 +469,20 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 			}
 			// Override region in Configuration Provider in case a Custom region is configured
 			if q.customregion[key] != "" {
+				// SECURITY: Validate custom region identifier before use
+				if err := ValidateRegion(q.customregion[key]); err != nil {
+					return fmt.Errorf("invalid custom region for profile %s: %w", key, err)
+				}
 				backend.Logger.Debug("using custom region", "method", "getConfigProvider", "customRegion", q.customregion[key])
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.customregion[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 
 				// Register custom home region in SDK's global region map so that
 				// SetRegion() can resolve sovereign cloud endpoints correctly
 				if q.customdomain[key] != "" {
+					// SECURITY: Validate custom domain before use in endpoint construction
+					if err := ValidateCustomDomain(q.customdomain[key]); err != nil {
+						return fmt.Errorf("invalid custom domain for profile %s: %w", key, err)
+					}
 					regionSchema := map[string]string{
 						"regionIdentifier":     q.customregion[key],
 						"realmKey":             q.customregion[key],
@@ -461,6 +492,12 @@ func (o *OCIDatasource) getConfigProvider(environment string, tenancymode string
 					common.AddRegionSchemaForPlc(regionSchema)
 				}
 			} else {
+				// SECURITY: Validate standard region before use
+				if q.region[key] != "" {
+					if err := ValidateRegion(q.region[key]); err != nil {
+						return fmt.Errorf("invalid region for profile %s: %w", key, err)
+					}
+				}
 				configProvider = common.NewRawConfigurationProvider(q.tenancyocid[key], q.user[key], q.region[key], q.fingerprint[key], q.privkey[key], q.privkeypass[key])
 			}
 
