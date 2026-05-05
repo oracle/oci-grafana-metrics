@@ -1,3 +1,16 @@
+<a name="v6.5.4"></a>
+
+# [Security Maintenance release (v6.5.4)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.4) - 05 May 2026
+
+This release includes:
+
+- Security fix: prevent credential exposure and SSRF via the region parameter
+- Security fix: resolve infinite loop DoS in OCILoadSettings when all 6 profiles are configured
+- Security fix: upgrade picomatch and serialize-javascript to address new advisories
+- Backend logging: use correct levels and structured key-value format
+
+[Changes][v6.5.4]
+
 <a name="v6.5.3"></a>
 
 # [Bug fix and security release (v6.5.3)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.3) - 01 Apr 2026
