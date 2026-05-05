@@ -7,12 +7,31 @@ package plugin
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/oracle/oci-grafana-metrics/pkg/plugin/constants"
 	"github.com/oracle/oci-grafana-metrics/pkg/plugin/models"
 )
+
+// validateRegionParam canonicalizes (TrimSpace + ToLower) the region parameter and
+// validates it. On rejection it writes a 400 response and returns ("", false). On
+// success it returns the canonical form so callers can flow it downstream — keeping
+// log keys, cache keys, and SDK calls aligned on a single representation.
+func validateRegionParam(rw http.ResponseWriter, region, method string) (string, bool) {
+	region = strings.ToLower(strings.TrimSpace(region))
+	if region == "" || region == constants.ALL_REGION {
+		return region, true
+	}
+	if err := ValidateRegion(region); err != nil {
+		backend.Logger.Warn("rejected invalid region", "method", method, "region", region)
+		respondWithError(rw, http.StatusBadRequest, "Invalid region parameter", err)
+		return "", false
+	}
+	return region, true
+}
 
 // rootRequest defines the structure for requests that only require a tenancy OCID.
 type rootRequest struct {
@@ -162,6 +181,13 @@ func (ocidx *OCIDatasource) GetNamespacesHandler(rw http.ResponseWriter, req *ht
 		return
 	}
 
+	// SECURITY: Validate region parameter to prevent SSRF; flow the canonical form downstream.
+	canonicalRegion, ok := validateRegionParam(rw, nmr.Region, "GetNamespacesHandler")
+	if !ok {
+		return
+	}
+	nmr.Region = canonicalRegion
+
 	namespaces := ocidx.GetNamespaceWithMetricNames(req.Context(), nmr.Tenancy, nmr.Compartment, nmr.Region)
 
 	writeResponse(rw, namespaces)
@@ -186,6 +212,13 @@ func (ocidx *OCIDatasource) GetResourceGroupHandler(rw http.ResponseWriter, req 
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
+
+	// SECURITY: Validate region parameter to prevent SSRF; flow the canonical form downstream.
+	canonicalRegion, ok := validateRegionParam(rw, rgr.Region, "GetResourceGroupHandler")
+	if !ok {
+		return
+	}
+	rgr.Region = canonicalRegion
 
 	rgs := ocidx.GetResourceGroups(req.Context(), rgr.Tenancy, rgr.Compartment, rgr.Region, rgr.Namespace)
 
@@ -212,6 +245,13 @@ func (ocidx *OCIDatasource) GetDimensionsHandler(rw http.ResponseWriter, req *ht
 		return
 	}
 
+	// SECURITY: Validate region parameter to prevent SSRF; flow the canonical form downstream.
+	canonicalRegion, ok := validateRegionParam(rw, dr.Region, "GetDimensionsHandler")
+	if !ok {
+		return
+	}
+	dr.Region = canonicalRegion
+
 	dimensions := ocidx.GetDimensions(req.Context(), dr.Tenancy, dr.Compartment, dr.Region, dr.Namespace, dr.MetricName)
 
 	writeResponse(rw, dimensions)
@@ -236,6 +276,13 @@ func (ocidx *OCIDatasource) GetTagsHandler(rw http.ResponseWriter, req *http.Req
 		respondWithError(rw, http.StatusBadRequest, "Failed to read request body", err)
 		return
 	}
+
+	// SECURITY: Validate region parameter to prevent SSRF; flow the canonical form downstream.
+	canonicalRegion, ok := validateRegionParam(rw, tr.Region, "GetTagsHandler")
+	if !ok {
+		return
+	}
+	tr.Region = canonicalRegion
 
 	tags := ocidx.GetTags(req.Context(), tr.Tenancy, tr.Compartment, tr.CompartmentName, tr.Region, tr.Namespace)
 
