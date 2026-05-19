@@ -355,14 +355,17 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string,
 	var pageHeader string
 
 	for {
-		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
-			identity.ListCompartmentsRequest{
-				CompartmentId:          common.String(tenancyocid),
-				Page:                   &pageHeader,
-				AccessLevel:            effectiveScope,
-				LifecycleState:         identity.CompartmentLifecycleStateActive,
-				CompartmentIdInSubtree: common.Bool(true),
-			})
+		req := identity.ListCompartmentsRequest{
+			CompartmentId:          common.String(tenancyocid),
+			AccessLevel:            effectiveScope,
+			LifecycleState:         identity.CompartmentLifecycleStateActive,
+			CompartmentIdInSubtree: common.Bool(true),
+		}
+		if len(pageHeader) != 0 {
+			req.Page = common.String(pageHeader)
+		}
+
+		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx, req)
 
 		if err != nil {
 			backend.Logger.Warn("client", "GetCompartments", err)
