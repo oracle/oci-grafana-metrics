@@ -1,3 +1,13 @@
+<a name="v6.5.5"></a>
+
+# [Security Maintenance release (v6.5.5)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.4) - 18 Jun 2026
+
+This release includes:
+
+- Security fix: resolved ANCHORE:CVE-2026-39883+go.opentelemetry.io/otel/sdk:v1.40.0 by bumping otel sdk to v1.43.0
+
+[Changes][v6.5.5]
+
 <a name="v6.5.4"></a>
 
 # [Security Maintenance release (v6.5.4)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.4) - 05 May 2026
