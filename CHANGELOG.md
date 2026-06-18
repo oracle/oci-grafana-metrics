@@ -1,6 +1,6 @@
 <a name="v6.5.5"></a>
 
-# [Security Maintenance release (v6.5.5)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.4) - 18 Jun 2026
+# [Security Maintenance release (v6.5.5)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.5) - 18 Jun 2026
 
 This release includes:
 
