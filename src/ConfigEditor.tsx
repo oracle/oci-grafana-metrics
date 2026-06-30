@@ -24,9 +24,7 @@ import {
   regions,
 } from './regionlist';
 
-interface Props extends DataSourcePluginOptionsEditorProps<OCIDataSourceOptions> {
-  onUpdateDatasourceJsonDataOptionSelect: (props: Props, field: string) => (option: SelectableValue<string>) => void;
-}
+type Props = DataSourcePluginOptionsEditorProps<OCIDataSourceOptions>;
 
 interface State {
   dynamicRegion0: string[];

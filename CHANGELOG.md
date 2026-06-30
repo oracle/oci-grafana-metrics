@@ -1,3 +1,20 @@
+# [Security Maintenance release (v6.5.5)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.5) - 24 Jun 2026
+
+This release includes:
+
+- This release includes dependency remediation for OSV, Dependabot, and govulncheck security findings
+- Security fix: upgraded `go.opentelemetry.io/otel/sdk` from `v1.40.0` to `v1.43.0` to remediate CVE-2026-39883.
+- Security fix: removed unused `@babel/preset-env` dependency to eliminate the vulnerable `@babel/plugin-transform-modules-systemjs` path flagged for CVE-2026-44728.
+- Security fix: bumped `fast-uri` to `4.0.0` to remediate CVE-2026-6321 and CVE-2026-6322.
+- Security fix: bumped `form-data` to `4.0.6` to remediate CVE-2026-12143.
+- Security fix: bumped `ws` to `8.21.0` to remediate CVE-2026-48779.
+- Security fix: upgraded `github.com/grafana/grafana-plugin-sdk-go` from `v0.290.1` to `v0.292.1`.
+- Security fix: upgraded `golang.org/x/crypto` to `v0.52.0` to remediate govulncheck findings GO-2026-5005, GO-2026-5006, GO-2026-5013, GO-2026-5014, GO-2026-5015, GO-2026-5016, GO-2026-5017, GO-2026-5018, GO-2026-5019, GO-2026-5020, GO-2026-5021, GO-2026-5023, and GO-2026-5033.
+- Security fix: added yarn resolutions for additional OSV/Dependabot npm findings: `@babel/core` `7.29.7`, `@opentelemetry/core` `2.8.0`, `@protobufjs/utf8` `1.1.1`, `@tootallnate/once` `2.0.1`, `diff` `5.2.2`, `dompurify` `3.4.11`, `immutable` `4.3.8`, `js-cookie` `3.0.7`, `js-yaml` `4.2.0`, `lodash` `4.18.1`, `nanoid` `3.3.8`, `postcss` `8.5.10`, `prismjs` `1.30.0`, `protobufjs` `7.6.3`, `protocol-buffers-schema` `3.6.1`, `qs` `6.15.2`, `uplot` `1.6.31`, and `uuid` `11.1.1`.
+- Tooling: bumped `typescript` to `5.2.2` and fixed the `ConfigEditor` props type so `yarn typecheck` passes after the dependency updates.
+
+[Changes][v6.5.5]
+
 <a name="v6.5.4"></a>
 
 # [Security Maintenance release (v6.5.4)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.4) - 05 May 2026
