@@ -65,6 +65,7 @@ for arg in "$@"; do
             echo ""
             echo "First-time setup:"
             echo "  cp .env.example .env   # then edit with your values"
+            echo "  docker compose pull    # optional: cache images before using a restricted network"
             echo ""
             echo "SSH tunnel:"
             echo "  Set SSH_TUNNEL_HOST in .env and pass --tunnel to start"
@@ -124,6 +125,35 @@ fi
 set -a
 source "$DEV_DIR/.env"
 set +a
+
+# --- Check Docker images before starting the tunnel or build ---
+if ! docker info >/dev/null 2>&1; then
+    echo -e "${RED}Docker is not running.${NC} Start Docker and try again."
+    exit 1
+fi
+
+missing_images=()
+while IFS= read -r image; do
+    if ! docker image inspect "$image" >/dev/null 2>&1; then
+        missing_images+=("$image")
+    fi
+done < <(cd "$DEV_DIR" && docker compose config --images)
+
+if [ "${#missing_images[@]}" -gt 0 ]; then
+    echo -e "${BOLD}Downloading required Grafana images from Docker Hub...${NC}"
+    printf '  - %s\n' "${missing_images[@]}"
+    echo ""
+    if ! (cd "$DEV_DIR" && docker compose pull); then
+        echo ""
+        echo -e "${RED}Could not download the required Grafana images.${NC}"
+        echo "Make sure Docker Hub is reachable from your network."
+        echo "If your network or VPN blocks external registries, switch networks and run:"
+        echo "  cd $DEV_DIR"
+        echo "  docker compose pull"
+        exit 1
+    fi
+    echo ""
+fi
 
 # --- Hint if SSH_TUNNEL_HOST is set but --tunnel not passed ---
 if [ "$FLAG_TUNNEL" = false ] && [ -n "${SSH_TUNNEL_HOST:-}" ]; then
@@ -186,16 +216,18 @@ if [ "$FLAG_TUNNEL" = true ]; then
 fi
 
 # --- Build plugin ---
-echo -e "${BOLD}Building plugin...${NC}"
 cd "$REPO_ROOT"
-yarn build 2>&1 | tail -1
-mage -v 2>&1 | tail -1
+echo -e "${BOLD}Building frontend...${NC}"
+yarn build
+echo ""
+echo -e "${BOLD}Building backend binaries for all platforms (this may take a few minutes)...${NC}"
+mage -v
 echo ""
 
 # --- Start containers ---
 echo -e "${BOLD}Starting Grafana containers...${NC}"
 cd "$DEV_DIR"
-docker compose up -d 2>&1 | grep -E "Created|Started|Warning" || true
+docker compose up -d
 echo ""
 
 # --- Run verification ---
