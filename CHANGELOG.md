@@ -1,3 +1,14 @@
+<a name="v6.5.6"></a>
+
+# [Bug fix release (v6.5.6)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.6) - 08 Jul 2026
+
+This release includes:
+
+- Fixed compartment pagination so the initial OCI request omits the page token and subsequent requests use the token returned by OCI.
+- Added one bounded retry when OCI rejects a pagination token, without caching partial compartment results.
+
+[Changes][v6.5.6]
+
 # [Security Maintenance release (v6.5.5)](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.5) - 24 Jun 2026
 
 This release includes:
