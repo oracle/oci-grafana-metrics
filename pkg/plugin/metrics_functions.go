@@ -22,6 +22,43 @@ type metricDataBank struct {
 	resourceLabels map[string]map[string]string
 }
 
+func listCompartments(
+	ctx context.Context,
+	request identity.ListCompartmentsRequest,
+	list func(context.Context, identity.ListCompartmentsRequest) (identity.ListCompartmentsResponse, error),
+) ([]identity.Compartment, error) {
+	var compartments []identity.Compartment
+	restarted := false
+
+	for {
+		response, err := list(ctx, request)
+		if err != nil {
+			if request.Page != nil && !restarted && isInvalidPaginationToken(err) {
+				compartments = nil
+				request.Page = nil
+				restarted = true
+				continue
+			}
+			return nil, err
+		}
+
+		compartments = append(compartments, response.Items...)
+		if response.OpcNextPage == nil || *response.OpcNextPage == "" {
+			return compartments, nil
+		}
+		request.Page = response.OpcNextPage
+	}
+}
+
+func isInvalidPaginationToken(err error) bool {
+	serviceErr, ok := common.IsServiceError(err)
+	if !ok || serviceErr.GetHTTPStatusCode() != 400 {
+		return false
+	}
+
+	return serviceErr.GetCode() == "InvalidPaginationToken" || serviceErr.GetCode() == "InvalidParameter"
+}
+
 // TestConnectivity checks the OCI data source test request in Grafana's Datasource configuration UI.
 //
 // This function performs a connectivity test to the Oracle Cloud Infrastructure (OCI) Monitoring service.
@@ -351,31 +388,15 @@ func (o *OCIDatasource) GetCompartments(ctx context.Context, tenancyOCID string,
 
 	// calling the api if not present in cache
 	compartmentList := []models.OCIResource{}
-	var fetchedCompartments []identity.Compartment
-	var pageHeader string
-
-	for {
-		res, err := o.tenancyAccess[takey].identityClient.ListCompartments(ctx,
-			identity.ListCompartmentsRequest{
-				CompartmentId:          common.String(tenancyocid),
-				Page:                   &pageHeader,
-				AccessLevel:            effectiveScope,
-				LifecycleState:         identity.CompartmentLifecycleStateActive,
-				CompartmentIdInSubtree: common.Bool(true),
-			})
-
-		if err != nil {
-			backend.Logger.Warn("client", "GetCompartments", err)
-			break
-		}
-
-		fetchedCompartments = append(fetchedCompartments, res.Items...)
-
-		if len(res.RawResponse.Header.Get("opc-next-page")) != 0 {
-			pageHeader = *res.OpcNextPage
-		} else {
-			break
-		}
+	fetchedCompartments, err := listCompartments(ctx, identity.ListCompartmentsRequest{
+		CompartmentId:          common.String(tenancyocid),
+		AccessLevel:            effectiveScope,
+		LifecycleState:         identity.CompartmentLifecycleStateActive,
+		CompartmentIdInSubtree: common.Bool(true),
+	}, o.tenancyAccess[takey].identityClient.ListCompartments)
+	if err != nil {
+		backend.Logger.Warn("failed to list compartments", "method", "GetCompartments", "error", err)
+		return nil
 	}
 
 	compartments[tenancyocid] = *resp.Name //tenancy name
