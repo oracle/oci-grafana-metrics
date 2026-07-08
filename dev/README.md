@@ -18,6 +18,19 @@ cp .env.example .env     # edit with your OCI compartment, regions, etc.
 
 That's it. The script handles building, containers, and verification.
 
+## Restricted Networks or VPNs
+
+The tests use official Grafana images from Docker Hub. If your network or VPN
+blocks external registries, cache the images before connecting:
+
+```bash
+docker compose pull
+```
+
+Once the images are cached locally, `test.sh` does not need Docker Hub access.
+If images are missing, the script tries to download them and shows this guidance
+if the download fails.
+
 ## What `test.sh` Does
 
 1. Starts SSH tunnel to your OCI instance (if `--tunnel` flag is passed)
