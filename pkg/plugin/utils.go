@@ -620,11 +620,18 @@ func getUniqueIdsForLabels(namespace string, dimensions map[string]string, metri
 				monitorID = dimensions["MonitorId"]
 				dimensionKey = "MonitorName"
 			} else {
-				// If no special condition was met, default to the first value in dimensions
-				for _, v := range dimensions {
-					resourceID = v
-					dimensionKey = v
-					break
+				// If no special condition was met, default to the first dimension.
+				// The dimension names are sorted so the aggregator stays stable
+				// across calls, as ranging over a map yields a random order.
+				dimensionNames := make([]string, 0, len(dimensions))
+				for k := range dimensions {
+					dimensionNames = append(dimensionNames, k)
+				}
+				sort.Strings(dimensionNames)
+
+				if len(dimensionNames) > 0 {
+					dimensionKey = dimensionNames[0]
+					resourceID = dimensions[dimensionKey]
 				}
 			}
 
@@ -728,11 +735,13 @@ func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricNam
 
 				// Check whether there is a dimension name for the metric that matches
 				// the placeholder label. If there is then replace the placeholder with
-				// the value of the dimension
+				// the value of the dimension. Placeholders that do not line up with a
+				// dimension are left unchanged so that a single unknown placeholder
+				// does not discard the whole custom legend.
 				keyValues, ok := dimensions[placeholderLabel]
 				if !ok {
-					o.logger.Error("generateCustomMetricLabel", "NoDimension", "dimension not found: "+placeholderLabel)
-					return ""
+					o.logger.Warn("generateCustomMetricLabel", "NoDimension", "dimension not found, placeholder left unchanged: "+placeholderLabel)
+					continue
 				}
 				var rangecycle []string
 
