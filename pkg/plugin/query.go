@@ -47,6 +47,12 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 		return response
 	}
 
+	backend.Logger.Info("plugin.query",
+		"refID", query.RefID,
+		"legendFormat", qm.LegendFormat,
+		"rawQuery", qm.RawQuery,
+	)
+
 	// checking if the query has valid tenancy detail
 	if qm.TenancyOCID == "" {
 		backend.Logger.Warn("plugin.query", "query", "tenancy ocid is mandatory but it is not present in query")
@@ -94,43 +100,49 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 
 	// plotting the x axis with time as unit
 	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
-	var name string
+
 	for _, metricDataValue := range metricDataValues {
-		name = metricDataValue.ResourceName
+		name := metricDataValue.ResourceName
 
 		dl := data.Labels{
 			"tenancy":   metricDataValue.TenancyName,
 			"unique_id": metricDataValue.UniqueDataID,
 			"region":    metricDataValue.Region,
 		}
-		if qm.LegendFormat != "" {
-			if metricDataValue.UniqueDataID == "" {
-				ocidx.logger.Debug("UniqueDataID", "No valid ResourceID found")
-				continue
-			} else {
-				ocidx.logger.Debug("UniqueDataID found", "UniqueDataID", metricDataValue.UniqueDataID)
-			}
+
+		useCustomLabel := qm.LegendFormat != "" && metricDataValue.UniqueDataID != ""
+
+		if qm.LegendFormat != "" && metricDataValue.UniqueDataID == "" {
+			ocidx.logger.Warn("legendFormat ignored for this series: no valid ResourceID found in dimensions",
+				"metric", metricDataValue.MetricName,
+				"resource_name", metricDataValue.ResourceName)
+		}
+
+		if useCustomLabel {
+			ocidx.logger.Debug("UniqueDataID found", "UniqueDataID", metricDataValue.UniqueDataID)
+
 			dl = data.Labels{}
 			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
-			OriginalDimensionMap := make(map[string][]string)
 
 			// Convert dimensions into a Go map
+			OriginalDimensionMap := make(map[string][]string, len(dimensions))
 			for _, dimension := range dimensions {
-				key := dimension.Key
-
-				// Create a new slice for each key in the map
-				var values []string
-				values = append(values, dimension.Values...)
-
-				// Assign the values slice to the map key
-				OriginalDimensionMap[key] = values
+				OriginalDimensionMap[dimension.Key] = append([]string(nil), dimension.Values...)
 			}
-			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, OriginalDimensionMap, metricDataValue.UniqueDataID, metricDataValue.DimensionKey)
+
+			name = ocidx.generateCustomMetricLabel(
+				metricsDataRequest.LegendFormat,
+				metricDataValue.MetricName,
+				OriginalDimensionMap,
+				metricDataValue.UniqueDataID,
+				metricDataValue.DimensionKey,
+			)
 			if name == "" {
-				ocidx.logger.Error("No valid resourceID found in dimensions", "metricDataValue.name", name)
+				ocidx.logger.Error("No valid resourceID found in dimensions",
+					"legendFormat", metricsDataRequest.LegendFormat,
+					"metric", metricDataValue.MetricName)
 				name = metricDataValue.UniqueDataID
 			}
-
 		} else {
 			for k, v := range metricDataValue.Labels {
 				dl[k] = v
@@ -139,6 +151,7 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 				}
 			}
 		}
+
 		frame.Fields = append(frame.Fields,
 			data.NewField(name, dl, metricDataValue.DataPoints),
 		)
