@@ -586,7 +586,8 @@ func (o *OCIDatasource) GetNamespaceWithMetricNames(
 //
 // Data Handling:
 //   - Handles fetching data for all regions in parallel when specified.
-//   - Adjusts data when different resource datapoints have a mismatched number of values.
+//   - Aligns series with mismatched timestamp sets to one shared time axis,
+//     leaving nulls (gaps) where a series has no datapoint of its own.
 //   - Supports filtering by resource group, dimensions, and tags.
 //   - Adds labels based on selected dimensions and tags.
 //   - Sorts the time slice for proper representation in Grafana.
@@ -599,7 +600,12 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	backend.Logger.Debug("fetching metric datapoints", "method", "GetMetricDataPoints", "compartment", requestParams.CompartmentOCID, "query", requestParams.QueryText)
 
 	times := []time.Time{}
-	dataValuesWithTime := map[common.SDKTime][]float64{}
+	// Each series keeps its own datapoints keyed by timestamp, and timestamps
+	// are collected into the union across all series. No value ever crosses
+	// series boundaries; a series simply has no entry at timestamps where OCI
+	// did not report a datapoint for it (see alignDataPointsToUnionTimestamps).
+	dataValuesPerSeries := map[int]map[common.SDKTime]float64{}
+	unionTimestamps := map[common.SDKTime]struct{}{}
 	dataPointsWithResourceSerialNo := map[int]models.OCIMetricDataPoints{}
 	dataPoints := []models.OCIMetricDataPoints{}
 	resourceIDsPerTag := map[string]map[string]struct{}{}
@@ -759,34 +765,17 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 				return metricDatapoints[i].Timestamp.Time.Before(metricDatapoints[j].Timestamp.Time)
 			})
 
-			// sometimes 2 different resource datapoint have mismatched no of values
-			// to make it equal fill the extra point with previous value
+			// Series may report datapoints at different timestamps (e.g. OCI
+			// object storage emits datapoints only for buckets with traffic).
+			// Keep each series' datapoints keyed by its own timestamps only.
 			resourcesFetched += 1
-			previousValue := 0.0
+			seriesValues := map[common.SDKTime]float64{}
 			for _, eachMetricDataPoint := range metricDatapoints {
 				t := *eachMetricDataPoint.Timestamp
-				v := *eachMetricDataPoint.Value
-
-				if _, ok := dataValuesWithTime[t]; ok {
-					dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
-					previousValue = v
-				} else {
-					if resourcesFetched == 1 {
-						dataValuesWithTime[t] = []float64{v}
-						previousValue = v
-						continue
-					}
-
-					// adjustment for previous non-existance values with the immediate previous value
-					// when the time comes in later data points
-					dataValuesWithTime[t] = []float64{previousValue}
-					for i := 2; i < resourcesFetched; i++ {
-						dataValuesWithTime[t] = append(dataValuesWithTime[t], previousValue)
-					}
-					dataValuesWithTime[t] = append(dataValuesWithTime[t], v)
-					previousValue = v
-				}
+				seriesValues[t] = *eachMetricDataPoint.Value
+				unionTimestamps[t] = struct{}{}
 			}
+			dataValuesPerSeries[resourcesFetched-1] = seriesValues
 
 			// for base tenancy
 			splits := strings.Split(tenancyOCID, "/")
@@ -826,19 +815,9 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	})
 
 	timesToFetch := []common.SDKTime{}
-	// adjustment for later non-existance values with last value
-	for t, dvs := range dataValuesWithTime {
+	for t := range unionTimestamps {
 		times = append(times, t.Time)
 		timesToFetch = append(timesToFetch, t)
-
-		if len(dvs) == resourcesFetched {
-			continue
-		}
-
-		lastValue := dataValuesWithTime[t][len(dataValuesWithTime[t])-1]
-		for i := 0; i < resourcesFetched-len(dvs); i++ {
-			dataValuesWithTime[t] = append(dataValuesWithTime[t], lastValue)
-		}
 	}
 
 	// sorting the time slice, for grafana
@@ -850,15 +829,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 		return timesToFetch[i].Time.Before(timesToFetch[j].Time)
 	})
 
-	dataValuesWithResourceSerialNo := map[int][]float64{}
-	// final preparation
-	for _, t := range timesToFetch {
-		dvIndex := 0
-		for i := 0; i < resourcesFetched; i++ {
-			dataValuesWithResourceSerialNo[i] = append(dataValuesWithResourceSerialNo[i], dataValuesWithTime[t][dvIndex])
-			dvIndex += 1
-		}
-	}
+	dataValuesWithResourceSerialNo := alignDataPointsToUnionTimestamps(resourcesFetched, dataValuesPerSeries, timesToFetch)
 
 	// extracting for grafana
 	for i, dps := range dataValuesWithResourceSerialNo {
@@ -869,6 +840,32 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 	}
 
 	return times, dataPoints, nil
+}
+
+// alignDataPointsToUnionTimestamps builds one nullable value slice per series,
+// aligned to the sorted union of timestamps observed across all series.
+//
+// Correctness invariant: for every series i and timestamp t, output[i][t]
+// equals series i's own observed value at t, or nil if OCI did not report a
+// datapoint for that series at t. No value is ever carried forward or
+// borrowed from another series, and missing datapoints are never zero-filled;
+// Grafana renders the nulls as gaps, which is the only honest representation
+// of "OCI did not report". (Fixes oracle/oci-grafana-metrics#285 and #323:
+// the previous positional realignment padded sparse series with the values of
+// whichever series contributed last at a given timestamp.)
+func alignDataPointsToUnionTimestamps(resourcesFetched int, dataValuesPerSeries map[int]map[common.SDKTime]float64, timesToFetch []common.SDKTime) [][]*float64 {
+	dataValuesWithResourceSerialNo := make([][]*float64, resourcesFetched)
+	for i := 0; i < resourcesFetched; i++ {
+		seriesValues := dataValuesPerSeries[i]
+		aligned := make([]*float64, len(timesToFetch))
+		for j, t := range timesToFetch {
+			if v, ok := seriesValues[t]; ok {
+				aligned[j] = common.Float64(v)
+			}
+		}
+		dataValuesWithResourceSerialNo[i] = aligned
+	}
+	return dataValuesWithResourceSerialNo
 }
 
 // ****** WARNING This function is not implemented yet ******
