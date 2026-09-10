@@ -61,8 +61,10 @@ type OCIMetricDataPoints struct {
 	UniqueDataID string
 	// DimensionKey is the key of the dimension used to identify the resource.
 	DimensionKey string
-	// DataPoints is a list of float64 values representing the metric data points.
-	DataPoints []float64
+	// DataPoints is a list of nullable float64 values representing the metric data points.
+	// A nil entry means OCI did not report a datapoint for this series at the
+	// corresponding timestamp; it is never filled with another series' value.
+	DataPoints []*float64
 	// Labels is a map of string to string representing the labels for the metric data.
 	Labels map[string]string
 }
