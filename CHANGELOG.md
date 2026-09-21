@@ -1,5 +1,11 @@
 # Changelog
 
+## [6.5.7](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.7) - 2026-09-21
+
+### Security
+
+- Upgraded transitive Go dependencies `golang.org/x/crypto`, `golang.org/x/net`, `golang.org/x/sys`, `golang.org/x/text`, and `google.golang.org/grpc` to their patched versions.
+
 ## [6.5.6](https://github.com/oracle/oci-grafana-metrics/releases/tag/v6.5.6) - 2026-07-08
 
 ### Fixed
