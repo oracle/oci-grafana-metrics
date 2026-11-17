@@ -819,6 +819,7 @@ func (o *OCIDatasource) GetMetricDataPoints(ctx context.Context, requestParams m
 				UniqueDataID: uniqueDataID,
 				DimensionKey: dimensionKey,
 				Labels:       labelsToAdd,
+				Dimensions:   metricDataItem.Dimensions,
 			}
 		}
 

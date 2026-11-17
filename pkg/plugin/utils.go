@@ -668,97 +668,42 @@ func addSelectedValuesLabels(existingLabels map[string]string, selectedValuePair
 	return existingLabels
 }
 
+// legendPlaceholderRe matches legend placeholders such as {{resourceName}} or {{ metric }}.
+var legendPlaceholderRe = regexp.MustCompile(`\{\{\s*([^}\s]+)\s*\}\}`)
+
 /*
-Function generates a custom metric label for the identified metric based on the
-legend format provided by the user where any known placeholders within the format
-will be replaced with the appropriate value.
+Function generates a custom metric label for a series based on the legend format
+provided by the user, replacing placeholders with the appropriate value.
 
-The currently supported legend format placeholders are:
-  - {metric} - Will be replaced by the metric name
-  - {dimension} - Will be replaced by the value of the specified dimension
+Placeholders are resolved in this order:
+  - {{metric}}    - the metric name
+  - {{dimension}} - the value of that dimension for this series, taken from the
+    SummarizeMetricsData response for the series itself
+  - {{label}}     - a label the plugin adds to every series (unique_id, tenancy, region)
 
-Any placeholders (or other text) in the legend format that do not line up with one
-of these placeholders will be unchanged. Note that placeholder labels are treated
-as case sensitive.
+Placeholder labels are case sensitive. The second return value is false when at
+least one placeholder could not be resolved; callers should then fall back to the
+series' default name rather than show a raw "{{...}}" placeholder.
 */
 func (o *OCIDatasource) generateCustomMetricLabel(legendFormat string, metricName string,
-	dimensions map[string][]string, UniqueDataID string, DimensionKey string) string {
-	o.logger.Debug("generateCustomMetricLabel ", "legendFormat", legendFormat)
-	o.logger.Debug("generateCustomMetricLabel ", "metricName", metricName)
-	o.logger.Debug("generateCustomMetricLabel ", "UniqueDataID", UniqueDataID)
-	o.logger.Debug("generateCustomMetricLabel ", "DimensionKey", DimensionKey)
-
-	metricLabel := legendFormat
-	// Define a pattern where we are looking for a left curly brace followed by one or
-	// more characters that are not the right curly brace (or whitespace) followed
-	// finally by a right curly brace. The inclusion of the <label> portion of the
-	// pattern is to allow the logic to extract the label text from the placeholder.
-	rePlaceholderLabel, err := regexp.Compile(`\{\{\s*(?P<label>[^} ]+)\s*\}\}`)
-
-	if err != nil {
-		o.logger.Error("Compilation of legend format placeholders regex failed")
-		return metricLabel
-	}
-
-	for _, placeholderStr := range rePlaceholderLabel.FindAllString(metricLabel, -1) {
-		if rePlaceholderLabel.Match([]byte(placeholderStr)) {
-			matches := rePlaceholderLabel.FindStringSubmatch(placeholderStr)
-			labelIndex := rePlaceholderLabel.SubexpIndex("label")
-
-			placeholderLabel := matches[labelIndex]
-			re := regexp.MustCompile(placeholderStr)
-
-			// If this placeholder is the {metric} placeholder then replace the
-			// placeholder string with the metric name
-			if placeholderLabel == "metric" {
-				metricLabel = re.ReplaceAllString(metricLabel, metricName)
-			} else {
-				o.logger.Debug("generateCustomMetricLabel", "Placeholder", placeholderLabel)
-				var resourceValues []string
-				var ok bool
-
-				// Check whether there is a resourceID dimension for the metric.
-				// That will be the aggregator for labeling process.
-				// If not found then labeling will not be possible
-				resourceValues, ok = dimensions[DimensionKey]
-				if !ok {
-					o.logger.Error("generateCustomMetricLabel", "NoResourceID", "No valid resourceID aggregator found: "+DimensionKey)
-					return ""
-				}
-
-				// Check whether there is a dimension name for the metric that matches
-				// the placeholder label. If there is then replace the placeholder with
-				// the value of the dimension
-				keyValues, ok := dimensions[placeholderLabel]
-				if !ok {
-					o.logger.Error("generateCustomMetricLabel", "NoDimension", "dimension not found: "+placeholderLabel)
-					return ""
-				}
-				var rangecycle []string
-
-				// Handling dimension in case of All Regions queries
-				if len(resourceValues) == len(keyValues) {
-					rangecycle = resourceValues
-				} else {
-					rangecycle = keyValues
-				}
-
-				for i, rv := range rangecycle {
-					// Check whether UniqueDataID matches any resourceID
-					if rv == UniqueDataID || strings.ToLower(rv) == UniqueDataID {
-						sublabel := keyValues[i]
-						o.logger.Debug("generateCustomMetricLabel", "metricLabelBefore", metricLabel)
-						metricLabel = re.ReplaceAllString(metricLabel, sublabel)
-						o.logger.Debug("generateCustomMetricLabel", "metricLabelAfter", metricLabel)
-						break
-					}
-
-				}
-
-			}
+	dimensions map[string]string, pluginLabels map[string]string) (string, bool) {
+	resolved := true
+	metricLabel := legendPlaceholderRe.ReplaceAllStringFunc(legendFormat, func(placeholder string) string {
+		label := legendPlaceholderRe.FindStringSubmatch(placeholder)[1]
+		if label == "metric" {
+			return metricName
 		}
-	}
-	o.logger.Debug("Generated metric Label", "legendFormat", legendFormat,
-		"metricName", metricName, "metricLabel", metricLabel)
-	return metricLabel
+		if v, ok := dimensions[label]; ok {
+			return v
+		}
+		if v, ok := pluginLabels[label]; ok && v != "" {
+			return v
+		}
+		o.logger.Debug("legend placeholder has no matching dimension or label", "placeholder", label)
+		resolved = false
+		return placeholder
+	})
+	o.logger.Debug("generated metric label", "legendFormat", legendFormat,
+		"metricName", metricName, "metricLabel", metricLabel, "resolved", resolved)
+	return metricLabel, resolved
 }

@@ -104,32 +104,18 @@ func (ocidx *OCIDatasource) query(ctx context.Context, pCtx backend.PluginContex
 			"region":    metricDataValue.Region,
 		}
 		if qm.LegendFormat != "" {
-			if metricDataValue.UniqueDataID == "" {
-				ocidx.logger.Debug("UniqueDataID", "No valid ResourceID found")
-				continue
-			} else {
-				ocidx.logger.Debug("UniqueDataID found", "UniqueDataID", metricDataValue.UniqueDataID)
-			}
-			dl = data.Labels{}
-			dimensions := ocidx.GetDimensions(ctx, qm.TenancyOCID, qm.CompartmentOCID, qm.Region, qm.Namespace, metricDataValue.MetricName, true)
-			OriginalDimensionMap := make(map[string][]string)
-
-			// Convert dimensions into a Go map
-			for _, dimension := range dimensions {
-				key := dimension.Key
-
-				// Create a new slice for each key in the map
-				var values []string
-				values = append(values, dimension.Values...)
-
-				// Assign the values slice to the map key
-				OriginalDimensionMap[key] = values
-			}
-			name = ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, OriginalDimensionMap, metricDataValue.UniqueDataID, metricDataValue.DimensionKey)
-			if name == "" {
-				ocidx.logger.Error("No valid resourceID found in dimensions", "metricDataValue.name", name)
+			// Use the dimensions OCI returned for this exact series. Re-fetching them via
+			// ListMetrics and correlating by slice index was unreliable (issue #370).
+			label, ok := ocidx.generateCustomMetricLabel(metricsDataRequest.LegendFormat, metricDataValue.MetricName, metricDataValue.Dimensions, dl)
+			if ok {
+				name = label
+			} else if name == "" {
+				// A placeholder could not be resolved for this series (for example
+				// resourceDisplayName on a namespace that has no such dimension):
+				// keep the default series name instead of a raw "{{...}}".
 				name = metricDataValue.UniqueDataID
 			}
+			dl = data.Labels{}
 
 		} else {
 			for k, v := range metricDataValue.Labels {

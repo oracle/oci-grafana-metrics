@@ -65,6 +65,9 @@ type OCIMetricDataPoints struct {
 	DataPoints []float64
 	// Labels is a map of string to string representing the labels for the metric data.
 	Labels map[string]string
+	// Dimensions holds the exact dimension key/values that OCI returned for this
+	// series in the SummarizeMetricsData response. Used for legend formatting.
+	Dimensions map[string]string
 }
 
 // OCIResourceTagsResponse represents the response structure for OCI resource tags.
